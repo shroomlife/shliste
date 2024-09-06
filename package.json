@@ -1,0 +1,29 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "postinstall": "nuxt prepare",
+    "pb": "docker build -t shroomlife/shliste:latest . && docker push shroomlife/shliste:latest",
+    "preview": "nuxt preview"
+  },
+  "dependencies": {
+    "@pinia/nuxt": "^0.5.4",
+    "nuxt": "^3.13.0",
+    "uuid": "^10.0.0",
+    "yup": "^1.4.0"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "^0.5.6",
+    "@nuxt/ui": "^2.18.4",
+    "@types/uuid": "^10.0.0",
+    "eslint": "^9.9.1",
+    "sass": "^1.78.0",
+    "typescript": "^5.5.4",
+    "vue": "3.5.2",
+    "vue-tsc": "^2.1.6"
+  }
+}

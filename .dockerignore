@@ -1,0 +1,37 @@
+# Node modules
+node_modules
+
+# Docker-related files
+Dockerfile*
+compose.*
+
+# Git-related files
+.git
+.gitignore
+
+# Documentation and metadata
+README.md
+LICENSE
+
+# IDE and editor settings
+.vscode
+.editorconfig
+.idea
+
+# Build and output directories
+.nuxt
+.output
+
+# Test and coverage reports
+coverage*
+
+# Environment files
+.env*
+.keys
+
+# Specific public directories (only if necessary)
+public/video/**
+
+# Additional project-specific ignores
+Makefile
+helm-charts
