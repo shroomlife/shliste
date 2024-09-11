@@ -5,7 +5,7 @@ const { list } = defineProps<{
 }>()
 
 const toast = useToast()
-const { $moment } = useNuxtApp()
+const { $moment, $swal } = useNuxtApp()
 
 const computedListLink = computed(() => `/list/${list.uuid}`)
 const computedCardUi = computed(() => ({
@@ -41,13 +41,23 @@ const unarchiveOption = [{
 const deleteOption = [{
   label: 'Löschen',
   icon: 'i-ph-trash',
-  click: () => {
-    listStore.removeList(list.uuid)
-    toast.add({
-      title: 'Liste wurde gelöscht!',
-      color: 'red',
-      icon: 'i-ph-trash',
+  click: async () => {
+    const response = await $swal.fire({
+      title: 'Liste wirklich löschen?',
+      text: 'Diese Aktion kann nicht rückgängig gemacht werden.',
+      showCancelButton: true,
+      icon: 'question',
+      confirmButtonText: 'Ja, löschen!',
+      cancelButtonText: 'Abbrechen',
     })
+    if (response.isConfirmed) {
+      listStore.removeList(list.uuid)
+      toast.add({
+        title: 'Liste wurde gelöscht!',
+        color: 'red',
+        icon: 'i-ph-trash',
+      })
+    }
   },
 }]
 
