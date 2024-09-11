@@ -44,6 +44,28 @@ const columns = ref([
   },
 ])
 
+const toast = useToast()
+const { $swal } = useNuxtApp()
+
+const deleteProduct = async (uuid: string) => {
+  const response = await $swal.fire({
+    title: 'Produkt wirklich löschen?',
+    text: 'Diese Aktion kann nicht rückgängig gemacht werden.',
+    showCancelButton: true,
+    icon: 'question',
+    confirmButtonText: 'Ja, löschen!',
+    cancelButtonText: 'Abbrechen',
+  })
+  if (response.isConfirmed) {
+    productStore.deleteProduct(uuid)
+    toast.add({
+      title: 'Produkt wurde gelöscht!',
+      color: 'red',
+      icon: 'i-ph-trash',
+    })
+  }
+}
+
 const searchQuery = ref('')
 </script>
 
@@ -85,7 +107,7 @@ const searchQuery = ref('')
             icon="i-ph-trash"
             color="red"
             size="sm"
-            @click="productStore.deleteProduct(row.uuid)"
+            @click="deleteProduct(row.uuid)"
           >
             <span class="hidden md:block">
               Löschen
