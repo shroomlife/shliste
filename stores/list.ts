@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { v4 as uuidv4 } from 'uuid'
 
 const localStorageKey = 'shliste/lists'
 
@@ -18,14 +19,16 @@ export const useListStore = defineStore('listStore', {
       .filter(list => !list.archivedAt)
       .sort((a: List, b: List) => new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime())
       .reverse(),
-    getListByUuid: state => (uuid: string) => state.lists.find(list => list.uuid === uuid),
+    getListByUuid: state => (uuid: string): List | undefined => state.lists.find(list => list.uuid === uuid),
   },
   actions: {
     setListEdit(list: List | null) {
       this.listEdit = list
     },
     addNewList() {
-      this.listEdit = {} as List
+      this.listEdit = {
+        products: [] as Product[],
+      } as List
     },
     addList(list: List) {
       this.lists.push(list)
@@ -57,6 +60,40 @@ export const useListStore = defineStore('listStore', {
       if (list) {
         list.name = updatedList.name
         list.updatedAt = new Date()
+      }
+      this.saveLists()
+    },
+    addItem(list: List, name: string): boolean {
+      const foundList = this.lists.find(loopedList => loopedList.uuid === list.uuid)
+      console.log('foundList', foundList)
+      if (foundList) {
+        const newProduct: Product = {
+          uuid: uuidv4(),
+          name: name,
+          description: '',
+          checked: false,
+          deleted: false,
+        }
+        foundList.products.push(newProduct)
+        this.saveLists()
+        return true
+      }
+      return false
+    },
+    checkProduct(list: List, product: Product) {
+      const foundList = this.lists.find(loopedList => loopedList.uuid === list.uuid)
+      if (foundList) {
+        const foundProduct = foundList.products.find(loopedProduct => loopedProduct.uuid === product.uuid)
+        if (foundProduct) {
+          foundProduct.checked = !foundProduct.checked
+        }
+      }
+      this.saveLists()
+    },
+    removeProduct(list: List, product: Product) {
+      const foundList = this.lists.find(loopedList => loopedList.uuid === list.uuid)
+      if (foundList) {
+        foundList.products = foundList.products.filter(loopedProduct => loopedProduct.uuid !== product.uuid)
       }
       this.saveLists()
     },

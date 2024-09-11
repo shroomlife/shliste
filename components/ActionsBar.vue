@@ -24,6 +24,10 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', handleScroll)
 })
+
+const handleAddButtonClick = () => {
+  listStore.addNewList()
+}
 </script>
 
 <template>
@@ -32,13 +36,13 @@ onBeforeUnmount(() => {
       <div class="row">
         <div class="col actions-bar">
           <UButton
-            class="shadow-lg"
+            class="shadow-md"
             icon="i-ph-plus-circle-fill"
             size="xl"
             color="pink"
-            square
             variant="solid"
-            @click="listStore.addNewList"
+            label="Neue Liste"
+            @click="handleAddButtonClick"
           />
         </div>
       </div>
@@ -53,17 +57,17 @@ section {
   height: fit-content;
   position: fixed;
   bottom: 0;
-  transition: transform 0.3s ease-out; // Smooth transition for sliding
+  transition: transform 0.3s ease-out;
 
   &.hidden {
-    transform: translateY(100%);  // Slide down to hide
+    transform: translateY(100%);
   }
 
   .actions-bar {
     display: flex;
     justify-content: flex-end;
-    padding-bottom: 12px;
-    padding-right: 12px;
+    padding-bottom: 1rem;
+    padding-right: 1rem;
   }
 }
 </style>

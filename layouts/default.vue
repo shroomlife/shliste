@@ -1,14 +1,29 @@
 <script lang="ts" setup>
-const links = [{
-  label: 'Aktiv',
-  icon: 'i-ph-check-square-offset',
-  to: '/',
-},
-{
-  label: 'Archiviert',
-  icon: 'i-ph-archive-box',
-  to: '/archiv',
-}]
+const listStore = useListStore()
+const productStore = useProductStore()
+
+const computedListsCount = computed(() => listStore.getActiveLists.length)
+const computedProductsCount = computed(() => productStore.getProducts.length)
+
+const links = [
+  {
+    label: 'Listen',
+    icon: 'i-ph-check-square-offset',
+    to: '/',
+    badge: computedListsCount.value,
+  },
+  {
+    label: 'Produkte',
+    icon: 'i-ph-shopping-cart',
+    to: '/produkte',
+    badge: computedProductsCount.value,
+  },
+  // {
+  //   label: 'Archiviert',
+  //   icon: 'i-ph-archive-box',
+  //   to: '/archiv',
+  // },
+]
 
 const route = useRoute()
 

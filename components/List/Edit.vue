@@ -29,6 +29,7 @@ const computedTitle = computed(() => {
 const state = reactive<List>({
   uuid: '',
   name: '',
+  products: [] as Product[],
   createdAt: null,
   updatedAt: null,
   archivedAt: null,
@@ -95,23 +96,24 @@ watch(() => listStore.getListEdit, (newVal: List | null) => {
         :schema="schema"
         :state="state"
         class="flex flex-col gap-4"
+        :validate-on="['submit']"
         @submit="onSubmit"
       >
         <UFormGroup
           label="Name"
           name="name"
+          size="xl"
         >
           <UInput
             v-model="state.name"
             placeholder="Name deiner Liste"
             icon="i-ph-text-align-left"
-            size="lg"
           />
         </UFormGroup>
         <div class="flex justify-between items-center">
           <UButton
             color="gray"
-            size="lg"
+            size="xl"
             @click="handleClose"
           >
             Abbrechen
@@ -119,7 +121,7 @@ watch(() => listStore.getListEdit, (newVal: List | null) => {
           <UButton
             type="submit"
             color="pink"
-            size="lg"
+            size="xl"
           >
             Speichern
           </UButton>

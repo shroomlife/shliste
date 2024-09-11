@@ -9,7 +9,7 @@ const computedCardUi = computed(() => ({
     padding: 'p-3',
   },
   header: {
-    padding: 'p-3',
+    padding: 'sm:px-0 p-0',
   },
   footer: {
     padding: 'p-3',
@@ -20,39 +20,35 @@ const computedCardUi = computed(() => ({
 <template>
   <UCard :ui="computedCardUi">
     <template #header>
-      <div class="flex items-center justify-between">
-        <span class="text-2xl md:text-3xl font-bold">{{ list.name }}</span>
-        <NuxtLink
-          v-if="!list.archivedAt"
-          :to="computedListLink"
-        >
-          <UButton
-            icon="i-ph-arrow-circle-right-fill"
-            size="sm"
-            trailing
-          >
-            Zur Liste
-          </UButton>
-        </NuxtLink>
+      <NuxtLink
+        :to="computedListLink"
+        class="flex sm:px-6 p-4"
+      >
         <div
-          v-if="list.archivedAt"
-          class="flex gap-2"
+
+          class="flex items-center justify-between"
         >
-          <UButton
-            icon="i-ph-arrow-counter-clockwise-bold"
-            color="gray"
-            size="sm"
-            square
-            @click="listStore.unarchiveList(list.uuid)"
-          />
-          <UButton
-            icon="i-ph-trash"
-            color="red"
-            size="sm"
-            @click="listStore.removeList(list.uuid)"
-          />
+          <span class="text-2xl md:text-3xl font-bold">{{ list.name }}</span>
+          <div
+            v-if="list.archivedAt"
+            class="flex gap-2"
+          >
+            <UButton
+              icon="i-ph-arrow-counter-clockwise-bold"
+              color="gray"
+              size="sm"
+              square
+              @click="listStore.unarchiveList(list.uuid)"
+            />
+            <UButton
+              icon="i-ph-trash"
+              color="red"
+              size="sm"
+              @click="listStore.removeList(list.uuid)"
+            />
+          </div>
         </div>
-      </div>
+      </NuxtLink>
     </template>
 
     <template
