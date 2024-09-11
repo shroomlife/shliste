@@ -1,6 +1,10 @@
 <script lang="ts" setup>
 const listStore = useListStore()
 const computedLists = computed(() => listStore.getActiveLists)
+definePageMeta({
+  showActionsBar: true,
+  showAddListButton: true,
+})
 </script>
 
 <template>

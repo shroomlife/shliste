@@ -3,6 +3,10 @@ const listStore = useListStore()
 const { list } = defineProps<{
   list: List
 }>()
+
+const toast = useToast()
+const { $moment } = useNuxtApp()
+
 const computedListLink = computed(() => `/list/${list.uuid}`)
 const computedCardUi = computed(() => ({
   body: {
@@ -15,79 +19,125 @@ const computedCardUi = computed(() => ({
     padding: 'p-3',
   },
 }))
+
+const editOption = [{
+  label: 'Bearbeiten',
+  icon: 'i-ph-pencil-line',
+  click: () => listStore.setListEdit(list),
+}]
+
+const archiveOption = [{
+  label: 'Archivieren',
+  icon: 'i-ph-archive-box',
+  click: () => listStore.archiveList(list),
+}]
+
+const unarchiveOption = [{
+  label: 'Unarchivieren',
+  icon: 'i-ph-archive-box',
+  click: () => listStore.unarchiveList(list),
+}]
+
+const deleteOption = [{
+  label: 'Löschen',
+  icon: 'i-ph-trash',
+  click: () => {
+    listStore.removeList(list.uuid)
+    toast.add({
+      title: 'Liste wurde gelöscht!',
+      color: 'red',
+      icon: 'i-ph-trash',
+    })
+  },
+}]
+
+const optionItems = computed(() => {
+  if (list.archivedAt) {
+    return [unarchiveOption, deleteOption]
+  }
+  return [editOption, archiveOption, deleteOption]
+})
+
+const computedListStyle = computed(() => {
+  return {
+    background: `linear-gradient(to bottom, ${list.color}, white)`,
+  }
+})
+
+const computedCheckedProductsCount = computed(() => {
+  return list.products.filter(product => product.checked).length
+})
+
+const computedShowCheckedProductsCount = computed(() => {
+  return list.products.some(product => product.checked)
+})
 </script>
 
 <template>
   <UCard :ui="computedCardUi">
     <template #header>
       <NuxtLink
+        v-if="!list.archivedAt"
         :to="computedListLink"
-        class="flex sm:px-6 p-4"
+        class="flex sm:px-6 p-4 rounded-t-lg"
+        :style="computedListStyle"
       >
-        <div
-
-          class="flex items-center justify-between"
-        >
-          <span class="text-2xl md:text-3xl font-bold">{{ list.name }}</span>
-          <div
-            v-if="list.archivedAt"
-            class="flex gap-2"
-          >
-            <UButton
-              icon="i-ph-arrow-counter-clockwise-bold"
-              color="gray"
-              size="sm"
-              square
-              @click="listStore.unarchiveList(list.uuid)"
-            />
-            <UButton
-              icon="i-ph-trash"
-              color="red"
-              size="sm"
-              @click="listStore.removeList(list.uuid)"
-            />
-          </div>
-        </div>
+        <ListName :list="list" />
       </NuxtLink>
+      <div
+        v-else
+        class="flex sm:px-6 p-4 rounded-t-lg"
+      >
+        <ListName :list="list" />
+      </div>
     </template>
 
     <template
-      v-if="!list.archivedAt"
       #footer
     >
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2">
-          <UButton
-            icon="i-ph-pencil-line"
-            color="gray"
-            size="sm"
-            @click="listStore.setListEdit(list)"
+          <UBadge
+            color="pink"
+            variant="subtle"
+            size="lg"
           >
-            <span class="hidden md:block">
-              Bearbeiten
-            </span>
-          </UButton>
-          <UButton
-            icon="i-ph-archive-box"
-            color="gray"
-            size="sm"
-            @click="listStore.archiveList(list.uuid)"
+            {{ list.products.length }} Einträge
+          </UBadge>
+          <UBadge
+            v-if="computedShowCheckedProductsCount"
+            color="green"
+            variant="subtle"
+            size="lg"
           >
-            <span class="hidden md:block">
-              Archivieren
-            </span>
-          </UButton>
+            {{ computedCheckedProductsCount }} Erledigt
+          </UBadge>
+          <UBadge
+            v-if="list.archivedAt"
+            color="gray"
+            variant="soft"
+            size="lg"
+          >
+            Archiviert am {{ $moment(list.archivedAt).format('DD.MM.YYYY, HH:mm') }} Uhr
+          </UBadge>
         </div>
-        <UButton
-          icon="i-ph-trash"
-          color="red"
-          size="sm"
-          @click="listStore.removeList(list.uuid)"
+
+        <UDropdown
+          :items="optionItems"
+          :ui="{
+            item: {
+              label: 'text-base',
+            },
+          }"
         >
-          <span class="hidden md:block">
-            Löschen
-          </span>
-        </UButton>
+          <UButton
+            color="gray"
+            icon="i-ph-dots-three-bold"
+            size="md"
+            square
+            padded
+          />
+        </UDropdown>
       </div>
     </template>
   </UCard>

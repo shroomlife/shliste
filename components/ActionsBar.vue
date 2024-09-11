@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 const listStore = useListStore()
+const productStore = useProductStore()
 
 const isFooterHidden = ref(false) // Controls the visibility of the footer
 const lastScrollPosition = ref(0) // Track the last known scroll position
@@ -25,9 +26,22 @@ onBeforeUnmount(() => {
   window.removeEventListener('scroll', handleScroll)
 })
 
-const handleAddButtonClick = () => {
+const handleAddListButtonClick = () => {
   listStore.addNewList()
 }
+
+const handleAddProductButtonClick = () => {
+  productStore.addNewProduct()
+}
+
+const route = useRoute()
+const computedShowAddListButton = computed(() => {
+  return route.meta.showActionsBar === true && route.meta.showAddListButton === true
+})
+
+const computedShowAddProductButton = computed(() => {
+  return route.meta.showActionsBar === true && route.meta.showAddProductButton === true
+})
 </script>
 
 <template>
@@ -36,13 +50,24 @@ const handleAddButtonClick = () => {
       <div class="row">
         <div class="col actions-bar">
           <UButton
+            v-if="computedShowAddListButton"
             class="shadow-md"
             icon="i-ph-plus-circle-fill"
             size="xl"
             color="pink"
             variant="solid"
             label="Neue Liste"
-            @click="handleAddButtonClick"
+            @click="handleAddListButtonClick"
+          />
+          <UButton
+            v-if="computedShowAddProductButton"
+            class="shadow-md"
+            icon="i-ph-plus-circle-fill"
+            size="xl"
+            color="pink"
+            variant="solid"
+            label="Neues Produkt"
+            @click="handleAddProductButtonClick"
           />
         </div>
       </div>

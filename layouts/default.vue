@@ -1,63 +1,74 @@
 <script lang="ts" setup>
-const listStore = useListStore()
-const productStore = useProductStore()
-
-const computedListsCount = computed(() => listStore.getActiveLists.length)
-const computedProductsCount = computed(() => productStore.getProducts.length)
-
 const links = [
   {
     label: 'Listen',
     icon: 'i-ph-check-square-offset',
     to: '/',
-    badge: computedListsCount.value,
   },
   {
     label: 'Produkte',
     icon: 'i-ph-shopping-cart',
     to: '/produkte',
-    badge: computedProductsCount.value,
   },
-  // {
-  //   label: 'Archiviert',
-  //   icon: 'i-ph-archive-box',
-  //   to: '/archiv',
-  // },
+  {
+    label: 'Archiv',
+    icon: 'i-ph-archive-box',
+    to: '/archiv',
+  },
 ]
 
 const route = useRoute()
 
-const computedShowListNavigation = computed(() => {
-  return !route.path.startsWith('/list')
+const computedShowActionsBar = computed(() => {
+  return route.meta.showActionsBar
+})
+
+const backLinks = [
+  {
+    label: 'Zurück zur Übersicht',
+    to: '/',
+    icon: 'i-ph-arrow-left-bold',
+  },
+]
+
+const computedLinks = computed(() => {
+  if (route.meta.isSingleList) {
+    return backLinks
+  }
+
+  return links
 })
 </script>
 
 <template>
   <main>
-    <header class="flex items-center justify-between p-2 bg-pink-100">
+    <header class="flex items-center justify-start p-4 bg-pink-100">
       <NuxtLink
         to="/"
         class="container mx-auto flex items-center gap-2"
       >
         <AppLogo class="w-10 h-10 md:w-12 md:h-12 shrink-0" />
-        <h1 class="text-3xl font-bold">
+        <h1 class="text-4xl font-bold">
           shliste
         </h1>
       </NuxtLink>
     </header>
     <div class="container mx-auto">
       <UHorizontalNavigation
-        v-if="computedShowListNavigation"
-        :links="links"
+        :links="computedLinks"
         class="border-b border-gray-200 dark:border-gray-800"
+        :ui="{
+          base: 'text-lg',
+        }"
       />
       <div class="p-4 flex flex-col">
         <slot />
       </div>
-      <ActionsBar />
+      <ActionsBar v-if="computedShowActionsBar" />
     </div>
     <footer />
     <ListEdit />
+    <ProductEdit />
   </main>
 </template>
 

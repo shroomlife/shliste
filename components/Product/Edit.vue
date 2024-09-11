@@ -4,40 +4,39 @@ import { v4 as uuidv4 } from 'uuid'
 
 const toast = useToast()
 
-const listStore = useListStore()
+const productStore = useProductStore()
+
 const computedIsOpen = computed({
   get() {
-    return listStore.getListEdit !== null
+    return productStore.getProductEdit !== null
   },
   set(value) {
     if (!value) {
-      listStore.setListEdit(null)
+      productStore.setProductEdit(null)
     }
   },
 })
 
 const handleClose = () => {
-  listStore.setListEdit(null)
+  productStore.setProductEdit(null)
 }
 
-const handleChangeColor = () => {
-  const color = useRandomColorRGBA(0.2)
-  listStore.changeColor(state.uuid, color)
-}
-
-const computedListHasId = computed(() => {
-  return typeof listStore.getListEdit?.uuid === 'string'
+const computedProductHasId = computed(() => {
+  return typeof productStore.getProductEdit?.uuid === 'string'
 })
 
 const computedTitle = computed(() => {
-  return computedListHasId.value ? 'Bearbeite Liste' : 'Neue Liste'
+  return computedProductHasId.value ? 'Bearbeite Produkt' : 'Neues Produkt'
 })
 
-const state = reactive<List>({
+const state = reactive<ListedProduct>({
   uuid: '',
   name: '',
-  color: '',
-  products: [] as Product[],
+  description: '',
+  brand: '',
+  supermarkets: [],
+  checked: false,
+  deleted: false,
   createdAt: null,
   updatedAt: null,
   archivedAt: null,
@@ -45,14 +44,13 @@ const state = reactive<List>({
 
 const schema = object({
   name: string().required('Name ist Erforderlich'),
+  description: string().optional(),
+  brand: string().optional(),
 })
 
 const resetState = (): void => {
   state.name = ''
   state.uuid = ''
-  state.createdAt = new Date()
-  state.updatedAt = new Date()
-  state.archivedAt = null
 }
 
 async function onSubmit() {
@@ -61,26 +59,27 @@ async function onSubmit() {
     state.createdAt = new Date()
     state.updatedAt = new Date()
     state.archivedAt = null
-    state.color = useRandomColorRGBA(0.2)
-    listStore.addList({ ...state })
+    productStore.addProduct({ ...state })
     toast.add({
-      title: 'Liste wurde erstellt!',
+      title: 'Produkt wurde erstellt!',
       color: 'green',
       icon: 'i-ph-check-circle',
     })
   }
   else {
-    listStore.updateList(state.uuid, state)
+    productStore.updateProduct(state.uuid, state)
   }
 
   handleClose()
   resetState()
 }
 
-watch(() => listStore.getListEdit, (newVal: List | null) => {
+watch(() => productStore.getProductEdit, (newVal: ListedProduct | null) => {
   if (newVal) {
     state.uuid = newVal.uuid
     state.name = newVal.name
+    state.brand = newVal.brand
+    state.description = newVal.description
     state.createdAt = newVal.createdAt
     state.updatedAt = newVal.updatedAt
     state.archivedAt = newVal.archivedAt
@@ -119,30 +118,42 @@ watch(() => listStore.getListEdit, (newVal: List | null) => {
         >
           <UInput
             v-model="state.name"
-            placeholder="Name deiner Liste"
+            placeholder="Name deines Produkts"
             icon="i-ph-text-align-left"
           />
         </UFormGroup>
+        <UFormGroup
+          label="Beschreibung"
+          name="description"
+          size="xl"
+        >
+          <UInput
+            v-model="state.description"
+            placeholder="Beschreibung deines Produkts"
+            icon="i-ph-text-align-left"
+          />
+        </UFormGroup>
+
+        <UFormGroup
+          label="Marke"
+          name="brand"
+          size="xl"
+        >
+          <UInput
+            v-model="state.brand"
+            placeholder="Marke deines Produkts"
+            icon="i-ph-tag"
+          />
+        </UFormGroup>
+
         <div class="flex justify-between items-center">
-          <div class="flex gap-2">
-            <UButton
-              color="gray"
-              size="xl"
-              @click="handleClose"
-            >
-              Abbrechen
-            </UButton>
-            <UButton
-              v-if="computedListHasId"
-              color="orange"
-              size="xl"
-              variant="ghost"
-              icon="i-ph-paint-brush"
-              @click="handleChangeColor"
-            >
-              Neue Farbe
-            </UButton>
-          </div>
+          <UButton
+            color="gray"
+            size="xl"
+            @click="handleClose"
+          >
+            Abbrechen
+          </UButton>
           <UButton
             type="submit"
             color="pink"

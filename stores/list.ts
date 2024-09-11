@@ -6,8 +6,15 @@ const localStorageKey = 'shliste/lists'
 export const useListStore = defineStore('listStore', {
   state: (): ListStore => {
     const savedLists = localStorage.getItem(localStorageKey)
+    const parsedSavedLists = savedLists ? JSON.parse(savedLists) : []
+    parsedSavedLists.forEach((list: List) => {
+      if (typeof list.color === 'undefined') {
+        list.color = useRandomColorRGBA(0.2)
+        localStorage.setItem(localStorageKey, JSON.stringify(parsedSavedLists))
+      }
+    })
     return {
-      lists: savedLists ? JSON.parse(savedLists) : [],
+      lists: parsedSavedLists,
       listEdit: null as List | null,
     }
   },
@@ -17,7 +24,7 @@ export const useListStore = defineStore('listStore', {
     getArchivedLists: state => state.lists.filter(list => list.archivedAt),
     getActiveLists: state => state.lists
       .filter(list => !list.archivedAt)
-      .sort((a: List, b: List) => new Date(a.createdAt!).getTime() - new Date(b.createdAt!).getTime())
+      .sort((a: List, b: List) => new Date(a.updatedAt!).getTime() - new Date(b.updatedAt!).getTime())
       .reverse(),
     getListByUuid: state => (uuid: string): List | undefined => state.lists.find(list => list.uuid === uuid),
   },
@@ -34,17 +41,19 @@ export const useListStore = defineStore('listStore', {
       this.lists.push(list)
       this.saveLists()
     },
-    archiveList(uuid: string) {
-      const list = this.lists.find(list => list.uuid === uuid)
-      if (list) {
-        list.archivedAt = new Date()
+    archiveList(list: List) {
+      const foundList = this.lists.find(loopedList => loopedList.uuid === list.uuid)
+      if (foundList) {
+        foundList.archivedAt = new Date()
+        foundList.updatedAt = new Date()
       }
       this.saveLists()
     },
-    unarchiveList(uuid: string) {
-      const list = this.lists.find(list => list.uuid === uuid)
-      if (list) {
+    unarchiveList(list: List) {
+      const foundList = this.lists.find(loopedList => loopedList.uuid === list.uuid)
+      if (foundList) {
         list.archivedAt = null
+        list.updatedAt = new Date()
       }
       this.saveLists()
     },
@@ -63,9 +72,16 @@ export const useListStore = defineStore('listStore', {
       }
       this.saveLists()
     },
+    changeColor(uuid: string, color: string) {
+      const list = this.lists.find(list => list.uuid === uuid)
+      if (list) {
+        list.color = color
+        list.updatedAt = new Date()
+      }
+      this.saveLists()
+    },
     addItem(list: List, name: string): boolean {
       const foundList = this.lists.find(loopedList => loopedList.uuid === list.uuid)
-      console.log('foundList', foundList)
       if (foundList) {
         const newProduct: Product = {
           uuid: uuidv4(),
@@ -75,6 +91,7 @@ export const useListStore = defineStore('listStore', {
           deleted: false,
         }
         foundList.products.push(newProduct)
+        foundList.updatedAt = new Date()
         this.saveLists()
         return true
       }
@@ -85,8 +102,30 @@ export const useListStore = defineStore('listStore', {
       if (foundList) {
         const foundProduct = foundList.products.find(loopedProduct => loopedProduct.uuid === product.uuid)
         if (foundProduct) {
-          foundProduct.checked = !foundProduct.checked
+          foundProduct.checked = true
+          foundList.updatedAt = new Date()
         }
+      }
+      this.saveLists()
+    },
+    uncheckProduct(list: List, product: Product) {
+      const foundList = this.lists.find(loopedList => loopedList.uuid === list.uuid)
+      if (foundList) {
+        const foundProduct = foundList.products.find(loopedProduct => loopedProduct.uuid === product.uuid)
+        if (foundProduct) {
+          foundProduct.checked = false
+          foundList.updatedAt = new Date()
+        }
+      }
+      this.saveLists()
+    },
+    uncheckAllProducts(list: List) {
+      const foundList = this.lists.find(loopedList => loopedList.uuid === list.uuid)
+      if (foundList) {
+        foundList.products.forEach((product) => {
+          product.checked = false
+        })
+        foundList.updatedAt = new Date()
       }
       this.saveLists()
     },
@@ -94,8 +133,29 @@ export const useListStore = defineStore('listStore', {
       const foundList = this.lists.find(loopedList => loopedList.uuid === list.uuid)
       if (foundList) {
         foundList.products = foundList.products.filter(loopedProduct => loopedProduct.uuid !== product.uuid)
+        foundList.updatedAt = new Date()
       }
       this.saveLists()
+    },
+    addListedProduct(list: List, uuid: string) {
+      const productStore = useProductStore()
+      const foundProduct = productStore.getProducts.find(product => product.uuid === uuid) as ListedProduct
+      const foundList = this.lists.find(loopedList => loopedList.uuid === list.uuid) as List
+      if (foundList && foundProduct) {
+        const newProduct: Product = {
+          uuid: uuidv4(),
+          name: foundProduct.name,
+          description: foundProduct.description || '',
+          brand: foundProduct.brand || '',
+          checked: false,
+          deleted: false,
+        }
+        foundList.products.push(newProduct)
+        foundList.updatedAt = new Date()
+        this.saveLists()
+        return true
+      }
+      return false
     },
   },
 })
