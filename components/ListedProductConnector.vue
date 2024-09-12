@@ -65,7 +65,12 @@ const handleKeyDown = (event: KeyboardEvent) => {
       @click="openModal"
     />
 
-    <UModal v-model="state.isOpen">
+    <UModal
+      v-model="state.isOpen"
+      :ui="{
+        container: 'items-center',
+      }"
+    >
       <UCommandPalette
         :model-value="[]"
         multiple
@@ -76,6 +81,9 @@ const handleKeyDown = (event: KeyboardEvent) => {
         }"
         :groups="[{ key: 'listedProducts', commands: listedProducts }]"
         :ui="{
+          input: {
+            size: 'text-base sm:text-base',
+          },
           group: {
             command: {
               container: 'w-full',
