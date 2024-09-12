@@ -7,7 +7,7 @@ export default defineNuxtConfig({
         lang: 'de',
       },
       meta: [
-        { name: 'description', content: 'Organisiere deine Einkäufe einfach und schnell mit deiner shliste. Einfach, intuitiv und kostenlos.' },
+        { name: 'description', content: 'Organisiere deine Einkäufe einfach und schnell mit deiner persönlichen shliste. Einfach, intuitiv und kostenlos.' },
         { name: 'theme-color', content: '#FCE7F3' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
       ],
@@ -34,6 +34,7 @@ export default defineNuxtConfig({
   },
   devtools: { enabled: true },
   ssr: false,
+
   modules: ['@nuxt/ui', '@nuxt/eslint', '@pinia/nuxt'],
   eslint: {
     config: {

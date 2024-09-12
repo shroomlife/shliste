@@ -38,7 +38,8 @@ export const useListStore = defineStore('listStore', {
       } as List
     },
     addList(list: List) {
-      this.lists.push(list)
+      const listToAdd = Object.assign({}, list)
+      this.lists.push(listToAdd)
       this.saveLists()
     },
     archiveList(list: List) {

@@ -81,6 +81,24 @@ const computedCheckedProductsCount = computed(() => {
 const computedShowCheckedProductsCount = computed(() => {
   return list.products.some(product => product.checked)
 })
+
+const computedCheckedProductsCountCaption = computed(() => {
+  if (computedCheckedProductsCount.value === list.products.length) {
+    return 'Alles erledigt'
+  }
+
+  if (computedCheckedProductsCount.value === 1) {
+    return '1 Eintrag erledigt'
+  }
+  return `${computedCheckedProductsCount.value} Einträge erledigt`
+})
+
+const computedCheckedProductsCountVariant = computed(() => {
+  if (computedCheckedProductsCount.value === list.products.length) {
+    return 'solid'
+  }
+  return 'subtle'
+})
 </script>
 
 <template>
@@ -117,10 +135,10 @@ const computedShowCheckedProductsCount = computed(() => {
           <UBadge
             v-if="computedShowCheckedProductsCount"
             color="green"
-            variant="subtle"
+            :variant="computedCheckedProductsCountVariant"
             size="lg"
           >
-            {{ computedCheckedProductsCount }} Erledigt
+            {{ computedCheckedProductsCountCaption }}
           </UBadge>
           <UBadge
             v-if="list.archivedAt"

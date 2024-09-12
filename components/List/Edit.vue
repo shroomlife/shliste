@@ -81,6 +81,8 @@ watch(() => listStore.getListEdit, (newVal: List | null) => {
   if (newVal) {
     state.uuid = newVal.uuid
     state.name = newVal.name
+    state.color = newVal.color
+    state.products = newVal.products
     state.createdAt = newVal.createdAt
     state.updatedAt = newVal.updatedAt
     state.archivedAt = newVal.archivedAt

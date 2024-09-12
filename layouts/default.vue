@@ -69,6 +69,7 @@ const computedLinks = computed(() => {
     <footer />
     <ListEdit />
     <ProductEdit />
+    <UNotifications />
   </main>
 </template>
 
