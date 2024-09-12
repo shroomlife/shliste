@@ -1,21 +1,28 @@
 <script lang="ts" setup>
-const links = [
+const listStore = useListStore()
+const productStore = useProductStore()
+
+const links = computed(() => [
   {
     label: 'Listen',
-    icon: 'i-ph-check-square-offset',
+    icon: 'i-ph-list-checks',
     to: '/',
+    badge: listStore.getActiveListsCount,
   },
   {
     label: 'Produkte',
     icon: 'i-ph-shopping-cart',
     to: '/produkte',
+    badge: productStore.getProductsCount,
   },
   {
     label: 'Archiv',
     icon: 'i-ph-archive-box',
     to: '/archiv',
+    badge: listStore.getArchivedListsCount,
+    disabled: listStore.getArchivedListsCount === 0,
   },
-]
+])
 
 const route = useRoute()
 
@@ -23,20 +30,20 @@ const computedShowActionsBar = computed(() => {
   return route.meta.showActionsBar
 })
 
-const backLinks = [
+const backLinks = computed(() => [
   {
     label: 'Zurück zur Übersicht',
     to: '/',
     icon: 'i-ph-arrow-left-bold',
   },
-]
+])
 
 const computedLinks = computed(() => {
   if (route.meta.isSingleList) {
-    return backLinks
+    return backLinks.value
   }
 
-  return links
+  return links.value
 })
 </script>
 

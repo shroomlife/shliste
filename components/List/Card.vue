@@ -81,24 +81,6 @@ const computedCheckedProductsCount = computed(() => {
 const computedShowCheckedProductsCount = computed(() => {
   return list.products.some(product => product.checked)
 })
-
-const computedCheckedProductsCountCaption = computed(() => {
-  if (computedCheckedProductsCount.value === list.products.length) {
-    return 'Alles erledigt'
-  }
-
-  if (computedCheckedProductsCount.value === 1) {
-    return '1 Eintrag erledigt'
-  }
-  return `${computedCheckedProductsCount.value} Einträge erledigt`
-})
-
-const computedCheckedProductsCountVariant = computed(() => {
-  if (computedCheckedProductsCount.value === list.products.length) {
-    return 'solid'
-  }
-  return 'subtle'
-})
 </script>
 
 <template>
@@ -126,20 +108,27 @@ const computedCheckedProductsCountVariant = computed(() => {
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-2">
           <UBadge
-            color="pink"
-            variant="subtle"
+            color="white"
+            variant="solid"
             size="lg"
           >
-            {{ list.products.length }} Einträge
+            <div class="flex items-center gap-2">
+              <UIcon name="i-ph-shopping-cart" />
+              <span>{{ list.products.length }}</span>
+            </div>
           </UBadge>
           <UBadge
             v-if="computedShowCheckedProductsCount"
-            color="green"
-            :variant="computedCheckedProductsCountVariant"
+            color="white"
+            variant="solid"
             size="lg"
           >
-            {{ computedCheckedProductsCountCaption }}
+            <div class="flex items-center gap-2">
+              <UIcon name="i-ph-check-fat-fill" />
+              <span>{{ computedCheckedProductsCount }}</span>
+            </div>
           </UBadge>
+
           <UBadge
             v-if="list.archivedAt"
             color="gray"

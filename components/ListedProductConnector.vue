@@ -21,9 +21,10 @@ const closeModal = () => {
 
 const selectedProducts = ref<ListedProduct[]>([])
 
-const onSelect = (product: { id: string, label: string }) => {
+const onSelect = (products: { id: string, label: string }[]) => {
+  const selectedProduct = products[0]
   state.isOpen = false
-  listStore.addListedProduct(list, product.id)
+  listStore.addListedProduct(list, selectedProduct.id)
   selectedProducts.value = []
 }
 
@@ -66,8 +67,13 @@ const handleKeyDown = (event: KeyboardEvent) => {
 
     <UModal v-model="state.isOpen">
       <UCommandPalette
-        v-model="selectedProducts"
-        command-attribute="uuid"
+        :model-value="[]"
+        multiple
+        :fuse="{
+          fuseOptions: {
+            keys: ['label', 'brand'],
+          },
+        }"
         :groups="[{ key: 'listedProducts', commands: listedProducts }]"
         :ui="{
           group: {

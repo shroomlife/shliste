@@ -27,6 +27,8 @@ export const useListStore = defineStore('listStore', {
       .sort((a: List, b: List) => new Date(a.updatedAt!).getTime() - new Date(b.updatedAt!).getTime())
       .reverse(),
     getListByUuid: state => (uuid: string): List | undefined => state.lists.find(list => list.uuid === uuid),
+    getActiveListsCount: state => state.lists.filter(list => !list.archivedAt).length,
+    getArchivedListsCount: state => state.lists.filter(list => list.archivedAt).length,
   },
   actions: {
     setListEdit(list: List | null) {

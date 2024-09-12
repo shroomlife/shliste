@@ -49,5 +49,6 @@ export const useProductStore = defineStore('productStore', {
   getters: {
     getProducts: state => state.products,
     getProductEdit: state => state.productEdit,
+    getProductsCount: state => state.products.length,
   },
 })

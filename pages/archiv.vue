@@ -5,12 +5,26 @@ const computedLists = computed(() => listStore.getArchivedLists)
 
 <template>
   <div>
-    <div class="flex flex-col gap-4">
+    <div
+      v-if="computedLists.length"
+      class="flex flex-col gap-4"
+    >
       <ListCard
         v-for="list in computedLists"
         :key="list.uuid"
         :list="list"
       />
+    </div>
+    <div v-else>
+      <div class="flex items-center justify-center gap-2 text-lg h-40">
+        <UIcon
+          name="i-ph-archive"
+          class="w-5 h-5"
+        />
+        <span>
+          Keine archivierten Listen vorhanden
+        </span>
+      </div>
     </div>
   </div>
 </template>
