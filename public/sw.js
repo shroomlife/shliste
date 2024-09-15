@@ -1,7 +1,12 @@
-const CACHE_NAME = 'shliste.app-cache-0.6.0';
+const CACHE_NAME = 'shliste.app-cache-0.7.0';
 const NETWORK_TIMEOUT_MS = 3000; // 3 seconds
 
 self.addEventListener('fetch', (event) => {
+  // Don't cache POST requests
+  if (event.request.method === 'POST') {
+    return;
+  }
+
   event.respondWith(
     Promise.race([
       fetch(event.request)
