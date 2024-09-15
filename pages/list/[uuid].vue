@@ -12,7 +12,7 @@ definePageMeta({
 
 const productUiConfig = {
   body: {
-    padding: 'p-4',
+    padding: 'p-3',
   },
 }
 

@@ -3,6 +3,8 @@ const props = defineProps<{
   list: List
   h1?: boolean
 }>()
+
+const { list } = toRefs(props)
 </script>
 
 <template>
@@ -14,7 +16,7 @@ const props = defineProps<{
       :is="props.h1 ? 'h1' : 'div'"
       class="text-3xl md:text-4xl font-bold"
     >
-      {{ props.list.name }}
+      {{ list.name }}
     </component>
   </div>
 </template>

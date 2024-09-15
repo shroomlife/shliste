@@ -1,13 +1,15 @@
 <script lang="ts" setup>
 const listStore = useListStore()
-const { list } = defineProps<{
+const props = defineProps<{
   list: List
 }>()
+
+const { list } = toRefs(props)
 
 const toast = useToast()
 const { $moment, $swal } = useNuxtApp()
 
-const computedListLink = computed(() => `/list/${list.uuid}`)
+const computedListLink = computed(() => `/list/${list.value.uuid}`)
 const computedCardUi = computed(() => ({
   body: {
     padding: 'p-3',
@@ -23,19 +25,19 @@ const computedCardUi = computed(() => ({
 const editOption = [{
   label: 'Bearbeiten',
   icon: 'i-ph-pencil-line',
-  click: () => listStore.setListEdit(list),
+  click: () => listStore.setListEdit(list.value),
 }]
 
 const archiveOption = [{
   label: 'Archivieren',
   icon: 'i-ph-archive-box',
-  click: () => listStore.archiveList(list),
+  click: () => listStore.archiveList(list.value),
 }]
 
 const unarchiveOption = [{
   label: 'Unarchivieren',
   icon: 'i-ph-archive-box',
-  click: () => listStore.unarchiveList(list),
+  click: () => listStore.unarchiveList(list.value),
 }]
 
 const deleteOption = [{
@@ -51,7 +53,7 @@ const deleteOption = [{
       cancelButtonText: 'Abbrechen',
     })
     if (response.isConfirmed) {
-      listStore.removeList(list.uuid)
+      listStore.removeList(list.value.uuid)
       toast.add({
         title: 'Liste wurde gelöscht!',
         color: 'red',
@@ -62,7 +64,7 @@ const deleteOption = [{
 }]
 
 const optionItems = computed(() => {
-  if (list.archivedAt) {
+  if (list.value.archivedAt) {
     return [unarchiveOption, deleteOption]
   }
   return [editOption, archiveOption, deleteOption]
@@ -70,16 +72,16 @@ const optionItems = computed(() => {
 
 const computedListStyle = computed(() => {
   return {
-    background: `linear-gradient(to bottom, ${list.color}, white)`,
+    background: `linear-gradient(to bottom, ${list.value.color}, white)`,
   }
 })
 
 const computedCheckedProductsCount = computed(() => {
-  return list.products.filter(product => product.checked).length
+  return list.value.products.filter(product => product.checked).length
 })
 
 const computedShowCheckedProductsCount = computed(() => {
-  return list.products.some(product => product.checked)
+  return list.value.products.some(product => product.checked)
 })
 </script>
 

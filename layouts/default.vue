@@ -50,15 +50,21 @@ const computedLinks = computed(() => {
 <template>
   <main>
     <header class="flex items-center justify-start p-4 bg-pink-100">
-      <NuxtLink
-        to="/"
-        class="container mx-auto flex items-center gap-2"
-      >
-        <AppLogo class="w-10 h-10 md:w-12 md:h-12 shrink-0" />
-        <h1 class="text-4xl font-bold">
-          shliste
-        </h1>
-      </NuxtLink>
+      <div class="container mx-auto flex items-center justify-between">
+        <NuxtLink
+          to="/"
+          class="flex items-center gap-2"
+        >
+          <AppLogo class="w-10 h-10 md:w-12 md:h-12 shrink-0" />
+          <h1 class="text-4xl font-bold">
+            shliste
+          </h1>
+        </NuxtLink>
+        <div class="flex items-center gap-2">
+          <CloudSyncIcon />
+          <Sidebar />
+        </div>
+      </div>
     </header>
     <div class="container mx-auto">
       <UHorizontalNavigation
@@ -77,6 +83,7 @@ const computedLinks = computed(() => {
     <ListEdit />
     <ProductEdit />
     <UNotifications />
+    <CloudSync />
   </main>
 </template>
 

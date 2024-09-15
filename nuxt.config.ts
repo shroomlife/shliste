@@ -16,6 +16,7 @@ export default defineNuxtConfig({
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'anonymous' },
         { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Zain:wght@200;300;400;700;800;900&display=swap' },
         { rel: 'manifest', href: '/manifest.json' },
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
       ],
       script: [
         { src: '/initSw.js' },
@@ -25,6 +26,15 @@ export default defineNuxtConfig({
   css: [
     '@/assets/css/main.scss',
   ],
+  runtimeConfig: {
+    google: {
+      client: {
+        id: process.env.NUXT_GOOGLE_CLIENT_ID,
+        secret: process.env.NUXT_GOOGLE_CLIENT_SECRET,
+        redirectUri: process.env.NUXT_GOOGLE_REDIRECT_URI,
+      },
+    },
+  },
   build: {
     transpile: ['tailwindcss'],
   },
@@ -34,7 +44,9 @@ export default defineNuxtConfig({
   },
   devtools: { enabled: true },
   ssr: false,
-
+  colorMode: {
+    preference: 'light',
+  },
   modules: ['@nuxt/ui', '@nuxt/eslint', '@pinia/nuxt'],
   eslint: {
     config: {

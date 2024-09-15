@@ -23,7 +23,6 @@ export const useProductStore = defineStore('productStore', {
     },
     editProduct(uuid: string) {
       const foundProduct = this.products.find((product: ListedProduct) => product.uuid === uuid)
-      console.log(foundProduct)
       if (foundProduct) {
         this.productEdit = foundProduct
       }
@@ -31,6 +30,9 @@ export const useProductStore = defineStore('productStore', {
     deleteProduct(uuid: string) {
       this.products = this.products.filter((product: ListedProduct) => product.uuid !== uuid)
       this.saveProducts()
+    },
+    setProducts(products: ListedProduct[] | null) {
+      this.products = products ?? [] as ListedProduct[]
     },
     updateProduct(uuid: string, product: ListedProduct) {
       const foundProduct = this.products.find((product: ListedProduct) => product.uuid === uuid)
@@ -42,8 +44,13 @@ export const useProductStore = defineStore('productStore', {
       }
       this.saveProducts()
     },
-    saveProducts() {
+    saveProductsLocal() {
       localStorage.setItem(localStorageKey, JSON.stringify(this.products))
+    },
+    async saveProducts() {
+      this.saveProductsLocal()
+      const googleStore = useGoogleStore()
+      await googleStore.triggerPush()
     },
   },
   getters: {
