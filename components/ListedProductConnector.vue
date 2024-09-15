@@ -23,6 +23,9 @@ const selectedProducts = ref<ListedProduct[]>([])
 
 const onSelect = (products: { id: string, label: string }[]) => {
   const selectedProduct = products[0]
+  if (!selectedProduct) {
+    return
+  }
   state.isOpen = false
   listStore.addListedProduct(list, selectedProduct.id)
   selectedProducts.value = []
@@ -72,6 +75,11 @@ const handleKeyDown = (event: KeyboardEvent) => {
       }"
     >
       <UCommandPalette
+        :empty-state="{
+          label: 'Keine Produkte',
+          icon: 'i-ph-shopping-cart',
+          queryLabel: 'Keine passenden Produkte gefunden',
+        }"
         :model-value="[]"
         multiple
         :fuse="{

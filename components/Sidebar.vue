@@ -2,7 +2,6 @@
 const listStore = useListStore()
 const productStore = useProductStore()
 const googleStore = useGoogleStore()
-
 const appStore = useAppStore()
 
 const openMenu = () => {
@@ -108,7 +107,9 @@ const optionItems = [
       padded
       @click="openMenu"
     />
-    <USlideover v-model="isSidebarOpen">
+    <USlideover
+      v-model="isSidebarOpen"
+    >
       <div class="p-4 flex flex-col gap-4">
         <div class="flex justify-between items-center">
           <div class="flex items-center gap-2">

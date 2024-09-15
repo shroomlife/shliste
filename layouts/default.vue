@@ -82,6 +82,7 @@ const computedLinks = computed(() => {
     <footer />
     <ListEdit />
     <ProductEdit />
+    <ListedProductEdit />
     <UNotifications />
     <CloudSync />
   </main>

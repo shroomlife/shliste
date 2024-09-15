@@ -12,7 +12,7 @@ definePageMeta({
 
 const productUiConfig = {
   body: {
-    padding: 'p-3',
+    padding: 'p-3 sm:p-4 xl:p-6',
   },
 }
 
@@ -62,6 +62,13 @@ const computedListStyle = computed(() => {
     background: `linear-gradient(to bottom, ${list.value.color}, white)`,
   }
 })
+
+const editProduct = (product: Product) => {
+  if (product.checked === true) {
+    return
+  }
+  listStore.setProductEdit(product)
+}
 </script>
 
 <template>
@@ -104,21 +111,28 @@ const computedListStyle = computed(() => {
           :ui="productUiConfig"
         >
           <div class="flex items-center gap-2">
-            <div class="flex-1 items-center flex gap-2 overflow-hidden">
-              <UBadge
-                v-if="product.brand"
-                color="pink"
-                variant="solid"
-                size="md"
+            <div
+              class="flex-1 items-center flex gap-2 overflow-hidden"
+            >
+              <NuxtLink
+                class="cursor-pointer"
+                @click="editProduct(product)"
               >
-                {{ product.brand }}
-              </UBadge>
-              <p
-                class="line-clamp-2 text-lg"
-                :class="{ 'line-through': product.checked }"
-              >
-                {{ product.name }}
-              </p>
+                <UBadge
+                  v-if="product.brand"
+                  color="pink"
+                  variant="solid"
+                  size="md"
+                >
+                  {{ product.brand }}
+                </UBadge>
+                <p
+                  class="line-clamp-2 text-lg"
+                  :class="{ 'line-through': product.checked }"
+                >
+                  {{ product.name }}
+                </p>
+              </NuxtLink>
             </div>
             <div class="flex gap-2">
               <UButton

@@ -1,6 +1,7 @@
 interface ListStore {
   lists: List[]
   listEdit: List | null
+  productEdit: Product | null
 }
 
 interface Product {

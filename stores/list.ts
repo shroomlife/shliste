@@ -16,11 +16,13 @@ export const useListStore = defineStore('listStore', {
     return {
       lists: parsedSavedLists as List[] ?? [],
       listEdit: null as List | null,
+      productEdit: null as Product | null,
     }
   },
   getters: {
     getLists: (state): List[] => state.lists,
     getListEdit: (state): List | null => state.listEdit,
+    getProductEdit: (state): Product | null => state.productEdit,
     getArchivedLists: (state): List[] => state.lists.filter(list => list.archivedAt),
     getActiveLists: state => state.lists
       .filter(list => !list.archivedAt)
@@ -33,6 +35,9 @@ export const useListStore = defineStore('listStore', {
   actions: {
     setListEdit(list: List | null) {
       this.listEdit = list
+    },
+    setProductEdit(product: Product | null) {
+      this.productEdit = product
     },
     addNewList() {
       this.listEdit = {
@@ -100,6 +105,21 @@ export const useListStore = defineStore('listStore', {
         return true
       }
       return false
+    },
+    updateProduct(product: Product) {
+      const foundList = this.lists.find((list: List) => {
+        return list.products.some(p => p.uuid === product.uuid)
+      })
+      if (foundList) {
+        const foundProduct = foundList.products.find(loopedProduct => loopedProduct.uuid === product.uuid)
+        if (foundProduct) {
+          foundProduct.name = product.name
+          foundProduct.description = product.description
+          foundProduct.brand = product.brand
+          foundList.updatedAt = new Date()
+        }
+      }
+      this.saveLists()
     },
     checkProduct(list: List, product: Product) {
       const foundList = this.lists.find(loopedList => loopedList.uuid === list.uuid)

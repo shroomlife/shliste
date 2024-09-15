@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { debounce } from 'lodash-es'
 
+const saveDebounceTime = 2500
+
 const getUserToken = (): GoogleToken | null => {
   const googleTokenCookie = useCookie('shliste/googleToken', cookieOptions)
   if (googleTokenCookie.value) {
@@ -202,7 +204,7 @@ export const useGoogleStore = defineStore('googleStore', {
         this.currentDebounce = debounce(async function (this: ReturnType<typeof useGoogleStore>) {
           await this.push()
           this.setIsPushInProgress(false)
-        }, 3000, { leading: false, trailing: true })
+        }, saveDebounceTime, { leading: false, trailing: true })
         this.currentDebounce()
       }
       else if (this.currentDebounce) {

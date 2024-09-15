@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+const appConfig = useAppConfig()
 const productStore = useProductStore()
 
 const { $moment } = useNuxtApp()
@@ -90,6 +91,8 @@ const searchQuery = ref('')
     <UTable
       :rows="products"
       :columns="columns"
+      :ui="appConfig.table.ui"
+      :empty-state="appConfig.table.ui.default.emptyState"
     >
       <template #actions-data="{ row }">
         <div class="flex gap-2">

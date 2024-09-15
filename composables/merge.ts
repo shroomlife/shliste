@@ -31,6 +31,8 @@ export const mergeData = (
     products: JSON.stringify(mergedProducts),
   }
 
+  console.log('Merged Data', result)
+
   return result
 }
 

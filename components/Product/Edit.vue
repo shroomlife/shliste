@@ -1,28 +1,27 @@
 <script lang="ts" setup>
 import { object, string } from 'yup'
-import { v4 as uuidv4 } from 'uuid'
 
-const toast = useToast()
+const appConfig = useAppConfig()
 
-const productStore = useProductStore()
+const listStore = useListStore()
 
 const computedIsOpen = computed({
   get() {
-    return productStore.getProductEdit !== null
+    return listStore.getProductEdit !== null
   },
   set(value) {
     if (!value) {
-      productStore.setProductEdit(null)
+      listStore.setProductEdit(null)
     }
   },
 })
 
 const handleClose = () => {
-  productStore.setProductEdit(null)
+  listStore.setProductEdit(null)
 }
 
 const computedProductHasId = computed(() => {
-  return typeof productStore.getProductEdit?.uuid === 'string'
+  return typeof listStore.getProductEdit?.uuid === 'string'
 })
 
 const computedTitle = computed(() => {
@@ -51,44 +50,31 @@ const schema = object({
 const resetState = (): void => {
   state.name = ''
   state.uuid = ''
+  state.brand = ''
+  state.description = ''
 }
 
 async function onSubmit() {
-  if (!state.uuid) {
-    state.uuid = uuidv4()
-    state.createdAt = new Date()
-    state.updatedAt = new Date()
-    state.archivedAt = null
-    productStore.addProduct({ ...state })
-    toast.add({
-      title: 'Produkt wurde erstellt!',
-      color: 'green',
-      icon: 'i-ph-check-circle',
-    })
-  }
-  else {
-    productStore.updateProduct(state.uuid, state)
-  }
-
+  listStore.updateProduct(state)
   handleClose()
   resetState()
 }
 
-watch(() => productStore.getProductEdit, (newVal: ListedProduct | null) => {
+watch(() => listStore.getProductEdit, (newVal: Product | null) => {
   if (newVal) {
     state.uuid = newVal.uuid
     state.name = newVal.name
     state.brand = newVal.brand
     state.description = newVal.description
-    state.createdAt = newVal.createdAt
-    state.updatedAt = newVal.updatedAt
-    state.archivedAt = newVal.archivedAt
   }
 })
 </script>
 
 <template>
-  <USlideover v-model="computedIsOpen">
+  <USlideover
+    v-model="computedIsOpen"
+    :ui="appConfig.slideOver.ui"
+  >
     <div class="p-4 flex flex-col gap-4">
       <div class="flex items-center justify-between">
         <h2 class="text-xl font-bold">
