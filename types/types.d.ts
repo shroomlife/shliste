@@ -68,3 +68,18 @@ interface GoogleUser {
   iat: number
   exp: number
 }
+
+interface SyncPullResponse {
+  data: GoogleDriveSyncRequestRaw
+  fileId: string
+  expiry_date?: number
+  access_token?: string
+  refresh_token?: string
+}
+
+interface SyncPushResponse {
+  id: string
+  expiry_date?: number
+  access_token?: string
+  refresh_token?: string
+}

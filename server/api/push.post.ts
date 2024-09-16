@@ -1,7 +1,7 @@
 import { google } from 'googleapis'
 import type { H3Event, EventHandlerRequest, H3Error } from 'h3'
 
-export default defineEventHandler(async (event: H3Event<EventHandlerRequest>) => {
+export default defineEventHandler(async (event: H3Event<EventHandlerRequest>): Promise<SyncPushResponse | undefined> => {
   try {
     const cookies = parseCookies(event)
     const body = await readBody(event) as GoogleDriveSyncRequest
@@ -18,6 +18,18 @@ export default defineEventHandler(async (event: H3Event<EventHandlerRequest>) =>
     const parsedGoogleToken = JSON.parse(googleToken) as GoogleToken
     const oauth2Client = event.context.oauth2Client
     oauth2Client.setCredentials(parsedGoogleToken)
+
+    const currentTimestamp = new Date().getTime()
+
+    console.log('parsedGoogleToken', parsedGoogleToken)
+
+    console.log('CHECK', currentTimestamp, parsedGoogleToken.expiry_date, currentTimestamp >= parsedGoogleToken.expiry_date)
+    if (!parsedGoogleToken.expiry_date || currentTimestamp >= parsedGoogleToken.expiry_date) {
+      const newToken = await oauth2Client.refreshAccessToken()
+      parsedGoogleToken.access_token = newToken.credentials.access_token as string
+      parsedGoogleToken.expiry_date = newToken.credentials.expiry_date as number
+      parsedGoogleToken.refresh_token = newToken.credentials.refresh_token as string
+    }
 
     const drive = google.drive({ version: 'v3', auth: oauth2Client })
 
@@ -36,7 +48,10 @@ export default defineEventHandler(async (event: H3Event<EventHandlerRequest>) =>
         })
         return {
           id: saveResponse.data.id,
-        }
+          expiry_date: parsedGoogleToken.expiry_date,
+          access_token: parsedGoogleToken.access_token,
+          refresh_token: parsedGoogleToken.refresh_token,
+        } as SyncPushResponse
       }
     }
     catch (error) {
@@ -57,7 +72,10 @@ export default defineEventHandler(async (event: H3Event<EventHandlerRequest>) =>
 
     return {
       id: saveResponse.data.id,
-    }
+      expiry_date: parsedGoogleToken.expiry_date,
+      access_token: parsedGoogleToken.access_token,
+      refresh_token: parsedGoogleToken.refresh_token,
+    } as SyncPushResponse
   }
   catch (error: unknown) {
     console.error('Error at Sync', error)

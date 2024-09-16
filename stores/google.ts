@@ -104,10 +104,7 @@ export const useGoogleStore = defineStore('googleStore', {
         if (this.getIsConnected) {
           this.setSyncing(true)
 
-          const fetchedData = await $fetch('/api/pull') as {
-            data: GoogleDriveSyncRequestRaw
-            fileId: string
-          }
+          const fetchedData = await $fetch('/api/pull') as SyncPullResponse
 
           const listStore = useListStore()
           const productStore = useProductStore()
@@ -132,6 +129,9 @@ export const useGoogleStore = defineStore('googleStore', {
           const updatedToken = {
             ...this.userToken,
             fileId: fetchedData.fileId,
+            expiry_date: fetchedData.expiry_date,
+            access_token: fetchedData.access_token,
+            refresh_token: fetchedData.refresh_token,
           } as GoogleToken
 
           googleTokenCookie.value = JSON.stringify(updatedToken)
@@ -159,12 +159,15 @@ export const useGoogleStore = defineStore('googleStore', {
             const saveResponse = await $fetch('/api/push', {
               body: dataJson,
               method: 'POST',
-            }) as { id: string }
+            }) as SyncPushResponse
 
             const googleTokenCookie = useCookie('shliste/googleToken')
             googleTokenCookie.value = JSON.stringify({
               ...this.userToken,
               fileId: saveResponse.id,
+              expiry_date: saveResponse.expiry_date,
+              access_token: saveResponse.access_token,
+              refresh_token: saveResponse.refresh_token,
             })
 
             const currentToken = getUserToken()
@@ -175,11 +178,10 @@ export const useGoogleStore = defineStore('googleStore', {
           }
           catch (error) {
             console.error('Error at Sync', error)
-            this.logout()
             const toast = useToast()
             toast.add({
               title: 'Fehler',
-              description: 'Beim Synchronisieren ist ein Fehler aufgetreten. Bitte melde dich erneut mit Google an.',
+              description: 'Beim Synchronisieren ist ein Fehler aufgetreten.',
               color: 'red',
               icon: 'i-ph-warning-bold',
               timeout: 0,

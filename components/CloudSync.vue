@@ -23,7 +23,6 @@ onMounted(async () => {
       }
       catch (error) {
         console.error('Error at Push', error)
-        googleStore.logout()
         const toast = useToast()
         toast.add({
           title: 'Fehler beim Synchronisieren!',
