@@ -59,5 +59,8 @@ export const useProductStore = defineStore('productStore', {
     getProducts: state => state.products,
     getProductEdit: state => state.productEdit,
     getProductsCount: state => state.products.length,
+    getProductByUuid: state => (uuid: string) => {
+      return state.products.find((product: ListedProduct) => product.uuid === uuid) as ListedProduct
+    },
   },
 })

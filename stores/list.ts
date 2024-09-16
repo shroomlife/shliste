@@ -171,6 +171,7 @@ export const useListStore = defineStore('listStore', {
           description: foundProduct.description || '',
           brand: foundProduct.brand || '',
           checked: false,
+          parentId: foundProduct.uuid,
         }
         foundList.products.push(newProduct)
         foundList.updatedAt = new Date()

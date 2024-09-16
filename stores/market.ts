@@ -44,6 +44,9 @@ export const useMarketStore = defineStore('marketStore', {
       }
       this.saveMarkets()
     },
+    getMarketById(uuid: string): Market {
+      return this.markets.find((market: Market) => market.uuid === uuid) as Market
+    },
     saveMarketsLocal() {
       localStorage.setItem(localStorageKey, JSON.stringify(this.markets))
     },

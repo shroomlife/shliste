@@ -22,13 +22,6 @@ const links = computed(() => [
     to: '/markets',
     badge: marketStore.getMarketsCount,
   },
-  // {
-  //   label: 'Archiv',
-  //   icon: 'i-ph-archive-box',
-  //   to: '/archiv',
-  //   badge: listStore.getArchivedListsCount,
-  //   disabled: listStore.getArchivedListsCount === 0,
-  // },
 ])
 
 const route = useRoute()
@@ -56,7 +49,7 @@ const computedLinks = computed(() => {
 
 <template>
   <main>
-    <header class="flex items-center justify-start p-4 bg-pink-100">
+    <header class="sticky top-0 z-50 flex items-center justify-start p-4 bg-pink-200/80 backdrop-blur-lg shadow">
       <div class="container mx-auto flex items-center justify-between">
         <NuxtLink
           to="/"

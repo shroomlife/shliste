@@ -10,6 +10,7 @@ interface Product {
   brand?: string
   description?: string
   checked: boolean
+  parentId?: string
 }
 
 interface ListedProduct extends Product {

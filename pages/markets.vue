@@ -5,12 +5,20 @@ const marketStore = useMarketStore()
 const { $moment } = useNuxtApp()
 
 const markets = computed(() => {
-  return marketStore.getMarkets.filter((market: Market) => market.name.toLowerCase().includes(searchQuery.value.toLowerCase())).map((market: Market) => {
-    return {
-      ...market,
-      updatedAt: $moment(market.updatedAt).format('DD.MM.YYYY HH:mm'),
-    }
-  })
+  const searchTerm = searchQuery.value.toLowerCase()
+  return marketStore.getMarkets
+    .filter((market: Market) => {
+      return (
+        market.name.toLowerCase().includes(searchTerm)
+        || market.address?.toLowerCase().includes(searchTerm)
+      )
+    })
+    .map((market: Market) => {
+      return {
+        ...market,
+        updatedAt: $moment(market.updatedAt).format('DD.MM.YYYY HH:mm'),
+      }
+    })
 })
 
 definePageMeta({

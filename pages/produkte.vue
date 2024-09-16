@@ -5,12 +5,20 @@ const productStore = useProductStore()
 const { $moment } = useNuxtApp()
 
 const products = computed(() => {
-  return productStore.getProducts.filter((product: ListedProduct) => product.name.toLowerCase().includes(searchQuery.value.toLowerCase())).map((product: ListedProduct) => {
-    return {
-      ...product,
-      updatedAt: $moment(product.updatedAt).format('DD.MM.YYYY HH:mm'),
-    }
-  })
+  const searchTerm = searchQuery.value.toLowerCase()
+  return productStore.getProducts
+    .filter((product: ListedProduct) => {
+      return (
+        product.name.toLowerCase().includes(searchTerm)
+        || product.brand?.toLowerCase().includes(searchTerm)
+      )
+    })
+    .map((product: ListedProduct) => {
+      return {
+        ...product,
+        updatedAt: $moment(product.updatedAt).format('DD.MM.YYYY HH:mm'),
+      }
+    })
 })
 
 definePageMeta({
@@ -32,6 +40,10 @@ const columns = ref([
   {
     key: 'description',
     label: 'Beschreibung',
+  },
+  {
+    key: 'marketIds',
+    label: 'Supermärkte',
   },
   {
     key: 'updatedAt',
@@ -97,6 +109,10 @@ const searchQuery = ref('')
         icon: 'i-ph-shopping-cart',
       }"
     >
+      <template #marketIds-data="{ row }">
+        <MarketRow :product="row" />
+      </template>
+
       <template #actions-data="{ row }">
         <div class="flex gap-2">
           <UButton

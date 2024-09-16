@@ -14,7 +14,7 @@ definePageMeta({
       class="flex flex-col gap-4"
     >
       <ListCard
-        v-for="list in computedLists"
+        v-for="list of computedLists"
         :key="list.uuid"
         :list="list"
       />

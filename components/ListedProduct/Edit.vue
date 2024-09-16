@@ -85,7 +85,7 @@ watch(() => productStore.getProductEdit, (newVal: ListedProduct | null) => {
     state.name = newVal.name
     state.description = newVal.description
     state.brand = newVal.brand
-    state.marketIds = newVal.marketIds
+    state.marketIds = newVal.marketIds ?? []
     state.createdAt = newVal.createdAt
     state.updatedAt = newVal.updatedAt
   }
@@ -94,10 +94,20 @@ watch(() => productStore.getProductEdit, (newVal: ListedProduct | null) => {
 const computedMarkets = computed(() => {
   return marketStore.getMarkets.map((market) => {
     return {
-      label: market.name,
+      label: `${market.name} - ${market.address}`,
       value: market.uuid,
     }
   })
+})
+
+const computedSelectedMarketsCaption = computed(() => {
+  return state.marketIds.map((marketId) => {
+    const market = marketStore.getMarketById(marketId)
+    const addressSplit = market.address.split(',')
+    const zipAndCity = addressSplit[1]?.trim()
+    const zip = zipAndCity?.split(' ')[0]
+    return `${market.name}${zip ? ` - ${zip}` : ''}`
+  }).join(', ')
 })
 </script>
 
@@ -171,9 +181,35 @@ const computedMarkets = computed(() => {
           <USelectMenu
             v-model="state.marketIds"
             :options="computedMarkets"
+            :clear-search-on-close="true"
             value-attribute="value"
+            :search-attributes="['label']"
+            searchable
             multiple
-          />
+          >
+            <template #empty>
+              Keine Supermärkte
+            </template>
+
+            <template #option-empty="{ query }">
+              <q>{{ query }}</q> wurde nicht gefunden.
+            </template>
+            <template #label>
+              <template
+                v-if="state.marketIds.length"
+              >
+                <span
+                  v-if="state.marketIds.length > 3"
+                  class="truncate"
+                >{{ state.marketIds.length }} Supermärkte</span>
+                <span
+                  v-else
+                  class="truncate"
+                >{{ computedSelectedMarketsCaption }}</span>
+              </template>
+              <span v-else>Keine Auswahl</span>
+            </template>
+          </USelectMenu>
         </UFormGroup>
 
         <div class="flex justify-between items-center">

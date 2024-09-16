@@ -2,6 +2,8 @@
 import { object, string } from 'yup'
 
 const listStore = useListStore()
+const productStore = useProductStore()
+const marketStore = useMarketStore()
 
 const { uuid } = useRoute().params
 const list = computed(() => listStore.getListByUuid(uuid as string)) as ComputedRef<List>
@@ -69,10 +71,51 @@ const editProduct = (product: Product) => {
   }
   listStore.setProductEdit(product)
 }
+
+const computedProductsInMarket = computed(() => {
+  return (market: Market) => {
+    return list.value.products.filter((product) => {
+      if (typeof product.parentId === 'undefined' || !product.parentId) return false
+
+      const listedProduct = productStore.getProductByUuid(product.parentId)
+      if (!listedProduct) return false
+
+      return listedProduct.marketIds.includes(market.uuid)
+    })
+      .map((product) => {
+        return product.name
+      })
+      .join(', ')
+  }
+})
+
+const computedHasMarketsInList = computed(() => {
+  return computedMarketsInList.value.length > 0
+})
+
+const computedMarketsInList = computed(() => {
+  const allMarkets = [] as Market[]
+  for (const product of list.value.products) {
+    if (typeof product.parentId !== 'undefined') {
+      const listedProduct = productStore.getProductByUuid(product.parentId)
+      if (listedProduct) {
+        const markets = listedProduct.marketIds.map((marketId) => {
+          return marketStore.getMarketById(marketId)
+        })
+        for (const market of markets) {
+          if (market) {
+            allMarkets.push(market)
+          }
+        }
+      }
+    }
+  }
+  return allMarkets
+})
 </script>
 
 <template>
-  <div class="pb-24">
+  <div class="flex flex-col pb-24 gap-4">
     <UCard :ui="computedCardUi">
       <template #header>
         <div
@@ -106,7 +149,7 @@ const editProduct = (product: Product) => {
           Keine Einträge
         </p>
         <UCard
-          v-for="product in list.products"
+          v-for="product of list.products"
           :key="product.uuid"
           :ui="productUiConfig"
         >
@@ -115,9 +158,15 @@ const editProduct = (product: Product) => {
               class="flex-1 items-center flex gap-2 overflow-hidden"
             >
               <NuxtLink
-                class="cursor-pointer"
+                class="cursor-pointer flex gap-2 items-center"
                 @click="editProduct(product)"
               >
+                <p
+                  class="line-clamp-2 text-lg"
+                  :class="{ 'line-through': product.checked }"
+                >
+                  {{ product.name }}
+                </p>
                 <UBadge
                   v-if="product.brand"
                   color="pink"
@@ -126,12 +175,6 @@ const editProduct = (product: Product) => {
                 >
                   {{ product.brand }}
                 </UBadge>
-                <p
-                  class="line-clamp-2 text-lg"
-                  :class="{ 'line-through': product.checked }"
-                >
-                  {{ product.name }}
-                </p>
               </NuxtLink>
             </div>
             <div class="flex gap-2">
@@ -167,6 +210,37 @@ const editProduct = (product: Product) => {
                 padded
                 @click="removeProduct(product)"
               />
+            </div>
+          </div>
+        </UCard>
+      </div>
+    </UCard>
+
+    <UCard v-if="computedHasMarketsInList">
+      <template #header>
+        <h2 class="text-xl font-bold">
+          Supermärkte
+        </h2>
+      </template>
+
+      <div class="flex flex-col gap-2">
+        <UCard
+          v-for="market of computedMarketsInList"
+          :key="market.uuid"
+        >
+          <div class="flex flex-col justify-center items-start gap-4">
+            <div class="flex flex-col md:flex-row items-start gap-2">
+              <span class="text-2xl font-bold">{{ market.name }}</span>
+              <span class="flex items-center gap-2">
+                <UIcon
+                  class="w-6 h-6"
+                  name="ph:map-pin"
+                />
+                <span class="text-lg">{{ market.address }}</span>
+              </span>
+            </div>
+            <div>
+              {{ computedProductsInMarket(market) }}
             </div>
           </div>
         </UCard>
