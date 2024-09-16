@@ -21,9 +21,6 @@ export default defineEventHandler(async (event: H3Event<EventHandlerRequest>): P
 
     const currentTimestamp = new Date().getTime()
 
-    console.log('parsedGoogleToken', parsedGoogleToken)
-
-    console.log('CHECK', currentTimestamp, parsedGoogleToken.expiry_date, currentTimestamp >= parsedGoogleToken.expiry_date)
     if (!parsedGoogleToken.expiry_date || currentTimestamp >= parsedGoogleToken.expiry_date) {
       const newToken = await oauth2Client.refreshAccessToken()
       parsedGoogleToken.access_token = newToken.credentials.access_token as string

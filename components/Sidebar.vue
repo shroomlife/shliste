@@ -2,6 +2,7 @@
 const listStore = useListStore()
 const productStore = useProductStore()
 const googleStore = useGoogleStore()
+const marketStore = useMarketStore()
 const appStore = useAppStore()
 
 const openMenu = () => {
@@ -38,10 +39,17 @@ const sidebarLinks = computed(() => {
       click: closeMenu,
     },
     {
+      label: 'Supermärkte',
+      icon: 'i-ph-storefront',
+      to: '/markets',
+      badge: marketStore.getMarketsCount,
+      click: closeMenu,
+    },
+    {
       label: 'Archiv',
       icon: 'i-ph-archive-box',
       to: '/archiv',
-      badge: listStore.getArchivedListsCount,
+      badge: listStore.getArchivedListsCount || 0,
       disabled: listStore.getArchivedListsCount === 0,
       click: () => {
         if (listStore.getArchivedListsCount > 0) {

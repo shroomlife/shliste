@@ -33,13 +33,16 @@ export const useProductStore = defineStore('productStore', {
     },
     setProducts(products: ListedProduct[] | null) {
       this.products = products ?? [] as ListedProduct[]
+      this.saveProductsLocal()
     },
     updateProduct(uuid: string, product: ListedProduct) {
+      console.log('Update Product', JSON.stringify(product))
       const foundProduct = this.products.find((product: ListedProduct) => product.uuid === uuid)
       if (foundProduct) {
         foundProduct.name = product.name
         foundProduct.description = product.description
         foundProduct.brand = product.brand
+        foundProduct.marketIds = product.marketIds
         foundProduct.updatedAt = new Date()
       }
       this.saveProducts()

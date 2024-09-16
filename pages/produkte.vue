@@ -75,7 +75,7 @@ const searchQuery = ref('')
     <template #header>
       <div class="flex justify-between items-center">
         <h2 class="text-3xl md:text-4xl font-bold">
-          Alle Produkte
+          Produkte
         </h2>
         <div>
           <UInput
@@ -92,7 +92,10 @@ const searchQuery = ref('')
       :rows="products"
       :columns="columns"
       :ui="appConfig.table.ui"
-      :empty-state="appConfig.table.ui.default.emptyState"
+      :empty-state="{
+        label: 'Keine Produkte',
+        icon: 'i-ph-shopping-cart',
+      }"
     >
       <template #actions-data="{ row }">
         <div class="flex gap-2">

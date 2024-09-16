@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 const listStore = useListStore()
 const productStore = useProductStore()
+const marketStore = useMarketStore()
 
 const isFooterHidden = ref(false) // Controls the visibility of the footer
 const lastScrollPosition = ref(0) // Track the last known scroll position
@@ -34,6 +35,10 @@ const handleAddProductButtonClick = () => {
   productStore.addNewProduct()
 }
 
+const handleAddMarketButtonClick = () => {
+  marketStore.addNewMarket()
+}
+
 const route = useRoute()
 const computedShowAddListButton = computed(() => {
   return route.meta.showActionsBar === true && route.meta.showAddListButton === true
@@ -41,6 +46,10 @@ const computedShowAddListButton = computed(() => {
 
 const computedShowAddProductButton = computed(() => {
   return route.meta.showActionsBar === true && route.meta.showAddProductButton === true
+})
+
+const computedShowAddMarketButton = computed(() => {
+  return route.meta.showActionsBar === true && route.meta.showAddMarketButton === true
 })
 </script>
 
@@ -68,6 +77,16 @@ const computedShowAddProductButton = computed(() => {
             variant="solid"
             label="Neues Produkt"
             @click="handleAddProductButtonClick"
+          />
+          <UButton
+            v-if="computedShowAddMarketButton"
+            class="shadow-md"
+            icon="i-ph-plus-circle-fill"
+            size="xl"
+            color="pink"
+            variant="solid"
+            label="Neuer Supermarkt"
+            @click="handleAddMarketButtonClick"
           />
         </div>
       </div>

@@ -5,106 +5,80 @@ import { v4 as uuidv4 } from 'uuid'
 const appConfig = useAppConfig()
 const toast = useToast()
 
-const productStore = useProductStore()
 const marketStore = useMarketStore()
 
 const computedIsOpen = computed({
   get() {
-    return productStore.getProductEdit !== null
+    return marketStore.getMarketEdit !== null
   },
   set(value) {
     if (!value) {
-      productStore.setProductEdit(null)
+      marketStore.setMarketEdit(null)
     }
   },
 })
 
 const handleClose = () => {
-  productStore.setProductEdit(null)
+  marketStore.setMarketEdit(null)
 }
 
 const computedProductHasId = computed(() => {
-  return typeof productStore.getProductEdit?.uuid === 'string'
+  return typeof marketStore.getMarketEdit?.uuid === 'string'
 })
 
 const computedTitle = computed(() => {
-  return computedProductHasId.value ? 'Bearbeite Produkt' : 'Neues Produkt'
+  return computedProductHasId.value ? 'Bearbeite Supermarkt' : 'Neuer Supermarkt'
 })
 
-const state = reactive<ListedProduct>({
+const state = reactive<Market>({
   uuid: '',
   name: '',
-  description: '',
-  brand: '',
-  marketIds: [] as string[],
-  checked: false,
-  deleted: false,
+  address: '',
   createdAt: null,
   updatedAt: null,
-  archivedAt: null,
 })
 
 const schema = object({
   name: string().required('Name ist Erforderlich'),
-  description: string().optional(),
-  brand: string().optional(),
+  address: string().required('Adresse ist Erforderlich'),
 })
 
 const resetState = (): void => {
-  state.name = ''
   state.uuid = ''
-  state.description = ''
-  state.brand = ''
-  state.marketIds = [] as string[]
-  state.checked = false
-  state.deleted = false
+  state.name = ''
+  state.address = ''
   state.createdAt = null
   state.updatedAt = null
-  state.archivedAt = null
 }
 
 async function onSubmit() {
-  console.log('Submit', JSON.stringify(state))
   if (!state.uuid) {
     state.uuid = uuidv4()
     state.createdAt = new Date()
     state.updatedAt = new Date()
-    state.archivedAt = null
-    productStore.addProduct({ ...state })
+    marketStore.addMarket({ ...state })
     toast.add({
-      title: 'Produkt wurde erstellt!',
+      title: 'Supermarkt wurde erstellt!',
       color: 'green',
       icon: 'i-ph-check-circle',
     })
   }
   else {
-    productStore.updateProduct(state.uuid, state)
+    marketStore.updateMarket(state.uuid, state)
   }
 
   handleClose()
   resetState()
 }
 
-watch(() => productStore.getProductEdit, (newVal: ListedProduct | null) => {
+watch(() => marketStore.getMarketEdit, (newVal: Market | null) => {
   if (newVal) {
     state.uuid = newVal.uuid
     state.name = newVal.name
-    state.description = newVal.description
-    state.brand = newVal.brand
-    state.marketIds = newVal.marketIds
+    state.address = newVal.address
     state.createdAt = newVal.createdAt
     state.updatedAt = newVal.updatedAt
-    state.archivedAt = newVal.archivedAt
   }
-})
-
-const computedMarkets = computed(() => {
-  return marketStore.getMarkets.map((market) => {
-    return {
-      label: market.name,
-      value: market.uuid,
-    }
-  })
 })
 </script>
 
@@ -142,44 +116,19 @@ const computedMarkets = computed(() => {
         >
           <UInput
             v-model="state.name"
-            placeholder="Name deines Produkts"
-            icon="i-ph-shopping-cart"
+            placeholder="Name des Supermarkts"
+            icon="i-ph-storefront"
           />
         </UFormGroup>
         <UFormGroup
-          label="Beschreibung"
-          name="description"
+          label="Adresse"
+          name="address"
           size="xl"
         >
           <UInput
-            v-model="state.description"
-            placeholder="Beschreibung deines Produkts"
-            icon="i-ph-text-align-left"
-          />
-        </UFormGroup>
-
-        <UFormGroup
-          label="Marke"
-          name="brand"
-          size="xl"
-        >
-          <UInput
-            v-model="state.brand"
-            placeholder="Marke deines Produkts"
-            icon="i-ph-tag"
-          />
-        </UFormGroup>
-
-        <UFormGroup
-          label="Supermärkte"
-          name="marketIds"
-          size="xl"
-        >
-          <USelectMenu
-            v-model="state.marketIds"
-            :options="computedMarkets"
-            value-attribute="value"
-            multiple
+            v-model="state.address"
+            placeholder="Adresse des Supermarkts"
+            icon="i-ph-map-pin"
           />
         </UFormGroup>
 

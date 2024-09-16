@@ -17,7 +17,15 @@ interface ListedProduct extends Product {
   createdAt: Date | null
   updatedAt: Date | null
   archivedAt: Date | null
-  supermarkets: Supermarket[]
+  marketIds: string[]
+}
+
+interface Market {
+  uuid: string
+  name: string
+  address: string
+  createdAt: Date | null
+  updatedAt: Date | null
 }
 
 interface List {
@@ -30,20 +38,17 @@ interface List {
   archivedAt: Date | null
 }
 
-interface Supermarket {
-  id: string
-  name: string
-}
-
 interface GoogleDriveSyncRequest {
   lists: List[]
   products: Product[]
+  markets: Market[]
   fileId?: string
 }
 
 interface GoogleDriveSyncRequestRaw {
   lists: string
   products: string
+  markets: string
   fileId?: string
 }
 

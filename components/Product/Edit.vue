@@ -33,7 +33,6 @@ const state = reactive<ListedProduct>({
   name: '',
   description: '',
   brand: '',
-  supermarkets: [],
   checked: false,
   deleted: false,
   createdAt: null,

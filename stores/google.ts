@@ -108,22 +108,27 @@ export const useGoogleStore = defineStore('googleStore', {
 
           const listStore = useListStore()
           const productStore = useProductStore()
+          const marketStore = useMarketStore()
 
           const localLists = listStore.getLists // Annahme: Gibt List[] zurück
           const localProducts = productStore.getProducts // Annahme: Gibt Product[] zurück
+          const localMarkets = marketStore.getMarkets // Annahme: Gibt Market[] zurück
 
           const localData: GoogleDriveSyncRequestRaw = {
             lists: JSON.stringify(localLists),
             products: JSON.stringify(localProducts),
+            markets: JSON.stringify(localMarkets),
           }
 
           const mergedData = mergeData(localData, fetchedData.data)
 
           const mergedLists = JSON.parse(mergedData.lists) as List[]
           const mergedProducts = JSON.parse(mergedData.products) as ListedProduct[]
+          const mergedMarkets = JSON.parse(mergedData.markets) as Market[]
 
           listStore.setLists(mergedLists)
           productStore.setProducts(mergedProducts)
+          marketStore.setMarkets(mergedMarkets)
 
           const googleTokenCookie = useCookie('shliste/googleToken')
           const updatedToken = {

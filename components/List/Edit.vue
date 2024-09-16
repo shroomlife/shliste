@@ -49,8 +49,8 @@ const schema = object({
 })
 
 const resetState = (): void => {
-  state.name = ''
   state.uuid = ''
+  state.name = ''
   state.createdAt = new Date()
   state.updatedAt = new Date()
   state.archivedAt = null
@@ -126,7 +126,7 @@ watch(() => listStore.getListEdit, (newVal: List | null) => {
           <UInput
             v-model="state.name"
             placeholder="Name deiner Liste"
-            icon="i-ph-text-align-left"
+            icon="i-ph-list-checks"
           />
         </UFormGroup>
         <div class="flex justify-between items-center">

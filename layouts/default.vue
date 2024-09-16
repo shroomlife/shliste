@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 const listStore = useListStore()
 const productStore = useProductStore()
+const marketStore = useMarketStore()
 
 const links = computed(() => [
   {
@@ -16,12 +17,18 @@ const links = computed(() => [
     badge: productStore.getProductsCount,
   },
   {
-    label: 'Archiv',
-    icon: 'i-ph-archive-box',
-    to: '/archiv',
-    badge: listStore.getArchivedListsCount,
-    disabled: listStore.getArchivedListsCount === 0,
+    label: 'Supermärkte',
+    icon: 'i-ph-storefront',
+    to: '/markets',
+    badge: marketStore.getMarketsCount,
   },
+  // {
+  //   label: 'Archiv',
+  //   icon: 'i-ph-archive-box',
+  //   to: '/archiv',
+  //   badge: listStore.getArchivedListsCount,
+  //   disabled: listStore.getArchivedListsCount === 0,
+  // },
 ])
 
 const route = useRoute()
