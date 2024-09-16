@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shliste.app-cache-0.7.1';
+const CACHE_NAME = 'shliste.app-cache-0.8.0';
 const NETWORK_TIMEOUT_MS = 3000; // 3 seconds
 
 self.addEventListener('fetch', (event) => {
