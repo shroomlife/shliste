@@ -11,13 +11,19 @@ export const mergeData = (
   const newProducts: ListedProduct[] = newData.products
   const newMarkets: Market[] = newData.markets
 
-  // Zusammenführen der 'products' Arrays
-  const mergedProducts = mergeArraysByUuid<ListedProduct>(oldProducts, newProducts)
+  // Filter the old data to keep only items that exist in the new data
+  const filteredOldLists = oldLists.filter(oldList => newLists.some(newList => newList.uuid === oldList.uuid))
+  const filteredOldProducts = oldProducts.filter(oldProduct => newProducts.some(newProduct => newProduct.uuid === oldProduct.uuid))
+  const filteredOldMarkets = oldMarkets.filter(oldMarket => newMarkets.some(newMarket => newMarket.uuid === oldMarket.uuid))
 
-  // Zusammenführen der 'lists' Arrays
-  const mergedLists = mergeArraysByUuid<List>(oldLists, newLists)
+  // Merge the 'products' arrays
+  const mergedProducts = mergeArraysByUuid<ListedProduct>(filteredOldProducts, newProducts)
 
-  const mergedMarkets = mergeArraysByUuid<Market>(oldMarkets, newMarkets)
+  // Merge the 'lists' arrays
+  const mergedLists = mergeArraysByUuid<List>(filteredOldLists, newLists)
+
+  // Merge the 'markets' arrays
+  const mergedMarkets = mergeArraysByUuid<Market>(filteredOldMarkets, newMarkets)
 
   // Zusammenführen der 'products' innerhalb jeder Liste
   for (const list of mergedLists) {

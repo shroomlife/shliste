@@ -36,7 +36,6 @@ export const useProductStore = defineStore('productStore', {
       this.saveProductsLocal()
     },
     updateProduct(uuid: string, product: ListedProduct) {
-      console.log('Update Product', JSON.stringify(product))
       const foundProduct = this.products.find((product: ListedProduct) => product.uuid === uuid)
       if (foundProduct) {
         foundProduct.name = product.name

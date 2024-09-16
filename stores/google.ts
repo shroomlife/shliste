@@ -120,7 +120,6 @@ export const useGoogleStore = defineStore('googleStore', {
             refresh_token: fetchedData.refresh_token,
           } as GoogleToken
 
-          console.log('Pull', fetchedData.fileId)
           if (fetchedData.fileId) {
             updatedToken.fileId = fetchedData.fileId
           }
@@ -130,7 +129,6 @@ export const useGoogleStore = defineStore('googleStore', {
 
           const fileId = this.getUserToken!.fileId as string | null
 
-          console.log('Pulled data:', fileId, fetchedData.data)
           if (fileId && fetchedData.data) {
             const listStore = useListStore()
             const productStore = useProductStore()
@@ -188,7 +186,6 @@ export const useGoogleStore = defineStore('googleStore', {
               refresh_token: saveResponse.refresh_token,
             } as GoogleToken
 
-            console.log('Push', saveResponse.fileId)
             if (saveResponse.fileId) {
               updatedToken.fileId = saveResponse.fileId
             }

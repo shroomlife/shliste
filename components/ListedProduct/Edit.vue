@@ -64,7 +64,6 @@ const resetState = (): void => {
 }
 
 async function onSubmit() {
-  console.log('Submit', JSON.stringify(state))
   if (!state.uuid) {
     state.uuid = uuidv4()
     state.createdAt = new Date()

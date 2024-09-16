@@ -17,16 +17,15 @@ onMounted(async () => {
   try {
     googleStore.setLoading(true)
     const pullFileId: string | null = await googleStore.pull()
-
-    console.log('pullFileId', pullFileId, typeof pullFileId)
-
-    const isPushSuccess = await googleStore.push()
-    if (!isPushSuccess) {
-      toast.add({
-        title: 'Fehler beim Synchronisieren!',
-        color: 'red',
-        icon: 'i-ph-warning',
-      })
+    if (pullFileId === null) {
+      const isPushSuccess = await googleStore.push()
+      if (!isPushSuccess) {
+        toast.add({
+          title: 'Fehler beim Synchronisieren!',
+          color: 'red',
+          icon: 'i-ph-warning',
+        })
+      }
     }
   }
   catch (error) {
