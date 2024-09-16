@@ -48,8 +48,14 @@ export const useGoogleStore = defineStore('googleStore', {
     getIsConnected: (state) => {
       return state.userToken !== null
     },
+    getFileId: (state): string | null => {
+      return state.userToken?.fileId as string | null ?? null
+    },
     getUser: (state) => {
       return state.user as GoogleUser | null
+    },
+    getUserToken: (state) => {
+      return state.userToken as GoogleToken | null
     },
     getLoading: (state) => {
       return state.loading
@@ -99,59 +105,67 @@ export const useGoogleStore = defineStore('googleStore', {
       const googleUserCookie = useCookie('shliste/googleUser')
       googleUserCookie.value = null
     },
-    async pull(): Promise<boolean> {
+    async pull(): Promise<string | null> {
       try {
         if (this.getIsConnected) {
           this.setSyncing(true)
 
           const fetchedData = await $fetch('/api/pull') as SyncPullResponse
 
-          const listStore = useListStore()
-          const productStore = useProductStore()
-          const marketStore = useMarketStore()
-
-          const localLists = listStore.getLists // Annahme: Gibt List[] zurück
-          const localProducts = productStore.getProducts // Annahme: Gibt Product[] zurück
-          const localMarkets = marketStore.getMarkets // Annahme: Gibt Market[] zurück
-
-          const localData: GoogleDriveSyncRequestRaw = {
-            lists: JSON.stringify(localLists),
-            products: JSON.stringify(localProducts),
-            markets: JSON.stringify(localMarkets),
-          }
-
-          const mergedData = mergeData(localData, fetchedData.data)
-
-          const mergedLists = JSON.parse(mergedData.lists) as List[]
-          const mergedProducts = JSON.parse(mergedData.products) as ListedProduct[]
-          const mergedMarkets = JSON.parse(mergedData.markets) as Market[]
-
-          listStore.setLists(mergedLists)
-          productStore.setProducts(mergedProducts)
-          marketStore.setMarkets(mergedMarkets)
-
           const googleTokenCookie = useCookie('shliste/googleToken')
           const updatedToken = {
             ...this.userToken,
-            fileId: fetchedData.fileId,
             expiry_date: fetchedData.expiry_date,
             access_token: fetchedData.access_token,
             refresh_token: fetchedData.refresh_token,
           } as GoogleToken
 
+          console.log('Pull', fetchedData.fileId)
+          if (fetchedData.fileId) {
+            updatedToken.fileId = fetchedData.fileId
+          }
+
           googleTokenCookie.value = JSON.stringify(updatedToken)
           this.setUserToken(updatedToken)
 
-          this.setSyncing(false)
-          return true
+          const fileId = this.getUserToken!.fileId as string | null
+
+          console.log('Pulled data:', fileId, fetchedData.data)
+          if (fileId && fetchedData.data) {
+            const listStore = useListStore()
+            const productStore = useProductStore()
+            const marketStore = useMarketStore()
+
+            const localLists = listStore.getLists ?? []
+            const localProducts = productStore.getProducts ?? []
+            const localMarkets = marketStore.getMarkets ?? []
+
+            const localData: GoogleDriveSyncRequestRaw = {
+              lists: JSON.stringify(localLists),
+              products: JSON.stringify(localProducts),
+              markets: JSON.stringify(localMarkets),
+            }
+
+            const mergedData = mergeData(localData, fetchedData.data)
+
+            listStore.setLists(mergedData.lists)
+            productStore.setProducts(mergedData.products)
+            marketStore.setMarkets(mergedData.markets)
+
+            return fileId
+          }
+          else {
+            return null
+          }
         }
-        this.setSyncing(false)
-        return false
+        return null
       }
       catch (error) {
-        this.setSyncing(false)
         console.error('Error at Pull', error)
-        return false
+        return null
+      }
+      finally {
+        this.setSyncing(false)
       }
     },
     async push(): Promise<boolean> {
@@ -167,32 +181,26 @@ export const useGoogleStore = defineStore('googleStore', {
             }) as SyncPushResponse
 
             const googleTokenCookie = useCookie('shliste/googleToken')
-            googleTokenCookie.value = JSON.stringify({
+            const updatedToken = {
               ...this.userToken,
-              fileId: saveResponse.id,
               expiry_date: saveResponse.expiry_date,
               access_token: saveResponse.access_token,
               refresh_token: saveResponse.refresh_token,
-            })
+            } as GoogleToken
 
-            const currentToken = getUserToken()
-            if (currentToken) {
-              currentToken.fileId = saveResponse.id
-              this.setUserToken(currentToken)
+            console.log('Push', saveResponse.fileId)
+            if (saveResponse.fileId) {
+              updatedToken.fileId = saveResponse.fileId
             }
+
+            googleTokenCookie.value = JSON.stringify(updatedToken)
+            this.setUserToken(updatedToken)
+
+            return true
           }
           catch (error) {
-            console.error('Error at Sync', error)
-            const toast = useToast()
-            toast.add({
-              title: 'Fehler',
-              description: 'Beim Synchronisieren ist ein Fehler aufgetreten.',
-              color: 'red',
-              icon: 'i-ph-warning-bold',
-              timeout: 0,
-            })
+            console.error('Error at Push', error)
           }
-          return true
         }
         return false
       }
@@ -220,6 +228,9 @@ export const useGoogleStore = defineStore('googleStore', {
     },
 
     triggerPush() {
+      if (this.getIsConnected === false) {
+        return
+      }
       this.debouncedPush()
       window.onbeforeunload = () => {
         if (this.currentDebounce) {

@@ -26,6 +26,12 @@ export default defineEventHandler(async (event: H3Event<EventHandlerRequest>) =>
       parsedGoogleToken.refresh_token = newToken.credentials.refresh_token as string
     }
 
+    const updatedTokenData = {
+      expiry_date: parsedGoogleToken.expiry_date,
+      access_token: parsedGoogleToken.access_token,
+      refresh_token: parsedGoogleToken.refresh_token,
+    }
+
     const drive = google.drive({ version: 'v3', auth: oauth2Client })
 
     let fileId = parsedGoogleToken.fileId
@@ -34,7 +40,7 @@ export default defineEventHandler(async (event: H3Event<EventHandlerRequest>) =>
       // Search for the file if fileId is not available
       const searchResponse = await drive.files.list({
         q: 'name=\'shliste.app.json\' and trashed=false',
-        fields: 'files(id, name)',
+        fields: 'files(id)',
         spaces: 'drive',
       })
 
@@ -43,10 +49,7 @@ export default defineEventHandler(async (event: H3Event<EventHandlerRequest>) =>
         fileId = files[0].id as string
       }
       else {
-        throw createError({
-          statusCode: 404,
-          statusMessage: 'File not found',
-        })
+        return updatedTokenData as SyncPullResponse
       }
     }
 
@@ -58,27 +61,18 @@ export default defineEventHandler(async (event: H3Event<EventHandlerRequest>) =>
       })
 
       if (response.data.trashed) {
-        throw createError({
-          statusCode: 404,
-          statusMessage: 'File is deleted',
-        })
+        return updatedTokenData as SyncPullResponse
       }
 
-      // Return the file content
       return {
         data: response.data,
         fileId,
-        expiry_date: parsedGoogleToken.expiry_date,
-        access_token: parsedGoogleToken.access_token,
-        refresh_token: parsedGoogleToken.refresh_token,
+        ...updatedTokenData,
       } as SyncPullResponse
     }
-    catch (error) {
-      console.error('Error retrieving file:', error)
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'Error retrieving file from Google Drive',
-      })
+    catch (error: unknown) {
+      console.error('Error at Pull', error)
+      return updatedTokenData as SyncPullResponse
     }
   }
   catch (error: unknown) {

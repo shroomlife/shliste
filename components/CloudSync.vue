@@ -1,36 +1,43 @@
 <script lang="ts" setup>
+const toast = useToast()
 const googleStore = useGoogleStore()
+
 const computedIsSyncing = computed({
   get: () => googleStore.getLoading,
   set: (value: boolean) => googleStore.setLoading(value),
 })
 
-const isInitialized = ref(false)
+// const isInitialized = ref(false)
 
 onMounted(async () => {
-  if (isInitialized.value) {
+  if (!googleStore.getIsConnected) {
     return
   }
 
-  if (googleStore.getIsConnected) {
+  try {
     googleStore.setLoading(true)
-    const syncSuccess = await googleStore.pull()
+    const pullFileId: string | null = await googleStore.pull()
 
-    isInitialized.value = true
-    if (!syncSuccess) {
-      try {
-        await googleStore.push()
-      }
-      catch (error) {
-        console.error('Error at Push', error)
-        const toast = useToast()
-        toast.add({
-          title: 'Fehler beim Synchronisieren!',
-          color: 'red',
-          icon: 'i-ph-warning',
-        })
-      }
+    console.log('pullFileId', pullFileId, typeof pullFileId)
+
+    const isPushSuccess = await googleStore.push()
+    if (!isPushSuccess) {
+      toast.add({
+        title: 'Fehler beim Synchronisieren!',
+        color: 'red',
+        icon: 'i-ph-warning',
+      })
     }
+  }
+  catch (error) {
+    console.error(error)
+    toast.add({
+      title: 'Fehler beim Synchronisieren!',
+      color: 'red',
+      icon: 'i-ph-warning',
+    })
+  }
+  finally {
     googleStore.setLoading(false)
   }
 })

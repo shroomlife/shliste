@@ -40,7 +40,7 @@ interface List {
 
 interface GoogleDriveSyncRequest {
   lists: List[]
-  products: Product[]
+  products: ListedProduct[]
   markets: Market[]
   fileId?: string
 }
@@ -75,16 +75,16 @@ interface GoogleUser {
 }
 
 interface SyncPullResponse {
-  data: GoogleDriveSyncRequestRaw
-  fileId: string
-  expiry_date?: number
-  access_token?: string
-  refresh_token?: string
+  data?: GoogleDriveSyncRequest
+  fileId?: string
+  expiry_date: number
+  access_token: string
+  refresh_token: string
 }
 
 interface SyncPushResponse {
-  id: string
-  expiry_date?: number
-  access_token?: string
-  refresh_token?: string
+  fileId: string
+  expiry_date: number
+  access_token: string
+  refresh_token: string
 }

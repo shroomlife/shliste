@@ -1,18 +1,23 @@
 export const mergeData = (
   oldData: GoogleDriveSyncRequestRaw,
-  newData: GoogleDriveSyncRequestRaw,
-): GoogleDriveSyncRequestRaw => {
+  newData: GoogleDriveSyncRequest,
+): GoogleDriveSyncRequest => {
   // Parse die JSON-Strings in den Schlüsseln 'lists' und 'products' und speichere sie in neuen Variablen
   const oldLists: List[] = JSON.parse(oldData.lists || '[]')
-  const oldProducts: Product[] = JSON.parse(oldData.products || '[]')
-  const newLists: List[] = JSON.parse(newData.lists || '[]')
-  const newProducts: Product[] = JSON.parse(newData.products || '[]')
+  const oldProducts: ListedProduct[] = JSON.parse(oldData.products || '[]')
+  const oldMarkets: Market[] = JSON.parse(oldData.markets || '[]')
+
+  const newLists: List[] = newData.lists
+  const newProducts: ListedProduct[] = newData.products
+  const newMarkets: Market[] = newData.markets
 
   // Zusammenführen der 'products' Arrays
-  const mergedProducts = mergeArraysByUuid<Product>(oldProducts, newProducts)
+  const mergedProducts = mergeArraysByUuid<ListedProduct>(oldProducts, newProducts)
 
   // Zusammenführen der 'lists' Arrays
   const mergedLists = mergeArraysByUuid<List>(oldLists, newLists)
+
+  const mergedMarkets = mergeArraysByUuid<Market>(oldMarkets, newMarkets)
 
   // Zusammenführen der 'products' innerhalb jeder Liste
   for (const list of mergedLists) {
@@ -25,10 +30,11 @@ export const mergeData = (
     list.products = mergeArraysByUuid<Product>(oldListProducts, newListProducts)
   }
 
-  // Konvertiere die Arrays zurück in JSON-Strings
-  const result: GoogleDriveSyncRequestRaw = {
-    lists: JSON.stringify(mergedLists),
-    products: JSON.stringify(mergedProducts),
+  const result: GoogleDriveSyncRequest = {
+    fileId: newData.fileId,
+    lists: mergedLists,
+    products: mergedProducts,
+    markets: mergedMarkets,
   }
 
   return result

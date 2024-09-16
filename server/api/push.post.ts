@@ -44,7 +44,7 @@ export default defineEventHandler(async (event: H3Event<EventHandlerRequest>): P
           fileId: parsedGoogleToken.fileId,
         })
         return {
-          id: saveResponse.data.id,
+          fileId: saveResponse.data.id,
           expiry_date: parsedGoogleToken.expiry_date,
           access_token: parsedGoogleToken.access_token,
           refresh_token: parsedGoogleToken.refresh_token,
@@ -68,7 +68,7 @@ export default defineEventHandler(async (event: H3Event<EventHandlerRequest>): P
     })
 
     return {
-      id: saveResponse.data.id,
+      fileId: saveResponse.data.id,
       expiry_date: parsedGoogleToken.expiry_date,
       access_token: parsedGoogleToken.access_token,
       refresh_token: parsedGoogleToken.refresh_token,
