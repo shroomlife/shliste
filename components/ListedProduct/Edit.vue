@@ -38,10 +38,8 @@ const state = reactive<ListedProduct>({
   brand: '',
   marketIds: [] as string[],
   checked: false,
-  deleted: false,
   createdAt: null,
   updatedAt: null,
-  archivedAt: null,
 })
 
 const schema = object({
@@ -57,10 +55,8 @@ const resetState = (): void => {
   state.brand = ''
   state.marketIds = [] as string[]
   state.checked = false
-  state.deleted = false
   state.createdAt = null
   state.updatedAt = null
-  state.archivedAt = null
 }
 
 async function onSubmit() {
@@ -68,7 +64,6 @@ async function onSubmit() {
     state.uuid = uuidv4()
     state.createdAt = new Date()
     state.updatedAt = new Date()
-    state.archivedAt = null
     productStore.addProduct({ ...state })
     toast.add({
       title: 'Produkt wurde erstellt!',
@@ -93,7 +88,6 @@ watch(() => productStore.getProductEdit, (newVal: ListedProduct | null) => {
     state.marketIds = newVal.marketIds
     state.createdAt = newVal.createdAt
     state.updatedAt = newVal.updatedAt
-    state.archivedAt = newVal.archivedAt
   }
 })
 

@@ -10,13 +10,11 @@ interface Product {
   brand?: string
   description?: string
   checked: boolean
-  deleted: boolean
 }
 
 interface ListedProduct extends Product {
   createdAt: Date | null
   updatedAt: Date | null
-  archivedAt: Date | null
   marketIds: string[]
 }
 

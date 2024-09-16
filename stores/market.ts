@@ -33,6 +33,7 @@ export const useMarketStore = defineStore('marketStore', {
     },
     setMarkets(markets: Market[] | null) {
       this.markets = markets ?? [] as Market[]
+      this.saveMarketsLocal()
     },
     updateMarket(uuid: string, market: Market) {
       const foundProduct = this.markets.find((market: Market) => market.uuid === uuid)

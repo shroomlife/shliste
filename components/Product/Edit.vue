@@ -28,16 +28,12 @@ const computedTitle = computed(() => {
   return computedProductHasId.value ? 'Bearbeite Produkt' : 'Neues Produkt'
 })
 
-const state = reactive<ListedProduct>({
+const state = reactive<Product>({
   uuid: '',
   name: '',
   description: '',
   brand: '',
   checked: false,
-  deleted: false,
-  createdAt: null,
-  updatedAt: null,
-  archivedAt: null,
 })
 
 const schema = object({
@@ -51,6 +47,7 @@ const resetState = (): void => {
   state.uuid = ''
   state.brand = ''
   state.description = ''
+  state.checked = false
 }
 
 async function onSubmit() {
@@ -65,6 +62,7 @@ watch(() => listStore.getProductEdit, (newVal: Product | null) => {
     state.name = newVal.name
     state.brand = newVal.brand
     state.description = newVal.description
+    state.checked = newVal.checked
   }
 })
 </script>

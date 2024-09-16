@@ -97,7 +97,6 @@ export const useListStore = defineStore('listStore', {
           name: name,
           description: '',
           checked: false,
-          deleted: false,
         }
         foundList.products.push(newProduct)
         foundList.updatedAt = new Date()
@@ -172,7 +171,6 @@ export const useListStore = defineStore('listStore', {
           description: foundProduct.description || '',
           brand: foundProduct.brand || '',
           checked: false,
-          deleted: false,
         }
         foundList.products.push(newProduct)
         foundList.updatedAt = new Date()
