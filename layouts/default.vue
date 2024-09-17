@@ -1,25 +1,9 @@
 <script lang="ts" setup>
 const headerLinks = computed(() => [
-  {
-    label: 'Listen',
-    icon: 'i-ph-list-checks',
-    to: '/',
-  },
-  {
-    label: 'Produkte',
-    icon: 'i-ph-shopping-cart',
-    to: '/produkte',
-  },
-  {
-    label: 'Supermärkte',
-    icon: 'i-ph-storefront',
-    to: '/markets',
-  },
-  {
-    label: 'Rezepte',
-    icon: 'i-ph-book',
-    to: '/rezepte',
-  },
+  appNavigation.lists,
+  appNavigation.products,
+  appNavigation.markets,
+  appNavigation.recipes,
 ])
 
 const route = useRoute()
@@ -28,17 +12,22 @@ const computedShowActionsBar = computed(() => {
   return route.meta.showActionsBar
 })
 
-const backLinks = computed(() => [
+const computedShowTopNavigation = computed(() => {
+  console.log('computedShowTopNavigation', route.meta.showTopNavigation)
+  return typeof route.meta.showTopNavigation === 'undefined'
+})
+
+const backLinks = (to: string) => [
   {
     label: 'Zurück zur Übersicht',
-    to: '/',
+    to: to,
     icon: 'i-ph-arrow-left-bold',
   },
-])
+]
 
 const computedLinks = computed(() => {
-  if (route.meta.isSingleList) {
-    return backLinks.value
+  if (route.meta.isSingleList && route.meta.backLink) {
+    return backLinks(route.meta.backLink as string)
   }
 
   return headerLinks.value
@@ -66,23 +55,20 @@ const computedLinks = computed(() => {
     </header>
     <div class="container mx-auto">
       <UHorizontalNavigation
+        v-if="computedShowTopNavigation"
         :links="computedLinks"
         class="border-b border-gray-200 dark:border-gray-800"
         :ui="{
           base: 'text-lg',
+          container: 'px-2',
         }"
       />
       <div class="p-4 flex flex-col">
         <slot />
       </div>
-      <ActionsBar v-if="computedShowActionsBar" />
     </div>
-    <footer />
-    <ListEdit />
-    <ProductEdit />
-    <ListedProductEdit />
+    <ActionsBar v-if="computedShowActionsBar" />
     <UNotifications />
-    <CloudSync />
   </main>
 </template>
 

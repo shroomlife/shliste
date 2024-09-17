@@ -34,6 +34,9 @@ export default defineNuxtConfig({
         redirectUri: process.env.NUXT_GOOGLE_REDIRECT_URI,
       },
     },
+    openai: {
+      apiKey: process.env.NUXT_OPENAI_API_KEY,
+    },
   },
   build: {
     transpile: ['tailwindcss'],

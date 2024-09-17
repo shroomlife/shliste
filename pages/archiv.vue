@@ -18,7 +18,7 @@ const computedLists = computed(() => listStore.getArchivedLists)
     <div v-else>
       <div class="flex items-center justify-center gap-2 text-lg h-40">
         <UIcon
-          name="i-ph-archive"
+          :name="appNavigation.archiv.icon"
           class="w-5 h-5"
         />
         <span>

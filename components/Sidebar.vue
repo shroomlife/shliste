@@ -3,6 +3,7 @@ const listStore = useListStore()
 const productStore = useProductStore()
 const googleStore = useGoogleStore()
 const marketStore = useMarketStore()
+const recipeStore = useRecipeStore()
 const appStore = useAppStore()
 
 const openMenu = () => {
@@ -25,30 +26,27 @@ const isGoogleConnecting = ref(false)
 const sidebarLinks = computed(() => {
   const appLinks = [
     {
-      label: 'Listen',
-      icon: 'i-ph-list-checks',
-      to: '/',
+      ...appNavigation.lists,
       badge: listStore.getActiveListsCount,
       click: closeMenu,
     },
     {
-      label: 'Produkte',
-      icon: 'i-ph-shopping-cart',
-      to: '/produkte',
+      ...appNavigation.products,
       badge: productStore.getProductsCount,
       click: closeMenu,
     },
     {
-      label: 'Supermärkte',
-      icon: 'i-ph-storefront',
-      to: '/markets',
+      ...appNavigation.markets,
       badge: marketStore.getMarketsCount,
       click: closeMenu,
     },
     {
-      label: 'Archiv',
-      icon: 'i-ph-archive-box',
-      to: '/archiv',
+      ...appNavigation.recipes,
+      badge: recipeStore.getRecipeCount,
+      click: closeMenu,
+    },
+    {
+      ...appNavigation.archiv,
       badge: listStore.getArchivedListsCount || 0,
       disabled: listStore.getArchivedListsCount === 0,
       click: () => {
@@ -61,15 +59,11 @@ const sidebarLinks = computed(() => {
 
   const siteLinks = [
     {
-      label: 'Datenschutz',
-      to: '/datenschutz',
-      icon: 'i-ph-shield-check-bold',
+      ...appNavigation.datenschutz,
       click: closeMenu,
     },
     {
-      label: 'Impressum',
-      to: '/impressum',
-      icon: 'i-ph-file-text-bold',
+      ...appNavigation.impressum,
       click: closeMenu,
     },
   ]

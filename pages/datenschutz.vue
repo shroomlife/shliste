@@ -1,5 +1,8 @@
 <script lang="ts" setup>
-
+definePageMeta({
+  showActionsBar: false,
+  showTopNavigation: false,
+})
 </script>
 
 <template>

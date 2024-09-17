@@ -9,7 +9,7 @@ const { list } = toRefs(props)
 const toast = useToast()
 const { $moment, $swal } = useNuxtApp()
 
-const computedListLink = computed(() => `/list/${list.value.uuid}`)
+const computedListLink = computed(() => `/liste/${list.value.uuid}`)
 const computedCardUi = computed(() => ({
   body: {
     padding: 'p-3',
@@ -115,7 +115,7 @@ const computedShowCheckedProductsCount = computed(() => {
             size="lg"
           >
             <div class="flex items-center gap-2">
-              <UIcon name="i-ph-shopping-cart" />
+              <UIcon :name="appNavigation.products.icon" />
               <span>{{ list.products.length }}</span>
             </div>
           </UBadge>

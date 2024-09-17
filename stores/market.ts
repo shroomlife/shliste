@@ -12,7 +12,13 @@ export const useMarketStore = defineStore('marketStore', {
   },
   actions: {
     addNewMarket() {
-      this.marketEdit = {} as Market
+      this.marketEdit = {
+        uuid: '',
+        name: '',
+        address: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as Market
     },
     setMarketEdit(market: Market | null) {
       this.marketEdit = market

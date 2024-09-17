@@ -2,6 +2,11 @@
 useSeoMeta({
   robots: 'index,follow',
 })
+
+definePageMeta({
+  showActionsBar: false,
+  showTopNavigation: false,
+})
 </script>
 
 <template>

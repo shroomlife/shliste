@@ -12,7 +12,16 @@ export const useProductStore = defineStore('productStore', {
   },
   actions: {
     addNewProduct() {
-      this.productEdit = {} as ListedProduct
+      this.productEdit = {
+        uuid: '',
+        name: '',
+        description: '',
+        brand: '',
+        marketIds: [],
+        checked: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as ListedProduct
     },
     setProductEdit(product: ListedProduct | null) {
       this.productEdit = product

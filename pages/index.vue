@@ -22,7 +22,7 @@ definePageMeta({
     <div v-else>
       <div class="flex items-center justify-center gap-2 text-lg h-40">
         <UIcon
-          name="i-ph-list-checks"
+          :name="appNavigation.lists.icon"
           class="w-5 h-5"
         />
         <span>
@@ -30,6 +30,7 @@ definePageMeta({
         </span>
       </div>
     </div>
+    <ListEdit />
   </div>
 </template>
 

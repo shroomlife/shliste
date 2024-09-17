@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 const props = defineProps<{
-  list: List
+  list?: List
+  name?: string
   h1?: boolean
 }>()
-
 const { list } = toRefs(props)
+const computedName = computed(() => props.name || list.value?.name || '')
 </script>
 
 <template>
@@ -16,11 +17,7 @@ const { list } = toRefs(props)
       :is="props.h1 ? 'h1' : 'div'"
       class="text-3xl md:text-4xl font-bold"
     >
-      {{ list.name }}
+      {{ computedName }}
     </component>
   </div>
 </template>
-
-<style lang="scss" scoped>
-
-</style>

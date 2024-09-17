@@ -48,9 +48,15 @@ const handleClose = () => {
       <UCard v-if="currentMarket">
         <template #header>
           <div class="flex items-center justify-between">
-            <span class="text-2xl font-bold">
-              {{ currentMarket.name }}
-            </span>
+            <div class="flex items-center gap-2">
+              <UIcon
+                class="w-8 h-8"
+                :name="appNavigation.markets.icon"
+              />
+              <span class="text-2xl font-bold">
+                {{ currentMarket.name }}
+              </span>
+            </div>
             <UButton
               color="gray"
               variant="ghost"

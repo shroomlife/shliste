@@ -83,62 +83,65 @@ const searchQuery = ref('')
 </script>
 
 <template>
-  <UCard>
-    <template #header>
-      <div class="flex justify-between items-center">
-        <h2 class="text-3xl md:text-4xl font-bold">
-          Produkte
-        </h2>
-        <div>
-          <UInput
-            v-model="searchQuery"
-            icon="i-ph-magnifying-glass"
-            placeholder="Produkt suchen..."
-            size="lg"
-          />
-        </div>
-      </div>
-    </template>
-
-    <UTable
-      :rows="products"
-      :columns="columns"
-      :ui="appConfig.table.ui"
-      :empty-state="{
-        label: 'Keine Produkte',
-        icon: 'i-ph-shopping-cart',
-      }"
-    >
-      <template #marketIds-data="{ row }">
-        <MarketRow :product="row" />
-      </template>
-
-      <template #actions-data="{ row }">
-        <div class="flex gap-2">
-          <UButton
-            icon="i-ph-pencil-line"
-            color="gray"
-            size="sm"
-            @click="productStore.editProduct(row.uuid)"
-          >
-            <span class="hidden md:block">
-              Bearbeiten
-            </span>
-          </UButton>
-          <UButton
-            icon="i-ph-trash"
-            color="red"
-            size="sm"
-            @click="deleteProduct(row.uuid)"
-          >
-            <span class="hidden md:block">
-              Löschen
-            </span>
-          </UButton>
+  <div>
+    <UCard>
+      <template #header>
+        <div class="flex justify-between items-center">
+          <h2 class="text-3xl md:text-4xl font-bold">
+            Produkte
+          </h2>
+          <div>
+            <UInput
+              v-model="searchQuery"
+              icon="i-ph-magnifying-glass"
+              placeholder="Produkt suchen..."
+              size="lg"
+            />
+          </div>
         </div>
       </template>
-    </UTable>
-  </UCard>
+
+      <UTable
+        :rows="products"
+        :columns="columns"
+        :ui="appConfig.table.ui"
+        :empty-state="{
+          label: 'Keine Produkte',
+          icon: 'i-ph-shopping-cart',
+        }"
+      >
+        <template #marketIds-data="{ row }">
+          <MarketRow :product="row" />
+        </template>
+
+        <template #actions-data="{ row }">
+          <div class="flex gap-2">
+            <UButton
+              icon="i-ph-pencil-line"
+              color="gray"
+              size="sm"
+              @click="productStore.editProduct(row.uuid)"
+            >
+              <span class="hidden md:block">
+                Bearbeiten
+              </span>
+            </UButton>
+            <UButton
+              icon="i-ph-trash"
+              color="red"
+              size="sm"
+              @click="deleteProduct(row.uuid)"
+            >
+              <span class="hidden md:block">
+                Löschen
+              </span>
+            </UButton>
+          </div>
+        </template>
+      </UTable>
+    </UCard>
+    <ListedProductEdit />
+  </div>
 </template>
 
 <style lang="scss" scoped>

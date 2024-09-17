@@ -5,44 +5,44 @@ import { v4 as uuidv4 } from 'uuid'
 const appConfig = useAppConfig()
 const toast = useToast()
 
-const listStore = useListStore()
+const recipeStore = useRecipeStore()
 const computedIsOpen = computed({
   get() {
-    return listStore.getListEdit !== null
+    return recipeStore.getRecipeEdit !== null
   },
   set(value) {
     if (!value) {
-      listStore.setListEdit(null)
+      recipeStore.setRecipeEdit(null)
     }
   },
 })
 
 const handleClose = () => {
-  listStore.setListEdit(null)
+  recipeStore.setRecipeEdit(null)
 }
 
-const handleChangeColor = () => {
-  const color = useRandomColorRGBA(0.2)
-  listStore.changeColor(state.uuid, color)
-}
+// const handleChangeColor = () => {
+//   const color = useRandomColorRGBA(0.2)
+//   recipeStore.changeColor(state.uuid, color)
+// }
 
-const computedListHasId = computed(() => {
-  return typeof listStore.getListEdit?.uuid === 'string'
+const computedRecipeHasId = computed(() => {
+  return typeof recipeStore.getRecipeEdit?.uuid === 'string'
 })
 
 const computedTitle = computed(() => {
-  return computedListHasId.value ? 'Bearbeite Liste' : 'Neue Liste'
+  return computedRecipeHasId.value ? 'Bearbeite Rezept' : 'Neues Rezept'
 })
 
-const state = reactive<List>({
+const state = reactive<Recipe>({
   uuid: '',
   name: '',
   color: '',
   description: '',
-  products: [] as Product[],
+  products: [] as (Product | ListedProduct)[],
+  steps: [] as string[],
   createdAt: null,
   updatedAt: null,
-  archivedAt: null,
 })
 
 const schema = object({
@@ -55,9 +55,9 @@ const resetState = (): void => {
   state.color = ''
   state.description = ''
   state.products = []
+  state.steps = []
   state.createdAt = new Date()
   state.updatedAt = new Date()
-  state.archivedAt = null
 }
 
 async function onSubmit() {
@@ -65,33 +65,32 @@ async function onSubmit() {
     state.uuid = uuidv4()
     state.createdAt = new Date()
     state.updatedAt = new Date()
-    state.archivedAt = null
     state.color = useRandomColorRGBA(0.2)
-    listStore.addList({ ...state })
+    recipeStore.addRecipe({ ...state })
     toast.add({
-      title: 'Liste wurde erstellt!',
+      title: 'Rezept wurde erstellt!',
       color: 'green',
       icon: 'i-ph-check-circle',
     })
   }
   else {
-    listStore.updateList(state.uuid, state)
+    recipeStore.updateRecipe(state.uuid, state)
   }
 
   handleClose()
   resetState()
 }
 
-watch(() => listStore.getListEdit, (newVal: List | null) => {
+watch(() => recipeStore.getRecipeEdit, (newVal: Recipe | null) => {
   if (newVal) {
     state.uuid = newVal.uuid
     state.name = newVal.name
     state.color = newVal.color
     state.description = newVal.description
     state.products = newVal.products
+    state.steps = newVal.steps
     state.createdAt = newVal.createdAt
     state.updatedAt = newVal.updatedAt
-    state.archivedAt = newVal.archivedAt
   }
 })
 </script>
@@ -130,8 +129,8 @@ watch(() => listStore.getListEdit, (newVal: List | null) => {
         >
           <UInput
             v-model="state.name"
-            placeholder="Name deiner Liste"
-            icon="i-ph-list-checks"
+            placeholder="Name deines Rezepts"
+            :icon="appNavigation.recipes.icon"
           />
         </UFormGroup>
         <div class="flex justify-between items-center">
@@ -144,12 +143,11 @@ watch(() => listStore.getListEdit, (newVal: List | null) => {
               Abbrechen
             </UButton>
             <UButton
-              v-if="computedListHasId"
+              v-if="0"
               color="orange"
               size="xl"
               variant="ghost"
               icon="i-ph-paint-brush"
-              @click="handleChangeColor"
             >
               Neue Farbe
             </UButton>

@@ -3,7 +3,8 @@ interface Recipe {
   name: string
   color: string
   description: string
-  ingredients: Product | ListedProduct[]
+  products: Product[]
+  steps: string[]
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -11,4 +12,5 @@ interface Recipe {
 interface RecipeStore {
   recipes: Recipe[]
   recipeEdit: Recipe | null
+  productEdit: Product | null
 }
