@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 const localStorageKey = 'shliste/products'
 
 export const useProductStore = defineStore('productStore', {
-  state: () => {
+  state: (): ListedProductStore => {
     const savedProducts = localStorage.getItem(localStorageKey)
     return {
       productEdit: null as ListedProduct | null,

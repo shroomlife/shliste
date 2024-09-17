@@ -3,11 +3,11 @@ import { defineStore } from 'pinia'
 const localStorageKey = 'shliste/markets'
 
 export const useMarketStore = defineStore('marketStore', {
-  state: () => {
+  state: (): MarketStore => {
     const savedMarkets = localStorage.getItem(localStorageKey)
     return {
-      marketEdit: null as Market | null,
       markets: savedMarkets ? JSON.parse(savedMarkets) as Market[] : [],
+      marketEdit: null as Market | null,
     }
   },
   actions: {
