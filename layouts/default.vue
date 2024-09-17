@@ -1,26 +1,24 @@
 <script lang="ts" setup>
-const listStore = useListStore()
-const productStore = useProductStore()
-const marketStore = useMarketStore()
-
-const links = computed(() => [
+const headerLinks = computed(() => [
   {
     label: 'Listen',
     icon: 'i-ph-list-checks',
     to: '/',
-    badge: listStore.getActiveListsCount,
   },
   {
     label: 'Produkte',
     icon: 'i-ph-shopping-cart',
     to: '/produkte',
-    badge: productStore.getProductsCount,
   },
   {
     label: 'Supermärkte',
     icon: 'i-ph-storefront',
     to: '/markets',
-    badge: marketStore.getMarketsCount,
+  },
+  {
+    label: 'Rezepte',
+    icon: 'i-ph-book',
+    to: '/rezepte',
   },
 ])
 
@@ -43,7 +41,7 @@ const computedLinks = computed(() => {
     return backLinks.value
   }
 
-  return links.value
+  return headerLinks.value
 })
 </script>
 

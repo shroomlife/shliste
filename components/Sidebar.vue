@@ -107,14 +107,23 @@ const optionItems = [
 <template>
   <div>
     <UButton
-      icon="i-ph-list-bold"
       color="white"
       variant="link"
       size="lg"
       square
       padded
       @click="openMenu"
-    />
+    >
+      <UChip
+        color="orange"
+        :show="!googleStore.getIsConnected"
+      >
+        <UIcon
+          name="i-ph-list-bold"
+          class="w-6 h-6"
+        />
+      </UChip>
+    </UButton>
     <USlideover
       v-model="isSidebarOpen"
     >

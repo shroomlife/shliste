@@ -31,6 +31,10 @@ export const useGoogleStore = defineStore('googleStore', {
         lastUpdated: null as Date | null,
         user: null as GoogleUser | null,
         userToken: null as GoogleToken | null,
+        loading: false,
+        syncing: false,
+        isPushInProgress: false,
+        currentDebounce: null as ReturnType<typeof debounce> | null,
       }
     }
 
