@@ -12,6 +12,7 @@ export default defineEventHandler((event: H3Event<EventHandlerRequest>) => {
     access_type: 'offline',
     scope: scopes,
     response_type: 'code',
+    prompt: 'consent',
   })
 
   return {

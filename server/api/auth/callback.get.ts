@@ -12,6 +12,8 @@ export default defineEventHandler(async (event: H3Event<EventHandlerRequest>) =>
 
     const oauth2Client: OAuth2Client = event.context.oauth2Client
     const { tokens } = await oauth2Client.getToken(query.code)
+
+    console.log('refresh_token1', tokens.refresh_token, new Date())
     oauth2Client.setCredentials(tokens)
 
     // Decode the JWT from tokens.id_token

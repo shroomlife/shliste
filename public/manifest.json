@@ -85,6 +85,6 @@
   "scope": "/",
   "short_name": "shliste",
   "start_url": "/",
-  "theme_color": "#FCE7F3",
-  "version": "0.8.0"
+  "theme_color": "#FDECF5",
+  "version": "0.9.0"
 }

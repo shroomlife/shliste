@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { debounce } from 'lodash-es'
+import type { CookieRef } from '#app'
 
 const saveDebounceTime = 2500
 
@@ -100,9 +101,9 @@ export const useGoogleStore = defineStore('googleStore', {
       this.setLastSynced(null)
       this.setLastUpdated(null)
       this.setUser(null)
-      const googleTokenCookie = useCookie('shliste/googleToken')
+      const googleTokenCookie = useCookie('shliste/googleToken', cookieOptions) as CookieRef<string | null>
       googleTokenCookie.value = null
-      const googleUserCookie = useCookie('shliste/googleUser')
+      const googleUserCookie = useCookie('shliste/googleUser', cookieOptions) as CookieRef<string | null>
       googleUserCookie.value = null
     },
     async pull(): Promise<string | null> {
@@ -112,7 +113,7 @@ export const useGoogleStore = defineStore('googleStore', {
 
           const fetchedData = await $fetch('/api/pull') as SyncPullResponse
 
-          const googleTokenCookie = useCookie('shliste/googleToken')
+          const googleTokenCookie = useCookie('shliste/googleToken', cookieOptions) as CookieRef<string>
           const updatedToken = {
             ...this.userToken,
             expiry_date: fetchedData.expiry_date,
@@ -178,7 +179,7 @@ export const useGoogleStore = defineStore('googleStore', {
               method: 'POST',
             }) as SyncPushResponse
 
-            const googleTokenCookie = useCookie('shliste/googleToken')
+            const googleTokenCookie = useCookie('shliste/googleToken', cookieOptions) as CookieRef<string>
             const updatedToken = {
               ...this.userToken,
               expiry_date: saveResponse.expiry_date,

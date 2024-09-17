@@ -14,6 +14,9 @@ export default defineEventHandler(async (event: H3Event<EventHandlerRequest>) =>
     }
 
     const parsedGoogleToken = JSON.parse(googleToken) as GoogleToken
+
+    console.log('refresh_token2', parsedGoogleToken.refresh_token, new Date())
+
     const oauth2Client = event.context.oauth2Client
     oauth2Client.setCredentials(parsedGoogleToken)
 
