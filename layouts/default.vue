@@ -49,7 +49,7 @@ const computedLinks = computed(() => {
 
 <template>
   <main>
-    <header class="sticky top-0 z-50 flex items-center justify-start p-4 bg-pink-200/80 backdrop-blur-lg shadow">
+    <header class="sticky top-0 z-50 flex items-center justify-start p-4 bg-pink-100/80 shadow backdrop-blur">
       <div class="container mx-auto flex items-center justify-between">
         <NuxtLink
           to="/"
