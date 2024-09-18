@@ -26,7 +26,12 @@ const computedCardUi = computed(() => ({
 }))
 
 const state = reactive({
-  newName: '',
+  product: {
+    newName: '',
+  },
+  step: {
+    newName: '',
+  },
 })
 
 const schema = object({
@@ -34,19 +39,22 @@ const schema = object({
 })
 
 const addItem = () => {
-  console.log('addItem')
   const newProduct: Product = {
     uuid: uuidv4(),
-    name: state.newName,
+    name: state.product.newName,
     description: '',
     checked: false,
   }
   recipeStore.addItem(recipe.value, newProduct)
-  state.newName = ''
+  state.product.newName = ''
+}
+
+const addStep = () => {
+  recipeStore.addStep(recipe.value, state.step.newName)
+  state.step.newName = ''
 }
 
 const editProduct = (product: Product) => {
-  console.log('editProduct')
   recipeStore.setProductEdit(product)
 }
 
@@ -64,11 +72,47 @@ const removeProduct = async (product: Product | ListedProduct) => {
   }
 }
 
+const removeStep = async (index: number) => {
+  const response = await $swal.fire({
+    title: 'Schritt wirklich löschen?',
+    text: 'Diese Aktion kann nicht rückgängig gemacht werden.',
+    showCancelButton: true,
+    icon: 'question',
+    confirmButtonText: 'Ja, löschen!',
+    cancelButtonText: 'Abbrechen',
+  })
+  if (response.isConfirmed) {
+    recipeStore.removeStep(recipe.value, index)
+  }
+}
+
 const computedListStyle = computed(() => {
   return {
     background: `linear-gradient(to bottom, ${recipe.value.color}, white)`,
   }
 })
+
+const computedFlatListStyle = computed(() => {
+  return {
+    backgroundColor: String(recipe.value.color).replace('0.2', '0.05'),
+  }
+})
+
+const isAbleToOrderStepUp = (index: number) => {
+  return index > 0
+}
+
+const isAbleToOrderStepDown = (index: number) => {
+  return index < recipe.value.steps.length - 1
+}
+
+const orderStepUp = (index: number) => {
+  recipeStore.orderStepUp(recipe.value, index)
+}
+
+const orderStepDown = (index: number) => {
+  recipeStore.orderStepDown(recipe.value, index)
+}
 </script>
 
 <template>
@@ -88,89 +132,213 @@ const computedListStyle = computed(() => {
           </div>
         </template>
 
-        <div class="flex flex-col gap-2">
-          <p
-            v-if="recipe.products.length === 0"
-            class="text-gray-500"
-          >
-            Keine Einträge
-          </p>
-          <UCard
-            v-for="product of recipe.products"
-            :key="product.uuid"
-            :ui="productUiConfig"
-          >
-            <div class="flex items-center gap-2">
+        <div class="flex flex-col gap-6">
+          <UCard :ui="computedCardUi">
+            <template #header>
               <div
-                class="flex-1 items-center flex gap-2 overflow-hidden"
+                class="flex justify-between items-center sm:px-6 p-4 rounded-t-lg"
+                :style="computedFlatListStyle"
               >
-                <NuxtLink
-                  class="cursor-pointer flex gap-2 items-center"
-                  @click="editProduct(product)"
-                >
-                  <p
-                    class="line-clamp-2 text-lg"
-                  >
-                    {{ product.name }}
-                  </p>
-                  <UBadge
-                    v-if="product.brand"
-                    color="pink"
-                    variant="solid"
-                    size="md"
-                  >
-                    {{ product.brand }}
-                  </UBadge>
-                </NuxtLink>
+                <span class="text-2xl md:text-3xl font-bold">Zutaten</span>
               </div>
-              <div class="flex gap-2">
-                <UButton
-                  color="red"
-                  variant="soft"
-                  size="md"
-                  icon="i-ph-trash"
-                  square
-                  padded
-                  @click="removeProduct(product)"
-                />
-              </div>
+            </template>
+
+            <div class="flex flex-col gap-2">
+              <p
+                v-if="recipe.products.length === 0"
+                class="text-gray-500"
+              >
+                Keine Zutaten
+              </p>
+              <UCard
+                v-for="product of recipe.products"
+                :key="product.uuid"
+                :ui="productUiConfig"
+              >
+                <div class="flex items-center gap-2">
+                  <div
+                    class="flex-1 items-center flex gap-2 overflow-hidden"
+                  >
+                    <NuxtLink
+                      class="cursor-pointer flex gap-2 items-center"
+                      @click="editProduct(product)"
+                    >
+                      <p
+                        class="line-clamp-2 text-lg"
+                      >
+                        {{ product.name }}
+                      </p>
+                      <UBadge
+                        v-if="product.brand"
+                        color="pink"
+                        variant="solid"
+                        size="md"
+                      >
+                        {{ product.brand }}
+                      </UBadge>
+                    </NuxtLink>
+                  </div>
+                  <div class="flex gap-2">
+                    <UButton
+                      color="red"
+                      variant="soft"
+                      size="md"
+                      icon="i-ph-trash"
+                      square
+                      padded
+                      @click="removeProduct(product)"
+                    />
+                  </div>
+                </div>
+              </UCard>
             </div>
+
+            <template #footer>
+              <UForm
+                :state="state.product"
+                :schema="schema"
+                :validate-on="['submit']"
+                class="container mx-auto"
+                @submit="addItem"
+              >
+                <UFormGroup
+                  name="newName"
+                  size="xl"
+                >
+                  <template #default>
+                    <div class="flex gap-2">
+                      <ListedProductConnector :recipe="recipe" />
+                      <UInput
+                        v-model="state.product.newName"
+                        class="flex-1"
+                        placeholder="Neuer Eintrag"
+                      />
+                      <UButton
+                        type="submit"
+                        color="green"
+                        size="xl"
+                        padded
+                        square
+                        icon="i-ph-plus-circle-fill"
+                      />
+                    </div>
+                  </template>
+                </UFormGroup>
+              </UForm>
+            </template>
+          </UCard>
+
+          <UDivider />
+
+          <UCard :ui="computedCardUi">
+            <template #header>
+              <div
+                class="flex justify-between items-center sm:px-6 p-4 rounded-t-lg"
+                :style="computedFlatListStyle"
+              >
+                <span class="text-2xl md:text-3xl font-bold">Zubereitung</span>
+              </div>
+            </template>
+
+            <div class="flex flex-col gap-2">
+              <p
+                v-if="recipe.steps.length === 0"
+                class="text-gray-500"
+              >
+                Keine Schritte
+              </p>
+              <UCard
+                v-for="(step, index) of recipe.steps"
+                :key="index"
+                :ui="productUiConfig"
+              >
+                <div class="flex flex-col justify-end gap-2">
+                  <div
+                    class="flex-1 items-center flex gap-2 overflow-hidden"
+                  >
+                    <NuxtLink
+                      class="cursor-pointer flex gap-2 items-center"
+                    >
+                      <p
+                        class="text-lg"
+                      >
+                        <span class="font-bold text-xl">{{ index+1 }}.</span> {{ step }}
+                      </p>
+                    </NuxtLink>
+                  </div>
+                  <div class="flex items-center justify-end gap-3">
+                    <!-- Buttons for Order Up and Order Down -->
+                    <div class="flex gap-2">
+                      <UButton
+                        :disabled="!isAbleToOrderStepUp(index)"
+                        color="white"
+                        variant="solid"
+                        size="xs"
+                        icon="i-ph-caret-up"
+                        square
+                        padded
+                        @click="orderStepUp(index)"
+                      />
+                      <UButton
+                        :disabled="!isAbleToOrderStepDown(index)"
+                        color="white"
+                        variant="solid"
+                        size="xs"
+                        icon="i-ph-caret-down"
+                        square
+                        padded
+                        @click="orderStepDown(index)"
+                      />
+                    </div>
+                    <UButton
+                      color="red"
+                      variant="soft"
+                      size="md"
+                      icon="i-ph-trash"
+                      square
+                      padded
+                      @click="removeStep(index)"
+                    />
+                  </div>
+                </div>
+              </UCard>
+            </div>
+
+            <template #footer>
+              <UForm
+                :state="state.step"
+                :schema="schema"
+                :validate-on="['submit']"
+                class="container mx-auto"
+                @submit="addStep"
+              >
+                <UFormGroup
+                  name="newName"
+                  size="xl"
+                >
+                  <template #default>
+                    <div class="flex gap-2">
+                      <UInput
+                        v-model="state.step.newName"
+                        class="flex-1"
+                        placeholder="Neuer Eintrag"
+                      />
+                      <UButton
+                        type="submit"
+                        color="green"
+                        size="xl"
+                        padded
+                        square
+                        icon="i-ph-plus-circle-fill"
+                      />
+                    </div>
+                  </template>
+                </UFormGroup>
+              </UForm>
+            </template>
           </UCard>
         </div>
       </UCard>
-
-      <div class="fixed bottom-0 left-0 right-0 z-10 bg-white dark:bg-gray-800 p-4 border-t border-gray-300">
-        <UForm
-          :state="state"
-          :schema="schema"
-          :validate-on="['submit']"
-          class="container mx-auto px-4"
-          @submit="addItem"
-        >
-          <UFormGroup
-            name="newName"
-            size="xl"
-          >
-            <template #default>
-              <div class="flex gap-2">
-                <UInput
-                  v-model="state.newName"
-                  class="flex-1"
-                  placeholder="Neuer Eintrag"
-                />
-                <UButton
-                  type="submit"
-                  color="green"
-                  size="xl"
-                  padded
-                  square
-                  icon="i-ph-plus-circle-fill"
-                />
-              </div>
-            </template>
-          </UFormGroup>
-        </UForm>
-      </div>
     </div>
     <RecipeProductEdit />
   </div>

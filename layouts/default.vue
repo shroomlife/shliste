@@ -13,7 +13,6 @@ const computedShowActionsBar = computed(() => {
 })
 
 const computedShowTopNavigation = computed(() => {
-  console.log('computedShowTopNavigation', route.meta.showTopNavigation)
   return typeof route.meta.showTopNavigation === 'undefined'
 })
 

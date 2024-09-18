@@ -187,6 +187,27 @@ export const useListStore = defineStore('listStore', {
       }
       return false
     },
+    addRecipe(list: List, recipeId: string) {
+      const foundList = this.lists.find(loopedList => loopedList.uuid === list.uuid)
+
+      const recipeStore = useRecipeStore()
+      const foundRecipe = recipeStore.getRecipeById(recipeId)
+
+      if (foundList && foundRecipe) {
+        for (const product of foundRecipe.products) {
+          const newProduct: Product = {
+            uuid: uuidv4(),
+            name: product.name,
+            description: product.description,
+            brand: product.brand,
+            checked: false,
+          }
+          foundList.products.push(newProduct)
+        }
+        foundList.updatedAt = new Date()
+        this.saveLists()
+      }
+    },
     saveListsLocal() {
       localStorage.setItem(localStorageKey, JSON.stringify(this.lists))
     },

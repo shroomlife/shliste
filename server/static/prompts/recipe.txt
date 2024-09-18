@@ -22,9 +22,10 @@ Requirements:
    - Make {error:true} when there is no Recipe or you are not able to create a qualified answer! (Otehrwise always {error:false})
    - Example Successful Response:
       {
-        "ingredients": [...],
-        "steps": [...],
-        "error": true
+         "title": "...",
+         "ingredients": [...],
+         "steps": [...],
+         "error": true
       }
    - Example Error Response:
       {

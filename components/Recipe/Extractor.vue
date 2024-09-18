@@ -1,11 +1,12 @@
 <script lang="ts" setup>
 import { object, string, type InferType } from 'yup'
+import { v4 as uuidv4 } from 'uuid'
 import type { FormSubmitEvent } from '#ui/types'
 import IconVype from '@/assets/icons/vype-ai.svg'
 
 const isOpen = ref(false)
-const recipeContent = ref(null) as Ref<string | null>
 const toast = useToast()
+const recipeStore = useRecipeStore()
 
 const openModal = () => {
   isOpen.value = true
@@ -19,6 +20,7 @@ const state = reactive({
   goVegan: true,
   extractedRecipe: {
     extracted: false,
+    title: '' as string,
     ingredients: [] as string[],
     selectedIngredients: [] as string[],
     steps: [] as string[],
@@ -37,7 +39,6 @@ type Schema = InferType<typeof schema>
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
     isLoading.value = true
-    recipeContent.value = null
     const { recipeUrl } = event.data
     const recipeResponse = await $fetch('/api/recipe/extract', {
       method: 'GET',
@@ -47,8 +48,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       },
     }) as ExtractRecipeResponse
 
-    if (recipeResponse.success && recipeResponse.ingredients && recipeResponse.steps) {
+    if (recipeResponse.success && recipeResponse.ingredients && recipeResponse.steps && recipeResponse.title) {
       state.extractedRecipe.extracted = true
+
+      state.extractedRecipe.title = recipeResponse.title as string
 
       state.extractedRecipe.ingredients = [...recipeResponse.ingredients]
       state.extractedRecipe.selectedIngredients = [...recipeResponse.ingredients]
@@ -115,9 +118,38 @@ const toggleStep = (step: string) => {
 }
 
 const resetLoadedRecipe = () => {
-  recipeContent.value = null
   isLoading.value = false
   state.recipeUrl = ''
+  state.extractedRecipe.extracted = false
+  state.extractedRecipe.title = ''
+  state.extractedRecipe.ingredients = []
+  state.extractedRecipe.selectedIngredients = []
+  state.extractedRecipe.steps = []
+  state.extractedRecipe.selectedSteps = []
+}
+
+const saveRecipe = () => {
+  recipeStore.addRecipe({
+    uuid: uuidv4(),
+    name: state.extractedRecipe.title,
+    color: useRandomColorRGBA(0.2),
+    description: '',
+    steps: state.extractedRecipe.selectedSteps,
+    products: state.extractedRecipe.selectedIngredients.map((ingredient) => {
+      const newProduct: Product = {
+        uuid: uuidv4(),
+        name: ingredient,
+        checked: false,
+        brand: '',
+        description: '',
+      }
+      return newProduct
+    }),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  })
+  closeModal()
+  resetLoadedRecipe()
 }
 </script>
 
@@ -263,6 +295,7 @@ const resetLoadedRecipe = () => {
                   size="xl"
                   type="submit"
                   :loading="isLoading"
+                  @click="saveRecipe"
                 >
                   Speichern
                 </UButton>

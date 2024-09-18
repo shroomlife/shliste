@@ -73,8 +73,8 @@ export default defineEventHandler(async (event): Promise<ExtractRecipeResponse> 
     ].join('\n')
     const cleanedBodyContent = bodyContent.replace(/\s+/g, ' ').trim()
 
-    console.log('### Prompt Template Text')
-    console.log(promptTemplateText)
+    console.info('### Prompt Template Text')
+    console.info(promptTemplateText)
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
@@ -91,19 +91,25 @@ export default defineEventHandler(async (event): Promise<ExtractRecipeResponse> 
 
     const messageContent = completion.choices[0].message.content as string
 
-    console.log('### Recipe Extracted')
-    console.log(messageContent)
+    console.info('### Recipe Extracted')
+    console.info(messageContent)
 
     const recipe = JSON.parse(messageContent) as {
+      title: string
       ingredients?: string[]
       steps?: string[]
       error: boolean
       errorMessage?: string
     }
 
+    if (recipe.ingredients) {
+      recipe.ingredients = Array.from(new Set(recipe.ingredients))
+    }
+
     if (recipe.error === false && recipe.ingredients && recipe.steps) {
       return {
         success: true,
+        title: recipe.title,
         ingredients: recipe.ingredients,
         steps: recipe.steps,
       }

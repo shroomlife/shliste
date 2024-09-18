@@ -17,6 +17,7 @@ interface RecipeStore {
 
 interface ExtractRecipeResponse {
   success: boolean
+  title?: string
   ingredients?: string[]
   steps?: string[]
   error?: string

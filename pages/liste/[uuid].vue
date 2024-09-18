@@ -263,6 +263,7 @@ const computedMarketsInList = computed(() => {
           >
             <template #default>
               <div class="flex gap-2">
+                <RecipeConnector :list="list" />
                 <ListedProductConnector :list="list" />
                 <UInput
                   v-model="state.newName"

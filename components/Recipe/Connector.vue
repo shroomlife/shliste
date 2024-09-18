@@ -1,11 +1,9 @@
 <script lang="ts" setup>
 const listStore = useListStore()
-const productStore = useProductStore()
 const recipeStore = useRecipeStore()
 
-const { list, recipe } = defineProps<{
-  list?: List
-  recipe?: Recipe
+const { list } = defineProps<{
+  list: List
 }>()
 
 const state = reactive({
@@ -21,34 +19,23 @@ const closeModal = () => {
   state.isOpen = false
 }
 
-const selectedProducts = ref<ListedProduct[]>([])
+const selectedRecipes = ref<Recipe[]>([])
 
 const onSelect = (products: { id: string, label: string }[]) => {
-  const selectedProduct = products[0] as { id: string, label: string }
-  const foundProduct = productStore.getProductByUuid(selectedProduct.id)
-
-  if (!foundProduct) {
+  const selectedRecipe = products[0] as { id: string, label: string }
+  if (!selectedRecipe) {
     return
   }
   state.isOpen = false
-
-  if (list) {
-    listStore.addItem(list, foundProduct.uuid)
-  }
-
-  if (recipe) {
-    recipeStore.addListedProduct(recipe, foundProduct)
-  }
-
-  selectedProducts.value = []
+  listStore.addRecipe(list, selectedRecipe.id)
+  selectedRecipes.value = []
 }
 
-const listedProducts = computed(() => {
-  return productStore.getProducts.map((product: ListedProduct) => {
+const listedRecipes = computed(() => {
+  return recipeStore.getRecipes.map((recipe: Recipe) => {
     return {
-      id: product.uuid,
-      label: product.name,
-      brand: product.brand,
+      id: recipe.uuid,
+      label: recipe.name,
     }
   })
 })
@@ -72,11 +59,11 @@ const handleKeyDown = (event: KeyboardEvent) => {
   <div>
     <UButton
       type="button"
-      color="pink"
+      color="rose"
       size="xl"
       padded
       square
-      icon="i-ph-list-magnifying-glass"
+      :icon="appNavigation.recipes.icon"
       @click="openModal"
     />
 
@@ -99,7 +86,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
             keys: ['label', 'brand'],
           },
         }"
-        :groups="[{ key: 'listedProducts', commands: listedProducts }]"
+        :groups="[{ key: 'listedRecipes', commands: listedRecipes }]"
         :ui="{
           input: {
             size: 'text-base sm:text-base',
@@ -113,17 +100,9 @@ const handleKeyDown = (event: KeyboardEvent) => {
         }"
         @update:model-value="onSelect"
       >
-        <template #listedProducts-command="{ command }">
+        <template #listedRecipes-command="{ command }">
           <div class="flex items-center justify-between text-lg w-full">
             <span>{{ command.label }}</span>
-            <UBadge
-              v-if="command.brand"
-              color="pink"
-              variant="solid"
-              size="md"
-            >
-              {{ command.brand }}
-            </UBadge>
           </div>
         </template>
       </UCommandPalette>
