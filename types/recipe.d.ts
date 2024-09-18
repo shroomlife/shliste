@@ -14,3 +14,10 @@ interface RecipeStore {
   recipeEdit: Recipe | null
   productEdit: Product | null
 }
+
+interface ExtractRecipeResponse {
+  success: boolean
+  ingredients?: string[]
+  steps?: string[]
+  error?: string
+}

@@ -1,17 +1,31 @@
+import { resolve } from 'path'
+import { readFileSync, existsSync } from 'fs'
 import { string } from 'yup'
 import * as cheerio from 'cheerio'
 import OpenAI from 'openai'
 
-export default defineEventHandler(async (event) => {
+const promptLocation = resolve(process.cwd(), 'server', 'static', 'prompts', 'recipe.txt')
+if (existsSync(promptLocation) === false) {
+  throw new Error('Prompt file not found!')
+}
+else {
+  console.log('✅ Recipe Prompt File Initialized')
+}
+
+export default defineEventHandler(async (event): Promise<ExtractRecipeResponse> => {
   try {
     const urlSchema = string().url()
-    const query = getQuery(event) as { recipeUrl: string }
+    const query = getQuery(event) as { recipeUrl: string, goVegan: boolean }
+
     const { recipeUrl } = query
 
     const isValidUrl = urlSchema.isValidSync(recipeUrl)
 
     if (!isValidUrl) {
-      return sendError(event, new Error('Invalid URL'))
+      return {
+        success: false,
+        error: 'Die URL ist ungültig.',
+      }
     }
 
     const controller = new AbortController()
@@ -28,15 +42,24 @@ export default defineEventHandler(async (event) => {
     clearTimeout(timeout)
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch the URL: ${response.statusText}`)
+      return {
+        success: false,
+        error: 'Die Website konnte leider nicht geladen werden.',
+      }
     }
 
     const html = await response.text()
 
-    // Parse the HTML and extract the body content
     const $ = cheerio.load(html)
     $('script, style, nav, footer, svg, img, picture, video, noscript, source, meta, header, footer, button, input, textarea, iframe').remove()
     const bodyContent = $('body').text().trim() as string
+
+    if (bodyContent.length === 0) {
+      return {
+        success: false,
+        error: 'Der Inhalt der Website konnte nicht extrahiert werden.',
+      }
+    }
 
     const runtimeConfig = useRuntimeConfig()
 
@@ -44,70 +67,57 @@ export default defineEventHandler(async (event) => {
       apiKey: runtimeConfig.openai.apiKey,
     })
 
-    const prompt = `You are a helpful assistant who extracts ingredients and preparation steps from a given recipe text and returns them in a specific format.
+    const promptTemplateText = [
+      readFileSync(promptLocation, 'utf-8') as string,
+      // goVegan ? '4. VEGANIZE: If in the recipe are NON-vegan ingredients, then replace them with amazing vegan alternatives! Take care! The User is allergic to NON-vegan products! MAKE THE RECIPE SUITABLE FOR VEGANS!' : '',
+    ].join('\n')
+    const cleanedBodyContent = bodyContent.replace(/\s+/g, ' ').trim()
 
-**Requirements:**
-
-1. **Ingredients:**
-   - Extract all ingredients from the text.
-   - Format each ingredient in the form: "[Quantity][Unit] [Ingredient]"
-     - **Quantity**: Numerical value (e.g., 500, 3)
-     - **Unit**: ml (milliliters), g (grams), stk. (pieces)
-     - **Ingredient**: Name of the ingredient
-   - Convert measurement units to German units if necessary.
-   - Example: "500ml Sahne", "3 stk. Eier", "250g Mehl"
-
-2. **Steps:**
-   - Extract the preparation steps from the text.
-   - Write clear and meaningful instructions in German.
-   - Return the steps as elements in a list (without numbering).
-
-3. **Output Format:**
-   - Return the results in the following JSON format:
-     \`\`\`json
-     {
-       "ingredients": ["..."],
-       "steps": ["..."]
-     }
-     \`\`\`
-   - Ensure that the JSON is valid and correctly formatted.
-   - Return **only** the JSON object, without additional explanations or texts.
-
----
-
-Here is the recipe text you should process:
-
-${bodyContent}
-`
+    console.log('### Prompt Template Text')
+    console.log(promptTemplateText)
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
+      // model: 'chatgpt-4o-latest',
       response_format: { type: 'json_object' },
       messages: [
         {
           role: 'system',
-          content:
-            'You are a helpful assistant that extracts recipes from text and outputs them in JSON format as specified. The output should be in German.',
+          content: promptTemplateText,
         },
-        { role: 'user', content: prompt },
+        { role: 'user', content: cleanedBodyContent },
       ],
     })
 
     const messageContent = completion.choices[0].message.content as string
 
-    console.log('messageContent:', messageContent)
+    console.log('### Recipe Extracted')
+    console.log(messageContent)
 
     const recipe = JSON.parse(messageContent) as {
-      ingredients: string[]
-      steps: string[]
+      ingredients?: string[]
+      steps?: string[]
+      error: boolean
+      errorMessage?: string
+    }
+
+    if (recipe.error === false && recipe.ingredients && recipe.steps) {
+      return {
+        success: true,
+        ingredients: recipe.ingredients,
+        steps: recipe.steps,
+      }
     }
 
     return {
-      recipe,
+      success: false,
+      error: recipe.errorMessage,
     }
   }
   catch (error: unknown) {
-    console.error('Error fetching the URL:', error)
-    return sendError(event, error as Error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten.',
+    }
   }
 })

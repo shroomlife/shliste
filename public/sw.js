@@ -2,7 +2,7 @@ const CACHE_NAME = 'shliste.app-cache-0.8.0';
 const NETWORK_TIMEOUT_MS = 3000; // 3 seconds
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.method === 'POST') {
+  if (event.request.method === 'POST' || String(event.request.url).includes('/api/')) {
     return;
   }
 

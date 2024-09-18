@@ -1,4 +1,5 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
+import svgLoader from 'vite-svg-loader'
+
 export default defineNuxtConfig({
   app: {
     head: {
@@ -55,5 +56,23 @@ export default defineNuxtConfig({
     config: {
       stylistic: true,
     },
+  },
+
+  vite: {
+    plugins: [
+      svgLoader({}),
+    ],
+    build: {
+      sourcemap: true,
+      minify: 'terser',
+      cssCodeSplit: true,
+      terserOptions: {
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+        },
+      },
+    },
+    cacheDir: '.vite',
   },
 })
