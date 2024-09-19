@@ -124,11 +124,7 @@ const optionItems = [
       <div class="p-4 flex flex-col gap-4">
         <div class="flex justify-between items-center">
           <div class="flex items-center gap-2">
-            <img
-              src="/images/logo/favicon.png"
-              class="w-10 h-10 md:w-12 md:h-12 shrink-0"
-              alt="shliste"
-            >
+            <AppLogo class="app-logo w-8 h-8 md:w-10 md:h-10 shrink-0" />
             <h1 class="text-4xl font-bold">
               menü
             </h1>

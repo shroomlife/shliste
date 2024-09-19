@@ -80,6 +80,11 @@ const deleteProduct = async (uuid: string) => {
 }
 
 const searchQuery = ref('')
+
+useSeoMeta({
+  title: 'shliste ~ Deine Produkte im Überblick',
+  description: 'Verwalte deine Lieblingsprodukte. Organisiere deine Einkaufsliste effizient mit shliste und finde schnell, was du brauchst!',
+})
 </script>
 
 <template>

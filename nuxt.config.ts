@@ -3,7 +3,7 @@ import svgLoader from 'vite-svg-loader'
 export default defineNuxtConfig({
   app: {
     head: {
-      title: 'shliste - Deine Shopping Liste 🛒',
+      title: 'shliste ~ Deine smarte Einkaufsliste',
       htmlAttrs: {
         lang: 'de',
       },
@@ -28,6 +28,7 @@ export default defineNuxtConfig({
     '@/assets/css/main.scss',
   ],
   runtimeConfig: {
+    environment: process.env.NUXT_ENVIRONMENT,
     google: {
       client: {
         id: process.env.NUXT_GOOGLE_CLIENT_ID,
@@ -51,13 +52,27 @@ export default defineNuxtConfig({
   colorMode: {
     preference: 'light',
   },
-  modules: ['@nuxt/ui', '@nuxt/eslint', '@pinia/nuxt'],
+  modules: ['@nuxt/ui', '@nuxt/eslint', '@pinia/nuxt', '@nuxtjs/seo', '@nuxtjs/sitemap'],
   eslint: {
     config: {
       stylistic: true,
     },
   },
-
+  seo: {
+    enabled: true,
+  },
+  site: {
+    indexable: true,
+    url: 'https://shliste.app',
+  },
+  nitro: {
+    publicAssets: [
+      {
+        baseURL: '/server',
+        dir: 'static',
+      },
+    ],
+  },
   vite: {
     plugins: [
       svgLoader({}),

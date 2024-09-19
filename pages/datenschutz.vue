@@ -3,6 +3,11 @@ definePageMeta({
   showActionsBar: false,
   showTopNavigation: false,
 })
+
+useSeoMeta({
+  title: 'shliste ~ Datenschutz',
+  description: 'Erfahre mehr über den Datenschutz deiner shlisten.',
+})
 </script>
 
 <template>

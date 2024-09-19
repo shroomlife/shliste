@@ -41,7 +41,7 @@ const computedLinks = computed(() => {
           to="/"
           class="flex items-center gap-2"
         >
-          <AppLogo class="w-10 h-10 md:w-12 md:h-12 shrink-0" />
+          <AppLogo class="app-logo w-8 h-8 md:w-10 md:h-10 shrink-0" />
           <h1 class="text-4xl font-bold">
             shliste
           </h1>

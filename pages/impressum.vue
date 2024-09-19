@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 useSeoMeta({
-  robots: 'index,follow',
+  title: 'shliste ~ Impressum',
+  description: 'Impressum der shliste App.',
 })
 
 definePageMeta({

@@ -1,7 +1,15 @@
 {
   "name": "shliste.app",
   "version": "0.8.0",
-  "private": true,
+  "private": false,
+  "keywords": [
+    "nuxt",
+    "docker",
+    "vue",
+    "lists",
+    "recipes",
+    "shopping"
+  ],
   "type": "module",
   "scripts": {
     "build": "nuxt build",
@@ -13,6 +21,8 @@
     "preview": "nuxt preview"
   },
   "dependencies": {
+    "@nuxtjs/seo": "2.0.0-rc.21",
+    "@nuxtjs/sitemap": "6.0.1",
     "@pinia/nuxt": "0.5.4",
     "cheerio": "1.0.0",
     "googleapis": "144.0.0",
@@ -37,7 +47,10 @@
     "tsc": "2.0.4",
     "typescript": "5.6.2",
     "vite-svg-loader": "5.1.0",
-    "vue": "3.5.6",
-    "vue-tsc": "2.1.6"
+    "vue": "3.5.6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shroomlife/shliste.git"
   }
 }

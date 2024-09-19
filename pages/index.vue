@@ -5,6 +5,11 @@ definePageMeta({
   showActionsBar: true,
   showAddListButton: true,
 })
+
+useSeoMeta({
+  title: 'shliste ~ Deine smarten Einkaufslisten',
+  description: 'Erstelle und verwalte mühelos deine Einkaufslisten mit shliste. Pack Produkte ein, hake sie ab und behalte immer den Überblick beim Shoppen!',
+})
 </script>
 
 <template>

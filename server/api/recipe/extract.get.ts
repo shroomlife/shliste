@@ -4,16 +4,32 @@ import { string } from 'yup'
 import * as cheerio from 'cheerio'
 import OpenAI from 'openai'
 
-const promptLocation = resolve(process.cwd(), 'server', 'static', 'prompts', 'recipe.txt')
-if (existsSync(promptLocation) === false) {
-  throw new Error('Prompt file not found!')
-}
-else {
-  console.log('✅ Recipe Prompt File Initialized')
-}
-
 export default defineEventHandler(async (event): Promise<ExtractRecipeResponse> => {
   try {
+    const runtimeConfig = useRuntimeConfig()
+
+    const prompt = {
+      location: null as string | null,
+    }
+
+    switch (runtimeConfig.environment) {
+      case 'production': {
+        prompt.location = resolve(process.cwd(), '.output', 'server', 'static', 'prompts', 'recipe.txt')
+        break
+      }
+      default: {
+        prompt.location = resolve(process.cwd(), 'server', 'static', 'prompts', 'recipe.txt')
+      }
+    }
+
+    console.log('### Prompt Location:', prompt.location)
+    if (existsSync(prompt.location) === false) {
+      throw new Error('Prompt file not found!')
+    }
+    else {
+      console.log('✅ Recipe Prompt File Initialized')
+    }
+
     const urlSchema = string().url()
     const query = getQuery(event) as { recipeUrl: string, goVegan: boolean }
 
@@ -61,14 +77,12 @@ export default defineEventHandler(async (event): Promise<ExtractRecipeResponse> 
       }
     }
 
-    const runtimeConfig = useRuntimeConfig()
-
     const openai = new OpenAI({
       apiKey: runtimeConfig.openai.apiKey,
     })
 
     const promptTemplateText = [
-      readFileSync(promptLocation, 'utf-8') as string,
+      readFileSync(prompt.location, 'utf-8') as string,
       // goVegan ? '4. VEGANIZE: If in the recipe are NON-vegan ingredients, then replace them with amazing vegan alternatives! Take care! The User is allergic to NON-vegan products! MAKE THE RECIPE SUITABLE FOR VEGANS!' : '',
     ].join('\n')
     const cleanedBodyContent = bodyContent.replace(/\s+/g, ' ').trim()

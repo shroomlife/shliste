@@ -71,6 +71,11 @@ const deleteMarket = async (uuid: string) => {
 }
 
 const searchQuery = ref('')
+
+useSeoMeta({
+  title: 'shliste ~ Deine Supermärkte im Überblick',
+  description: 'Verwalte deine Supermärkte. Verknüpfe Produkte mit Supermärkten und finde schnell, wo deine Artikel erhältlich sind.',
+})
 </script>
 
 <template>

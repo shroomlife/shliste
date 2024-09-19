@@ -5,6 +5,10 @@ definePageMeta({
   showActionsBar: true,
   showRecipeButtons: true,
 })
+useSeoMeta({
+  title: 'shliste ~ Verwalte deine Rezepte und Zutaten',
+  description: 'Erstelle und speichere Rezepte. Füge Zutaten und Zubereitung hinzu und plane deine Mahlzeiten einfach und effektiv!',
+})
 </script>
 
 <template>

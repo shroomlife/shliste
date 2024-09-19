@@ -1,6 +1,11 @@
 <script lang="ts" setup>
 const listStore = useListStore()
 const computedLists = computed(() => listStore.getArchivedLists)
+
+useSeoMeta({
+  title: 'shliste ~ Deine archivierten Einkaufslisten',
+  description: 'Archivierte Einkaufslisten in shliste. Hier findest du alle Listen, die du archiviert hast.',
+})
 </script>
 
 <template>
