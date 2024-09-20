@@ -35,16 +35,13 @@ const computedLinks = computed(() => {
 
 <template>
   <main>
-    <header class="sticky top-0 z-50 flex items-center justify-start p-4 bg-pink-100/80 shadow backdrop-blur">
-      <div class="container mx-auto flex items-center justify-between">
+    <header class="sticky top-0 z-50 flex items-center justify-start p-4 shadow backdrop-blur">
+      <div class="container mx-auto sm:px-4 flex items-center justify-between">
         <NuxtLink
           to="/"
-          class="flex items-center gap-2"
+          class="main-brand-link"
         >
-          <AppLogo class="app-logo w-8 h-8 md:w-10 md:h-10 shrink-0" />
-          <h1 class="text-4xl font-bold">
-            shliste
-          </h1>
+          <AppBrand class="w-auto h-8" />
         </NuxtLink>
         <div class="flex items-center gap-2">
           <CloudSyncIcon />

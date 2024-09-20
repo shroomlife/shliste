@@ -1,49 +1,49 @@
 {
-  "hash": "7ca24b43",
+  "hash": "f51f1c76",
   "configHash": "04845e91",
-  "lockfileHash": "377695e9",
-  "browserHash": "db487096",
+  "lockfileHash": "b4b38b00",
+  "browserHash": "af407f23",
   "optimized": {
+    "sweetalert2": {
+      "src": "../../../node_modules/sweetalert2/dist/sweetalert2.esm.all.js",
+      "file": "sweetalert2.js",
+      "fileHash": "02e9885e",
+      "needsInterop": false
+    },
     "moment": {
       "src": "../../../node_modules/moment/dist/moment.js",
       "file": "moment.js",
-      "fileHash": "99654d9b",
+      "fileHash": "dc51ed51",
       "needsInterop": false
     },
     "moment/locale/de": {
       "src": "../../../node_modules/moment/locale/de.js",
       "file": "moment_locale_de.js",
-      "fileHash": "9a33fe73",
+      "fileHash": "c048fb67",
       "needsInterop": true
-    },
-    "sweetalert2": {
-      "src": "../../../node_modules/sweetalert2/dist/sweetalert2.esm.all.js",
-      "file": "sweetalert2.js",
-      "fileHash": "fde8b268",
-      "needsInterop": false
     },
     "pinia": {
       "src": "../../../node_modules/pinia/dist/pinia.mjs",
       "file": "pinia.js",
-      "fileHash": "be88d95e",
-      "needsInterop": false
-    },
-    "uuid": {
-      "src": "../../../node_modules/uuid/dist/esm-browser/index.js",
-      "file": "uuid.js",
-      "fileHash": "9a726951",
+      "fileHash": "7f60a657",
       "needsInterop": false
     },
     "yup": {
       "src": "../../../node_modules/yup/index.esm.js",
       "file": "yup.js",
-      "fileHash": "973fbc0b",
+      "fileHash": "ed81706a",
+      "needsInterop": false
+    },
+    "uuid": {
+      "src": "../../../node_modules/uuid/dist/esm-browser/index.js",
+      "file": "uuid.js",
+      "fileHash": "b67933d7",
       "needsInterop": false
     },
     "lodash-es": {
       "src": "../../../node_modules/lodash-es/lodash.js",
       "file": "lodash-es.js",
-      "fileHash": "a75be1a4",
+      "fileHash": "b224d241",
       "needsInterop": false
     }
   },

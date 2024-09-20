@@ -180,7 +180,7 @@ const orderStepDown = (index: number) => {
                   </div>
                   <div class="flex gap-2">
                     <UButton
-                      color="red"
+                      color="rose"
                       variant="soft"
                       size="md"
                       icon="i-ph-trash"
@@ -291,7 +291,7 @@ const orderStepDown = (index: number) => {
                       />
                     </div>
                     <UButton
-                      color="red"
+                      color="rose"
                       variant="soft"
                       size="md"
                       icon="i-ph-trash"

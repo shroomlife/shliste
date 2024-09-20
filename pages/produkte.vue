@@ -133,7 +133,7 @@ useSeoMeta({
             </UButton>
             <UButton
               icon="i-ph-trash"
-              color="red"
+              color="rose"
               size="sm"
               @click="deleteProduct(row.uuid)"
             >

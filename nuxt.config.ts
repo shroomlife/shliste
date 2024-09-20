@@ -74,6 +74,14 @@ export default defineNuxtConfig({
     ],
   },
   vite: {
+    css: {
+      preprocessorOptions: {
+        scss: {
+          // additionalData: '@import "@/assets/css/_variables.scss";',
+          api: 'modern',
+        },
+      },
+    },
     plugins: [
       svgLoader({}),
     ],

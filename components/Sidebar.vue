@@ -114,7 +114,7 @@ const optionItems = [
       >
         <UIcon
           name="i-ph-list-bold"
-          class="w-6 h-6"
+          size="30"
         />
       </UChip>
     </UButton>

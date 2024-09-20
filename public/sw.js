@@ -1,5 +1,5 @@
-const CACHE_NAME = 'shliste.app-cache-0.8.0';
-const NETWORK_TIMEOUT_MS = 3000; // 3 seconds
+const CACHE_NAME = 'shliste.app-cache-0.9.0';
+const NETWORK_TIMEOUT_MS = 3000;
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method === 'POST' || String(event.request.url).includes('/api/')) {
@@ -10,7 +10,6 @@ self.addEventListener('fetch', (event) => {
     Promise.race([
       fetch(event.request)
         .then((response) => {
-          // If successful and status is 200, clone and cache the response
           if (response.status === 200) {
             const clonedResponse = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
@@ -26,7 +25,6 @@ self.addEventListener('fetch', (event) => {
     .catch(async () => {
       return caches.match(event.request)
         .then((cachedResponse) => {
-          // Return cached resource if found, else return offline message
           return cachedResponse || new Response(
             'No Connection',
             { status: 503, statusText: 'Service Nicht Verfügbar' }

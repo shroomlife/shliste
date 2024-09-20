@@ -7,3 +7,18 @@ body {
     fill: rgb(224, 100, 178);
   }
 }
+
+header {
+  background: rgb(253,236,245);
+  background: linear-gradient(180deg, rgba(253,236,245,1) 0%, rgba(253,236,245,0.8) 100%);
+}
+
+.main-brand-link {
+  &:hover {
+    svg {
+      path {
+        fill: #cb378d;
+      }
+    }
+  }
+}

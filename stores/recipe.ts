@@ -107,7 +107,7 @@ export const useRecipeStore = defineStore('recipeStore', {
       }
     },
     setRecipes(recipes: Recipe[]) {
-      this.recipes = recipes
+      this.recipes = recipes ?? [] as Recipe[]
       this.saveRecipesLocal()
     },
     removeItem(recipe: Recipe, item: Product) {

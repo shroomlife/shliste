@@ -120,7 +120,7 @@ useSeoMeta({
             </UButton>
             <UButton
               icon="i-ph-trash"
-              color="red"
+              color="rose"
               size="sm"
               @click="deleteMarket(row.uuid)"
             >

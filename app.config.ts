@@ -1,5 +1,6 @@
 export default defineAppConfig({
   ui: {
+    primary: 'rose',
     strategy: 'merge',
     notifications: {
       position: 'top-0 bottom-auto',

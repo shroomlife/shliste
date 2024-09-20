@@ -79,7 +79,7 @@ const handleClose = () => {
 
         <template #footer>
           <UButton
-            color="blue"
+            color="green"
             :to="computedMarketDirectionsLink"
             target="_blank"
           >

@@ -1,4 +1,4 @@
-FROM node:alpine AS builder
+FROM node:22-alpine AS builder
 
 RUN corepack enable
 WORKDIR /app
@@ -11,7 +11,7 @@ COPY . .
 
 RUN pnpm run build
 
-FROM node:alpine AS prod-deps
+FROM node:22-alpine AS prod-deps
 
 RUN corepack enable
 WORKDIR /app
@@ -21,7 +21,7 @@ COPY --from=builder /app/pnpm-lock.yaml ./
 
 RUN pnpm install --prod
 
-FROM node:alpine
+FROM node:22-alpine
 
 WORKDIR /app
 

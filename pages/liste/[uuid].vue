@@ -204,7 +204,7 @@ const computedMarketsInList = computed(() => {
 
                 <UButton
                   v-if="product.checked"
-                  color="red"
+                  color="rose"
                   variant="soft"
                   size="md"
                   icon="i-ph-trash"
