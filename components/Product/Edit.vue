@@ -21,7 +21,7 @@ const handleClose = () => {
 }
 
 const computedProductHasId = computed(() => {
-  return typeof listStore.getProductEdit?.uuid === 'string'
+  return typeof listStore.getProductEdit?.uuid === 'string' && listStore.getProductEdit?.uuid.length > 0
 })
 
 const computedTitle = computed(() => {

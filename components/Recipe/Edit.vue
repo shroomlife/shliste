@@ -27,7 +27,7 @@ const handleClose = () => {
 // }
 
 const computedRecipeHasId = computed(() => {
-  return typeof recipeStore.getRecipeEdit?.uuid === 'string'
+  return typeof recipeStore.getRecipeEdit?.uuid === 'string' && recipeStore.getRecipeEdit?.uuid.length > 0
 })
 
 const computedTitle = computed(() => {

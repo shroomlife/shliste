@@ -2,6 +2,7 @@ interface GoogleDriveSyncRequest {
   lists: List[]
   products: ListedProduct[]
   markets: Market[]
+  recipes: Recipe[]
   fileId?: string
 }
 
@@ -9,6 +10,7 @@ interface GoogleDriveSyncRequestRaw {
   lists: string
   products: string
   markets: string
+  recipes: string
   fileId?: string
 }
 

@@ -8,7 +8,7 @@ export default defineNuxtConfig({
         lang: 'de',
       },
       meta: [
-        { name: 'description', content: 'Organisiere deine Einkäufe einfach und schnell mit deiner persönlichen shliste. Einfach, intuitiv und kostenlos.' },
+        { name: 'description', content: 'Erstelle und verwalte mühelos deine Einkaufslisten mit shliste. Pack Produkte ein, hake sie ab und behalte immer den Überblick beim Shoppen!' },
         { name: 'theme-color', content: '#FCE7F3' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
       ],

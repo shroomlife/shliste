@@ -106,6 +106,10 @@ export const useRecipeStore = defineStore('recipeStore', {
         this.saveRecipes()
       }
     },
+    setRecipes(recipes: Recipe[]) {
+      this.recipes = recipes
+      this.saveRecipesLocal()
+    },
     removeItem(recipe: Recipe, item: Product) {
       const foundRecipe = this.recipes.find((r: Recipe) => r.uuid === recipe.uuid)
       if (foundRecipe) {

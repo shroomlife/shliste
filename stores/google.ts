@@ -138,15 +138,18 @@ export const useGoogleStore = defineStore('googleStore', {
             const listStore = useListStore()
             const productStore = useProductStore()
             const marketStore = useMarketStore()
+            const recipeStore = useRecipeStore()
 
             const localLists = listStore.getLists ?? []
             const localProducts = productStore.getProducts ?? []
             const localMarkets = marketStore.getMarkets ?? []
+            const localRecipes = recipeStore.getRecipes ?? []
 
             const localData: GoogleDriveSyncRequestRaw = {
               lists: JSON.stringify(localLists),
               products: JSON.stringify(localProducts),
               markets: JSON.stringify(localMarkets),
+              recipes: JSON.stringify(localRecipes),
             }
 
             const mergedData = mergeData(localData, fetchedData.data)
@@ -154,6 +157,7 @@ export const useGoogleStore = defineStore('googleStore', {
             listStore.setLists(mergedData.lists)
             productStore.setProducts(mergedData.products)
             marketStore.setMarkets(mergedData.markets)
+            recipeStore.setRecipes(mergedData.recipes)
 
             return fileId
           }

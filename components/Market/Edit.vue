@@ -23,7 +23,7 @@ const handleClose = () => {
 }
 
 const computedProductHasId = computed(() => {
-  return typeof marketStore.getMarketEdit?.uuid === 'string'
+  return typeof marketStore.getMarketEdit?.uuid === 'string' && marketStore.getMarketEdit?.uuid.length > 0
 })
 
 const computedTitle = computed(() => {

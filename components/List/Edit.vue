@@ -27,7 +27,7 @@ const handleChangeColor = () => {
 }
 
 const computedListHasId = computed(() => {
-  return typeof listStore.getListEdit?.uuid === 'string'
+  return typeof listStore.getListEdit?.uuid === 'string' && listStore.getListEdit?.uuid.length > 0
 })
 
 const computedTitle = computed(() => {
