@@ -44,7 +44,7 @@ const deleteOption = [{
       recipeStore.removeRecipe(recipe.value.uuid)
       toast.add({
         title: 'Rezept wurde gelöscht!',
-        color: 'red',
+        color: 'rose',
         icon: 'i-ph-trash',
       })
     }

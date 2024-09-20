@@ -34,4 +34,12 @@ export const appNavigation = {
     to: '/datenschutz',
     icon: 'i-ph-shield-check-bold',
   },
+  import: {
+    label: 'Import',
+    icon: 'i-ph-upload-bold',
+  },
+  export: {
+    label: 'Download Backup',
+    icon: 'i-ph-cloud-arrow-down-bold',
+  },
 }

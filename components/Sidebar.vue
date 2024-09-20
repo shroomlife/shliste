@@ -6,6 +6,8 @@ const marketStore = useMarketStore()
 const recipeStore = useRecipeStore()
 const appStore = useAppStore()
 
+const toast = useToast()
+
 const openMenu = () => {
   appStore.openSidebar()
 }
@@ -31,6 +33,11 @@ const sidebarLinks = computed(() => {
       click: closeMenu,
     },
     {
+      ...appNavigation.recipes,
+      badge: recipeStore.getRecipeCount,
+      click: closeMenu,
+    },
+    {
       ...appNavigation.products,
       badge: productStore.getProductsCount,
       click: closeMenu,
@@ -41,17 +48,45 @@ const sidebarLinks = computed(() => {
       click: closeMenu,
     },
     {
-      ...appNavigation.recipes,
-      badge: recipeStore.getRecipeCount,
-      click: closeMenu,
-    },
-    {
       ...appNavigation.archiv,
       badge: listStore.getArchivedListsCount || 0,
       disabled: listStore.getArchivedListsCount === 0,
       click: () => {
         if (listStore.getArchivedListsCount > 0) {
           closeMenu()
+        }
+      },
+    },
+  ]
+
+  const actionLinks = [
+    // {
+    //   ...appNavigation.import,
+    // },
+    {
+      ...appNavigation.export,
+      click: () => {
+        try {
+          const dataToExport = JSON.stringify(useSync())
+          const blob = new Blob([dataToExport], { type: 'application/json' })
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          const date = new Date()
+          const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+          const formattedTime = `${String(date.getHours()).padStart(2, '0')}-${String(date.getMinutes()).padStart(2, '0')}-${String(date.getSeconds()).padStart(2, '0')}`
+          const fileName = `shliste-export-${formattedDate}_${formattedTime}.json`
+          link.download = fileName
+          link.click()
+          URL.revokeObjectURL(url)
+        }
+        catch (error) {
+          console.error(error)
+          toast.add({
+            title: 'Fehler beim Exportieren',
+            description: 'Beim Exportieren deiner Daten ist ein Fehler aufgetreten. Bitte versuche es erneut.',
+            color: 'rose',
+          })
         }
       },
     },
@@ -70,6 +105,7 @@ const sidebarLinks = computed(() => {
 
   return [
     appLinks,
+    actionLinks,
     siteLinks,
   ]
 })

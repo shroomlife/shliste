@@ -63,8 +63,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       toast.add({
         title: 'Fehler beim Extrahieren',
         description: recipeResponse.error,
-        color: 'red',
-        timeout: 5000,
+        color: 'rose',
       })
     }
     else {
@@ -76,8 +75,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     toast.add({
       title: 'Fehler beim Extrahieren',
       description: 'Ein unbekannter Fehler ist aufgetreten.',
-      color: 'red',
-      timeout: 5000,
+      color: 'rose',
     })
   }
   finally {
@@ -129,7 +127,7 @@ const resetLoadedRecipe = () => {
 }
 
 const saveRecipe = () => {
-  recipeStore.addRecipe({
+  const newRecipe = {
     uuid: uuidv4(),
     name: state.extractedRecipe.title,
     color: useRandomColorRGBA(0.2),
@@ -147,7 +145,19 @@ const saveRecipe = () => {
     }),
     createdAt: new Date(),
     updatedAt: new Date(),
+  }
+
+  recipeStore.addRecipe(newRecipe)
+
+  toast.add({
+    title: 'Rezept erstellt!',
+    description: 'Das Rezept wurde erfolgreich extrahiert.',
+    color: 'green',
   })
+
+  const recipeUrl = ['/rezept', newRecipe.uuid].join('/')
+  navigateTo(recipeUrl)
+
   closeModal()
   resetLoadedRecipe()
 }

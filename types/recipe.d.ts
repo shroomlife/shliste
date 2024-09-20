@@ -13,6 +13,7 @@ interface RecipeStore {
   recipes: Recipe[]
   recipeEdit: Recipe | null
   productEdit: Product | null
+  recipeStepEditIndex: number | null
 }
 
 interface ExtractRecipeResponse {

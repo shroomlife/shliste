@@ -113,6 +113,13 @@ const orderStepUp = (index: number) => {
 const orderStepDown = (index: number) => {
   recipeStore.orderStepDown(recipe.value, index)
 }
+
+const editStep = (index: number) => {
+  console.log('editStep', index)
+  recipeStore.setRecipeStepEdit(index)
+}
+
+const isEdit = ref(false)
 </script>
 
 <template>
@@ -121,18 +128,42 @@ const orderStepDown = (index: number) => {
       <UCard :ui="computedCardUi">
         <template #header>
           <div
-            class="flex justify-between items-center sm:px-6 p-4 rounded-t-lg"
+            class="flex justify-between items-start sm:px-6 p-4 rounded-t-lg"
             :style="computedListStyle"
           >
             <ListName
               :name="recipe.name"
               :h1="true"
             />
-            <div class="flex gap-2" />
+            <div class="flex gap-2">
+              <UButton
+                v-if="!isEdit"
+                color="white"
+                variant="solid"
+                size="lg"
+                icon="i-ph-pencil-line"
+                padded
+                square
+                @click="isEdit = true"
+              />
+              <UButton
+                v-else
+                color="white"
+                variant="solid"
+                size="lg"
+                icon="i-ph-check-bold"
+                padded
+                square
+                @click="isEdit = false"
+              />
+            </div>
           </div>
         </template>
 
-        <div class="flex flex-col gap-6">
+        <div
+          v-if="isEdit"
+          class="flex flex-col gap-6"
+        >
           <UCard :ui="computedCardUi">
             <template #header>
               <div
@@ -258,6 +289,7 @@ const orderStepDown = (index: number) => {
                   >
                     <NuxtLink
                       class="cursor-pointer flex gap-2 items-center"
+                      @click="editStep(index)"
                     >
                       <p
                         class="text-lg"
@@ -338,9 +370,14 @@ const orderStepDown = (index: number) => {
             </template>
           </UCard>
         </div>
+        <RecipeView
+          v-else
+          :recipe="recipe"
+        />
       </UCard>
     </div>
     <RecipeProductEdit />
+    <RecipeStepEdit />
   </div>
 </template>
 

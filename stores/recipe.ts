@@ -10,6 +10,7 @@ export const useRecipeStore = defineStore('recipeStore', {
       recipes: savedRecipes ? JSON.parse(savedRecipes) as Recipe[] : [],
       recipeEdit: null as Recipe | null,
       productEdit: null as Product | null,
+      recipeStepEditIndex: null as number | null,
     }
   },
 
@@ -28,6 +29,9 @@ export const useRecipeStore = defineStore('recipeStore', {
     },
     setRecipeEdit(recipe: Recipe | null) {
       this.recipeEdit = recipe
+    },
+    setRecipeStepEdit(step: number | null) {
+      this.recipeStepEditIndex = step
     },
     addRecipe(recipe: Recipe) {
       this.recipes.push(recipe)
@@ -131,6 +135,14 @@ export const useRecipeStore = defineStore('recipeStore', {
         }
       }
     },
+    updateRecipeStep(recipe: Recipe, stepIndex: number, newName: string) {
+      const foundRecipe = this.recipes.find((r: Recipe) => r.uuid === recipe.uuid)
+      if (foundRecipe) {
+        foundRecipe.steps[stepIndex] = newName
+        foundRecipe.updatedAt = new Date()
+        this.saveRecipes()
+      }
+    },
     setProductEdit(product: Product | null) {
       this.productEdit = product
     },
@@ -145,7 +157,9 @@ export const useRecipeStore = defineStore('recipeStore', {
   },
 
   getters: {
-    getRecipes: state => state.recipes,
+    getRecipes: state => state.recipes
+      .sort((a: Recipe, b: Recipe) => new Date(b.updatedAt!).getTime() - new Date(a.updatedAt!).getTime()),
+    getRecipeStepEditIndex: state => state.recipeStepEditIndex,
     getRecipeById: state => (uuid: string) => state.recipes.find((recipe: Recipe) => recipe.uuid === uuid) as Recipe,
     getRecipeEdit: state => state.recipeEdit,
     getRecipeCount: state => state.recipes.length,

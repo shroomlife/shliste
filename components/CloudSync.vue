@@ -22,7 +22,7 @@ onMounted(async () => {
       if (!isPushSuccess) {
         toast.add({
           title: 'Fehler beim Synchronisieren!',
-          color: 'red',
+          color: 'rose',
           icon: 'i-ph-warning',
         })
       }
@@ -32,7 +32,7 @@ onMounted(async () => {
     console.error(error)
     toast.add({
       title: 'Fehler beim Synchronisieren!',
-      color: 'red',
+      color: 'rose',
       icon: 'i-ph-warning',
     })
   }
@@ -51,14 +51,16 @@ onMounted(async () => {
       <div class="flex flex-col items-center justify-center">
         <UIcon
           name="i-mdi-google-drive"
-          class="w-24 h-24 text-green-500 mb-4"
+          class="text-green-500"
+          size="128"
         />
         <UIcon
           name="svg-spinners:3-dots-fade"
-          class="w-10 h-10 text-green-500"
+          class="text-green-500"
+          size="64"
         />
-        <p class="text-gray-500">
-          Wir synchronisieren deine Listen mit Google Drive.
+        <p class="text-gray-500 text-lg">
+          Wir synchronisieren deine Daten mit Google Drive
         </p>
       </div>
     </div>

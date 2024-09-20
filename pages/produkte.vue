@@ -57,6 +57,11 @@ const columns = ref([
   },
 ])
 
+const defaultSort = ref({
+  column: 'updatedAt',
+  direction: 'desc' as const,
+})
+
 const toast = useToast()
 const { $swal } = useNuxtApp()
 
@@ -73,7 +78,7 @@ const deleteProduct = async (uuid: string) => {
     productStore.deleteProduct(uuid)
     toast.add({
       title: 'Produkt wurde gelöscht!',
-      color: 'red',
+      color: 'rose',
       icon: 'i-ph-trash',
     })
   }
@@ -107,6 +112,7 @@ useSeoMeta({
       </template>
 
       <UTable
+        :sort="defaultSort"
         :rows="products"
         :columns="columns"
         :ui="appConfig.table.ui"

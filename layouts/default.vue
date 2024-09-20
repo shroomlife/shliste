@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 const headerLinks = computed(() => [
   appNavigation.lists,
+  appNavigation.recipes,
   appNavigation.products,
   appNavigation.markets,
-  appNavigation.recipes,
 ])
 
 const route = useRoute()

@@ -56,7 +56,7 @@ const deleteOption = [{
       listStore.removeList(list.value.uuid)
       toast.add({
         title: 'Liste wurde gelöscht!',
-        color: 'red',
+        color: 'rose',
         icon: 'i-ph-trash',
       })
     }
