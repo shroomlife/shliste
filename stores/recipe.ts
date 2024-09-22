@@ -21,6 +21,7 @@ export const useRecipeStore = defineStore('recipeStore', {
         name: '',
         color: '',
         description: '',
+        url: '',
         products: [],
         steps: [],
         createdAt: new Date(),
@@ -43,6 +44,7 @@ export const useRecipeStore = defineStore('recipeStore', {
         foundRecipe.name = recipe.name
         foundRecipe.color = recipe.color
         foundRecipe.description = recipe.description
+        foundRecipe.url = recipe.url
         foundRecipe.products = recipe.products ?? []
         foundRecipe.updatedAt = new Date()
         this.saveRecipes()

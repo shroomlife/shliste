@@ -8,6 +8,7 @@ const { list } = toRefs(props)
 
 const toast = useToast()
 const { $moment, $swal } = useNuxtApp()
+const isDescriptionOpen = ref(false)
 
 const computedListLink = computed(() => `/liste/${list.value.uuid}`)
 const computedCardUi = computed(() => ({
@@ -83,6 +84,30 @@ const computedCheckedProductsCount = computed(() => {
 const computedShowCheckedProductsCount = computed(() => {
   return list.value.products.some(product => product.checked)
 })
+
+const computedListHasUrl = computed(() => {
+  return list.value.url && list.value.url.length > 0
+})
+
+const computedExternalListLink = computed(() => {
+  return list.value.url
+})
+
+const computedListHasDescription = computed(() => {
+  return list.value.description && list.value.description.length > 0
+})
+
+const openDescription = () => {
+  isDescriptionOpen.value = true
+}
+
+const closeDescription = () => {
+  isDescriptionOpen.value = false
+}
+
+const computedProductAmountCaption = computed(() => {
+  return list.value.products.length === 1 ? 'Produkt' : 'Produkte'
+})
 </script>
 
 <template>
@@ -116,13 +141,13 @@ const computedShowCheckedProductsCount = computed(() => {
           >
             <div class="flex items-center gap-2">
               <UIcon :name="appNavigation.products.icon" />
-              <span>{{ list.products.length }}</span>
+              <span>{{ list.products.length }} {{ computedProductAmountCaption }}</span>
             </div>
           </UBadge>
           <UBadge
             v-if="computedShowCheckedProductsCount"
-            color="white"
-            variant="solid"
+            color="green"
+            variant="subtle"
             size="lg"
           >
             <div class="flex items-center gap-2">
@@ -141,22 +166,68 @@ const computedShowCheckedProductsCount = computed(() => {
           </UBadge>
         </div>
 
-        <UDropdown
-          :items="optionItems"
-          :ui="{
-            item: {
-              label: 'text-base',
-            },
-          }"
-        >
+        <div class="flex gap-2">
           <UButton
+            v-if="computedListHasDescription"
+            icon="i-ph-text-columns"
             color="gray"
-            icon="i-ph-dots-three-bold"
             size="md"
             square
             padded
+            @click="openDescription"
           />
-        </UDropdown>
+
+          <UModal v-model="isDescriptionOpen">
+            <UCard>
+              <template #header>
+                <div class="flex items-center justify-between">
+                  <ListName :list="list" />
+                  <UButton
+                    color="gray"
+                    variant="ghost"
+                    size="md"
+                    icon="i-ph-x"
+                    square
+                    padded
+                    @click="closeDescription"
+                  />
+                </div>
+              </template>
+
+              <div class="text-lg">
+                {{ list.description }}
+              </div>
+            </UCard>
+          </UModal>
+
+          <UButton
+            v-if="computedListHasUrl"
+            icon="i-ph-arrow-square-out"
+            color="gray"
+            size="md"
+            square
+            padded
+            :to="computedExternalListLink"
+            target="_blank"
+            :external="true"
+          />
+          <UDropdown
+            :items="optionItems"
+            :ui="{
+              item: {
+                label: 'text-base',
+              },
+            }"
+          >
+            <UButton
+              color="gray"
+              icon="i-ph-dots-three-bold"
+              size="md"
+              square
+              padded
+            />
+          </UDropdown>
+        </div>
       </div>
     </template>
   </UCard>

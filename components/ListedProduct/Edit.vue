@@ -82,9 +82,9 @@ async function onSubmit() {
 watch(() => productStore.getProductEdit, (newVal: ListedProduct | null) => {
   if (newVal) {
     state.uuid = newVal.uuid
-    state.name = newVal.name
-    state.description = newVal.description
-    state.brand = newVal.brand
+    state.name = newVal.name ?? ''
+    state.description = newVal.description ?? ''
+    state.brand = newVal.brand ?? ''
     state.marketIds = newVal.marketIds ?? []
     state.createdAt = newVal.createdAt
     state.updatedAt = newVal.updatedAt
@@ -101,7 +101,7 @@ const computedMarkets = computed(() => {
 })
 
 const computedSelectedMarketsCaption = computed(() => {
-  return state.marketIds.map((marketId) => {
+  return state.marketIds?.map((marketId) => {
     const market = marketStore.getMarketById(marketId)
     const addressSplit = market.address.split(',')
     const zipAndCity = addressSplit[1]?.trim()

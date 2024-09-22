@@ -3,6 +3,7 @@ interface Recipe {
   name: string
   color: string
   description: string
+  url: string
   products: Product[]
   steps: string[]
   createdAt: Date | null

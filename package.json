@@ -10,6 +10,10 @@
     "recipes",
     "shopping"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shroomlife/shliste.git"
+  },
   "type": "module",
   "scripts": {
     "build": "nuxt build",
@@ -17,9 +21,10 @@
     "docker:build": "docker build -t shroomlife/shliste:latest .",
     "generate": "nuxt generate",
     "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "pb": "docker build -t shroomlife/shliste:latest . && docker push shroomlife/shliste:latest",
-    "preview": "nuxt preview",
-    "lint": "eslint --fix"
+    "preview": "nuxt preview"
   },
   "dependencies": {
     "@nuxtjs/seo": "2.0.0-rc.21",
@@ -49,9 +54,5 @@
     "typescript": "5.6.2",
     "vite-svg-loader": "5.1.0",
     "vue": "3.5.8"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/shroomlife/shliste.git"
   }
 }

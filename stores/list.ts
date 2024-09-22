@@ -44,6 +44,7 @@ export const useListStore = defineStore('listStore', {
         name: '',
         description: '',
         color: '',
+        url: '',
         products: [],
         archivedAt: null,
         createdAt: new Date(),
@@ -79,6 +80,8 @@ export const useListStore = defineStore('listStore', {
       const foundList = this.lists.find(list => list.uuid === uuid)
       if (foundList) {
         foundList.name = updatedList.name
+        foundList.description = updatedList.description
+        foundList.url = updatedList.url ?? ''
         foundList.updatedAt = new Date()
         this.saveLists()
       }

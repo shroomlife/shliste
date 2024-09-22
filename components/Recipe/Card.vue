@@ -60,6 +60,14 @@ const computedRecipeStyle = computed(() => {
     background: `linear-gradient(to bottom, ${recipe.value.color}, white)`,
   }
 })
+
+const computedRecipeHasUrl = computed(() => {
+  return typeof recipe.value.url === 'string' && recipe.value.url.length > 0
+})
+
+const computedExternalRecipeLink = computed(() => {
+  return recipe.value.url
+})
 </script>
 
 <template>
@@ -86,27 +94,40 @@ const computedRecipeStyle = computed(() => {
           >
             <div class="flex items-center gap-2">
               <UIcon :name="appNavigation.products.icon" />
-              <span>{{ recipe.products.length }}</span>
+              <span>{{ recipe.products.length }} Zutaten</span>
             </div>
           </UBadge>
         </div>
 
-        <UDropdown
-          :items="optionItems"
-          :ui="{
-            item: {
-              label: 'text-base',
-            },
-          }"
-        >
+        <div class="flex gap-2">
           <UButton
+            v-if="computedRecipeHasUrl"
+            icon="i-ph-arrow-square-out"
             color="gray"
-            icon="i-ph-dots-three-bold"
             size="md"
             square
             padded
+            :to="computedExternalRecipeLink"
+            target="_blank"
+            :external="true"
           />
-        </UDropdown>
+          <UDropdown
+            :items="optionItems"
+            :ui="{
+              item: {
+                label: 'text-base',
+              },
+            }"
+          >
+            <UButton
+              color="gray"
+              icon="i-ph-dots-three-bold"
+              size="md"
+              square
+              padded
+            />
+          </UDropdown>
+        </div>
       </div>
     </template>
   </UCard>

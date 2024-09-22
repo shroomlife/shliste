@@ -39,6 +39,7 @@ const state = reactive<Recipe>({
   name: '',
   color: '',
   description: '',
+  url: '',
   products: [] as (Product | ListedProduct)[],
   steps: [] as string[],
   createdAt: null,
@@ -47,6 +48,7 @@ const state = reactive<Recipe>({
 
 const schema = object({
   name: string().required('Name ist Erforderlich'),
+  url: string().url('Ungültige URL'),
 })
 
 const resetState = (): void => {
@@ -54,6 +56,7 @@ const resetState = (): void => {
   state.name = ''
   state.color = ''
   state.description = ''
+  state.url = ''
   state.products = []
   state.steps = []
   state.createdAt = new Date()
@@ -87,6 +90,7 @@ watch(() => recipeStore.getRecipeEdit, (newVal: Recipe | null) => {
     state.name = newVal.name
     state.color = newVal.color
     state.description = newVal.description
+    state.url = newVal.url
     state.products = newVal.products
     state.steps = newVal.steps
     state.createdAt = newVal.createdAt
@@ -131,6 +135,18 @@ watch(() => recipeStore.getRecipeEdit, (newVal: Recipe | null) => {
             v-model="state.name"
             placeholder="Name deines Rezepts"
             :icon="appNavigation.recipes.icon"
+          />
+        </UFormGroup>
+        <UFormGroup
+          label="Link"
+          name="url"
+          size="xl"
+        >
+          <UInput
+            v-model="state.url"
+            placeholder="URL deines Rezepts"
+            icon="i-ph-link"
+            type="url"
           />
         </UFormGroup>
         <div class="flex justify-between items-center">

@@ -48,6 +48,7 @@ const state = reactive<List>({
 
 const schema = object({
   name: string().required('Name ist Erforderlich'),
+  description: string().optional(),
   url: string().url('Ungültige URL'),
 })
 
@@ -148,6 +149,15 @@ watch(() => listStore.getListEdit, (newVal: List | null) => {
             placeholder="URL deiner Liste"
             icon="i-ph-link"
             type="url"
+          />
+        </UFormGroup>
+        <UFormGroup
+          label="Beschreibung"
+          name="description"
+          size="xl"
+        >
+          <UTextarea
+            v-model="state.description"
           />
         </UFormGroup>
         <div class="flex justify-between items-center">

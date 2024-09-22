@@ -50,7 +50,7 @@ export const useProductStore = defineStore('productStore', {
         foundProduct.name = product.name
         foundProduct.description = product.description
         foundProduct.brand = product.brand
-        foundProduct.marketIds = product.marketIds
+        foundProduct.marketIds = product.marketIds ?? []
         foundProduct.updatedAt = new Date()
       }
       this.saveProducts()

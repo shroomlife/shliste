@@ -24,6 +24,7 @@ const closeModal = () => {
 const selectedProducts = ref<ListedProduct[]>([])
 
 const onSelect = (products: { id: string, label: string }[]) => {
+  console.log('onSelect', products)
   const selectedProduct = products[0] as { id: string, label: string }
   const foundProduct = productStore.getProductByUuid(selectedProduct.id)
 
@@ -33,7 +34,7 @@ const onSelect = (products: { id: string, label: string }[]) => {
   state.isOpen = false
 
   if (list) {
-    listStore.addItem(list, foundProduct.uuid)
+    listStore.addListedProduct(list, foundProduct.uuid)
   }
 
   if (recipe) {

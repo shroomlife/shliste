@@ -81,7 +81,7 @@ const computedProductsInMarket = computed(() => {
       const listedProduct = productStore.getProductByUuid(product.parentId)
       if (!listedProduct) return false
 
-      return listedProduct.marketIds.includes(market.uuid)
+      return listedProduct.marketIds?.includes(market.uuid)
     })
       .map((product) => {
         return product.name
@@ -100,9 +100,9 @@ const computedMarketsInList = computed(() => {
     if (typeof product.parentId !== 'undefined') {
       const listedProduct = productStore.getProductByUuid(product.parentId)
       if (listedProduct) {
-        const markets = listedProduct.marketIds.map((marketId) => {
+        const markets = listedProduct.marketIds?.map((marketId) => {
           return marketStore.getMarketById(marketId)
-        })
+        }) ?? []
         for (const market of markets) {
           if (market) {
             allMarkets.push(market)
