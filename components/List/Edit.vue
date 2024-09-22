@@ -39,6 +39,7 @@ const state = reactive<List>({
   name: '',
   color: '',
   description: '',
+  url: '',
   products: [] as Product[],
   createdAt: null,
   updatedAt: null,
@@ -47,6 +48,7 @@ const state = reactive<List>({
 
 const schema = object({
   name: string().required('Name ist Erforderlich'),
+  url: string().url('Ungültige URL'),
 })
 
 const resetState = (): void => {
@@ -54,6 +56,7 @@ const resetState = (): void => {
   state.name = ''
   state.color = ''
   state.description = ''
+  state.url = ''
   state.products = []
   state.createdAt = new Date()
   state.updatedAt = new Date()
@@ -88,6 +91,7 @@ watch(() => listStore.getListEdit, (newVal: List | null) => {
     state.name = newVal.name
     state.color = newVal.color
     state.description = newVal.description
+    state.url = newVal.url
     state.products = newVal.products
     state.createdAt = newVal.createdAt
     state.updatedAt = newVal.updatedAt
@@ -132,6 +136,18 @@ watch(() => listStore.getListEdit, (newVal: List | null) => {
             v-model="state.name"
             placeholder="Name deiner Liste"
             icon="i-ph-list-checks"
+          />
+        </UFormGroup>
+        <UFormGroup
+          label="Link"
+          name="url"
+          size="xl"
+        >
+          <UInput
+            v-model="state.url"
+            placeholder="URL deiner Liste"
+            icon="i-ph-link"
+            type="url"
           />
         </UFormGroup>
         <div class="flex justify-between items-center">

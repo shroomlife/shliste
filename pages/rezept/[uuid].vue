@@ -124,7 +124,9 @@ const isEdit = ref(false)
 
 <template>
   <div>
-    <div class="flex flex-col pb-24 gap-4">
+    <div
+      class="flex flex-col gap-4"
+    >
       <UCard :ui="computedCardUi">
         <template #header>
           <div

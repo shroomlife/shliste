@@ -3,6 +3,7 @@ interface List {
   name: string
   description: string
   color: string
+  url: string
   products: Product[]
   createdAt: Date | null
   updatedAt: Date | null

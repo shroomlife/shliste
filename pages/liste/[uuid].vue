@@ -117,7 +117,7 @@ const computedMarketsInList = computed(() => {
 
 <template>
   <div>
-    <div class="flex flex-col pb-24 gap-4">
+    <div class="flex flex-col pb-20 gap-4">
       <UCard :ui="computedCardUi">
         <template #header>
           <div
