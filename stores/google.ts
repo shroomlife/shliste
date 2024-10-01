@@ -139,26 +139,14 @@ export const useGoogleStore = defineStore('googleStore', {
             const productStore = useProductStore()
             const marketStore = useMarketStore()
             const recipeStore = useRecipeStore()
-
-            const localLists = listStore.getLists ?? []
-            const localProducts = productStore.getProducts ?? []
-            const localMarkets = marketStore.getMarkets ?? []
-            const localRecipes = recipeStore.getRecipes ?? []
-
-            const localData: GoogleDriveSyncRequestRaw = {
-              lists: JSON.stringify(localLists),
-              products: JSON.stringify(localProducts),
-              markets: JSON.stringify(localMarkets),
-              recipes: JSON.stringify(localRecipes),
-            }
-
-            const mergedData = mergeData(localData, fetchedData.data)
-
-            listStore.setLists(mergedData.lists)
-            productStore.setProducts(mergedData.products)
-            marketStore.setMarkets(mergedData.markets)
-            recipeStore.setRecipes(mergedData.recipes)
-
+            const fetchedLists: List[] = fetchedData.data.lists ?? []
+            const fetchedProducts: ListedProduct[] = fetchedData.data.products ?? []
+            const fetchedMarkets: Market[] = fetchedData.data.markets ?? []
+            const fetchedRecipes: Recipe[] = fetchedData.data.recipes ?? []
+            listStore.setLists(fetchedLists)
+            productStore.setProducts(fetchedProducts)
+            marketStore.setMarkets(fetchedMarkets)
+            recipeStore.setRecipes(fetchedRecipes)
             return fileId
           }
           else {
