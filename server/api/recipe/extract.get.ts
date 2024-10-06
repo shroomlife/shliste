@@ -38,6 +38,7 @@ export default defineEventHandler(async (event): Promise<ExtractRecipeResponse> 
     const isValidUrl = urlSchema.isValidSync(recipeUrl)
 
     if (!isValidUrl) {
+      console.error('### Invalid URL:', recipeUrl)
       return {
         success: false,
         error: 'Die URL ist ungültig.',
@@ -135,6 +136,7 @@ export default defineEventHandler(async (event): Promise<ExtractRecipeResponse> 
     }
   }
   catch (error: unknown) {
+    console.error('### Recipe Extract Error:', error instanceof Error ? error.message : error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten.',
