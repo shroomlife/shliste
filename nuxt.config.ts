@@ -1,6 +1,9 @@
 import svgLoader from 'vite-svg-loader'
 
 export default defineNuxtConfig({
+  modules: ['@nuxt/ui', '@nuxt/eslint', '@pinia/nuxt', '@nuxtjs/seo', '@nuxtjs/sitemap'],
+  ssr: false,
+  devtools: { enabled: true },
   app: {
     head: {
       title: 'shliste ~ Deine smarte Einkaufsliste',
@@ -27,6 +30,13 @@ export default defineNuxtConfig({
   css: [
     '@/assets/css/main.scss',
   ],
+  site: {
+    indexable: true,
+    url: 'https://shliste.app',
+  },
+  colorMode: {
+    preference: 'light',
+  },
   runtimeConfig: {
     environment: process.env.NUXT_ENVIRONMENT,
     google: {
@@ -43,28 +53,10 @@ export default defineNuxtConfig({
   build: {
     transpile: ['tailwindcss'],
   },
-  compatibilityDate: '2024-09-10',
   future: {
     compatibilityVersion: 4,
   },
-  devtools: { enabled: true },
-  ssr: false,
-  colorMode: {
-    preference: 'light',
-  },
-  modules: ['@nuxt/ui', '@nuxt/eslint', '@pinia/nuxt', '@nuxtjs/seo', '@nuxtjs/sitemap'],
-  eslint: {
-    config: {
-      stylistic: true,
-    },
-  },
-  seo: {
-    enabled: true,
-  },
-  site: {
-    indexable: true,
-    url: 'https://shliste.app',
-  },
+  compatibilityDate: '2024-09-10',
   nitro: {
     publicAssets: [
       {
@@ -97,5 +89,13 @@ export default defineNuxtConfig({
       },
     },
     cacheDir: '.vite',
+  },
+  eslint: {
+    config: {
+      stylistic: true,
+    },
+  },
+  seo: {
+    enabled: true,
   },
 })
