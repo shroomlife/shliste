@@ -104,6 +104,13 @@ export default defineEventHandler(async (event): Promise<ExtractRecipeResponse> 
       ],
     })
 
+    if (completion.choices.length === 0 || typeof completion.choices[0] === 'undefined') {
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'No choices returned from OpenAI API.',
+      })
+    }
+
     const messageContent = completion.choices[0].message.content as string
 
     console.info('### Recipe Extracted')

@@ -17,6 +17,14 @@ export default defineEventHandler(async (event: H3Event<EventHandlerRequest>) =>
 
     // Decode the JWT from tokens.id_token
     const jwtParts = tokens.id_token?.split('.') as string[]
+
+    if (typeof jwtParts[1] === 'undefined') {
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'Invalid ID Token format.',
+      })
+    }
+
     const payload = JSON.parse(Buffer.from(jwtParts[1], 'base64').toString())
 
     // Extract relevant user information

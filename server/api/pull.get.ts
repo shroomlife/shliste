@@ -46,7 +46,7 @@ export default defineEventHandler(async (event: H3Event<EventHandlerRequest>) =>
       })
 
       const files = searchResponse.data.files
-      if (files && files.length > 0) {
+      if (files && files.length > 0 && typeof files[0] !== 'undefined') {
         fileId = files[0].id as string
       }
       else {

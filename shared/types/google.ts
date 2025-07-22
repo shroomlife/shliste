@@ -1,4 +1,4 @@
-interface GoogleDriveSyncRequest {
+export interface GoogleDriveSyncRequest {
   lists: List[]
   products: ListedProduct[]
   markets: Market[]
@@ -6,7 +6,7 @@ interface GoogleDriveSyncRequest {
   fileId?: string
 }
 
-interface GoogleDriveSyncRequestRaw {
+export interface GoogleDriveSyncRequestRaw {
   lists: string
   products: string
   markets: string
@@ -14,7 +14,7 @@ interface GoogleDriveSyncRequestRaw {
   fileId?: string
 }
 
-interface GoogleToken {
+export interface GoogleToken {
   access_token: string
   refresh_token: string
   scope: string
@@ -24,7 +24,7 @@ interface GoogleToken {
   fileId?: string
 }
 
-interface GoogleUser {
+export interface GoogleUser {
   iss: string
   azp: string
   aud: string
