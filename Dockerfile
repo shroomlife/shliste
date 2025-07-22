@@ -1,37 +1,36 @@
-FROM node:22-alpine AS builder
+FROM oven/bun:1.2.18-alpine AS builder
 
-RUN corepack enable
 WORKDIR /app
 
-COPY package.json ./
-
-RUN pnpm install
+COPY package.json bun.lock ./
+RUN bun install
 
 COPY . .
 
-RUN pnpm run build
+ENV NODE_ENV=development
+ENV NUXT_PUBLIC_ENVIRONMENT=development
 
-FROM node:22-alpine AS prod-deps
+RUN bun run build
 
-RUN corepack enable
-WORKDIR /app
-
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/pnpm-lock.yaml ./
-
-RUN pnpm install --prod
-
-FROM node:22-alpine
+FROM oven/bun:1.2.18-alpine AS prod-deps
 
 WORKDIR /app
 
-ENV NODE_ENV=production
+COPY package.json bun.lock ./
+
+RUN bun install --production --ignore-scripts
+
+FROM oven/bun:1.2.18-alpine AS runtime
+
+WORKDIR /app
+
+ENV NODE_ENV=development
+ENV NUXT_PUBLIC_ENVIRONMENT=development
 
 COPY --from=builder /app/.output ./.output
-COPY ./server/static ./.output/server/static
-
+COPY --from=prod-deps /app/bun.lock ./bun.lock
 COPY --from=prod-deps /app/node_modules ./node_modules
 
 EXPOSE 3000
 
-CMD ["node", ".output/server/index.mjs"]
+CMD ["bun", ".output/server/index.mjs"]
