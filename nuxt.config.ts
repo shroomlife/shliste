@@ -3,7 +3,7 @@ import svgLoader from 'vite-svg-loader'
 export default defineNuxtConfig({
   modules: ['@nuxt/ui', '@nuxt/eslint', '@pinia/nuxt', '@nuxtjs/seo', '@nuxtjs/sitemap'],
   ssr: false,
-  devtools: { enabled: true },
+  devtools: { enabled: false },
   app: {
     head: {
       title: 'shliste ~ Deine smarte Einkaufsliste',
@@ -64,16 +64,9 @@ export default defineNuxtConfig({
         dir: 'static',
       },
     ],
+    preset: 'bun',
   },
   vite: {
-    css: {
-      preprocessorOptions: {
-        scss: {
-          // additionalData: '@import "@/assets/css/_variables.scss";',
-          api: 'modern',
-        },
-      },
-    },
     plugins: [
       svgLoader({}),
     ],
