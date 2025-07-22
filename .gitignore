@@ -5,6 +5,7 @@
 .nitro
 .cache
 .vite
+.vscode
 dist
 
 # Node dependencies
