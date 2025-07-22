@@ -67,8 +67,9 @@ bun run pb
 | `preview`         | Preview the production build             |
 | `lint`            | Run ESLint                               |
 | `lint:fix`        | Auto-fix lint issues                     |
-| `docker:build`    | Build Docker image                       |
-| `pb`              | Build and push Docker image              |
+| `docker:build`    | Build Docker Image                       |
+| `docker:push`     | Push Docker Image                        |
+| `pb`              | Build and Push Docker Image              |
 
 ## 🧱 Tech Stack
 
