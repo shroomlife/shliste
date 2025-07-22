@@ -19,6 +19,7 @@
     "build": "nuxt build",
     "dev": "nuxt dev",
     "docker:build": "docker build -t shroomlife/shliste:latest .",
+    "docker:push": "docker push shroomlife/shliste:latest",
     "generate": "nuxt generate",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",

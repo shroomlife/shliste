@@ -34,24 +34,27 @@
 ```bash
 git clone https://github.com/shroomlife/shliste.git
 cd shliste
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 ### Build for Production
 
 ```bash
-npm run build
+bun run build
 ```
 
 ### Docker Build & Push
 
 ```bash
 # Build Docker image
-npm run docker:build
+bun run docker:build
 
 # Push to Docker Hub
-npm run pb
+bun run docker:push
+
+# Both in one command
+bun run pb
 ```
 
 ## 📦 NPM Scripts
