@@ -200,7 +200,6 @@ const optionItems = [
                     v-if="isGoogleConnected"
                     color="white"
                     variant="solid"
-                    icon="i-ph-check-bold"
                     size="md"
                     class="flex items-center gap-1"
                   >
@@ -214,7 +213,6 @@ const optionItems = [
                     v-else
                     color="white"
                     variant="solid"
-                    icon="i-ph-check-bold"
                     size="md"
                     class="flex items-center gap-1"
                   >
