@@ -14,11 +14,11 @@ export default defineEventHandler(async (event): Promise<ExtractRecipeResponse> 
 
     switch (runtimeConfig.environment) {
       case 'production': {
-        prompt.location = resolve(process.cwd(), '.output', 'server', 'static', 'prompts', 'recipe.txt')
+        prompt.location = resolve(process.cwd(), 'static', 'prompts', 'recipe.txt')
         break
       }
       default: {
-        prompt.location = resolve(process.cwd(), 'server', 'static', 'prompts', 'recipe.txt')
+        prompt.location = resolve(process.cwd(), 'static', 'prompts', 'recipe.txt')
       }
     }
 

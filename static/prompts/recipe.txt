@@ -32,4 +32,3 @@ Requirements:
         "error": true,
         "errorMessage": "Ich konnte kein Rezept finden." // Should be an easy to understand error message.
       }
-

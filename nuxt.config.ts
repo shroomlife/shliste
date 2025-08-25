@@ -1,7 +1,7 @@
 import svgLoader from 'vite-svg-loader'
 
 export default defineNuxtConfig({
-  modules: ['@nuxt/ui', '@nuxt/eslint', '@pinia/nuxt', '@nuxtjs/seo', '@nuxtjs/sitemap'],
+  modules: ['@nuxt/ui', '@nuxt/eslint', '@pinia/nuxt', '@nuxtjs/seo'],
   ssr: false,
   devtools: { enabled: false },
   app: {

@@ -30,6 +30,7 @@ ENV NUXT_PUBLIC_ENVIRONMENT=development
 COPY --from=builder /app/.output ./.output
 COPY --from=prod-deps /app/bun.lock ./bun.lock
 COPY --from=prod-deps /app/node_modules ./node_modules
+COPY ./static /app/static
 
 EXPOSE 3000
 
