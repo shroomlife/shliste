@@ -22,11 +22,11 @@
     "docker:push": "docker push shroomlife/shliste:latest",
     "generate": "nuxt generate",
     "postinstall": "nuxt prepare",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "eslint . --ext .ts,.vue",
+    "lint:fix": "eslint . --ext .ts,.vue --fix",
     "pb": "docker build -t shroomlife/shliste:latest . && docker push shroomlife/shliste:latest",
     "preview": "nuxt preview",
-    "type-check": "tsc --noEmit"
+    "typecheck": "nuxt typecheck"
   },
   "dependencies": {
     "@nuxtjs/seo": "3.1.0",
