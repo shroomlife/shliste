@@ -1,0 +1,57 @@
+name: Production CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Out Repository
+        uses: actions/checkout@v5.0.0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2.0.2
+        with:
+          bun-version: "1.2.22"
+
+      - name: Install Dependencies
+        run: bun install
+
+      - name: Run Type Check
+        run: bun run typecheck
+
+      - name: Run Linter
+        run: bun run lint
+
+  Build:
+    needs: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Out Repository
+        uses: actions/checkout@v5.0.0
+
+      - name: Log In to Docker Hub
+        uses: docker/login-action@v3.5.0
+        with:
+          username: ${{ vars.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build and Push Docker Production Image
+        run: |
+          docker build -t shroomlife/shliste:latest . &&
+          docker push shroomlife/shliste:latest
+
+  Deploy:
+    needs: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Production Server
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ vars.DEPLOY_HOST }}
+          username: ${{ vars.DEPLOY_USERNAME }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: docker compose pull shliste_de && docker compose up -d shliste_de

@@ -1,4 +1,4 @@
-FROM oven/bun:1.2.18-alpine AS builder
+FROM oven/bun:1.2.22-alpine AS builder
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ ENV NUXT_PUBLIC_ENVIRONMENT=development
 
 RUN bun run build
 
-FROM oven/bun:1.2.18-alpine AS prod-deps
+FROM oven/bun:1.2.22-alpine AS prod-deps
 
 WORKDIR /app
 
@@ -20,7 +20,7 @@ COPY package.json bun.lock ./
 
 RUN bun install --production --ignore-scripts
 
-FROM oven/bun:1.2.18-alpine AS runtime
+FROM oven/bun:1.2.22-alpine AS runtime
 
 WORKDIR /app
 
