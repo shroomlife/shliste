@@ -54,4 +54,4 @@ jobs:
           host: ${{ vars.DEPLOY_HOST }}
           username: ${{ vars.DEPLOY_USERNAME }}
           key: ${{ secrets.DEPLOY_KEY }}
-          script: docker compose pull shliste_de && docker compose up -d shliste_de
+          script: docker compose pull shliste_app && docker compose up -d shliste_app
