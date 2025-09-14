@@ -145,6 +145,7 @@ const saveRecipe = () => {
     }),
     createdAt: new Date(),
     updatedAt: new Date(),
+    url: state.recipeUrl,
   }
 
   recipeStore.addRecipe(newRecipe)
