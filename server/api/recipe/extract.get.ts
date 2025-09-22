@@ -46,7 +46,7 @@ export default defineEventHandler(async (event): Promise<ExtractRecipeResponse> 
     }
 
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 5000) // 5 seconds timeout
+    const timeout = setTimeout(() => controller.abort(), 5000)
 
     const response = await fetch(recipeUrl, {
       signal: controller.signal,
@@ -92,8 +92,7 @@ export default defineEventHandler(async (event): Promise<ExtractRecipeResponse> 
     console.info(promptTemplateText)
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      // model: 'chatgpt-4o-latest',
+      model: 'gpt-5',
       response_format: { type: 'json_object' },
       messages: [
         {

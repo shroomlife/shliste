@@ -40,13 +40,14 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
     isLoading.value = true
     const { recipeUrl } = event.data
-    const recipeResponse = await $fetch('/api/recipe/extract', {
+    const recipeResponse = await $fetch<ExtractRecipeResponse>('/api/recipe/extract', {
       method: 'GET',
       params: {
         recipeUrl,
         goVegan: state.goVegan,
       },
-    }) as ExtractRecipeResponse
+      timeout: 90 * 1000,
+    })
 
     if (recipeResponse.success && recipeResponse.ingredients && recipeResponse.steps && recipeResponse.title) {
       state.extractedRecipe.extracted = true
