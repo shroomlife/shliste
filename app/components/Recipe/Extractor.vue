@@ -46,7 +46,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         recipeUrl,
         goVegan: state.goVegan,
       },
-      timeout: 90 * 1000,
+      timeout: 60 * 1000,
     })
 
     if (recipeResponse.success && recipeResponse.ingredients && recipeResponse.steps && recipeResponse.title) {

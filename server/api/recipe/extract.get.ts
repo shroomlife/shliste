@@ -5,144 +5,125 @@ import * as cheerio from 'cheerio'
 import OpenAI from 'openai'
 
 export default defineEventHandler(async (event): Promise<ExtractRecipeResponse> => {
+  // Einheitliche Hilfsfunktion für Responses
+  const createResponse = (data: Partial<ExtractRecipeResponse>): ExtractRecipeResponse => ({
+    success: data.success ?? false,
+    title: data.title ?? undefined,
+    ingredients: data.ingredients ?? undefined,
+    steps: data.steps ?? undefined,
+    error: data.error ?? undefined,
+  })
+
   try {
     const runtimeConfig = useRuntimeConfig()
 
-    const prompt = {
-      location: null as string | null,
-    }
+    // Prompt-Location ermitteln
+    const promptPath = resolve(process.cwd(), 'static', 'prompts', 'recipe.txt')
+    console.log('### Prompt Location:', promptPath)
 
-    switch (runtimeConfig.environment) {
-      case 'production': {
-        prompt.location = resolve(process.cwd(), 'static', 'prompts', 'recipe.txt')
-        break
-      }
-      default: {
-        prompt.location = resolve(process.cwd(), 'static', 'prompts', 'recipe.txt')
-      }
-    }
-
-    console.log('### Prompt Location:', prompt.location)
-    if (existsSync(prompt.location) === false) {
+    if (!existsSync(promptPath)) {
       throw new Error('Prompt file not found!')
     }
-    else {
-      console.log('✅ Recipe Prompt File Initialized')
-    }
+    console.log('✅ Recipe Prompt File Initialized')
 
-    const urlSchema = string().url()
-    const query = getQuery(event) as { recipeUrl: string, goVegan: boolean }
-
+    // URL validieren
+    const query = getQuery(event) as { recipeUrl: string, goVegan?: boolean }
     const { recipeUrl } = query
 
-    const isValidUrl = urlSchema.isValidSync(recipeUrl)
-
-    if (!isValidUrl) {
-      console.error('### Invalid URL:', recipeUrl)
-      return {
-        success: false,
-        error: 'Die URL ist ungültig.',
-      }
+    const urlSchema = string().url()
+    if (!urlSchema.isValidSync(recipeUrl)) {
+      return createResponse({ success: false, error: 'Die URL ist ungültig.' })
     }
 
+    // Fetch mit Timeout
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 5000)
+    const timeout = setTimeout(() => controller.abort(), 10_000)
 
-    const response = await fetch(recipeUrl, {
-      signal: controller.signal,
-      redirect: 'error',
-      headers: {
-        'User-Agent': 'https://shliste.app (Recipe Extractor)',
-      },
-    })
-
-    clearTimeout(timeout)
+    let response: Response
+    try {
+      response = await fetch(recipeUrl, {
+        signal: controller.signal,
+        redirect: 'error',
+        headers: { 'User-Agent': 'https://shliste.app (Recipe Extractor)' },
+      })
+    }
+    finally {
+      clearTimeout(timeout)
+    }
 
     if (!response.ok) {
-      return {
-        success: false,
-        error: 'Die Website konnte leider nicht geladen werden.',
-      }
+      return createResponse({ error: 'Die Website konnte leider nicht geladen werden.' })
     }
 
+    // HTML säubern
     const html = await response.text()
-
     const $ = cheerio.load(html)
     $('script, style, nav, footer, svg, img, picture, video, noscript, source, meta, header, footer, button, input, textarea, iframe').remove()
-    const bodyContent = $('body').text().trim() as string
+    const bodyContent = $('body').text().trim()
 
-    if (bodyContent.length === 0) {
-      return {
-        success: false,
-        error: 'Der Inhalt der Website konnte nicht extrahiert werden.',
-      }
+    if (!bodyContent) {
+      return createResponse({ error: 'Der Inhalt der Website konnte nicht extrahiert werden.' })
     }
+
+    // Prompt lesen
+    const promptText = readFileSync(promptPath, 'utf-8')
+    const cleanedBodyContent = bodyContent.replace(/\s+/g, ' ').trim()
 
     const openai = new OpenAI({
       apiKey: runtimeConfig.openai.apiKey,
     })
 
-    const promptTemplateText = [
-      readFileSync(prompt.location, 'utf-8') as string,
-      // goVegan ? '4. VEGANIZE: If in the recipe are NON-vegan ingredients, then replace them with amazing vegan alternatives! Take care! The User is allergic to NON-vegan products! MAKE THE RECIPE SUITABLE FOR VEGANS!' : '',
-    ].join('\n')
-    const cleanedBodyContent = bodyContent.replace(/\s+/g, ' ').trim()
-
     console.info('### Prompt Template Text')
-    console.info(promptTemplateText)
+    console.info(promptText)
 
+    // GPT-Aufruf
     const completion = await openai.chat.completions.create({
       model: 'gpt-5',
       response_format: { type: 'json_object' },
       messages: [
-        {
-          role: 'system',
-          content: promptTemplateText,
-        },
+        { role: 'system', content: promptText },
         { role: 'user', content: cleanedBodyContent },
       ],
     })
 
-    if (completion.choices.length === 0 || typeof completion.choices[0] === 'undefined') {
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'No choices returned from OpenAI API.',
-      })
+    const messageContent = completion.choices?.[0]?.message?.content
+    if (!messageContent) {
+      return createResponse({ error: 'Keine Antwort vom OpenAI-Modell erhalten.' })
     }
-
-    const messageContent = completion.choices[0].message.content as string
 
     console.info('### Recipe Extracted')
     console.info(messageContent)
 
-    const recipe = JSON.parse(messageContent) as {
-      title: string
+    // JSON parsen
+    let recipe: {
+      title?: string
       ingredients?: string[]
       steps?: string[]
-      error: boolean
+      error?: boolean
       errorMessage?: string
     }
 
-    if (recipe.ingredients) {
-      recipe.ingredients = Array.from(new Set(recipe.ingredients))
+    try {
+      recipe = JSON.parse(messageContent)
+    }
+    catch {
+      return createResponse({ error: 'Fehler beim Verarbeiten der OpenAI-Antwort.' })
     }
 
-    if (recipe.error === false && recipe.ingredients && recipe.steps) {
-      return {
-        success: true,
-        title: recipe.title,
-        ingredients: recipe.ingredients,
-        steps: recipe.steps,
-      }
+    // Ergebnis prüfen
+    if (recipe.error || !recipe.ingredients?.length || !recipe.steps?.length) {
+      return createResponse({ error: recipe.errorMessage || 'Das Rezept konnte nicht extrahiert werden.' })
     }
 
-    return {
-      success: false,
-      error: recipe.errorMessage,
-    }
+    return createResponse({
+      success: true,
+      title: recipe.title,
+      ingredients: Array.from(new Set(recipe.ingredients)),
+      steps: recipe.steps,
+    })
   }
   catch (error: unknown) {
-    console.error('### Recipe Extract Error:', error instanceof Error ? error.message : error)
+    console.error('### Recipe Extract Error:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten.',
