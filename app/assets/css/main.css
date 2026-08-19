@@ -12,7 +12,7 @@
  * damit sogar markentreuer als die App auf den meisten Geraeten.
  */
 
-@theme {
+@theme static {
   /* --- Schrift ---------------------------------------------------------
    * Zain laeuft schmal und hoch. Der Android-Quellcode haelt ausdruecklich
    * fest: "18sp Zain wirkt etwa wie 14sp Roboto". Die Groessen liegen deshalb
@@ -46,7 +46,34 @@
   --radius-xl: 1.25rem;  /* 20 */
   --radius-2xl: 1.5rem;  /* 24 */
 
-  /* --- Marke ----------------------------------------------------------- */
+  /* --- Marke -----------------------------------------------------------
+   * Nuxt UI erwartet fuer ein Farbalias eine vollstaendige 50-950-Palette,
+   * nicht einen Einzelwert — sonst bleibt `primary` unaufgeloest und
+   * Buttons rendern unsichtbar.
+   *
+   * Die Stufen sind aus den echten Android-Werten abgeleitet, nicht erfunden:
+   *   50  = SecondaryColor        (#FDECF5)
+   *   100 = secondaryContainer    (#FBE0EF)
+   *   200 = primaryContainer      (#FFD8EC)
+   *   300 = tertiaryContainer     (#F7D6E9)
+   *   400 = primary im Dark-Mode  (#FF8CCB)
+   *   500 = PrimaryColor          (#E064B2)  <- der Markenton
+   *   600 = tertiary im Light     (#B84C8F)
+   *   950 = onPrimaryContainer    (#3B0021)
+   * Die Stufen 700 bis 900 fuellen den Verlauf dazwischen auf.
+   */
+  --color-brand-50: #FDECF5;
+  --color-brand-100: #FBE0EF;
+  --color-brand-200: #FFD8EC;
+  --color-brand-300: #F7D6E9;
+  --color-brand-400: #FF8CCB;
+  --color-brand-500: #E064B2;
+  --color-brand-600: #B84C8F;
+  --color-brand-700: #943B72;
+  --color-brand-800: #6B2A53;
+  --color-brand-900: #4A1D3A;
+  --color-brand-950: #3B0021;
+
   --color-brand: #E064B2;      /* PrimaryColor   — identisch zum Web-Logo */
   --color-brand-soft: #FDECF5; /* SecondaryColor — identisch zum Header   */
   --color-mint: #7FD1AE;       /* MainGreen                                */

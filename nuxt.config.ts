@@ -103,4 +103,11 @@ export default defineNuxtConfig({
   },
 
   seo: { enabled: true },
+
+  // OG-Image-Generierung aus: sie zieht eine native resvg-Binary (rund 4 MB,
+  // plattformspezifisch — die Windows-Variante landet sonst nutzlos im
+  // Linux-Image) plus eingebettete Inter-Schriften. Fuer eine App hinter
+  // Anmeldung bringt das nichts; die Startseite bekommt bei Bedarf ein
+  // statisches OG-Bild.
+  ogImage: { enabled: false },
 })

@@ -64,7 +64,8 @@ const listen = shallowRef<import('~/types/domain').List[]>([])
           class="text-[1rem]"
           style="color: var(--md-on-surface-variant); text-wrap: pretty"
         >
-          Melde dich an, um deine Listen zu synchronisieren und mit anderen zu teilen.
+          Leg einfach los. Ein Konto brauchst du erst, wenn du zwischen Geraeten
+          abgleichen oder eine Liste teilen moechtest.
         </p>
       </div>
 
