@@ -38,13 +38,17 @@ import {
   getLastSyncedAt,
   getListsForView,
   getRecipesForView,
+  hardDeleteList,
+  isDirtyList,
+  isDirtyRecipeOrChildren,
+  countDirtyItemsForList,
   clearDirtyFlags,
   replaceListMembers,
   setHasMigrated,
   setLastSyncedAt,
   type DirtyStoreName,
 } from '../../db/repositories'
-import type { DirtyRows, EntityStore, LocalDataCounts, RowStores, SyncStore } from './ports'
+import type { DirtyRows, EntityStore, LocalDataCounts, RealtimeStore, RowStores, SyncStore } from './ports'
 import {
   putBadgeRow,
   putChatMessageRow,
@@ -155,12 +159,23 @@ async function countLocalData(): Promise<LocalDataCounts> {
 }
 
 /**
+ * Ist an der Liste selbst oder an einer ihrer Positionen etwas ungesendet?
+ *
+ * Beide Fragen zusammen, weil die Echtzeit-Auswertung nur eine Antwort
+ * braucht: Ein Delta ist genau dann sicher, wenn HIER nichts aussteht.
+ */
+async function isListDirtyWithItems(listId: string): Promise<boolean> {
+  if (await isDirtyList(listId)) return true
+  return await countDirtyItemsForList(listId) > 0
+}
+
+/**
  * Der Standard-Port: die echte IndexedDB dieses Browsers.
  *
  * Als Objekt und nicht als Klasse — es gibt nichts zu vererben und keinen
  * Zustand zu halten. Die Verbindung selbst verwaltet `app/db/client.ts`.
  */
-export const localStore: SyncStore = {
+export const localStore: SyncStore & RealtimeStore = {
   rows,
   readDirty,
   clearDirty: (store: DirtyStoreName, ids: readonly string[], snapshot: IsoUtc) =>
@@ -174,4 +189,7 @@ export const localStore: SyncStore = {
   readLastSignedInUserId: getLastSignedInUserId,
   countLocalData,
   countPending: countDirty,
+  isListDirty: isListDirtyWithItems,
+  isRecipeDirty: isDirtyRecipeOrChildren,
+  removeList: hardDeleteList,
 }

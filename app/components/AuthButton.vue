@@ -85,7 +85,7 @@ const hasClientId = clientId.length > 0
  */
 const { compact = false } = defineProps<{ compact?: boolean }>()
 
-const { profile, isSignedIn, signIn, signOut, loadSession } = useAuth()
+const { profile, isSignedIn, signIn, signOut } = useAuth()
 const toast = useToast()
 
 /**
@@ -117,10 +117,6 @@ const menuItems = computed<DropdownMenuItem[][]>(() => [
     },
   }],
 ])
-
-onMounted(() => {
-  void loadSession()
-})
 
 function loadGoogleIdentity(): Promise<GoogleIdentityApi> {
   const alreadyLoaded = readGoogleIdentityApi()

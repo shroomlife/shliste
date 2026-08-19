@@ -25,6 +25,8 @@ export const SYNC_ENDPOINTS = {
   session: '/api/auth/me',
   status: '/api/sync/status',
   pull: '/api/sync/pull',
+  /** Gezielter Abruf einer Liste, einzelner Positionen oder eines Rezepts. */
+  delta: '/api/sync/pull/delta',
   push: '/api/sync/push',
   migrate: '/api/sync/migrate',
 } as const

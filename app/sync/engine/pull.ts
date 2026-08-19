@@ -98,7 +98,14 @@ export function parsePullResponse(value: unknown): PullResponse {
   }
 }
 
-function parsePulledList(value: unknown): PulledList | null {
+/**
+ * Engt eine Liste samt ihrer Positionen und Mitglieder ein.
+ *
+ * Exportiert, weil der Delta-Abruf dieselbe Form bekommt (siehe `delta.ts`).
+ * Ein zweiter Parser dort waere eine zweite Gelegenheit, unterschiedlich streng
+ * zu sein.
+ */
+export function parsePulledList(value: unknown): PulledList | null {
   const list = parseList(value)
   if (list === null || !isRecord(value)) return null
 
@@ -109,7 +116,8 @@ function parsePulledList(value: unknown): PulledList | null {
   }
 }
 
-function parsePulledRecipe(value: unknown): PulledRecipe | null {
+/** Engt ein Rezept samt Zutaten, Schritten und Verlauf ein. Siehe `parsePulledList`. */
+export function parsePulledRecipe(value: unknown): PulledRecipe | null {
   const recipe = parseRecipe(value)
   if (recipe === null || !isRecord(value)) return null
 
@@ -421,6 +429,67 @@ async function applyChatMessage(rows: RowStores, server: RecipeChatMessage): Pro
  * Der Ablauf
  * ------------------------------------------------------------------ */
 
+/**
+ * Zeilen, wie der Server sie liefert.
+ *
+ * Alle Felder sind wahlweise, weil nicht jede Antwort alle Arten enthaelt: Der
+ * volle Pull bringt Listen, Rezepte und Abzeichen, ein Delta je nach Anlass nur
+ * eine Liste, einzelne Positionen oder ein Rezept.
+ */
+export interface PulledRows {
+  lists?: readonly PulledList[]
+  /** Positionen ohne ihre Liste. Nur der Delta-Abruf liefert sie so. */
+  items?: readonly ListItem[]
+  recipes?: readonly PulledRecipe[]
+  badges?: readonly Badge[]
+}
+
+/**
+ * Schreibt gezogene Zeilen in die lokale Datenbank.
+ *
+ * IDEMPOTENT, UND ZWAR ZWINGEND: Dieselben Zeilen kommen wegen der
+ * Cursor-Ueberlappung mehrfach herunter, und ein Delta ueberschneidet sich
+ * regelmaessig mit dem naechsten vollen Pull. Jeder Aufruf fuehrt deshalb neu
+ * zusammen, statt auf "schon gesehen" zu setzen.
+ *
+ * Von Pull und Delta gemeinsam benutzt. Zwei Wege, dieselben Zeilen zu
+ * schreiben, waeren zwei Gelegenheiten, die Merge-Semantik auseinanderlaufen
+ * zu lassen.
+ */
+export async function applyPulledRows(store: PullStore, rows: PulledRows): Promise<void> {
+  for (const list of rows.lists ?? []) {
+    await applyList(store.rows, list)
+    for (const item of list.items) {
+      await applyItem(store.rows, item)
+    }
+    // Ersetzen und nicht zusammenführen: Wer aus der Liste entfernt wurde,
+    // taucht in der Antwort schlicht nicht mehr auf (siehe
+    // `replaceListMembers` in `app/db/repositories.ts`).
+    await store.replaceMembers(list.id, list.members)
+  }
+
+  for (const item of rows.items ?? []) {
+    await applyItem(store.rows, item)
+  }
+
+  for (const recipe of rows.recipes ?? []) {
+    await applyRecipe(store.rows, recipe)
+    for (const ingredient of recipe.ingredients) {
+      await applyIngredient(store.rows, ingredient)
+    }
+    for (const step of recipe.steps) {
+      await applyStep(store.rows, step)
+    }
+    for (const message of recipe.chatMessages) {
+      await applyChatMessage(store.rows, message)
+    }
+  }
+
+  for (const badge of rows.badges ?? []) {
+    await applyBadge(store.rows, badge)
+  }
+}
+
 /** Holt die Antwort des Servers. `since === null` heisst voller Pull. */
 export type PullFetcher = (since: IsoUtc | null) => Promise<unknown>
 
@@ -442,33 +511,7 @@ export async function runPull(store: PullStore, fetchPull: PullFetcher): Promise
   const since = await store.readCursor()
   const response = parsePullResponse(await fetchPull(since))
 
-  for (const list of response.lists) {
-    await applyList(store.rows, list)
-    for (const item of list.items) {
-      await applyItem(store.rows, item)
-    }
-    // Ersetzen und nicht zusammenführen: Wer aus der Liste entfernt wurde,
-    // taucht in der Antwort schlicht nicht mehr auf (siehe
-    // `replaceListMembers` in `app/db/repositories.ts`).
-    await store.replaceMembers(list.id, list.members)
-  }
-
-  for (const recipe of response.recipes) {
-    await applyRecipe(store.rows, recipe)
-    for (const ingredient of recipe.ingredients) {
-      await applyIngredient(store.rows, ingredient)
-    }
-    for (const step of recipe.steps) {
-      await applyStep(store.rows, step)
-    }
-    for (const message of recipe.chatMessages) {
-      await applyChatMessage(store.rows, message)
-    }
-  }
-
-  for (const badge of response.badges) {
-    await applyBadge(store.rows, badge)
-  }
+  await applyPulledRows(store, response)
 
   // Erst schreiben, dann vorrücken: Ein Abbruch mitten im Anwenden lässt das
   // Wasserzeichen stehen, und der nächste Pull holt dieselbe Menge erneut.

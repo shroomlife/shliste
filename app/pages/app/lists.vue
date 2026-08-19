@@ -16,6 +16,7 @@ useHead({ title: 'Listen ~ shliste' })
 
 const route = useRoute()
 const { entries, reload, createList } = useLists()
+const { dataVersion, scheduleSync } = useSync()
 
 /** Auf Mobil zeigt der Bereich entweder den Index oder das Detail, nie beides. */
 const isDetailOpen = computed(() => typeof route.params.id === 'string')
@@ -25,6 +26,13 @@ const newListName = ref('')
 const isSaving = ref(false)
 
 onMounted(() => {
+  void reload()
+})
+
+// Der Abgleich schreibt in dieselbe lokale Datenbank. Statt dass er in die
+// Ansicht hineinschiebt, beobachtet die Ansicht seinen Zaehler und liest neu —
+// dieselbe Richtung wie beim uebrigen Lesen.
+watch(dataVersion, () => {
   void reload()
 })
 
@@ -40,6 +48,7 @@ async function submitDialog(): Promise<void> {
   isSaving.value = true
   try {
     const created = await createList(name)
+    scheduleSync()
     isDialogOpen.value = false
     await navigateTo(`/app/lists/${created.id}`)
   }

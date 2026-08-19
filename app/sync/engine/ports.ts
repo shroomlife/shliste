@@ -79,6 +79,30 @@ export interface PullStore {
   writeCursor: (value: IsoUtc) => Promise<void>
 }
 
+/**
+ * Was die Echtzeit-Auswertung zusaetzlich zum Pull braucht.
+ *
+ * Die beiden Dirty-Abfragen entscheiden, ob ein Ereignis mit einem Delta
+ * beantwortet werden darf: Liegt lokal eine ungesendete Aenderung an derselben
+ * Zeile, waere ein Delta die halbe Wahrheit — es wuerde den Serverstand
+ * hereinholen, ohne den eigenen hinauszugeben. In dem Fall gehoert ein
+ * vollstaendiger Lauf her, der erst pusht und dann zieht.
+ */
+export interface RealtimeStore extends PullStore {
+  /** Ist die Liste selbst oder eine ihrer Positionen ungesendet? */
+  isListDirty: (listId: string) => Promise<boolean>
+  /** Ist das Rezept oder eines seiner Kinder ungesendet? */
+  isRecipeDirty: (recipeId: string) => Promise<boolean>
+  /**
+   * Entfernt eine Liste samt Kindern ENDGUELTIG und ohne Grabstein.
+   *
+   * Ein lokales `deletedAt` waere hier falsch: Es ginge beim naechsten Push als
+   * Loeschabsicht zurueck und wuerde die Liste fuer alle uebrigen Mitglieder
+   * zerstoeren, obwohl dieses Konto sie nur nicht mehr sieht.
+   */
+  removeList: (listId: string) => Promise<void>
+}
+
 export interface LocalDataCounts {
   lists: number
   recipes: number

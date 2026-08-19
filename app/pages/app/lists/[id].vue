@@ -20,6 +20,7 @@ const route = useRoute()
 const listId = computed(() => String(route.params.id))
 
 const { reload: reloadOverview } = useLists()
+const { dataVersion, scheduleSync } = useSync()
 
 const {
   list,
@@ -60,7 +61,12 @@ function run(work: Promise<unknown>): void {
  * werden — sonst zeigt der Index daneben veraltete Zahlen.
  */
 function mutate(work: Promise<unknown>): void {
-  run(work.then(() => reloadOverview()))
+  run(work.then(async () => {
+    await reloadOverview()
+    // Gesammelt statt sofort: Beim Abhaken faellt eine Aenderung nach der
+    // anderen an, und ein Push je Haken waere eine Runde je Handbewegung.
+    scheduleSync()
+  }))
 }
 
 /**
@@ -80,6 +86,11 @@ async function loadList(): Promise<void> {
 watch(listId, () => {
   run(loadList())
 }, { immediate: true })
+
+// Hat der Abgleich etwas geschrieben, koennen es Eintraege dieser Liste sein.
+watch(dataVersion, () => {
+  run(loadList())
+})
 
 function toggleItem(item: ListItem): void {
   mutate(setItemChecked(item))

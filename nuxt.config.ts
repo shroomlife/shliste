@@ -25,6 +25,11 @@ export default defineNuxtConfig({
         { name: 'description', content: 'Erstelle und verwalte muehelos deine Einkaufslisten mit shliste. Pack Produkte ein, hake sie ab und behalte immer den Ueberblick beim Shoppen!' },
         // Entspricht --color-secondary aus dem Android-Farbschema (SecondaryColor)
         { name: 'theme-color', content: '#FDECF5' },
+        // Beide Schreibweisen: Chrome hat die apple-Variante fuer veraltet
+        // erklaert und will die standardisierte, Safari liest weiterhin die
+        // eigene. Nur eine von beiden zu setzen kostet auf einer der beiden
+        // Plattformen den Vollbildmodus der installierten App.
+        { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
       ],
       link: [

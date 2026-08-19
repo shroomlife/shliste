@@ -7,12 +7,18 @@ definePageMeta({ layout: 'app' })
 useHead({ title: 'Rezepte ~ shliste' })
 
 const { recipes, reload, createRecipe } = useRecipes()
+const { dataVersion, scheduleSync } = useSync()
 
 const isDialogOpen = ref(false)
 const newRecipeName = ref('')
 const isSaving = ref(false)
 
 onMounted(() => {
+  void reload()
+})
+
+// Wie bei den Listen: Der Abgleich meldet, die Ansicht liest neu.
+watch(dataVersion, () => {
   void reload()
 })
 
@@ -28,6 +34,7 @@ async function submitDialog(): Promise<void> {
   isSaving.value = true
   try {
     await createRecipe(name)
+    scheduleSync()
     isDialogOpen.value = false
   }
   finally {

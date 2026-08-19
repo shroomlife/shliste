@@ -7,8 +7,17 @@
  * - der schwebende Knopf wandert in den Kopf des Index, weil ein Kreis unten
  *   rechts auf 1600 Pixel das klassische Handy-Klon-Signal ist
  * - auf Mobil bleibt beides so, wie es Android macht
+ *
+ * Hier und nur hier laeuft der Abgleich an: Das Layout umschliesst den ganzen
+ * App-Bereich und lebt genau so lange wie er. Ein zweiter Aufruf an anderer
+ * Stelle oeffnete eine zweite Echtzeit-Verbindung.
  */
 const route = useRoute()
+
+const { isSignedIn } = useAuth()
+const { display } = useSync()
+
+useSyncRunner()
 
 interface Destination {
   label: string
@@ -79,7 +88,12 @@ function isActive(destination: Destination): boolean {
       <!-- Konto und Abgleich stehen zusammen am unteren Ende der Rail: beides
            betrifft nicht den Inhalt, sondern den Zustand der App. -->
       <div class="flex flex-col items-center gap-2">
-        <SyncStatus />
+        <!-- Ohne Konto gibt es nichts abzugleichen. Eine Anzeige waere dann
+             kein Hinweis, sondern eine Frage ohne Anlass. -->
+        <SyncStatus
+          v-if="isSignedIn"
+          :state="display"
+        />
         <AuthButton compact />
       </div>
     </nav>
@@ -90,7 +104,10 @@ function isActive(destination: Destination): boolean {
       class="flex h-12 shrink-0 items-center justify-end gap-2 px-3 lg:hidden"
       style="background: var(--md-surface-container)"
     >
-      <SyncStatus />
+      <SyncStatus
+        v-if="isSignedIn"
+        :state="display"
+      />
       <AuthButton />
     </div>
 
