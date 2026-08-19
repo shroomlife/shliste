@@ -84,6 +84,22 @@
  * (Start-Vibe Light), Dark wird ueber .dark ergaenzt.
  */
 :root {
+  /*
+   * Gefuellte Flaechen mit weisser Schrift benutzen den TIEFEREN Markenton.
+   *
+   * Gemessen: #E064B2 auf Weiss ergibt 3,16:1 — das reicht nach WCAG 2.2 AA
+   * nur fuer grosse Schrift, nicht fuer Knopfbeschriftungen (dort 4,5:1).
+   * #B84C8F erreicht 4,70:1. Seit dem 28.06.2025 ist das in Deutschland nach
+   * BFSG haftungsrelevant und keine Geschmacksfrage.
+   *
+   * Der Ton ist nicht erfunden: Es ist Androids `tertiary` und zugleich die
+   * Material-Tonstufe 40, die M3 fuer `primary` im hellen Schema vorsieht.
+   * Der Markenton #E064B2 bleibt ueberall dort, wo er ohne Schrift steht —
+   * Logo, Lasuren, Akzente. Im Dark-Mode bleibt alles wie gehabt: #FF8CCB auf
+   * #3B0021 sind 8,17:1.
+   */
+  --ui-primary: var(--color-brand-600);
+
   --md-primary: #E064B2;
   --md-on-primary: #FFFFFF;
   --md-primary-container: #FFD8EC;
