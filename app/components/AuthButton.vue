@@ -240,11 +240,16 @@ function reportFailure(title: string, error: unknown): void {
       class="rounded-full"
       :aria-label="`Konto von ${displayName}`"
     >
+      <!-- Ohne Profilbild trägt der Kreis die Initialen. Er bekommt dafür die
+           Markenfarbe: Der Standardton von Nuxt UI ist fast weiss und wäre auf
+           der hellrosa Rail praktisch unsichtbar. -->
       <UAvatar
         :src="profile?.photoUrl ?? undefined"
         :alt="displayName"
         :text="initials"
         size="sm"
+        :ui="{ fallback: 'font-bold' }"
+        style="background: var(--md-primary-container); color: var(--md-on-primary-container)"
       />
     </UButton>
   </UDropdownMenu>

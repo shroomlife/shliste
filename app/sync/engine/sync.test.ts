@@ -18,7 +18,7 @@ import type {
 } from '../../db/schema'
 import { DIRTY } from '../../db/schema'
 import { SyncError } from './errors'
-import type { DirtyRows, EntityStore, LocalDataCounts, RowStores, SyncStore } from './ports'
+import type { ConflictStore, DirtyRows, EntityStore, LocalDataCounts, RowStores, SyncStore } from './ports'
 import { createSyncStateStore } from './state'
 import { createSyncEngine, parseServerStatus, parseSessionState, type SyncRequest } from './sync'
 
@@ -61,10 +61,13 @@ function dirtyList(id: string): ListRow {
   }
 }
 
-interface FakeSyncStore extends SyncStore {
+interface FakeSyncStore extends SyncStore, ConflictStore {
   hasMigrated: boolean
   cursor: IsoUtc | null
   pending: number
+  /** Mitschrift der Konfliktauflösung. */
+  clearedDeleted: number
+  wiped: number
 }
 
 function fakeSyncStore(options: {
@@ -89,6 +92,8 @@ function fakeSyncStore(options: {
     hasMigrated: options.hasMigrated ?? true,
     cursor: null,
     pending: options.pending ?? 0,
+    clearedDeleted: 0,
+    wiped: 0,
     readDirty: () => Promise.resolve({ ...emptyDirty(), ...options.dirty }),
     clearDirty: () => Promise.resolve(),
     replaceMembers: (_listId: string, _members: readonly ListMember[]) => Promise.resolve(),
@@ -105,6 +110,15 @@ function fakeSyncStore(options: {
     readLastSignedInUserId: () => Promise.resolve(options.lastSignedInUserId ?? null),
     countLocalData: () => Promise.resolve(options.local ?? { lists: 0, recipes: 0 }),
     countPending: () => Promise.resolve(store.pending),
+    clearDirtyOnDeleted: () => {
+      store.clearedDeleted += 1
+      return Promise.resolve(0)
+    },
+    wipeLocalData: () => {
+      store.wiped += 1
+      store.cursor = null
+      return Promise.resolve()
+    },
   }
 
   return store
@@ -414,6 +428,104 @@ describe('createSyncEngine — Push und Pull', () => {
     await createSyncEngine({ store, state: createSyncStateStore(), request }).sync()
 
     expect(request.calls).toContain(`/api/sync/pull?since=${encodeURIComponent(TS)}`)
+  })
+})
+
+/* ------------------------------------------------------------------ *
+ * Konfliktauflösung
+ *
+ * Der Fall: Beide Seiten haben Daten und die Stände lassen sich nicht
+ * beweisen. Die Engine hält dann an und fragt. Was danach passiert, ist eine
+ * Entscheidung des Nutzers — und jede der drei hat Folgen, die man nicht
+ * versehentlich auslösen darf.
+ * ------------------------------------------------------------------ */
+
+describe('resolveConflict', () => {
+  test('merge verwirft lokale Löschabsichten und gleicht ab', async () => {
+    const request = fakeRequest({
+      '/api/sync/push': () => PUSH_OK,
+      '/api/sync/pull': () => PULL_OK,
+    })
+    const store = fakeSyncStore({ hasMigrated: false })
+
+    await createSyncEngine({ store, state: createSyncStateStore(), request }).resolveConflict('merge')
+
+    // Ohne diesen Schritt risse eine offline getroffene Löschung über das
+    // feldgenaue Last-Write-Wins den Serverbestand mit.
+    expect(store.clearedDeleted).toBe(1)
+    expect(store.wiped).toBe(0)
+    expect(store.hasMigrated).toBe(true)
+    expect(request.calls).toContain('/api/sync/pull')
+  })
+
+  test('pullServer löscht lokal und zieht danach vollständig', async () => {
+    const request = fakeRequest({ '/api/sync/pull': () => PULL_OK })
+    const store = fakeSyncStore({ hasMigrated: false })
+    store.cursor = TS
+
+    await createSyncEngine({ store, state: createSyncStateStore(), request }).resolveConflict('pullServer')
+
+    expect(store.wiped).toBe(1)
+    // Ohne zurückgesetztes Wasserzeichen käme nur ein Ausschnitt zurück und
+    // der Rest fehlte für immer.
+    expect(request.calls).toContain('/api/sync/pull')
+    expect(store.hasMigrated).toBe(true)
+  })
+
+  test('pushLocal lädt den lokalen Bestand hoch', async () => {
+    const request = fakeRequest({ '/api/sync/migrate': () => MIGRATE_OK })
+    const store = fakeSyncStore({ hasMigrated: false, dirty: { lists: [dirtyList('l1')] } })
+
+    await createSyncEngine({ store, state: createSyncStateStore(), request }).resolveConflict('pushLocal')
+
+    expect(request.calls).toContain('/api/sync/migrate')
+    expect(store.wiped).toBe(0)
+    expect(store.clearedDeleted).toBe(0)
+    expect(store.hasMigrated).toBe(true)
+  })
+
+  test('jeder Weg beantwortet die Frage endgültig', async () => {
+    // hasMigrated muss danach stehen, sonst fragt der nächste Start erneut.
+    for (const strategy of ['merge', 'pushLocal', 'pullServer'] as const) {
+      const request = fakeRequest({
+        '/api/sync/push': () => PUSH_OK,
+        '/api/sync/pull': () => PULL_OK,
+        '/api/sync/migrate': () => MIGRATE_OK,
+      })
+      const store = fakeSyncStore({ hasMigrated: false })
+
+      await createSyncEngine({ store, state: createSyncStateStore(), request }).resolveConflict(strategy)
+
+      expect(store.hasMigrated).toBe(true)
+    }
+  })
+
+  test('die Konfliktmeldung wird dabei geräumt', async () => {
+    const request = fakeRequest({
+      '/api/sync/push': () => PUSH_OK,
+      '/api/sync/pull': () => PULL_OK,
+    })
+    const state = createSyncStateStore()
+    state.set({ conflict: { server: { lists: 4, recipes: 2, contentHash: null, lastOverwriteAt: null }, local: { lists: 1, recipes: 0 } } })
+
+    await createSyncEngine({ store: fakeSyncStore({ hasMigrated: false }), state, request }).resolveConflict('merge')
+
+    expect(state.get().conflict).toBeNull()
+  })
+
+  test('ein Fehler landet im Zustand statt als geworfene Ausnahme', async () => {
+    // Kein hinterlegter Pfad: die Attrappe wirft, wie es ein Netzausfall täte.
+    const request = fakeRequest({})
+    const state = createSyncStateStore()
+
+    const outcome = await createSyncEngine({ store: fakeSyncStore(), state, request })
+      .resolveConflict('pullServer')
+
+    // Der Aufrufer bekommt eine Antwort und keine Ausnahme um die Ohren, und
+    // die Oberfläche hat einen Satz zum Anzeigen.
+    expect(outcome.ran).toBe(true)
+    expect(state.get().phase).not.toBe('idle')
+    expect(state.get().message).not.toBeNull()
   })
 })
 

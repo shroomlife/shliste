@@ -24,7 +24,7 @@
 import type { IsoUtc } from '../../../shared/types/domain'
 import { describeSyncError, toSyncError, type SyncError } from './errors'
 import { isRecord, readBooleanOr, readIso, readNumberOr, readString } from './json'
-import type { SyncStore } from './ports'
+import type { ConflictStore, SyncStore } from './ports'
 import { runPull, type PullOutcome } from './pull'
 import { runMigrate, runPush, type NoticeSink, type PushOutcome, type PushPayload } from './push'
 import { localStore } from './store'
@@ -98,7 +98,7 @@ export function parseSessionState(value: unknown): SessionState {
 export type SyncRequest = (path: string, options?: RequestOptions) => Promise<unknown>
 
 export interface SyncEngineDeps {
-  store: SyncStore
+  store: SyncStore & ConflictStore
   state: SyncStateStore
   /** Der Weg zur BFF. Im Test durch eine Attrappe ersetzbar. */
   request?: SyncRequest
@@ -121,8 +121,30 @@ export type SyncOutcome
   = | { ran: false, reason: 'busy' }
     | { ran: true, snapshot: SyncSnapshot }
 
+/**
+ * Wie ein Konflikt aufgelöst wird, wenn beide Seiten Daten haben.
+ *
+ * Die drei Wege entsprechen denen der Android-App (ConflictStrategy), damit
+ * dieselbe Entscheidung auf beiden Clients dasselbe bedeutet:
+ *
+ * - `merge`      — beide Bestände behalten. Lokale Löschabsichten werden
+ *                  vorher verworfen, sonst rissen sie über das feldgenaue
+ *                  Last-Write-Wins den Serverbestand mit.
+ * - `pushLocal`  — der lokale Bestand gilt und wird hochgeladen.
+ * - `pullServer` — der Server gilt; dieses Gerät vergisst seinen Bestand.
+ */
+export type ConflictStrategy = 'merge' | 'pushLocal' | 'pullServer'
+
 export interface SyncEngine {
   sync: () => Promise<SyncOutcome>
+  /**
+   * Löst einen gemeldeten Konflikt auf und gleicht anschliessend ab.
+   *
+   * Nur nach einer Entscheidung des Nutzers aufrufen: `pullServer` verwirft
+   * lokale Daten unwiederbringlich, `pushLocal` schreibt sie über den
+   * Serverbestand.
+   */
+  resolveConflict: (strategy: ConflictStrategy) => Promise<SyncOutcome>
   isRunning: () => boolean
 }
 
@@ -308,7 +330,60 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
     return { ran: true, snapshot: state.get() }
   }
 
-  return { sync, isRunning: () => running }
+  /**
+   * Führt die gewählte Auflösung aus und gleicht danach ab.
+   *
+   * Der Mutex gilt hier genauso wie beim gewöhnlichen Lauf: Eine Auflösung
+   * während eines laufenden Abgleichs würde auf einem Bestand arbeiten, der
+   * sich gerade unter ihr verändert.
+   */
+  const resolveConflict = async (strategy: ConflictStrategy): Promise<SyncOutcome> => {
+    if (running) return { ran: false, reason: 'busy' }
+    running = true
+
+    state.set({ phase: 'syncing', message: null, retryAfterMs: null, conflict: null })
+
+    try {
+      // Der Marker wird in jedem der drei Wege gesetzt: Die Frage ist
+      // beantwortet und darf beim nächsten Start nicht erneut gestellt werden.
+      if (strategy === 'merge') {
+        await store.clearDirtyOnDeleted()
+        await store.writeHasMigrated(true)
+      }
+      else if (strategy === 'pullServer') {
+        await store.wipeLocalData()
+        await store.writeHasMigrated(true)
+      }
+      else {
+        // pushLocal: der Import lädt den lokalen Bestand hoch. Danach ist
+        // alles Lokale auch auf dem Server, der Pull darunter holt die
+        // Serversicht zurück.
+        const migrated = await runMigrate(store, sendMigrate, onNotice)
+        await store.writeHasMigrated(true)
+        await finish(null, migrated.skippedCount, null)
+        return { ran: true, snapshot: state.get() }
+      }
+
+      const pull = await runPull(store, fetchPull)
+      await finish(pull, 0, null)
+    }
+    catch (cause) {
+      const error = toSyncError(cause)
+      state.set({
+        phase: phaseFromError(error),
+        message: describeSyncError(error),
+        retryAfterMs: error.retryAfterMs,
+        pendingCount: await countPendingQuietly(store),
+      })
+    }
+    finally {
+      running = false
+    }
+
+    return { ran: true, snapshot: state.get() }
+  }
+
+  return { sync, resolveConflict, isRunning: () => running }
 }
 
 function toConflictReport(status: ServerStatus, localLists: number, localRecipes: number): SyncConflictReport {

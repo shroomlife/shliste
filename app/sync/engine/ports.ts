@@ -108,6 +108,27 @@ export interface LocalDataCounts {
   recipes: number
 }
 
+/**
+ * Was die Konfliktauflösung zusätzlich braucht.
+ *
+ * Beide Eingriffe sind gross und selten, deshalb stehen sie hier und nicht im
+ * gewöhnlichen Ablauf: Sie laufen ausschliesslich auf eine ausdrückliche
+ * Entscheidung des Nutzers hin.
+ */
+export interface ConflictStore {
+  /**
+   * Nimmt das Push-Flag von allen lokal gelöschten Zeilen und meldet, wie
+   * viele es waren. Für "zusammenführen": Eine offline getroffene Löschung
+   * darf den Serverbestand nicht mitreissen.
+   */
+  clearDirtyOnDeleted: () => Promise<number>
+  /**
+   * Löscht alle abgeglichenen Nutzdaten dieses Geräts, ohne Grabsteine, und
+   * setzt das Wasserzeichen zurück. Für "Server übernehmen".
+   */
+  wipeLocalData: () => Promise<void>
+}
+
 export interface SessionStore {
   readHasMigrated: () => Promise<boolean>
   writeHasMigrated: (value: boolean) => Promise<void>

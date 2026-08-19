@@ -38,8 +38,10 @@ import {
   getLastSyncedAt,
   getListsForView,
   getRecipesForView,
+  clearDirtyOnDeleted,
   hardDeleteList,
   isDirtyList,
+  wipeSyncedData,
   isDirtyRecipeOrChildren,
   countDirtyItemsForList,
   clearDirtyFlags,
@@ -48,7 +50,15 @@ import {
   setLastSyncedAt,
   type DirtyStoreName,
 } from '../../db/repositories'
-import type { DirtyRows, EntityStore, LocalDataCounts, RealtimeStore, RowStores, SyncStore } from './ports'
+import type {
+  ConflictStore,
+  DirtyRows,
+  EntityStore,
+  LocalDataCounts,
+  RealtimeStore,
+  RowStores,
+  SyncStore,
+} from './ports'
 import {
   putBadgeRow,
   putChatMessageRow,
@@ -175,7 +185,7 @@ async function isListDirtyWithItems(listId: string): Promise<boolean> {
  * Als Objekt und nicht als Klasse — es gibt nichts zu vererben und keinen
  * Zustand zu halten. Die Verbindung selbst verwaltet `app/db/client.ts`.
  */
-export const localStore: SyncStore & RealtimeStore = {
+export const localStore: SyncStore & RealtimeStore & ConflictStore = {
   rows,
   readDirty,
   clearDirty: (store: DirtyStoreName, ids: readonly string[], snapshot: IsoUtc) =>
@@ -192,4 +202,6 @@ export const localStore: SyncStore & RealtimeStore = {
   isListDirty: isListDirtyWithItems,
   isRecipeDirty: isDirtyRecipeOrChildren,
   removeList: hardDeleteList,
+  clearDirtyOnDeleted,
+  wipeLocalData: wipeSyncedData,
 }

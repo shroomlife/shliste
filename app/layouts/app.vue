@@ -15,9 +15,21 @@
 const route = useRoute()
 
 const { isSignedIn } = useAuth()
-const { display } = useSync()
+const { display, snapshot, resolveConflict } = useSync()
 
 useSyncRunner()
+
+/**
+ * Die Frage "welcher Stand gilt?" öffnet sich von selbst, sobald sie entsteht,
+ * lässt sich aber schliessen. Sie bleibt danach im Zustand stehen und ist über
+ * die Abgleich-Anzeige wieder erreichbar.
+ */
+const isConflictOpen = ref(false)
+const hasConflict = computed(() => snapshot.value.conflict !== null)
+
+watch(hasConflict, (pending) => {
+  if (pending) isConflictOpen.value = true
+})
 
 interface Destination {
   label: string
@@ -98,6 +110,8 @@ function isActive(destination: Destination): boolean {
         <SyncStatus
           v-if="isSignedIn"
           :state="display"
+          :actionable="hasConflict"
+          @activate="isConflictOpen = true"
         />
         <AuthButton compact />
       </div>
@@ -125,6 +139,8 @@ function isActive(destination: Destination): boolean {
       <SyncStatus
         v-if="isSignedIn"
         :state="display"
+        :actionable="hasConflict"
+        @activate="isConflictOpen = true"
       />
       <AuthButton />
     </div>
@@ -132,6 +148,14 @@ function isActive(destination: Destination): boolean {
     <main class="flex min-w-0 grow flex-col lg:min-h-0">
       <slot />
     </main>
+
+    <!-- Steht über allem: Solange nicht entschieden ist, welcher Stand gilt,
+         gleicht die App nicht ab. Benutzbar bleibt sie trotzdem. -->
+    <SyncConflictDialog
+      v-model:open="isConflictOpen"
+      :conflict="snapshot.conflict"
+      @resolve="resolveConflict"
+    />
 
     <!-- Mobil: Bottom-Nav wie in Android. Auf Desktop ausgeblendet. -->
     <nav

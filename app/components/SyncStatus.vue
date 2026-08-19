@@ -8,7 +8,19 @@
  */
 export type SyncState = 'synced' | 'syncing' | 'pending' | 'error' | 'offline'
 
-const { state = 'offline' } = defineProps<{ state?: SyncState }>()
+const { state = 'offline', actionable = false } = defineProps<{
+  state?: SyncState
+  /**
+   * Gibt es etwas zu tun? Dann wird aus der Anzeige ein Knopf.
+   *
+   * Heute ist das genau der Fall "welcher Stand gilt?" — eine Frage, die
+   * gestellt wurde und noch offen ist. Ohne diesen Weg zurück wäre sie nach
+   * dem ersten Schliessen unerreichbar.
+   */
+  actionable?: boolean
+}>()
+
+const emit = defineEmits<{ activate: [] }>()
 
 const display = computed(() => {
   switch (state) {
@@ -27,9 +39,13 @@ const display = computed(() => {
 </script>
 
 <template>
-  <div
+  <component
+    :is="actionable ? 'button' : 'div'"
     class="flex flex-col items-center gap-1"
+    :class="actionable && 'rounded-lg transition-opacity hover:opacity-70'"
+    :type="actionable ? 'button' : undefined"
     :title="display.label"
+    @click="actionable && emit('activate')"
   >
     <UIcon
       :name="display.icon"
@@ -38,5 +54,5 @@ const display = computed(() => {
       :style="{ color: display.color }"
     />
     <span class="sr-only">{{ display.label }}</span>
-  </div>
+  </component>
 </template>

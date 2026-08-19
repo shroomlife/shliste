@@ -24,7 +24,7 @@ import {
   type SyncStatusDisplay,
 } from '../sync/engine/state'
 import { localStore } from '../sync/engine/store'
-import { syncEngine } from '../sync/engine/sync'
+import { syncEngine, type ConflictStrategy } from '../sync/engine/sync'
 import { requestJson, SYNC_ENDPOINTS } from '../sync/engine/transport'
 import type { RealtimeEvent } from '../sync/realtime/events'
 import { useRealtime } from '../sync/realtime/useRealtime'
@@ -79,6 +79,13 @@ export interface UseSync {
   requestSync: () => Promise<void>
   /** Nach einer lokalen Änderung: abgleichen, aber gesammelt. */
   scheduleSync: () => void
+  /**
+   * Beantwortet die Frage, welcher Stand gilt, und gleicht danach ab.
+   *
+   * Nur auf eine ausdrückliche Entscheidung des Nutzers hin aufrufen: Zwei
+   * der drei Wege verwerfen Daten (siehe `ConflictStrategy`).
+   */
+  resolveConflict: (strategy: ConflictStrategy) => Promise<void>
 }
 
 export function useSync(): UseSync {
@@ -105,12 +112,20 @@ export function useSync(): UseSync {
     }, MUTATION_DEBOUNCE_MS)
   }
 
+  async function resolveConflict(strategy: ConflictStrategy): Promise<void> {
+    if (import.meta.server) return
+
+    const outcome = await syncEngine.resolveConflict(strategy)
+    if (outcome.ran) dataVersion.value += 1
+  }
+
   return {
     snapshot: readonly(snapshot),
     display: computed(() => toDisplayState(snapshot.value.phase)),
     dataVersion: readonly(dataVersion),
     requestSync,
     scheduleSync,
+    resolveConflict,
   }
 }
 

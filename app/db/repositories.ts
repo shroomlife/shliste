@@ -588,6 +588,67 @@ export async function clearDirtyFlags(
   await tx.done
 }
 
+/**
+ * Nimmt das Push-Flag von allen lokal gelöschten Zeilen.
+ *
+ * NUR FÜR DIE KONFLIKTAUFLÖSUNG "ZUSAMMENFÜHREN". Der Fall: Auf diesem
+ * Gerät wurde offline etwas gelöscht, auf dem Server liegt derselbe
+ * Bestand noch. Ohne diesen Schritt ginge die Löschabsicht beim nächsten
+ * Push hinaus, und das feldgenaue Last-Write-Wins würde `deletedAt`
+ * verbreiten — der Nutzer wollte aber zusammenführen und nicht löschen.
+ *
+ * Ohne Zeitstempelprüfung, anders als `clearDirtyFlags`: Hier wird nichts
+ * bestätigt, was der Server bereits hat, sondern eine Absicht verworfen. Die
+ * Zeile bleibt liegen und kommt beim nächsten Pull in ihrem Serverzustand
+ * zurück.
+ */
+export async function clearDirtyOnDeleted(): Promise<number> {
+  const db = await getDb()
+  const tx = db.transaction(DIRTY_STORES, 'readwrite')
+
+  const cleared = await Promise.all(DIRTY_STORES.map(async (name) => {
+    const store = tx.objectStore(name)
+    const rows = await store.index('by-dirty').getAll(DIRTY)
+    // `in` statt eines Zugriffs: Chat-Nachrichten sind anfügend und kennen
+    // gar kein `deletedAt`. Sie fallen damit von selbst heraus, ohne dass die
+    // Liste der Stores hier ein zweites Mal gepflegt werden muss.
+    const deleted = rows.filter(row => 'deletedAt' in row && row.deletedAt !== null)
+    await Promise.all(deleted.map(row => store.put({ ...row, dirty: CLEAN })))
+    return deleted.length
+  }))
+
+  await tx.done
+  return cleared.reduce((sum, count) => sum + count, 0)
+}
+
+/**
+ * Löscht ALLE abgeglichenen Nutzdaten dieses Geräts.
+ *
+ * NUR FÜR DIE KONFLIKTAUFLÖSUNG "SERVER ÜBERNEHMEN". Danach ist lokal
+ * nichts mehr da, was der folgende volle Pull nicht wieder herstellt.
+ *
+ * Ohne Grabsteine: Ein `deletedAt` würde beim nächsten Push als
+ * Löschabsicht hinausgehen und die Daten auch auf dem Server und allen
+ * anderen Geräten entfernen. Gemeint ist aber "dieses Gerät vergisst",
+ * nicht "alle vergessen".
+ *
+ * `lastSyncedAt` fällt mit weg, damit der folgende Pull vollständig läuft
+ * und nicht nur die Änderungen seit dem alten Wasserzeichen holt.
+ */
+export async function wipeSyncedData(): Promise<void> {
+  const db = await getDb()
+  const stores = [...DIRTY_STORES, 'list_members', 'sync_meta'] as const
+  const tx = db.transaction(stores, 'readwrite')
+
+  await Promise.all(DIRTY_STORES.map(name => tx.objectStore(name).clear()))
+  await tx.objectStore('list_members').clear()
+  // Der Rest von sync_meta bleibt: `lastSignedInUserId` gehört zum Konto und
+  // nicht zu den Daten, und `hasMigrated` setzt der Aufrufer gleich neu.
+  await tx.objectStore('sync_meta').delete('lastSyncedAt')
+
+  await tx.done
+}
+
 /* ------------------------------------------------------------------ *
  * sync_meta — Key-Value
  * ------------------------------------------------------------------ */
