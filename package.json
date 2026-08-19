@@ -17,14 +17,15 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
+    "bump": "bun bump.ts",
     "dev": "nuxt dev",
     "docker:build": "docker build -t shroomlife/shliste:latest .",
     "docker:push": "docker push shroomlife/shliste:latest",
     "generate": "nuxt generate",
-    "postinstall": "nuxt prepare",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "pb": "docker build -t shroomlife/shliste:latest . && docker push shroomlife/shliste:latest",
+    "postinstall": "nuxt prepare",
     "preview": "nuxt preview",
     "typecheck": "nuxt typecheck"
   },

@@ -15,7 +15,8 @@
  * Alias-Auflösung (dieselbe Begründung wie in `db/timestamps.ts`).
  */
 import type { ListItem } from '../../shared/types/domain'
-import { getItemsForList, getList, upsertItem, type Draft } from '../db/repositories'
+import { getItemsForList, getList, upsertItem, upsertList, type Draft } from '../db/repositories'
+import { nowIso } from '../db/timestamps'
 import type { ListItemRow, ListRow } from '../db/schema'
 
 /* ------------------------------------------------------------------ *
@@ -213,6 +214,59 @@ export function useListDetail() {
     await reload()
   }
 
+  /**
+   * Benennt die Liste um.
+   *
+   * Über `upsertList`, das dabei nur das Feld `name` neu stempelt — genau
+   * dadurch kann der Push später diese eine Änderung übertragen, ohne die
+   * Farbe oder das Geheim-Flag eines anderen Geräts zu überschreiben.
+   */
+  async function renameList(name: string): Promise<void> {
+    const target = list.value
+    const trimmed = name.trim()
+    if (target === null || trimmed.length === 0 || trimmed === target.name) return
+
+    await upsertList({
+      id: target.id,
+      name: trimmed,
+      color: target.color,
+      secret: target.secret,
+      lastSuggestedItems: target.lastSuggestedItems,
+      sourceUrl: target.sourceUrl,
+      ownerUserId: target.ownerUserId,
+      deletedAt: target.deletedAt,
+    })
+    await reload()
+  }
+
+  /**
+   * Löscht die Liste — beziehungsweise verlässt sie.
+   *
+   * EIN VORGANG FÜR BEIDES, und zwar nicht aus Bequemlichkeit: Der Server
+   * entscheidet anhand der Mitgliedschaft, was ein `deletedAt` bedeutet. Vom
+   * Eigentümer ist es eine Löschung, von einem Mitglied das Verlassen der
+   * Liste (`push.ts` in der API wandelt es um). Eine zweite Route dafür gibt
+   * es bewusst nicht.
+   *
+   * Ein Grabstein und kein Entfernen der Zeile: Ohne ihn erführe der Server
+   * nie von der Löschung und brächte die Liste beim nächsten Pull zurück.
+   */
+  async function deleteList(): Promise<void> {
+    const target = list.value
+    if (target === null) return
+
+    await upsertList({
+      id: target.id,
+      name: target.name,
+      color: target.color,
+      secret: target.secret,
+      lastSuggestedItems: target.lastSuggestedItems,
+      sourceUrl: target.sourceUrl,
+      ownerUserId: target.ownerUserId,
+      deletedAt: nowIso(),
+    })
+  }
+
   return {
     list: readonly(list),
     items: readonly(items),
@@ -224,5 +278,7 @@ export function useListDetail() {
     toggleItem,
     addItem,
     removeItem,
+    renameList,
+    deleteList,
   }
 }

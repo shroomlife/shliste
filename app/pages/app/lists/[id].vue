@@ -24,6 +24,62 @@ const { dataVersion, scheduleSync } = useSync()
 const { profile, isSignedIn } = useAuth()
 
 const isMembersOpen = ref(false)
+const isRenameOpen = ref(false)
+const isDeleteOpen = ref(false)
+const renameValue = ref('')
+
+/**
+ * Eine geheime Liste wird auf dem Web NICHT geöffnet.
+ *
+ * Android schützt sie mit Biometrie. Im Browser gäbe es dafür nur WebAuthn,
+ * und das ist eine eigene Entscheidung — bis dahin ist "gesperrt" die
+ * ehrliche Antwort. Einen schwächeren Schutz zu bauen hiesse, genau das
+ * Feature zu verwässern, das es der Privatsphäre wegen gibt.
+ */
+const isLocked = computed(() => list.value?.secret === true)
+
+/**
+ * Der Eintrag im Menü heisst für Mitglieder anders als für Eigentümer, weil er
+ * etwas anderes bedeutet: Der Eigentümer löscht die Liste für alle, ein
+ * Mitglied verlässt sie nur. Derselbe Vorgang, zwei Wahrheiten — der Server
+ * entscheidet anhand der Mitgliedschaft.
+ */
+const deleteLabel = computed(() => (isOwner.value ? 'Liste löschen' : 'Liste verlassen'))
+
+const menuItems = computed(() => [[
+  {
+    label: 'Umbenennen',
+    icon: 'i-lucide-pencil',
+    onSelect: () => {
+      renameValue.value = list.value?.name ?? ''
+      isRenameOpen.value = true
+    },
+  },
+  {
+    label: deleteLabel.value,
+    icon: 'i-lucide-trash-2',
+    color: 'error' as const,
+    onSelect: () => {
+      isDeleteOpen.value = true
+    },
+  },
+]])
+
+function submitRename(): void {
+  const name = renameValue.value.trim()
+  if (name.length === 0) return
+
+  isRenameOpen.value = false
+  mutate(renameList(name))
+}
+
+async function confirmDelete(): Promise<void> {
+  isDeleteOpen.value = false
+  await deleteList()
+  await reloadOverview()
+  scheduleSync()
+  await navigateTo('/app/lists')
+}
 
 /**
  * Ist das die eigene Liste?
@@ -44,6 +100,8 @@ const {
   load,
   toggleItem: setItemChecked,
   addItem: createItem,
+  renameList,
+  deleteList,
 } = useListDetail()
 
 const newItemName = ref('')
@@ -159,17 +217,19 @@ function addItem(): void {
           aria-label="Mitglieder verwalten"
           @click="isMembersOpen = true"
         />
-        <UButton
-          icon="i-lucide-ellipsis-vertical"
-          color="neutral"
-          variant="ghost"
-          class="shrink-0 rounded-full"
-          aria-label="Weitere Aktionen"
-        />
+        <UDropdownMenu :items="menuItems">
+          <UButton
+            icon="i-lucide-ellipsis-vertical"
+            color="neutral"
+            variant="ghost"
+            class="shrink-0 rounded-full"
+            aria-label="Weitere Aktionen"
+          />
+        </UDropdownMenu>
       </div>
 
       <div
-        v-if="items.length"
+        v-if="items.length && !isLocked"
         class="flex items-center gap-3.5"
       >
         <span
@@ -184,8 +244,35 @@ function addItem(): void {
       </div>
     </header>
 
+    <!-- Gesperrt: geheime Listen werden im Browser nicht geöffnet -->
+    <div
+      v-if="isLocked"
+      class="flex grow flex-col items-center justify-center gap-3 px-8 text-center"
+    >
+      <UIcon
+        name="i-lucide-lock"
+        class="size-10"
+        style="color: var(--md-on-surface-variant)"
+      />
+      <p class="text-[1.25rem] font-bold">
+        Diese Liste ist geheim
+      </p>
+      <p
+        class="max-w-md text-[1rem]"
+        style="color: var(--md-on-surface-variant); text-wrap: pretty"
+      >
+        Geheime Listen öffnet bisher nur die Android-App, dort geschützt per
+        Fingerabdruck oder Gesichtserkennung. Im Browser bleibt sie zu, solange
+        es hier keinen ebenbürtigen Schutz gibt — ein schwächerer wäre
+        schlechter als keiner.
+      </p>
+    </div>
+
     <!-- Einträge -->
-    <div class="flex grow flex-col gap-0.5 px-3 py-2 lg:min-h-0 lg:overflow-y-auto lg:px-5">
+    <div
+      v-else
+      class="flex grow flex-col gap-0.5 px-3 py-2 lg:min-h-0 lg:overflow-y-auto lg:px-5"
+    >
       <template v-if="items.length">
         <ListItemRow
           v-for="item in openItems"
@@ -237,6 +324,68 @@ function addItem(): void {
       </div>
     </div>
 
+    <AppSheet
+      v-model:open="isRenameOpen"
+      title="Liste umbenennen"
+      description="Wie soll sie heissen?"
+    >
+      <UInput
+        v-model="renameValue"
+        size="xl"
+        autofocus
+        :ui="{ root: 'w-full' }"
+        @keyup.enter="submitRename"
+      />
+
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            class="font-bold"
+            @click="isRenameOpen = false"
+          >
+            Abbrechen
+          </UButton>
+          <UButton
+            :disabled="renameValue.trim().length === 0"
+            class="font-bold"
+            @click="submitRename"
+          >
+            Speichern
+          </UButton>
+        </div>
+      </template>
+    </AppSheet>
+
+    <AppSheet
+      v-model:open="isDeleteOpen"
+      :title="deleteLabel"
+      :description="isOwner
+        ? 'Die Liste verschwindet auch bei allen, mit denen du sie teilst.'
+        : 'Die Liste bleibt für die übrigen Mitglieder bestehen.'"
+    >
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            class="font-bold"
+            @click="isDeleteOpen = false"
+          >
+            Abbrechen
+          </UButton>
+          <UButton
+            color="error"
+            class="font-bold"
+            @click="confirmDelete"
+          >
+            {{ isOwner ? 'Löschen' : 'Verlassen' }}
+          </UButton>
+        </div>
+      </template>
+    </AppSheet>
+
     <ListMembersSheet
       v-model:open="isMembersOpen"
       :list-id="listId"
@@ -245,6 +394,7 @@ function addItem(): void {
 
     <!-- Eingabe -->
     <div
+      v-if="!isLocked"
       class="flex shrink-0 items-center gap-2.5 border-t px-3 py-3.5 lg:px-5"
       style="border-color: var(--md-outline-variant)"
     >
