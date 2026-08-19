@@ -1,0 +1,58 @@
+import type { RecipeRow } from '../db/schema'
+import { getRecipesForView, upsertRecipe } from '../db/repositories'
+import { randomListColor } from '../utils/color'
+
+/**
+ * Rezeptuebersicht aus der lokalen Datenbank.
+ *
+ * Aufbau bewusst gleich wie `useLists`: Beide Bereiche verhalten sich fuer die
+ * Bedienung identisch, deshalb sollen sie sich auch im Code gleich lesen.
+ *
+ * Wie bei den Listen ohne Konto nutzbar — angemeldet werden muss man erst
+ * fuer Abgleich und Teilen.
+ */
+export function useRecipes() {
+  const recipes = useState<RecipeRow[]>('recipes', () => [])
+  const isLoading = useState<boolean>('recipes-loading', () => false)
+
+  async function reload(): Promise<void> {
+    // IndexedDB gibt es nur im Browser. Auf dem Server bleibt die Liste leer,
+    // was folgenlos ist, weil der App-Bereich client-seitig rendert.
+    if (import.meta.server) return
+
+    isLoading.value = true
+    try {
+      recipes.value = await getRecipesForView()
+    }
+    finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * Legt ein Rezept an und gibt es zurueck.
+   *
+   * Die ID wird clientseitig vergeben, genau wie bei den Listen und wie in der
+   * Android-App: ohne eigene Schluessel gaebe es offline keine stabile
+   * Identitaet.
+   */
+  async function createRecipe(name: string): Promise<RecipeRow> {
+    const row = await upsertRecipe({
+      id: crypto.randomUUID(),
+      name: name.trim(),
+      color: randomListColor(),
+      sourceUrl: null,
+      imagePath: null,
+      deletedAt: null,
+    })
+    await reload()
+    return row
+  }
+
+  return {
+    recipes: readonly(recipes),
+    isLoading: readonly(isLoading),
+    reload,
+    createRecipe,
+  }
+}

@@ -78,8 +78,23 @@ function isActive(destination: Destination): boolean {
       </NuxtLink>
 
       <div class="grow" />
-      <SyncStatus />
+      <!-- Konto und Abgleich stehen zusammen am unteren Ende der Rail: beides
+           betrifft nicht den Inhalt, sondern den Zustand der App. -->
+      <div class="flex flex-col items-center gap-2">
+        <SyncStatus />
+        <AuthButton />
+      </div>
     </nav>
+
+    <!-- Mobil: schmale Kopfzeile fuer Konto und Abgleich. Auf dem Desktop
+         uebernimmt das die Rail, deshalb dort ausgeblendet. -->
+    <div
+      class="flex h-12 shrink-0 items-center justify-end gap-2 px-3 lg:hidden"
+      style="background: var(--md-surface-container)"
+    >
+      <SyncStatus />
+      <AuthButton />
+    </div>
 
     <main class="flex min-w-0 grow flex-col">
       <slot />

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { List, ListItem } from '#shared/types/domain'
+import type { ListItem } from '#shared/types/domain'
 
 /**
  * Detailansicht einer Liste — der Bildschirm, auf dem in dieser App die meiste
@@ -10,19 +10,26 @@ import type { List, ListItem } from '#shared/types/domain'
  * steht diese Ansicht rechts neben dem Index, auf Mobil ist sie eine eigene
  * Seite mit Zurueck-Pfeil.
  *
- * Stand: Die Datenschicht (Phasen 3 bis 5) wird gerade gebaut. Bis dahin zeigt
- * die Seite ehrlich den Leerzustand statt erfundener Beispieldaten.
+ * Die Daten kommen aus der lokalen Datenbank und damit ohne Konto aus.
+ * Abhaken und Hinzufuegen funktionieren offline; der Abgleich mit dem Server
+ * laeuft getrennt davon.
  */
 definePageMeta({ layout: 'app' })
 
 const route = useRoute()
 const listId = computed(() => String(route.params.id))
 
-const list = shallowRef<List | null>(null)
-const items = shallowRef<ListItem[]>([])
+const {
+  list,
+  items,
+  openItems,
+  doneItems,
+  load,
+  toggleItem: setItemChecked,
+  addItem: createItem,
+} = useListDetail()
 
-const openItems = computed(() => items.value.filter(item => !item.checked))
-const doneItems = computed(() => items.value.filter(item => item.checked))
+const newItemName = ref('')
 
 const progress = computed(() => {
   const total = items.value.length
@@ -32,6 +39,18 @@ const progress = computed(() => {
 useHead({ title: () => `${list.value?.name ?? 'Liste'} ~ shliste` })
 
 /**
+ * Die Ereignisbehandler der Vorlage sind synchron, die Datenbankzugriffe nicht.
+ * Alles laeuft deshalb hier durch: So endet ein gescheiterter Zugriff (privater
+ * Modus, gesperrter Speicher) nicht als unbehandelte Zusage im Nichts, sondern
+ * im Protokoll.
+ */
+function run(work: Promise<unknown>): void {
+  void work.catch((error: unknown) => {
+    console.error('[Listendetail] Zugriff auf die lokale Datenbank fehlgeschlagen:', error)
+  })
+}
+
+/**
  * Laedt Liste und Eintraege aus der lokalen Datenbank.
  *
  * Bewusst kein useFetch: Die Daten liegen offline-first in IndexedDB und nicht
@@ -39,23 +58,29 @@ useHead({ title: () => `${list.value?.name ?? 'Liste'} ~ shliste` })
  * schreibt in dieselbe Datenbank zurueck, woraufhin diese Ansicht neu laedt.
  */
 async function loadList(): Promise<void> {
-  // Wird an app/db angeschlossen, sobald die Datenschicht steht (Phase 3).
-  void listId.value
+  await load(listId.value)
 }
 
 // watch mit immediate statt onMounted: so laedt die Ansicht auch neu, wenn auf
 // dem Desktop im Index eine andere Liste gewaehlt wird, ohne dass die
 // Komponente neu erzeugt wird.
 watch(listId, () => {
-  void loadList()
+  run(loadList())
 }, { immediate: true })
 
-function toggleItem(_item: ListItem): void {
-  // Wird mit der Datenschicht verbunden (Phase 3).
+function toggleItem(item: ListItem): void {
+  run(setItemChecked(item))
 }
 
 function addItem(): void {
-  // Wird mit der Datenschicht verbunden (Phase 3).
+  const name = newItemName.value.trim()
+  if (name.length === 0) return
+
+  // Sofort leeren statt erst nach dem Schreiben: Der naechste Artikel soll ohne
+  // Wartezeit tippbar sein, und ein zweites Enter darf nicht denselben Eintrag
+  // ein zweites Mal anlegen.
+  newItemName.value = ''
+  run(createItem(name))
 }
 </script>
 
@@ -176,6 +201,7 @@ function addItem(): void {
       style="border-color: var(--md-outline-variant)"
     >
       <UInput
+        v-model="newItemName"
         placeholder="Artikel hinzufuegen"
         icon="i-lucide-plus"
         size="xl"

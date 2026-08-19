@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { Recipe } from '#shared/types/domain'
-
 /**
  * Rezepte-Uebersicht. Wie bei den Listen gilt: ohne Konto nutzbar, die Daten
  * liegen lokal. Ein Konto braucht es erst fuer Abgleich und Teilen.
@@ -8,10 +6,34 @@ import type { Recipe } from '#shared/types/domain'
 definePageMeta({ layout: 'app' })
 useHead({ title: 'Rezepte ~ shliste' })
 
-const recipes = shallowRef<Recipe[]>([])
+const { recipes, reload, createRecipe } = useRecipes()
 
-// Platzhalter bis die Datenschicht steht (Phase 3).
-function createRecipe(): void {}
+const isDialogOpen = ref(false)
+const newRecipeName = ref('')
+const isSaving = ref(false)
+
+onMounted(() => {
+  void reload()
+})
+
+function openDialog(): void {
+  newRecipeName.value = ''
+  isDialogOpen.value = true
+}
+
+async function submitDialog(): Promise<void> {
+  const name = newRecipeName.value.trim()
+  if (name.length === 0 || isSaving.value) return
+
+  isSaving.value = true
+  try {
+    await createRecipe(name)
+    isDialogOpen.value = false
+  }
+  finally {
+    isSaving.value = false
+  }
+}
 </script>
 
 <template>
@@ -22,7 +44,7 @@ function createRecipe(): void {}
     <AppPageHeader
       title="Rezepte"
       action-label="Neu"
-      @action="createRecipe"
+      @action="openDialog"
     />
 
     <div
@@ -64,7 +86,43 @@ function createRecipe(): void {}
     <!-- Mobil: dieselbe Aktion als schwebender Knopf, wie bei den Listen -->
     <AppFab
       label="Neues Rezept"
-      @click="createRecipe"
+      @click="openDialog"
     />
+
+    <AppSheet
+      v-model:open="isDialogOpen"
+      title="Neues Rezept"
+      description="Wie soll das Rezept heissen?"
+    >
+      <UInput
+        v-model="newRecipeName"
+        placeholder="z.B. Linsencurry"
+        size="xl"
+        autofocus
+        :ui="{ root: 'w-full' }"
+        @keyup.enter="submitDialog"
+      />
+
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            class="font-bold"
+            @click="isDialogOpen = false"
+          >
+            Abbrechen
+          </UButton>
+          <UButton
+            :loading="isSaving"
+            :disabled="newRecipeName.trim().length === 0"
+            class="font-bold"
+            @click="submitDialog"
+          >
+            Anlegen
+          </UButton>
+        </div>
+      </template>
+    </AppSheet>
   </div>
 </template>
