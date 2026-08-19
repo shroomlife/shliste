@@ -46,16 +46,21 @@ function isActive(destination: Destination): boolean {
       style="background: var(--md-surface-container); border-color: var(--md-outline-variant)"
       aria-label="Hauptnavigation"
     >
+      <!-- Die Bildmarke der Android-App (drawable ci_logo), nicht nachgebaut.
+           Vorher stand hier ein Menü-Symbol, das kein Menü öffnete — genau die
+           Art Versprechen, das eine Oberfläche nicht halten kann. -->
       <NuxtLink
         to="/"
-        class="mb-4 flex size-10 items-center justify-center rounded-xl"
-        style="background: var(--md-primary)"
-        aria-label="Zur Startseite"
+        class="mb-4 flex size-10 items-center justify-center"
+        aria-label="shliste, zur Startseite"
       >
-        <UIcon
-          name="i-lucide-menu"
-          class="size-5 text-white"
-        />
+        <img
+          src="/images/brand/mark.svg"
+          alt=""
+          width="28"
+          height="22"
+          class="w-7"
+        >
       </NuxtLink>
 
       <NuxtLink
@@ -101,9 +106,22 @@ function isActive(destination: Destination): boolean {
     <!-- Mobil: schmale Kopfzeile für Konto und Abgleich. Auf dem Desktop
          übernimmt das die Rail, deshalb dort ausgeblendet. -->
     <div
-      class="flex h-12 shrink-0 items-center justify-end gap-2 px-3 lg:hidden"
+      class="flex h-12 shrink-0 items-center gap-2 px-3 lg:hidden"
       style="background: var(--md-surface-container)"
     >
+      <NuxtLink
+        to="/"
+        aria-label="shliste, zur Startseite"
+      >
+        <img
+          src="/images/brand/wordmark.svg"
+          alt="shliste"
+          width="91"
+          height="24"
+          class="h-6 w-auto"
+        >
+      </NuxtLink>
+      <div class="grow" />
       <SyncStatus
         v-if="isSignedIn"
         :state="display"

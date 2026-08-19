@@ -7,6 +7,7 @@ export default defineNuxtConfig({
     '@nuxt/fonts',
     '@pinia/nuxt',
     '@nuxtjs/seo',
+    '@vite-pwa/nuxt',
   ],
 
   // SSR bleibt an: der Nitro-Server wird ohnehin gebraucht, weil er das
@@ -85,6 +86,12 @@ export default defineNuxtConfig({
     // Der App-Bereich rendert ausschliesslich im Client — seine Daten liegen
     // in IndexedDB und sind auf dem Server nicht vorhanden.
     '/app/**': { ssr: false },
+    // Diese eine Seite wird zusätzlich vorgerendert. Sie ist die Hülle, die der
+    // Service Worker offline für JEDE /app-Adresse ausliefert (navigateFallback):
+    // Weil im App-Bereich ohnehin nur der Browser rendert, ist die ausgelieferte
+    // HTML-Datei für alle diese Adressen dieselbe, und der Router im Browser
+    // setzt daraus die richtige Seite zusammen.
+    '/app/lists': { prerender: true },
   },
 
   future: { compatibilityVersion: 4 },
@@ -123,6 +130,75 @@ export default defineNuxtConfig({
   // Anmeldung bringt das nichts; die Startseite bekommt bei Bedarf ein
   // statisches OG-Bild.
   ogImage: { enabled: false },
+
+  /**
+   * Der Service Worker.
+   *
+   * WAS VORHER FEHLTE: Der handgeschriebene Vorgänger hatte KEIN
+   * Precache-Manifest — der Cache füllte sich nur mit tatsächlich besuchten
+   * Seiten. Der erste Offline-Aufruf einer noch nie besuchten Route schlug
+   * damit fehl, was für eine App, die "Abhaken geht auch ohne Netz"
+   * verspricht, nicht tragbar ist. Workbox erzeugt das Manifest beim Build
+   * aus den echten Ausgabedateien.
+   *
+   * `prompt` statt `autoUpdate`: Ein Selbstneuladen mitten im Einkauf wäre
+   * genau die Überraschung, die eine App nicht liefern soll. Die neue Fassung
+   * wird angeboten, angenommen wird sie per Klick (siehe PwaPrompt.vue).
+   */
+  pwa: {
+    registerType: 'prompt',
+
+    manifest: {
+      name: 'shliste ~ Deine smarte Einkaufsliste',
+      short_name: 'shliste',
+      description: 'Einkaufslisten und Rezepte, die auf allen Geräten gleich sind — auch ohne Netz.',
+      lang: 'de',
+      // Die installierte App startet direkt im Listenbereich und nicht auf der
+      // Werbeseite: Wer sie installiert hat, ist überzeugt.
+      start_url: '/app/lists',
+      scope: '/',
+      display: 'standalone',
+      background_color: '#FFFFFF',
+      // Identisch zum theme-color-Meta oben und zur SecondaryColor der
+      // Android-App. Die alte manifest.json wich hier ab, was auf Android zu
+      // zwei verschiedenen Tönungen der Systemleiste führte.
+      theme_color: '#FDECF5',
+      icons: [
+        { src: '/images/logo/logo192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+        { src: '/images/logo/logo512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+        // Dasselbe Bild auch als maskable: Der Rand des Logos ist einfarbig
+        // #FDECF5 bis in die Ecken und das Motiv liegt weit innerhalb der
+        // sicheren Zone — Android darf also beschneiden, wie es mag.
+        { src: '/images/logo/logo512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      ],
+    },
+
+    workbox: {
+      globPatterns: ['**/*.{js,css,html,png,svg,ico,webmanifest,woff2}'],
+      // Offline bekommt jede /app-Adresse die vorgerenderte Hülle. Ohne diese
+      // Zeile wäre nur die eine besuchte Adresse offline erreichbar.
+      navigateFallback: '/app/lists',
+      navigateFallbackAllowlist: [/^\/app\//],
+      // Die BFF-Aufrufe gehören nie in den Cache und nie auf die Hülle: Ein
+      // gescheiterter Abgleich ist ein Fehler, den die Engine behandelt, und
+      // keine HTML-Seite.
+      navigateFallbackDenylist: [/^\/api\//],
+      cleanupOutdatedCaches: true,
+    },
+
+    // In der Entwicklung aus: Ein Service Worker, der neben dem HMR-Server
+    // Dateien ausliefert, macht aus jedem Fehler eine Frage nach dem Cache.
+    devOptions: { enabled: false },
+
+    // BEKANNT UND HARMLOS: Offline scheitert je Seitenaufruf eine Anfrage an
+    // /api/_nuxt_icon. Die Icons erscheinen trotzdem, sie liegen im
+    // Client-Bundle (43 Stueck, rund 10 KB) — nachgewiesen mit abgeschaltetem
+    // Server. Zwei naheliegende Auswege wurden geprueft und verworfen:
+    // `icon.provider: 'none'` unterbindet die Anfrage, laesst dann aber auch
+    // die Icons der vorgerenderten Seiten leer; ein Laufzeit-Cache greift
+    // nicht, weil jede Seite eine andere Icon-Kombination und damit eine
+    // andere Adresse anfragt.
+  },
 
   seo: { enabled: true },
 })

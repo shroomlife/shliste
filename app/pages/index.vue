@@ -31,16 +31,20 @@ const features = [
     style="background: var(--md-background); color: var(--md-on-background)"
   >
     <header class="mx-auto flex max-w-5xl items-center gap-3 px-6 py-5">
-      <div
-        class="flex size-8 items-center justify-center rounded-lg"
-        style="background: var(--md-primary)"
+      <!-- Der echte Schriftzug der Android-App (drawable ci_brand), nicht
+           nachgebaut: dieselben Pfade, damit beide Auftritte identisch sind. -->
+      <NuxtLink
+        to="/"
+        aria-label="shliste, zur Startseite"
       >
-        <UIcon
-          name="i-lucide-list-checks"
-          class="size-5 text-white"
-        />
-      </div>
-      <span class="text-[1.625rem] font-black tracking-tight">shliste</span>
+        <img
+          src="/images/brand/wordmark.svg"
+          alt="shliste"
+          width="152"
+          height="40"
+          class="h-9 w-auto sm:h-10"
+        >
+      </NuxtLink>
       <div class="grow" />
       <UButton
         to="/app/lists"
