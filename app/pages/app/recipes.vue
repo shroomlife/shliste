@@ -1,13 +1,19 @@
 <script setup lang="ts">
 /**
- * Rezepte-Übersicht. Wie bei den Listen gilt: ohne Konto nutzbar, die Daten
- * liegen lokal. Ein Konto braucht es erst für Abgleich und Teilen.
+ * Rezeptbereich, aufgebaut wie der Listenbereich.
+ *
+ * Dieselbe Routen-Ebene, dieselbe Master-Detail-Aufteilung, dieselbe Karte:
+ * Wer Listen bedienen kann, kann auch Rezepte bedienen, ohne etwas Neues zu
+ * lernen. Auf Mobil tritt der Index zurück, sobald ein Rezept offen ist.
  */
 definePageMeta({ layout: 'app' })
 useHead({ title: 'Rezepte ~ shliste' })
 
-const { recipes, reload, createRecipe } = useRecipes()
+const route = useRoute()
+const { entries, reload, createRecipe } = useRecipes()
 const { dataVersion, scheduleSync } = useSync()
+
+const isDetailOpen = computed(() => typeof route.params.id === 'string')
 
 const isDialogOpen = ref(false)
 const newRecipeName = ref('')
@@ -33,9 +39,10 @@ async function submitDialog(): Promise<void> {
 
   isSaving.value = true
   try {
-    await createRecipe(name)
+    const created = await createRecipe(name)
     scheduleSync()
     isDialogOpen.value = false
+    await navigateTo(`/app/recipes/${created.id}`)
   }
   finally {
     isSaving.value = false
@@ -45,56 +52,63 @@ async function submitDialog(): Promise<void> {
 
 <template>
   <div
-    class="flex min-w-0 grow flex-col lg:min-h-0 lg:overflow-y-auto"
-    style="background: var(--md-surface-low)"
+    class="flex min-w-0 grow lg:min-h-0 lg:divide-x"
+    style="border-color: var(--md-outline-variant)"
   >
-    <AppPageHeader
-      title="Rezepte"
-      action-label="Neu"
-      @action="openDialog"
-    />
-
-    <div
-      v-if="recipes.length"
-      class="grid gap-3 px-5 pb-5 sm:grid-cols-2 xl:grid-cols-3"
+    <!-- Index -->
+    <section
+      class="w-full shrink-0 flex-col lg:flex lg:w-86 lg:overflow-y-auto"
+      :class="isDetailOpen ? 'hidden' : 'flex'"
+      style="background: var(--md-surface-low)"
     >
-      <article
-        v-for="recipe in recipes"
-        :key="recipe.id"
-        class="list-tint rounded-xl p-4"
-        :style="{ '--list-color': recipe.color }"
-      >
-        <h2 class="text-[1.25rem] font-bold">
-          {{ recipe.name }}
-        </h2>
-      </article>
-    </div>
-
-    <div
-      v-else
-      class="flex grow flex-col items-center justify-center gap-3 px-8 py-16 text-center"
-    >
-      <UIcon
-        name="i-lucide-chef-hat"
-        class="size-10"
-        style="color: var(--md-on-surface-variant)"
+      <AppPageHeader
+        title="Rezepte"
+        action-label="Neu"
+        @action="openDialog"
       />
-      <p class="text-[1.25rem] font-bold">
-        Noch keine Rezepte
-      </p>
-      <p
-        class="text-[1rem]"
-        style="color: var(--md-on-surface-variant); text-wrap: pretty"
-      >
-        Lege ein Rezept an und hol seine Zutaten später mit einem Tippen auf die Einkaufsliste.
-      </p>
-    </div>
 
-    <!-- Mobil: dieselbe Aktion als schwebender Knopf, wie bei den Listen -->
-    <AppFab
-      label="Neues Rezept"
-      @click="openDialog"
-    />
+      <div
+        v-if="entries.length"
+        class="flex flex-col gap-2 px-4 pb-4"
+      >
+        <RecipeCard
+          v-for="entry in entries"
+          :key="entry.recipe.id"
+          :recipe="entry.recipe"
+          :ingredient-count="entry.ingredientCount"
+          :step-count="entry.stepCount"
+          :active="entry.recipe.id === route.params.id"
+        />
+      </div>
+
+      <div
+        v-else
+        class="flex grow flex-col items-center justify-center gap-3 px-8 py-16 text-center"
+      >
+        <UIcon
+          name="i-lucide-chef-hat"
+          class="size-10"
+          style="color: var(--md-on-surface-variant)"
+        />
+        <p class="text-[1.25rem] font-bold">
+          Noch keine Rezepte
+        </p>
+        <p
+          class="text-[1rem]"
+          style="color: var(--md-on-surface-variant); text-wrap: pretty"
+        >
+          Lege ein Rezept an und hol seine Zutaten später mit einem Tippen auf die Einkaufsliste.
+        </p>
+      </div>
+
+      <!-- Mobil: dieselbe Aktion als schwebender Knopf, wie bei den Listen -->
+      <AppFab
+        label="Neues Rezept"
+        @click="openDialog"
+      />
+    </section>
+
+    <NuxtPage />
 
     <AppSheet
       v-model:open="isDialogOpen"

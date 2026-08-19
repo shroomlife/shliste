@@ -1,6 +1,24 @@
 import type { RecipeRow } from '../db/schema'
-import { getRecipesForView, upsertRecipe } from '../db/repositories'
+import {
+  getIngredientsForRecipe,
+  getRecipesForView,
+  getStepsForRecipe,
+  upsertRecipe,
+} from '../db/repositories'
 import { randomListColor } from '../utils/color'
+
+/**
+ * Ein Rezept samt der Zahlen, die die Übersicht anzeigt.
+ *
+ * Wie bei den Listen abgeleitet und nicht in der Zeile gespeichert: Eine
+ * zweite Wahrheit, die bei jeder Änderung mitgepflegt werden müsste, würde
+ * früher oder später auseinanderlaufen.
+ */
+export interface RecipeWithCounts {
+  recipe: RecipeRow
+  ingredientCount: number
+  stepCount: number
+}
 
 /**
  * Rezeptübersicht aus der lokalen Datenbank.
@@ -12,7 +30,7 @@ import { randomListColor } from '../utils/color'
  * für Abgleich und Teilen.
  */
 export function useRecipes() {
-  const recipes = useState<RecipeRow[]>('recipes', () => [])
+  const entries = useState<RecipeWithCounts[]>('recipes', () => [])
   const isLoading = useState<boolean>('recipes-loading', () => false)
 
   async function reload(): Promise<void> {
@@ -22,7 +40,14 @@ export function useRecipes() {
 
     isLoading.value = true
     try {
-      recipes.value = await getRecipesForView()
+      const recipes = await getRecipesForView()
+      entries.value = await Promise.all(recipes.map(async (recipe) => {
+        const [ingredients, steps] = await Promise.all([
+          getIngredientsForRecipe(recipe.id),
+          getStepsForRecipe(recipe.id),
+        ])
+        return { recipe, ingredientCount: ingredients.length, stepCount: steps.length }
+      }))
     }
     finally {
       isLoading.value = false
@@ -50,7 +75,7 @@ export function useRecipes() {
   }
 
   return {
-    recipes: readonly(recipes),
+    entries: readonly(entries),
     isLoading: readonly(isLoading),
     reload,
     createRecipe,
