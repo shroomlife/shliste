@@ -682,13 +682,68 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0
 }
 
-/** Wurden die Daten der alten localStorage-Fassung übernommen? */
+/** Wurden die lokalen Daten einmalig auf den Server geladen? */
 export async function getHasMigrated(): Promise<boolean> {
   return (await readMeta('hasMigrated', isBoolean)) ?? false
 }
 
 export async function setHasMigrated(value: boolean): Promise<void> {
   await writeMeta('hasMigrated', value)
+}
+
+/** Wurden die localStorage-Dokumente der alten Fassung übernommen? */
+export async function getLegacyImported(): Promise<boolean> {
+  return (await readMeta('legacyImported', isBoolean)) ?? false
+}
+
+export async function setLegacyImported(value: boolean): Promise<void> {
+  await writeMeta('legacyImported', value)
+}
+
+/**
+ * Schreibt übernommene Altzeilen — ohne die üblichen Zeitstempel-Regeln.
+ *
+ * NICHT über `upsert*`: Die setzen `updatedAt` auf jetzt und stempeln jedes
+ * geänderte Feld einzeln. Für eine Zeile aus dem Jahr davor wäre beides
+ * falsch — sie soll ihren eigenen Zeitpunkt behalten. `dirty` steht trotzdem
+ * auf 1, denn der Server kennt diese Zeilen noch nicht.
+ *
+ * `add` statt `put`: Eine bereits vorhandene Zeile wird nicht überschrieben.
+ * Der Import ist damit auch dann harmlos, wenn er ein zweites Mal liefe.
+ */
+export async function insertLegacyRows(rows: {
+  lists: readonly List[]
+  items: readonly ListItem[]
+  recipes: readonly Recipe[]
+  ingredients: readonly RecipeIngredient[]
+  steps: readonly RecipeStep[]
+}): Promise<number> {
+  const db = await getDb()
+  const tx = db.transaction(['lists', 'list_items', 'recipes', 'recipe_ingredients', 'recipe_steps'], 'readwrite')
+
+  let written = 0
+  const write = async (store: 'lists' | 'list_items' | 'recipes' | 'recipe_ingredients' | 'recipe_steps', row: object): Promise<void> => {
+    try {
+      // @ts-expect-error — der Storename ist zur Laufzeit gebunden; die
+      // Typbindung von `idb` lässt sich hier nur mit fünf gleichlautenden
+      // Zweigen erhalten, und die wären keine Verbesserung.
+      await tx.objectStore(store).add({ ...row, dirty: DIRTY })
+      written += 1
+    }
+    catch {
+      // ConstraintError: die Zeile gibt es schon. Kein Fehler, sondern der
+      // Normalfall eines zweiten Laufs.
+    }
+  }
+
+  for (const row of rows.lists) await write('lists', row)
+  for (const row of rows.items) await write('list_items', row)
+  for (const row of rows.recipes) await write('recipes', row)
+  for (const row of rows.ingredients) await write('recipe_ingredients', row)
+  for (const row of rows.steps) await write('recipe_steps', row)
+
+  await tx.done
+  return written
 }
 
 /** Ende des letzten erfolgreichen Abgleichs, `null` wenn noch nie. */

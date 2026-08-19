@@ -92,6 +92,14 @@ export interface UseSync {
    * der drei Wege verwerfen Daten (siehe `ConflictStrategy`).
    */
   resolveConflict: (strategy: ConflictStrategy) => Promise<void>
+  /**
+   * Meldet, dass die lokale Datenbank von aussen geändert wurde.
+   *
+   * Für Schreibvorgänge, die nicht aus einer Ansicht kommen — heute die
+   * Übernahme der alten Daten beim ersten Start. Ohne dieses Signal stünden
+   * die geschriebenen Zeilen erst nach dem nächsten Seitenwechsel da.
+   */
+  notifyDataChanged: () => void
 }
 
 export function useSync(): UseSync {
@@ -125,6 +133,10 @@ export function useSync(): UseSync {
     if (outcome.ran) dataVersion.value += 1
   }
 
+  function notifyDataChanged(): void {
+    dataVersion.value += 1
+  }
+
   return {
     snapshot: computed(() => snapshot.value),
     display: computed(() => toDisplayState(snapshot.value.phase)),
@@ -132,6 +144,7 @@ export function useSync(): UseSync {
     requestSync,
     scheduleSync,
     resolveConflict,
+    notifyDataChanged,
   }
 }
 

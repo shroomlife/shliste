@@ -62,7 +62,9 @@ export type ListMemberRow = ListMember
 /**
  * Die Schlüssel des Key-Value-Stores mit ihren Werttypen.
  *
- * - `hasMigrated`: wurden die Daten der alten localStorage-Version übernommen?
+ * - `hasMigrated`: wurden die lokalen Daten einmalig auf den Server geladen?
+ * - `legacyImported`: wurden die localStorage-Dokumente der alten Fassung
+ *   in diese Datenbank übernommen?
  * - `lastSyncedAt`: Ende des letzten erfolgreichen Abgleichs
  * - `lastSignedInUserId`: wer war zuletzt angemeldet? Weicht die ID beim
  *   nächsten Anmelden ab, gehören die lokalen Daten einem anderen Konto.
@@ -71,6 +73,14 @@ export type ListMemberRow = ListMember
  */
 export interface SyncMetaMap {
   hasMigrated: boolean
+  /**
+   * Wurden die Dokumente aus `localStorage` der alten Fassung übernommen?
+   *
+   * Getrennt von `hasMigrated`, weil es eine andere Frage beantwortet: Dieses
+   * Flag betrifft den Weg von localStorage in die lokale Datenbank und läuft
+   * ohne Konto, `hasMigrated` den Weg von hier auf den Server.
+   */
+  legacyImported: boolean
   lastSyncedAt: IsoUtc
   lastSignedInUserId: string
   lastEventId: string
