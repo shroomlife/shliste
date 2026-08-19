@@ -1,0 +1,658 @@
+/**
+ * Die Zugriffsformen auf die lokale Datenbank.
+ *
+ * Der Schnitt folgt den DAOs der Android-App, weil der Sync-Algorithmus dort
+ * bereits erprobt ist und genau diese Formen aufruft. Wer hier etwas
+ * umbenennt, muss den Sync mitdenken.
+ *
+ * Zwei Regeln ziehen sich durch die Datei:
+ *
+ * 1. Jede Schreiboperation setzt `dirty = 1`, `updatedAt` und die
+ *    `fieldTimestamps` der tatsächlich geänderten Felder. Feldgenaue
+ *    Zeitstempel sind die Grundlage des Last-Write-Wins: Ohne sie würde ein
+ *    Server-Datensatz, der nur ein anderes Feld betrifft, die lokale
+ *    Änderung überschreiben.
+ * 2. Löschen ist weich (`deletedAt`), damit die Löschung überhaupt gepusht
+ *    werden kann. Die einzige Ausnahme ist `hardDeleteList()` — begründet
+ *    dort.
+ *
+ * Für ein weiches Löschen gibt es bewusst keine eigene Funktion: Es ist ein
+ * normales Update, das `deletedAt` setzt, und läuft über dieselbe
+ * Upsert-Funktion wie jede andere Änderung.
+ */
+import type {
+  Badge,
+  FieldTimestamps,
+  IsoUtc,
+  List,
+  ListItem,
+  ListMember,
+  Recipe,
+  RecipeChatMessage,
+  RecipeIngredient,
+  RecipeStep,
+  SyncedEntity,
+} from '../../shared/types/domain'
+import { getDb } from './client'
+import {
+  CLEAN,
+  DIRTY,
+  type BadgeRow,
+  type DirtyFlag,
+  type ListItemRow,
+  type ListMemberRow,
+  type ListRow,
+  type RecipeChatMessageRow,
+  type RecipeIngredientRow,
+  type RecipeRow,
+  type RecipeStepRow,
+  type SyncMetaKey,
+  type SyncMetaMap,
+} from './schema'
+import { compareIso, isAtOrBefore, isIsoUtc, nowIso } from './timestamps'
+
+/**
+ * Was der Aufrufer beim Schreiben liefert: alle Domänenfelder ausser den
+ * dreien, die diese Schicht selbst führt. Sie sind bewusst nicht setzbar —
+ * ein von Hand gesetztes `updatedAt` würde das Last-Write-Wins verfälschen.
+ */
+export type Draft<T extends SyncedEntity> = Omit<T, 'createdAt' | 'updatedAt' | 'fieldTimestamps'>
+
+/** Alle Stores, deren Zeilen gepusht werden. */
+export type DirtyStoreName
+  = | 'lists'
+    | 'list_items'
+    | 'recipes'
+    | 'recipe_ingredients'
+    | 'recipe_steps'
+    | 'recipe_chat_messages'
+    | 'badges'
+
+export const DIRTY_STORES: readonly DirtyStoreName[] = [
+  'lists',
+  'list_items',
+  'recipes',
+  'recipe_ingredients',
+  'recipe_steps',
+  'recipe_chat_messages',
+  'badges',
+]
+
+/* ------------------------------------------------------------------ *
+ * Reine Hilfsfunktionen — ohne IndexedDB, deshalb direkt testbar.
+ * ------------------------------------------------------------------ */
+
+/**
+ * Felder, die nie einen eigenen Zeitstempel bekommen. Die ID ist
+ * unveränderlich; ein Zeitstempel darauf hätte für das Merge keine
+ * Bedeutung und würde nur Platz in jeder Push-Nutzlast kosten.
+ */
+const UNSTAMPED_FIELDS: ReadonlySet<string> = new Set(['id'])
+
+/**
+ * Liefert die Namen der Felder, die sich gegenüber der gespeicherten Zeile
+ * geändert haben. Ohne Vorgänger (neue Zeile) sind das alle gelieferten
+ * Felder.
+ *
+ * Der Vergleich mit `Object.is` genügt, weil alle Domänenfelder Primitive
+ * oder `null` sind — verschachtelte Werte gibt es im Contract nicht.
+ */
+export function changedFields(previous: object | undefined, next: object): string[] {
+  const entries: [string, unknown][] = Object.entries(next)
+  const relevant = entries.filter(([field]) => !UNSTAMPED_FIELDS.has(field))
+
+  if (previous === undefined) {
+    return relevant.map(([field]) => field)
+  }
+
+  const before = new Map<string, unknown>(Object.entries(previous))
+  return relevant
+    .filter(([field, value]) => !Object.is(before.get(field), value))
+    .map(([field]) => field)
+}
+
+/**
+ * Schreibt den Zeitstempel auf die geänderten Felder fort. Die Stempel
+ * unveränderter Felder bleiben stehen — genau das macht das Merge feldgenau.
+ */
+export function mergeFieldTimestamps(
+  previous: FieldTimestamps | null,
+  fields: readonly string[],
+  stamp: IsoUtc,
+): FieldTimestamps {
+  const merged: FieldTimestamps = { ...previous }
+  for (const field of fields) {
+    merged[field] = stamp
+  }
+  return merged
+}
+
+/** Die Felder, die diese Schicht selbst führt. */
+export interface RowMeta {
+  createdAt: IsoUtc
+  updatedAt: IsoUtc
+  fieldTimestamps: FieldTimestamps
+  dirty: DirtyFlag
+}
+
+/**
+ * Baut die verwalteten Felder einer zu schreibenden Zeile. `createdAt` bleibt
+ * beim Wert der bestehenden Zeile: Es beschreibt die Entstehung, nicht den
+ * letzten Schreibvorgang, und wandert sonst bei jeder Änderung nach vorn.
+ */
+export function buildRowMeta(
+  previous: SyncedEntity | undefined,
+  changed: readonly string[],
+  now: IsoUtc,
+): RowMeta {
+  return {
+    createdAt: previous?.createdAt ?? now,
+    updatedAt: now,
+    fieldTimestamps: mergeFieldTimestamps(previous?.fieldTimestamps ?? null, changed, now),
+    dirty: DIRTY,
+  }
+}
+
+/**
+ * Der Zeitstempel, an dem sich entscheidet, ob eine Zeile beim Push noch
+ * unverändert war. Chat-Nachrichten sind append-only und haben kein
+ * `updatedAt`; für sie gilt `createdAt`.
+ */
+export function snapshotStampOf(row: { readonly createdAt: IsoUtc, readonly updatedAt?: IsoUtc }): IsoUtc {
+  return row.updatedAt ?? row.createdAt
+}
+
+/** Neueste Änderung zuerst — die Reihenfolge der Übersichtsseiten. */
+export function compareByUpdatedAtDesc(
+  a: { readonly updatedAt: IsoUtc },
+  b: { readonly updatedAt: IsoUtc },
+): number {
+  return compareIso(b.updatedAt, a.updatedAt)
+}
+
+/** Älteste zuerst — die Reihenfolge eines Gesprächsverlaufs. */
+export function compareByCreatedAtAsc(
+  a: { readonly createdAt: IsoUtc },
+  b: { readonly createdAt: IsoUtc },
+): number {
+  return compareIso(a.createdAt, b.createdAt)
+}
+
+/** Von Hand sortierbare Zeilen: Items, Zutaten, Zubereitungsschritte. */
+export interface ManualOrder {
+  readonly sortKey: string | null
+  readonly orderIndex: number
+  readonly createdAt: IsoUtc
+}
+
+/**
+ * Reihenfolge einer manuell sortierbaren Liste: `sortKey`, dann
+ * `orderIndex`, dann `createdAt`.
+ *
+ * Der Vergleich der Sortierschlüssel läuft über `<` und nicht über
+ * `localeCompare`: Die Schlüssel sind Base-62-Bruchindizes, deren Ordnung
+ * genau die Zeichenordnung ist. Eine sprachabhängige Kollation würde
+ * Gross- und Kleinbuchstaben zusammenziehen und die Reihenfolge zerstören.
+ *
+ * Zeilen ohne Schlüssel kommen ans Ende: Sie wurden nie von Hand einsortiert
+ * (oder der Schlüssel war ungültig und wurde bewusst als `null` gespeichert)
+ * und werden über `orderIndex` geordnet.
+ */
+export function compareByManualOrder(a: ManualOrder, b: ManualOrder): number {
+  if (a.sortKey !== null && b.sortKey !== null) {
+    if (a.sortKey !== b.sortKey) {
+      return a.sortKey < b.sortKey ? -1 : 1
+    }
+  }
+  else if (a.sortKey !== b.sortKey) {
+    return a.sortKey === null ? 1 : -1
+  }
+
+  if (a.orderIndex !== b.orderIndex) {
+    return a.orderIndex - b.orderIndex
+  }
+
+  return compareIso(a.createdAt, b.createdAt)
+}
+
+/* ------------------------------------------------------------------ *
+ * Schreiben
+ *
+ * Die Upserts sind je Entität ausgeschrieben statt generisch: `idb` bindet
+ * Storename und Wertetyp aneinander, ein generischer Helfer müsste diese
+ * Bindung mit einem Cast aufbrechen. Lieber sieben kurze, geprüfte
+ * Funktionen als ein cleverer Helfer ohne Typsicherheit.
+ * ------------------------------------------------------------------ */
+
+export async function upsertList(input: Draft<List>): Promise<ListRow> {
+  const db = await getDb()
+  const previous = await db.get('lists', input.id)
+  const changed = changedFields(previous, input)
+
+  // Ein Schreibvorgang ohne inhaltliche Änderung würde die Zeile grundlos
+  // schmutzig machen und einen Push auslösen.
+  if (previous !== undefined && changed.length === 0) {
+    return previous
+  }
+
+  const row: ListRow = { ...input, ...buildRowMeta(previous, changed, nowIso()) }
+  await db.put('lists', row)
+  return row
+}
+
+export async function upsertItem(input: Draft<ListItem>): Promise<ListItemRow> {
+  const db = await getDb()
+  const previous = await db.get('list_items', input.id)
+  const changed = changedFields(previous, input)
+
+  if (previous !== undefined && changed.length === 0) {
+    return previous
+  }
+
+  const row: ListItemRow = { ...input, ...buildRowMeta(previous, changed, nowIso()) }
+  await db.put('list_items', row)
+  return row
+}
+
+export async function upsertRecipe(input: Draft<Recipe>): Promise<RecipeRow> {
+  const db = await getDb()
+  const previous = await db.get('recipes', input.id)
+  const changed = changedFields(previous, input)
+
+  if (previous !== undefined && changed.length === 0) {
+    return previous
+  }
+
+  const row: RecipeRow = { ...input, ...buildRowMeta(previous, changed, nowIso()) }
+  await db.put('recipes', row)
+  return row
+}
+
+export async function upsertIngredient(input: Draft<RecipeIngredient>): Promise<RecipeIngredientRow> {
+  const db = await getDb()
+  const previous = await db.get('recipe_ingredients', input.id)
+  const changed = changedFields(previous, input)
+
+  if (previous !== undefined && changed.length === 0) {
+    return previous
+  }
+
+  const row: RecipeIngredientRow = { ...input, ...buildRowMeta(previous, changed, nowIso()) }
+  await db.put('recipe_ingredients', row)
+  return row
+}
+
+export async function upsertStep(input: Draft<RecipeStep>): Promise<RecipeStepRow> {
+  const db = await getDb()
+  const previous = await db.get('recipe_steps', input.id)
+  const changed = changedFields(previous, input)
+
+  if (previous !== undefined && changed.length === 0) {
+    return previous
+  }
+
+  const row: RecipeStepRow = { ...input, ...buildRowMeta(previous, changed, nowIso()) }
+  await db.put('recipe_steps', row)
+  return row
+}
+
+export async function upsertBadge(input: Draft<Badge>): Promise<BadgeRow> {
+  const db = await getDb()
+  const previous = await db.get('badges', input.id)
+  const changed = changedFields(previous, input)
+
+  if (previous !== undefined && changed.length === 0) {
+    return previous
+  }
+
+  const row: BadgeRow = { ...input, ...buildRowMeta(previous, changed, nowIso()) }
+  await db.put('badges', row)
+  return row
+}
+
+/**
+ * Chat-Nachrichten sind append-only: Sie haben weder `updatedAt` noch
+ * `deletedAt` noch `fieldTimestamps`. Deshalb gibt es hier nichts zu
+ * vergleichen und nichts zu mergen — die Nachricht wird geschrieben und
+ * beim nächsten Push übertragen.
+ */
+export async function appendChatMessage(message: RecipeChatMessage): Promise<RecipeChatMessageRow> {
+  const db = await getDb()
+  const row: RecipeChatMessageRow = { ...message, dirty: DIRTY }
+  await db.put('recipe_chat_messages', row)
+  return row
+}
+
+/**
+ * Ersetzt die Mitglieder einer Liste durch den Stand des Servers.
+ *
+ * Ersetzen statt Zusammenführen, weil der Server hier die Quelle der Wahrheit
+ * ist: Wer aus der Liste entfernt wurde, taucht in der Antwort schlicht nicht
+ * mehr auf, und ein Zusammenführen würde ihn lokal am Leben halten.
+ */
+export async function replaceListMembers(listId: string, members: readonly ListMember[]): Promise<void> {
+  const db = await getDb()
+  const tx = db.transaction('list_members', 'readwrite')
+  const store = tx.objectStore('list_members')
+  const stale = await store.index('by-listId').getAllKeys(listId)
+
+  // Erst löschen, dann schreiben: IndexedDB arbeitet die Anfragen einer
+  // Transaktion in Reihenfolge ab, verbliebene Mitglieder werden also
+  // unmittelbar wieder angelegt.
+  await Promise.all([
+    ...stale.map(key => store.delete(key)),
+    ...members.map(member => store.put(member)),
+  ])
+
+  await tx.done
+}
+
+/**
+ * Löscht eine Liste samt Items und Mitgliedern wirklich.
+ *
+ * Der harte Weg ist hier richtig, obwohl sonst weich gelöscht wird: Diese
+ * Funktion läuft, wenn der Server meldet, dass man nicht mehr Mitglied der
+ * Liste ist. Ein Tombstone würde beim nächsten Push als Löschwunsch
+ * hochgeladen und damit die Liste für alle verbliebenen Mitglieder
+ * löschen — für Daten, die einem gar nicht mehr gehören.
+ */
+export async function hardDeleteList(listId: string): Promise<void> {
+  const db = await getDb()
+  const tx = db.transaction(['lists', 'list_items', 'list_members'], 'readwrite')
+  const items = tx.objectStore('list_items')
+  const members = tx.objectStore('list_members')
+
+  const [itemKeys, memberKeys] = await Promise.all([
+    items.index('by-listId').getAllKeys(listId),
+    members.index('by-listId').getAllKeys(listId),
+  ])
+
+  await Promise.all([
+    ...itemKeys.map(key => items.delete(key)),
+    ...memberKeys.map(key => members.delete(key)),
+    tx.objectStore('lists').delete(listId),
+  ])
+
+  await tx.done
+}
+
+/* ------------------------------------------------------------------ *
+ * Lesen für die Oberfläche
+ * ------------------------------------------------------------------ */
+
+export async function getList(listId: string): Promise<ListRow | undefined> {
+  const db = await getDb()
+  return db.get('lists', listId)
+}
+
+/** Alle nicht gelöschten Listen, zuletzt geänderte zuerst. */
+export async function getListsForView(): Promise<ListRow[]> {
+  const db = await getDb()
+  const rows = await db.getAll('lists')
+  return rows.filter(row => row.deletedAt === null).sort(compareByUpdatedAtDesc)
+}
+
+/**
+ * Die sichtbaren Items einer Liste in ihrer manuellen Reihenfolge.
+ *
+ * `removed` ist der zweite Löschmarker neben `deletedAt`: rausgeworfene Items
+ * bleiben als Verlauf für die Vorschläge erhalten, gehören aber nicht in die
+ * Ansicht.
+ */
+export async function getItemsForList(listId: string): Promise<ListItemRow[]> {
+  const db = await getDb()
+  const rows = await db.getAllFromIndex('list_items', 'by-listId', listId)
+  return rows
+    .filter(row => row.deletedAt === null && !row.removed)
+    .sort(compareByManualOrder)
+}
+
+export async function getRecipe(recipeId: string): Promise<RecipeRow | undefined> {
+  const db = await getDb()
+  return db.get('recipes', recipeId)
+}
+
+/** Alle nicht gelöschten Rezepte, zuletzt geänderte zuerst. */
+export async function getRecipesForView(): Promise<RecipeRow[]> {
+  const db = await getDb()
+  const rows = await db.getAll('recipes')
+  return rows.filter(row => row.deletedAt === null).sort(compareByUpdatedAtDesc)
+}
+
+export async function getIngredientsForRecipe(recipeId: string): Promise<RecipeIngredientRow[]> {
+  const db = await getDb()
+  const rows = await db.getAllFromIndex('recipe_ingredients', 'by-recipeId', recipeId)
+  return rows.filter(row => row.deletedAt === null).sort(compareByManualOrder)
+}
+
+export async function getStepsForRecipe(recipeId: string): Promise<RecipeStepRow[]> {
+  const db = await getDb()
+  const rows = await db.getAllFromIndex('recipe_steps', 'by-recipeId', recipeId)
+  return rows.filter(row => row.deletedAt === null).sort(compareByManualOrder)
+}
+
+export async function getChatMessagesForRecipe(recipeId: string): Promise<RecipeChatMessageRow[]> {
+  const db = await getDb()
+  const rows = await db.getAllFromIndex('recipe_chat_messages', 'by-recipeId', recipeId)
+  return rows.sort(compareByCreatedAtAsc)
+}
+
+/** Alle nicht gelöschten Auszeichnungen, zuletzt verdiente zuerst. */
+export async function getBadgesForView(): Promise<BadgeRow[]> {
+  const db = await getDb()
+  const rows = await db.getAll('badges')
+  return rows
+    .filter(row => row.deletedAt === null)
+    .sort((a, b) => compareIso(b.earnedAt, a.earnedAt))
+}
+
+export async function getMembersForList(listId: string): Promise<ListMemberRow[]> {
+  const db = await getDb()
+  return db.getAllFromIndex('list_members', 'by-listId', listId)
+}
+
+/* ------------------------------------------------------------------ *
+ * Sync: was muss hoch?
+ * ------------------------------------------------------------------ */
+
+export async function getDirtyLists(): Promise<ListRow[]> {
+  const db = await getDb()
+  return db.getAllFromIndex('lists', 'by-dirty', DIRTY)
+}
+
+export async function getDirtyItems(): Promise<ListItemRow[]> {
+  const db = await getDb()
+  return db.getAllFromIndex('list_items', 'by-dirty', DIRTY)
+}
+
+export async function getDirtyRecipes(): Promise<RecipeRow[]> {
+  const db = await getDb()
+  return db.getAllFromIndex('recipes', 'by-dirty', DIRTY)
+}
+
+export async function getDirtyIngredients(): Promise<RecipeIngredientRow[]> {
+  const db = await getDb()
+  return db.getAllFromIndex('recipe_ingredients', 'by-dirty', DIRTY)
+}
+
+export async function getDirtySteps(): Promise<RecipeStepRow[]> {
+  const db = await getDb()
+  return db.getAllFromIndex('recipe_steps', 'by-dirty', DIRTY)
+}
+
+export async function getDirtyBadges(): Promise<BadgeRow[]> {
+  const db = await getDb()
+  return db.getAllFromIndex('badges', 'by-dirty', DIRTY)
+}
+
+export async function getDirtyChatMessages(): Promise<RecipeChatMessageRow[]> {
+  const db = await getDb()
+  return db.getAllFromIndex('recipe_chat_messages', 'by-dirty', DIRTY)
+}
+
+/**
+ * Gesamtzahl der noch nicht gepushten Zeilen für die Statusanzeige.
+ *
+ * Alle Zählungen laufen in einer gemeinsamen Lesetransaktion, damit die
+ * Summe einen in sich stimmigen Stand zeigt und nicht Zeilen doppelt oder
+ * gar nicht erfasst, die währenddessen geschrieben werden.
+ */
+export async function countDirty(): Promise<number> {
+  const db = await getDb()
+  const tx = db.transaction(DIRTY_STORES, 'readonly')
+  const counts = await Promise.all(
+    DIRTY_STORES.map(name => tx.objectStore(name).index('by-dirty').count(DIRTY)),
+  )
+  await tx.done
+
+  return counts.reduce((sum, count) => sum + count, 0)
+}
+
+/** Hat die Liste selbst ungepushte Änderungen? (Items zählt `countDirtyItemsForList`.) */
+export async function isDirtyList(listId: string): Promise<boolean> {
+  const db = await getDb()
+  const row = await db.get('lists', listId)
+  return row?.dirty === DIRTY
+}
+
+export async function countDirtyItemsForList(listId: string): Promise<number> {
+  const db = await getDb()
+  const rows = await db.getAllFromIndex('list_items', 'by-listId', listId)
+  return rows.filter(row => row.dirty === DIRTY).length
+}
+
+/**
+ * Wahr, wenn am Rezept selbst oder an seinen Zutaten, Schritten oder
+ * Chat-Nachrichten etwas ungepusht ist.
+ *
+ * Auszeichnungen bleiben bewusst aussen vor: Sie hängen zwar an einem Rezept,
+ * sind aber verdiente Erfolge und kein Bestandteil des Rezeptinhalts. Ihr
+ * Zustand darf das Rezept nicht als "ungespeichert" erscheinen lassen.
+ */
+export async function isDirtyRecipeOrChildren(recipeId: string): Promise<boolean> {
+  const db = await getDb()
+
+  const recipe = await db.get('recipes', recipeId)
+  if (recipe?.dirty === DIRTY) {
+    return true
+  }
+
+  const tx = db.transaction(['recipe_ingredients', 'recipe_steps', 'recipe_chat_messages'], 'readonly')
+  const [ingredients, steps, messages] = await Promise.all([
+    tx.objectStore('recipe_ingredients').index('by-recipeId').getAll(recipeId),
+    tx.objectStore('recipe_steps').index('by-recipeId').getAll(recipeId),
+    tx.objectStore('recipe_chat_messages').index('by-recipeId').getAll(recipeId),
+  ])
+  await tx.done
+
+  return ingredients.some(row => row.dirty === DIRTY)
+    || steps.some(row => row.dirty === DIRTY)
+    || messages.some(row => row.dirty === DIRTY)
+}
+
+/**
+ * Nimmt das Push-Flag von den erfolgreich übertragenen Zeilen.
+ *
+ * `snapshotTime` ist der Zeitpunkt, zu dem die Nutzlast zusammengestellt
+ * wurde. Nur Zeilen, die seitdem unverändert geblieben sind, werden sauber
+ * gesetzt. Wer während des laufenden Pushs bearbeitet wurde, bleibt schmutzig
+ * — sonst ginge genau diese Änderung verloren: Der Server bestätigt den alten
+ * Stand, das Flag fiele weg, und die neue Fassung würde nie hochgeladen.
+ */
+export async function clearDirtyFlags(
+  store: DirtyStoreName,
+  ids: readonly string[],
+  snapshotTime: IsoUtc,
+): Promise<void> {
+  if (ids.length === 0) {
+    return
+  }
+
+  const db = await getDb()
+  const tx = db.transaction(store, 'readwrite')
+  const target = tx.objectStore(store)
+
+  await Promise.all(ids.map(async (id) => {
+    const row = await target.get(id)
+    if (row === undefined) {
+      return
+    }
+
+    if (!isAtOrBefore(snapshotStampOf(row), snapshotTime)) {
+      return
+    }
+
+    await target.put({ ...row, dirty: CLEAN })
+  }))
+
+  await tx.done
+}
+
+/* ------------------------------------------------------------------ *
+ * sync_meta — Key-Value
+ * ------------------------------------------------------------------ */
+
+async function readMeta<T>(key: SyncMetaKey, isValid: (value: unknown) => value is T): Promise<T | null> {
+  const db = await getDb()
+  const raw: unknown = await db.get('sync_meta', key)
+
+  // Der Store ist zur Laufzeit untypisiert (eine ältere Version der App oder
+  // ein manueller Eingriff kann alles hineinschreiben). Ein unerwarteter Wert
+  // gilt als "nicht gesetzt" statt die Sync-Engine mit Unsinn zu füttern.
+  return isValid(raw) ? raw : null
+}
+
+async function writeMeta<K extends SyncMetaKey>(key: K, value: SyncMetaMap[K] | null): Promise<void> {
+  const db = await getDb()
+
+  if (value === null) {
+    await db.delete('sync_meta', key)
+    return
+  }
+
+  await db.put('sync_meta', value, key)
+}
+
+function isBoolean(value: unknown): value is boolean {
+  return typeof value === 'boolean'
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0
+}
+
+/** Wurden die Daten der alten localStorage-Fassung übernommen? */
+export async function getHasMigrated(): Promise<boolean> {
+  return (await readMeta('hasMigrated', isBoolean)) ?? false
+}
+
+export async function setHasMigrated(value: boolean): Promise<void> {
+  await writeMeta('hasMigrated', value)
+}
+
+/** Ende des letzten erfolgreichen Abgleichs, `null` wenn noch nie. */
+export async function getLastSyncedAt(): Promise<IsoUtc | null> {
+  return readMeta('lastSyncedAt', isIsoUtc)
+}
+
+export async function setLastSyncedAt(value: IsoUtc): Promise<void> {
+  await writeMeta('lastSyncedAt', value)
+}
+
+/** Wer war zuletzt angemeldet? `null` heisst "noch nie" oder "abgemeldet". */
+export async function getLastSignedInUserId(): Promise<string | null> {
+  return readMeta('lastSignedInUserId', isNonEmptyString)
+}
+
+export async function setLastSignedInUserId(value: string | null): Promise<void> {
+  await writeMeta('lastSignedInUserId', value)
+}
+
+/** Cursor des Event-Streams, `null` wenn noch kein Ereignis empfangen wurde. */
+export async function getLastEventId(): Promise<string | null> {
+  return readMeta('lastEventId', isNonEmptyString)
+}
+
+export async function setLastEventId(value: string | null): Promise<void> {
+  await writeMeta('lastEventId', value)
+}

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Recipe } from '~/types/domain'
+import type { Recipe } from '#shared/types/domain'
 
 /**
  * Rezepte-Uebersicht. Wie bei den Listen gilt: ohne Konto nutzbar, die Daten
@@ -8,7 +8,10 @@ import type { Recipe } from '~/types/domain'
 definePageMeta({ layout: 'app' })
 useHead({ title: 'Rezepte ~ shliste' })
 
-const rezepte = shallowRef<Recipe[]>([])
+const recipes = shallowRef<Recipe[]>([])
+
+// Platzhalter bis die Datenschicht steht (Phase 3).
+function createRecipe(): void {}
 </script>
 
 <template>
@@ -16,30 +19,24 @@ const rezepte = shallowRef<Recipe[]>([])
     class="flex min-w-0 grow flex-col"
     style="background: var(--md-surface-low)"
   >
-    <header class="flex items-center justify-between gap-3 px-5 pt-5 pb-3">
-      <h1 class="text-[1.875rem] leading-8 font-extrabold">
-        Rezepte
-      </h1>
-      <UButton
-        icon="i-lucide-plus"
-        class="rounded-full font-bold"
-      >
-        Neu
-      </UButton>
-    </header>
+    <AppPageHeader
+      title="Rezepte"
+      action-label="Neu"
+      @action="createRecipe"
+    />
 
     <div
-      v-if="rezepte.length"
+      v-if="recipes.length"
       class="grid gap-3 px-5 pb-5 sm:grid-cols-2 xl:grid-cols-3"
     >
       <article
-        v-for="rezept in rezepte"
-        :key="rezept.id"
+        v-for="recipe in recipes"
+        :key="recipe.id"
         class="list-tint rounded-xl p-4"
-        :style="{ '--list-color': rezept.color }"
+        :style="{ '--list-color': recipe.color }"
       >
         <h2 class="text-[1.25rem] font-bold">
-          {{ rezept.name }}
+          {{ recipe.name }}
         </h2>
       </article>
     </div>
@@ -63,5 +60,11 @@ const rezepte = shallowRef<Recipe[]>([])
         Lege ein Rezept an und hol seine Zutaten spaeter mit einem Tippen auf die Einkaufsliste.
       </p>
     </div>
+
+    <!-- Mobil: dieselbe Aktion als schwebender Knopf, wie bei den Listen -->
+    <AppFab
+      label="Neues Rezept"
+      @click="createRecipe"
+    />
   </div>
 </template>

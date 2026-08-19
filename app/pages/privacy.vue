@@ -21,7 +21,7 @@ useSeoMeta({ title: 'Datenschutz ~ shliste', robots: 'noindex' })
     </h2>
     <p class="mt-2 text-[1.125rem]">
       Robin Lehmann, Kontakt siehe <NuxtLink
-        to="/impressum"
+        to="/imprint"
         style="color: var(--md-primary)"
       >Impressum</NuxtLink>.
     </p>

@@ -6,20 +6,20 @@ useSeoMeta({
   description: 'Einkaufslisten teilen und gemeinsam abhaken, in Echtzeit. Rezepte verwalten und Zutaten mit einem Tippen auf die Liste holen. Funktioniert auch ohne Netz.',
 })
 
-const punkte = [
+const features = [
   {
     icon: 'i-lucide-users',
-    titel: 'Gemeinsam statt getrennt',
+    title: 'Gemeinsam statt getrennt',
     text: 'Lade jemanden zu einer Liste ein. Aenderungen erscheinen sofort auf allen Geraeten, ohne Neuladen.',
   },
   {
     icon: 'i-lucide-cloud-off',
-    titel: 'Auch ohne Netz',
+    title: 'Auch ohne Netz',
     text: 'Im Laden zaehlt nicht der Empfang. Abhaken geht offline, der Abgleich passiert automatisch, sobald wieder Netz da ist.',
   },
   {
     icon: 'i-lucide-chef-hat',
-    titel: 'Vom Rezept zur Liste',
+    title: 'Vom Rezept zur Liste',
     text: 'Zutaten eines Rezepts mit einem Tippen auf die Einkaufsliste holen, statt sie abzutippen.',
   },
 ]
@@ -89,24 +89,24 @@ const punkte = [
 
       <section class="grid gap-4 pb-16 sm:grid-cols-3">
         <article
-          v-for="punkt in punkte"
-          :key="punkt.titel"
+          v-for="feature in features"
+          :key="feature.title"
           class="rounded-xl p-6"
           style="background: var(--md-surface-container)"
         >
           <UIcon
-            :name="punkt.icon"
+            :name="feature.icon"
             class="size-6"
             style="color: var(--md-primary)"
           />
           <h2 class="mt-3 text-[1.25rem] font-bold">
-            {{ punkt.titel }}
+            {{ feature.title }}
           </h2>
           <p
             class="mt-2 text-[1rem]"
             style="color: var(--md-on-surface-variant); text-wrap: pretty"
           >
-            {{ punkt.text }}
+            {{ feature.text }}
           </p>
         </article>
       </section>
@@ -118,11 +118,11 @@ const punkte = [
     >
       <nav class="flex gap-6">
         <NuxtLink
-          to="/impressum"
+          to="/imprint"
           class="hover:underline"
         >Impressum</NuxtLink>
         <NuxtLink
-          to="/datenschutz"
+          to="/privacy"
           class="hover:underline"
         >Datenschutz</NuxtLink>
       </nav>

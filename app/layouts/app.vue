@@ -2,29 +2,29 @@
 /**
  * App-Shell, Design-Richtung A ("Material treu").
  *
- * Die Umformung von Android auf Desktop, nicht das Skalieren:
+ * Die Umformung von Android auf Desktop, nicht das blosse Skalieren:
  * - Bottom-Nav (Touch) wird auf grossen Schirmen zur schmalen Icon-Rail
- * - der schwebende FAB wandert in den Kopf des Index, weil ein Kreis unten
- *   rechts auf 1600px das klassische Handy-Klon-Signal ist
+ * - der schwebende Knopf wandert in den Kopf des Index, weil ein Kreis unten
+ *   rechts auf 1600 Pixel das klassische Handy-Klon-Signal ist
  * - auf Mobil bleibt beides so, wie es Android macht
  */
 const route = useRoute()
 
-interface Ziel {
+interface Destination {
   label: string
   to: string
   icon: string
 }
 
-const ziele: Ziel[] = [
+const destinations: Destination[] = [
   { label: 'Listen', to: '/app', icon: 'i-lucide-list-checks' },
-  { label: 'Rezepte', to: '/app/rezepte', icon: 'i-lucide-chef-hat' },
+  { label: 'Rezepte', to: '/app/recipes', icon: 'i-lucide-chef-hat' },
 ]
 
-function istAktiv(ziel: Ziel): boolean {
-  return ziel.to === '/app'
+function isActive(destination: Destination): boolean {
+  return destination.to === '/app'
     ? route.path === '/app' || route.path.startsWith('/app/liste')
-    : route.path.startsWith(ziel.to)
+    : route.path.startsWith(destination.to)
 }
 </script>
 
@@ -35,7 +35,7 @@ function istAktiv(ziel: Ziel): boolean {
   >
     <!-- Desktop: Icon-Rail. Auf Mobil ausgeblendet. -->
     <nav
-      class="hidden lg:flex w-21 shrink-0 flex-col items-center gap-2 border-r py-4"
+      class="hidden w-21 shrink-0 flex-col items-center gap-2 border-r py-4 lg:flex"
       style="background: var(--md-surface-container); border-color: var(--md-outline-variant)"
       aria-label="Hauptnavigation"
     >
@@ -43,6 +43,7 @@ function istAktiv(ziel: Ziel): boolean {
         to="/"
         class="mb-4 flex size-10 items-center justify-center rounded-xl"
         style="background: var(--md-primary)"
+        aria-label="Zur Startseite"
       >
         <UIcon
           name="i-lucide-menu"
@@ -51,29 +52,29 @@ function istAktiv(ziel: Ziel): boolean {
       </NuxtLink>
 
       <NuxtLink
-        v-for="ziel in ziele"
-        :key="ziel.to"
-        :to="ziel.to"
+        v-for="destination in destinations"
+        :key="destination.to"
+        :to="destination.to"
         class="flex w-full flex-col items-center gap-1 py-1"
-        :aria-current="istAktiv(ziel) ? 'page' : undefined"
+        :aria-current="isActive(destination) ? 'page' : undefined"
       >
         <span
           class="flex h-8 w-14 items-center justify-center rounded-full transition-colors"
-          :style="istAktiv(ziel)
+          :style="isActive(destination)
             ? 'background: var(--md-primary-container); color: var(--md-on-primary-container)'
             : 'color: var(--md-on-surface-variant)'"
         >
           <UIcon
-            :name="ziel.icon"
+            :name="destination.icon"
             class="size-5"
           />
         </span>
         <span
           class="text-[0.875rem]"
-          :style="istAktiv(ziel)
+          :style="isActive(destination)
             ? 'color: var(--md-on-primary-container); font-weight: 700'
             : 'color: var(--md-on-surface-variant)'"
-        >{{ ziel.label }}</span>
+        >{{ destination.label }}</span>
       </NuxtLink>
 
       <div class="grow" />
@@ -91,29 +92,29 @@ function istAktiv(ziel: Ziel): boolean {
       aria-label="Hauptnavigation"
     >
       <NuxtLink
-        v-for="ziel in ziele"
-        :key="ziel.to"
-        :to="ziel.to"
+        v-for="destination in destinations"
+        :key="destination.to"
+        :to="destination.to"
         class="flex grow flex-col items-center gap-0.5 py-2"
-        :aria-current="istAktiv(ziel) ? 'page' : undefined"
+        :aria-current="isActive(destination) ? 'page' : undefined"
       >
         <span
           class="flex h-8 w-16 items-center justify-center rounded-full transition-colors"
-          :style="istAktiv(ziel)
+          :style="isActive(destination)
             ? 'background: var(--md-primary-container); color: var(--md-on-primary-container)'
             : 'color: var(--md-on-surface-variant)'"
         >
           <UIcon
-            :name="ziel.icon"
+            :name="destination.icon"
             class="size-5"
           />
         </span>
         <span
           class="text-[0.875rem]"
-          :style="istAktiv(ziel)
+          :style="isActive(destination)
             ? 'color: var(--md-on-primary-container); font-weight: 700'
             : 'color: var(--md-on-surface-variant)'"
-        >{{ ziel.label }}</span>
+        >{{ destination.label }}</span>
       </NuxtLink>
     </nav>
   </div>

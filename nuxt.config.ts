@@ -65,8 +65,13 @@ export default defineNuxtConfig({
   routeRules: {
     // Oeffentliche Seiten werden vorgerendert: gut fuer SEO und First Paint.
     '/': { prerender: true },
-    '/impressum': { prerender: true },
-    '/datenschutz': { prerender: true },
+    '/imprint': { prerender: true },
+    '/privacy': { prerender: true },
+    // Die alten deutschen Adressen sind seit Jahren im Umlauf und in
+    // Suchmaschinen erfasst. 301 statt Ersatzlos-Weg, damit weder Nutzer noch
+    // Rankings verloren gehen.
+    '/impressum': { redirect: { to: '/imprint', statusCode: 301 } },
+    '/datenschutz': { redirect: { to: '/privacy', statusCode: 301 } },
     // Der App-Bereich rendert ausschliesslich im Client — seine Daten liegen
     // in IndexedDB und sind auf dem Server nicht vorhanden.
     '/app/**': { ssr: false },
@@ -102,12 +107,12 @@ export default defineNuxtConfig({
     ],
   },
 
-  seo: { enabled: true },
-
   // OG-Image-Generierung aus: sie zieht eine native resvg-Binary (rund 4 MB,
   // plattformspezifisch — die Windows-Variante landet sonst nutzlos im
   // Linux-Image) plus eingebettete Inter-Schriften. Fuer eine App hinter
   // Anmeldung bringt das nichts; die Startseite bekommt bei Bedarf ein
   // statisches OG-Bild.
   ogImage: { enabled: false },
+
+  seo: { enabled: true },
 })

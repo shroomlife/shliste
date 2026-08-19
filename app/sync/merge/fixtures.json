@@ -1,0 +1,468 @@
+{
+  "schemaVersion": 1,
+  "description": "Golden Fixtures für den Field-Level-LWW-Merge in Pull-Richtung (Server -> Gerät). Bewusst als JSON und nicht als TypeScript abgelegt, damit dieselben Fälle auch im API-Repo und perspektivisch im Android-Projekt gegen die dortige Implementierung laufen können. Jeder Fall beschreibt eine Zeile: den lokalen Stand (oder null), den Serverstand und das erwartete Merge-Ergebnis.",
+  "contract": {
+    "comparison": "numerisch in Epoch-Millisekunden; fehlende und unparsbare Zeitstempel verlieren jeden Vergleich",
+    "tie": "beim Pull gewinnt der Server (beim Push gewinnt serverseitig der Client - die Asymmetrie ist Absicht)",
+    "dirty": "gemergt wird nur eine dirty-Zeile; gewinnt lokal ein Feld, bleibt die Zeile dirty",
+    "addWins": "eine Löschung wird nur von einem Inhaltsfeld mit strikt neuerem Zeitstempel aufgehoben; orderIndex, sortKey, deletedAt und removed zählen nicht als Inhalt"
+  },
+  "cases": [
+    {
+      "name": "lokal gewinnt: strikt neuerer Zeitstempel schlägt den Server",
+      "why": "Der Normalfall einer Offline-Änderung. Der lokale Gewinner muss stehen bleiben UND die Zeile dirty halten, sonst fällt er beim nächsten Push aus der Auswahl.",
+      "entityType": "list",
+      "local": {
+        "dirty": true,
+        "values": { "name": "lokal", "color": "#111111", "secret": false, "lastSuggestedItems": "lokal-vorschlag", "sourceUrl": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T12:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "server", "color": "#222222", "secret": true, "lastSuggestedItems": "server-vorschlag", "sourceUrl": "https://example.test/rezept", "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z", "color": "2026-07-16T10:00:00.000Z", "secret": "2026-07-16T10:00:00.000Z", "lastSuggestedItems": "2026-07-16T10:00:00.000Z", "sourceUrl": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "name": "lokal", "color": "#222222", "secret": true, "lastSuggestedItems": "server-vorschlag", "sourceUrl": "https://example.test/rezept", "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T12:00:00.000Z", "color": "2026-07-16T10:00:00.000Z", "secret": "2026-07-16T10:00:00.000Z", "lastSuggestedItems": "2026-07-16T10:00:00.000Z", "sourceUrl": "2026-07-16T10:00:00.000Z", "deletedAt": "" },
+        "dirty": true,
+        "restored": false
+      }
+    },
+    {
+      "name": "Server gewinnt: der neuere Serverwert setzt sich durch",
+      "why": "Spiegelbild des ersten Falls. Wichtig ist der zweite Teil: Verliert die lokale Seite jedes Feld, ist die Zeile danach sauber.",
+      "entityType": "list",
+      "local": {
+        "dirty": true,
+        "values": { "name": "lokal", "color": "#111111", "secret": false, "lastSuggestedItems": "", "sourceUrl": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "server", "color": "#222222", "secret": false, "lastSuggestedItems": "", "sourceUrl": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T12:00:00.000Z", "color": "2026-07-16T12:00:00.000Z", "secret": "2026-07-16T12:00:00.000Z", "lastSuggestedItems": "2026-07-16T12:00:00.000Z", "sourceUrl": "2026-07-16T12:00:00.000Z", "deletedAt": "2026-07-16T12:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "name": "server", "color": "#222222", "secret": false, "lastSuggestedItems": "", "sourceUrl": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T12:00:00.000Z", "color": "2026-07-16T12:00:00.000Z", "secret": "2026-07-16T12:00:00.000Z", "lastSuggestedItems": "2026-07-16T12:00:00.000Z", "sourceUrl": "2026-07-16T12:00:00.000Z", "deletedAt": "2026-07-16T12:00:00.000Z" },
+        "dirty": false,
+        "restored": false
+      }
+    },
+    {
+      "name": "Gleichstand beim Pull: der Server gewinnt",
+      "why": "Die absichtliche Asymmetrie. Beim Push gewinnt bei identischem Zeitstempel der Client, beim Pull der Server. Zöge man beide Richtungen auf >=, könnte ein Feld bei gleichem Zeitstempel endlos zwischen zwei Geräten pendeln.",
+      "entityType": "list",
+      "local": {
+        "dirty": true,
+        "values": { "name": "lokal", "color": "#111111", "secret": false, "lastSuggestedItems": "", "sourceUrl": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T12:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "server", "color": "#222222", "secret": false, "lastSuggestedItems": "", "sourceUrl": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T12:00:00.000Z", "color": "2026-07-16T12:00:00.000Z", "secret": "2026-07-16T12:00:00.000Z", "lastSuggestedItems": "2026-07-16T12:00:00.000Z", "sourceUrl": "2026-07-16T12:00:00.000Z", "deletedAt": "2026-07-16T12:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "name": "server", "color": "#222222", "secret": false, "lastSuggestedItems": "", "sourceUrl": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T12:00:00.000Z", "color": "2026-07-16T12:00:00.000Z", "secret": "2026-07-16T12:00:00.000Z", "lastSuggestedItems": "2026-07-16T12:00:00.000Z", "sourceUrl": "2026-07-16T12:00:00.000Z", "deletedAt": "2026-07-16T12:00:00.000Z" },
+        "dirty": false,
+        "restored": false
+      }
+    },
+    {
+      "name": "derselbe Zeitpunkt in zwei Formaten ist ein Gleichstand",
+      "why": "Android schreibt ...00Z, der Browser ...00.000Z. Lexikografisch wäre der lokale Wert grösser und würde fälschlich gewinnen. Numerisch ist es ein Gleichstand, also gewinnt der Server.",
+      "entityType": "list",
+      "local": {
+        "dirty": true,
+        "values": { "name": "lokal", "color": "#111111", "secret": false, "lastSuggestedItems": "", "sourceUrl": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:15:00Z" }
+      },
+      "server": {
+        "values": { "name": "server", "color": "#222222", "secret": false, "lastSuggestedItems": "", "sourceUrl": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:15:00.000Z", "color": "2026-07-16T10:00:00.000Z", "secret": "2026-07-16T10:00:00.000Z", "lastSuggestedItems": "2026-07-16T10:00:00.000Z", "sourceUrl": "2026-07-16T10:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "name": "server", "color": "#222222", "secret": false, "lastSuggestedItems": "", "sourceUrl": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:15:00.000Z", "color": "2026-07-16T10:00:00.000Z", "secret": "2026-07-16T10:00:00.000Z", "lastSuggestedItems": "2026-07-16T10:00:00.000Z", "sourceUrl": "2026-07-16T10:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "dirty": false,
+        "restored": false
+      }
+    },
+    {
+      "name": "Add-Wins: Inhalts-Edit nach der Löschung hebt sie auf",
+      "why": "Wer offline umbenennt, während ein anderes Gerät löscht, hat sichtbar die Absicht, die Zeile zu behalten. Der Zeitstempel von deletedAt bleibt stehen, damit ein späteres echtes Delete ihn überschreiben kann.",
+      "entityType": "listItem",
+      "local": {
+        "dirty": true,
+        "values": { "name": "neu", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T11:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "alt", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "deletedAt": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "name": "neu", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T11:00:00.000Z", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "dirty": true,
+        "restored": true
+      }
+    },
+    {
+      "name": "Add-Wins: Inhalts-Edit nach removed setzt removed zurück",
+      "why": "removed ist der zweite Löschmarker des ListItems (rausgeworfen, per Undo wiederherstellbar). Er folgt derselben Regel wie deletedAt.",
+      "entityType": "listItem",
+      "local": {
+        "dirty": true,
+        "values": { "name": "neu", "quantity": 2, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T11:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "alt", "quantity": 2, "checked": false, "removed": true, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "fieldTimestamps": { "removed": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "name": "neu", "quantity": 2, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T11:00:00.000Z", "quantity": "", "checked": "", "removed": "2026-07-16T10:00:00.000Z", "orderIndex": "", "sortKey": "", "deletedAt": "" },
+        "dirty": true,
+        "restored": true
+      }
+    },
+    {
+      "name": "Add-Wins greift NICHT bei orderIndex und sortKey",
+      "why": "Der teuerste Fehler des alten Verhaltens. Eine Umsortierung stempelt orderIndex und sortKey für ALLE Geschwister neu. Zählten sie als Inhalt, holte jeder, der sortiert, jedes gerade gelöschte Item für alle zurück.",
+      "entityType": "listItem",
+      "local": {
+        "dirty": true,
+        "values": { "name": "Milch", "quantity": 1, "checked": false, "removed": false, "orderIndex": 3, "sortKey": "a3", "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T09:00:00.000Z", "orderIndex": "2026-07-16T11:00:00.000Z", "sortKey": "2026-07-16T11:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "Milch", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "name": "2026-07-16T09:00:00.000Z", "orderIndex": "2026-07-16T08:00:00.000Z", "sortKey": "2026-07-16T08:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "name": "Milch", "quantity": 1, "checked": false, "removed": false, "orderIndex": 3, "sortKey": "a3", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "name": "2026-07-16T09:00:00.000Z", "quantity": "", "checked": "", "removed": "", "orderIndex": "2026-07-16T11:00:00.000Z", "sortKey": "2026-07-16T11:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "dirty": true,
+        "restored": false
+      }
+    },
+    {
+      "name": "Add-Wins greift auch bei removed nicht durch eine Umsortierung",
+      "why": "Gegenprobe zum Fall darüber für den zweiten Löschmarker.",
+      "entityType": "listItem",
+      "local": {
+        "dirty": true,
+        "values": { "name": "Brot", "quantity": 1, "checked": false, "removed": false, "orderIndex": 7, "sortKey": "a7", "deletedAt": null },
+        "fieldTimestamps": { "orderIndex": "2026-07-16T11:00:00.000Z", "sortKey": "2026-07-16T11:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "Brot", "quantity": 1, "checked": false, "removed": true, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "fieldTimestamps": { "removed": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "name": "Brot", "quantity": 1, "checked": false, "removed": true, "orderIndex": 7, "sortKey": "a7", "deletedAt": null },
+        "fieldTimestamps": { "name": "", "quantity": "", "checked": "", "removed": "2026-07-16T10:00:00.000Z", "orderIndex": "2026-07-16T11:00:00.000Z", "sortKey": "2026-07-16T11:00:00.000Z", "deletedAt": "" },
+        "dirty": true,
+        "restored": false
+      }
+    },
+    {
+      "name": "ein späteres Delete hebt kein früheres Delete auf",
+      "why": "deletedAt und removed sind beide Löschmarker und stehen deshalb in keiner Inhaltsliste. Ohne diese Symmetrie nähme ein späteres removed=true ein früheres deletedAt zurück und die Zeile stünde als Zombie wieder da.",
+      "entityType": "listItem",
+      "local": {
+        "dirty": true,
+        "values": { "name": "x", "quantity": 1, "checked": false, "removed": true, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "name": "2026-07-16T09:00:00.000Z", "removed": "2026-07-16T12:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "x", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "fieldTimestamps": {}
+      },
+      "expected": {
+        "values": { "name": "x", "quantity": 1, "checked": false, "removed": true, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "name": "2026-07-16T09:00:00.000Z", "quantity": "", "checked": "", "removed": "2026-07-16T12:00:00.000Z", "orderIndex": "", "sortKey": "", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "dirty": true,
+        "restored": false
+      }
+    },
+    {
+      "name": "leere fieldTimestamps auf beiden Seiten: der Server gewinnt jedes Feld",
+      "why": "Ohne Zeitstempel ist jedes Feld ein Gleichstand auf -Infinity, und Gleichstand heisst beim Pull Server. Die lokale Zeile ist danach sauber.",
+      "entityType": "listItem",
+      "local": {
+        "dirty": true,
+        "values": { "name": "lokal", "quantity": 5, "checked": true, "removed": false, "orderIndex": 2, "sortKey": "a2", "deletedAt": null },
+        "fieldTimestamps": {}
+      },
+      "server": {
+        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "fieldTimestamps": {}
+      },
+      "expected": {
+        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "fieldTimestamps": { "name": "", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "deletedAt": "" },
+        "dirty": false,
+        "restored": false
+      }
+    },
+    {
+      "name": "fehlende fieldTimestamps (null) verhalten sich wie ein leeres Objekt",
+      "why": "Alt-Zeilen aus der Zeit vor dem Field-Level-LWW tragen gar keine Zeitstempel. Sie dürfen den Merge nicht zum Absturz bringen.",
+      "entityType": "listItem",
+      "local": {
+        "dirty": true,
+        "values": { "name": "lokal", "quantity": 5, "checked": true, "removed": false, "orderIndex": 2, "sortKey": "a2", "deletedAt": null },
+        "fieldTimestamps": null
+      },
+      "server": {
+        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "fieldTimestamps": null
+      },
+      "expected": {
+        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "fieldTimestamps": { "name": "", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "deletedAt": "" },
+        "dirty": false,
+        "restored": false
+      }
+    },
+    {
+      "name": "fehlender Server-Zeitstempel verliert gegen einen gültigen lokalen",
+      "why": "Ein gültiger Zeitstempel schlägt das Nichts. Der lokale Wert bleibt stehen und die Zeile dirty.",
+      "entityType": "recipe",
+      "local": {
+        "dirty": true,
+        "values": { "name": "lokal", "color": "#111111", "sourceUrl": null, "imagePath": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "server", "color": "#222222", "sourceUrl": "https://example.test/r", "imagePath": "sync:u/r/h.webp", "deletedAt": null },
+        "fieldTimestamps": {}
+      },
+      "expected": {
+        "values": { "name": "lokal", "color": "#222222", "sourceUrl": "https://example.test/r", "imagePath": "sync:u/r/h.webp", "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z", "color": "", "sourceUrl": "", "imagePath": "", "deletedAt": "" },
+        "dirty": true,
+        "restored": false
+      }
+    },
+    {
+      "name": "fehlender lokaler Zeitstempel verliert gegen einen gültigen Server-Zeitstempel",
+      "why": "Spiegelbild. Ein fehlender Wert ist nie strikt neuer, kann also nie gewinnen.",
+      "entityType": "recipe",
+      "local": {
+        "dirty": true,
+        "values": { "name": "lokal", "color": "#111111", "sourceUrl": null, "imagePath": null, "deletedAt": null },
+        "fieldTimestamps": {}
+      },
+      "server": {
+        "values": { "name": "server", "color": "#222222", "sourceUrl": null, "imagePath": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z", "color": "2026-07-16T10:00:00.000Z", "sourceUrl": "2026-07-16T10:00:00.000Z", "imagePath": "2026-07-16T10:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "name": "server", "color": "#222222", "sourceUrl": null, "imagePath": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z", "color": "2026-07-16T10:00:00.000Z", "sourceUrl": "2026-07-16T10:00:00.000Z", "imagePath": "2026-07-16T10:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "dirty": false,
+        "restored": false
+      }
+    },
+    {
+      "name": "unparsbarer lokaler Zeitstempel verliert gegen einen gültigen",
+      "why": "Ein kaputter Client-Wert darf den Merge weder abbrechen noch gewinnen. Er zählt wie ein fehlender Wert.",
+      "entityType": "recipe",
+      "local": {
+        "dirty": true,
+        "values": { "name": "lokal", "color": "#111111", "sourceUrl": null, "imagePath": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "morgen" }
+      },
+      "server": {
+        "values": { "name": "server", "color": "#222222", "sourceUrl": null, "imagePath": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z", "color": "2026-07-16T10:00:00.000Z", "sourceUrl": "2026-07-16T10:00:00.000Z", "imagePath": "2026-07-16T10:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "name": "server", "color": "#222222", "sourceUrl": null, "imagePath": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z", "color": "2026-07-16T10:00:00.000Z", "sourceUrl": "2026-07-16T10:00:00.000Z", "imagePath": "2026-07-16T10:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "dirty": false,
+        "restored": false
+      }
+    },
+    {
+      "name": "unparsbarer Server-Zeitstempel verliert gegen einen gültigen lokalen",
+      "why": "Auch der Server kann kaputte Werte tragen, etwa weil ein alter Client sie hochgeladen hat.",
+      "entityType": "recipe",
+      "local": {
+        "dirty": true,
+        "values": { "name": "lokal", "color": "#111111", "sourceUrl": null, "imagePath": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "server", "color": "#222222", "sourceUrl": null, "imagePath": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "kaputt" }
+      },
+      "expected": {
+        "values": { "name": "lokal", "color": "#222222", "sourceUrl": null, "imagePath": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z", "color": "", "sourceUrl": "", "imagePath": "", "deletedAt": "" },
+        "dirty": true,
+        "restored": false
+      }
+    },
+    {
+      "name": "unparsbar auf beiden Seiten ist ein Gleichstand",
+      "why": "Beide Seiten liegen auf -Infinity. Der Server gewinnt, und sein (kaputter) Zeitstempel wird weitergetragen statt still durch einen anderen ersetzt.",
+      "entityType": "recipe",
+      "local": {
+        "dirty": true,
+        "values": { "name": "lokal", "color": "#111111", "sourceUrl": null, "imagePath": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "kaputt-lokal" }
+      },
+      "server": {
+        "values": { "name": "server", "color": "#222222", "sourceUrl": null, "imagePath": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "kaputt-server" }
+      },
+      "expected": {
+        "values": { "name": "server", "color": "#222222", "sourceUrl": null, "imagePath": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "kaputt-server", "color": "", "sourceUrl": "", "imagePath": "", "deletedAt": "" },
+        "dirty": false,
+        "restored": false
+      }
+    },
+    {
+      "name": "saubere lokale Zeile: die Serverzeile wird unverändert übernommen",
+      "why": "Gemergt wird nur, was dirty ist. Der neuere lokale Zeitstempel wird hier bewusst ignoriert: Eine saubere Zeile hat nichts beizusteuern, ihre Zeitstempel stammen ohnehin vom Server.",
+      "entityType": "listItem",
+      "local": {
+        "dirty": false,
+        "values": { "name": "lokal", "quantity": 9, "checked": true, "removed": true, "orderIndex": 4, "sortKey": "a4", "deletedAt": "2026-07-16T13:00:00.000Z" },
+        "fieldTimestamps": { "name": "2026-07-16T13:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z" },
+        "dirty": false,
+        "restored": false
+      }
+    },
+    {
+      "name": "ohne lokale Zeile wird die Serverzeile einfach angelegt",
+      "why": "Der Erstkontakt mit einer Zeile. Kein Merge, kein Add-Wins, kein dirty.",
+      "entityType": "badge",
+      "local": null,
+      "server": {
+        "values": { "recipeName": "Chili", "recipeColor": "#333333", "recipeImagePath": null, "earnedAt": "2026-07-16T10:00:00.000Z", "deletedAt": null },
+        "fieldTimestamps": { "recipeName": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "recipeName": "Chili", "recipeColor": "#333333", "recipeImagePath": null, "earnedAt": "2026-07-16T10:00:00.000Z", "deletedAt": null },
+        "fieldTimestamps": { "recipeName": "2026-07-16T10:00:00.000Z" },
+        "dirty": false,
+        "restored": false
+      }
+    },
+    {
+      "name": "Add-Wins beim Rezeptschritt: aiExplanation zählt als Inhalt",
+      "why": "Belegt, dass die Inhaltsliste pro Entitätstyp gilt und nicht nur für listItem gepflegt ist.",
+      "entityType": "recipeStep",
+      "local": {
+        "dirty": true,
+        "values": { "description": "Schritt", "orderIndex": 0, "sortKey": "a0", "isChecked": false, "aiExplanation": "Weil das Fett bindet.", "deletedAt": null },
+        "fieldTimestamps": { "aiExplanation": "2026-07-16T11:00:00.000Z" }
+      },
+      "server": {
+        "values": { "description": "Schritt", "orderIndex": 0, "sortKey": "a0", "isChecked": false, "aiExplanation": null, "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "deletedAt": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "description": "Schritt", "orderIndex": 0, "sortKey": "a0", "isChecked": false, "aiExplanation": "Weil das Fett bindet.", "deletedAt": null },
+        "fieldTimestamps": { "description": "", "orderIndex": "", "sortKey": "", "isChecked": "", "aiExplanation": "2026-07-16T11:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "dirty": true,
+        "restored": true
+      }
+    },
+    {
+      "name": "Add-Wins beim Badge: earnedAt zählt als Inhalt",
+      "why": "earnedAt ist beim Badge ein fachliches Inhaltsfeld und kein Positionsfeld, darf eine Löschung also aufheben.",
+      "entityType": "badge",
+      "local": {
+        "dirty": true,
+        "values": { "recipeName": "Chili", "recipeColor": "#333333", "recipeImagePath": null, "earnedAt": "2026-07-16T11:00:00.000Z", "deletedAt": null },
+        "fieldTimestamps": { "earnedAt": "2026-07-16T11:00:00.000Z" }
+      },
+      "server": {
+        "values": { "recipeName": "Chili", "recipeColor": "#333333", "recipeImagePath": null, "earnedAt": "2026-07-16T09:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "earnedAt": "2026-07-16T09:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "recipeName": "Chili", "recipeColor": "#333333", "recipeImagePath": null, "earnedAt": "2026-07-16T11:00:00.000Z", "deletedAt": null },
+        "fieldTimestamps": { "recipeName": "", "recipeColor": "", "recipeImagePath": "", "earnedAt": "2026-07-16T11:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "dirty": true,
+        "restored": true
+      }
+    },
+    {
+      "name": "Gleichstand zwischen Inhalts-Edit und Löschung stellt NICHT wieder her",
+      "why": "Add-Wins verlangt strikt neuer. Sonst höbe eine Löschung, die zufällig auf derselben Millisekunde wie ein Edit landet, sich selbst auf.",
+      "entityType": "listItem",
+      "local": {
+        "dirty": true,
+        "values": { "name": "geändert", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "alt", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "deletedAt": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "name": "geändert", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "dirty": true,
+        "restored": false
+      }
+    },
+    {
+      "name": "Zutaten: Positionsfelder sind auch hier kein Inhalt",
+      "why": "Rezeptzutaten werden genauso umsortiert wie Listeneinträge. Die Ausnahme muss für jeden Typ mit orderIndex und sortKey gelten.",
+      "entityType": "recipeIngredient",
+      "local": {
+        "dirty": true,
+        "values": { "name": "Bohnen", "quantity": 2, "orderIndex": 1, "sortKey": "a1", "deletedAt": null },
+        "fieldTimestamps": { "orderIndex": "2026-07-16T12:00:00.000Z", "sortKey": "2026-07-16T12:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "Bohnen", "quantity": 2, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "name": "2026-07-16T08:00:00.000Z", "quantity": "2026-07-16T08:00:00.000Z", "orderIndex": "2026-07-16T08:00:00.000Z", "sortKey": "2026-07-16T08:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "name": "Bohnen", "quantity": 2, "orderIndex": 1, "sortKey": "a1", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "name": "2026-07-16T08:00:00.000Z", "quantity": "2026-07-16T08:00:00.000Z", "orderIndex": "2026-07-16T12:00:00.000Z", "sortKey": "2026-07-16T12:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "dirty": true,
+        "restored": false
+      }
+    },
+    {
+      "name": "eine dirty-Zeile wird sauber, wenn sie jedes Feld verliert",
+      "why": "Das Gegenstück zur Dirty-Regel: Nur ein lokaler Sieg hält die Zeile im nächsten Push. Ohne Sieg gibt es nichts mehr zu senden.",
+      "entityType": "list",
+      "local": {
+        "dirty": true,
+        "values": { "name": "lokal", "color": "#111111", "secret": false, "lastSuggestedItems": "", "sourceUrl": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T09:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "server", "color": "#222222", "secret": true, "lastSuggestedItems": "s", "sourceUrl": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z", "color": "2026-07-16T10:00:00.000Z", "secret": "2026-07-16T10:00:00.000Z", "lastSuggestedItems": "2026-07-16T10:00:00.000Z", "sourceUrl": "2026-07-16T10:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "name": "server", "color": "#222222", "secret": true, "lastSuggestedItems": "s", "sourceUrl": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z", "color": "2026-07-16T10:00:00.000Z", "secret": "2026-07-16T10:00:00.000Z", "lastSuggestedItems": "2026-07-16T10:00:00.000Z", "sourceUrl": "2026-07-16T10:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "dirty": false,
+        "restored": false
+      }
+    }
+  ]
+}

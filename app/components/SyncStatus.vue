@@ -1,27 +1,27 @@
 <script setup lang="ts">
 /**
  * Sync-Anzeige in der Rail. Farben und Bedeutungen stammen aus
- * SemanticColors.kt der Android-App, damit beide Clients dasselbe sagen.
+ * SemanticColors.kt der Android-App, damit beide Clients dasselbe aussagen.
  *
  * Solange die Sync-Schicht noch nicht steht, meldet die Anzeige ehrlich
  * "offline" statt einen Erfolg vorzutaeuschen.
  */
-type Zustand = 'synchron' | 'laeuft' | 'wartet' | 'fehler' | 'offline'
+export type SyncState = 'synced' | 'syncing' | 'pending' | 'error' | 'offline'
 
-const { zustand = 'offline' } = defineProps<{ zustand?: Zustand }>()
+const { state = 'offline' } = defineProps<{ state?: SyncState }>()
 
-const darstellung = computed(() => {
-  switch (zustand) {
-    case 'synchron':
-      return { icon: 'i-lucide-refresh-cw', farbe: 'var(--md-sync-success)', text: 'Synchron' }
-    case 'laeuft':
-      return { icon: 'i-lucide-loader-circle', farbe: 'var(--md-on-surface-variant)', text: 'Sync laeuft' }
-    case 'wartet':
-      return { icon: 'i-lucide-cloud-upload', farbe: 'var(--md-sync-warning)', text: 'Aenderungen warten' }
-    case 'fehler':
-      return { icon: 'i-lucide-triangle-alert', farbe: 'var(--md-delete-content)', text: 'Sync-Fehler' }
+const display = computed(() => {
+  switch (state) {
+    case 'synced':
+      return { icon: 'i-lucide-refresh-cw', color: 'var(--md-sync-success)', label: 'Synchron' }
+    case 'syncing':
+      return { icon: 'i-lucide-loader-circle', color: 'var(--md-on-surface-variant)', label: 'Abgleich laeuft' }
+    case 'pending':
+      return { icon: 'i-lucide-cloud-upload', color: 'var(--md-sync-warning)', label: 'Aenderungen warten' }
+    case 'error':
+      return { icon: 'i-lucide-triangle-alert', color: 'var(--md-delete-content)', label: 'Abgleich fehlgeschlagen' }
     default:
-      return { icon: 'i-lucide-cloud-off', farbe: 'var(--md-on-surface-variant)', text: 'Offline' }
+      return { icon: 'i-lucide-cloud-off', color: 'var(--md-on-surface-variant)', label: 'Offline' }
   }
 })
 </script>
@@ -29,14 +29,14 @@ const darstellung = computed(() => {
 <template>
   <div
     class="flex flex-col items-center gap-1"
-    :title="darstellung.text"
+    :title="display.label"
   >
     <UIcon
-      :name="darstellung.icon"
+      :name="display.icon"
       class="size-4"
-      :class="zustand === 'laeuft' && 'animate-spin motion-reduce:animate-none'"
-      :style="{ color: darstellung.farbe }"
+      :class="state === 'syncing' && 'animate-spin motion-reduce:animate-none'"
+      :style="{ color: display.color }"
     />
-    <span class="sr-only">{{ darstellung.text }}</span>
+    <span class="sr-only">{{ display.label }}</span>
   </div>
 </template>

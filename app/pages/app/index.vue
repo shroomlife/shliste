@@ -1,17 +1,45 @@
 <script setup lang="ts">
 /**
- * Listen-Uebersicht, Design-Richtung A.
+ * Listenuebersicht, Design-Richtung A.
  *
  * Auf Desktop ist das die mittlere Spalte (Index) neben dem Detailbereich,
  * auf Mobil die erste Ebene des bekannten Stacks.
  *
- * Stand: Die Sync-Schicht (Phasen 3 bis 5) ist noch nicht gebaut. Diese Seite
- * zeigt deshalb bewusst den ehrlichen Leerzustand statt erfundener Beispieldaten.
+ * Die Daten kommen aus IndexedDB und damit ohne Konto aus. Angemeldet werden
+ * muss man erst fuer Abgleich und Teilen.
  */
 definePageMeta({ layout: 'app' })
 useHead({ title: 'Listen ~ shliste' })
 
-const listen = shallowRef<import('~/types/domain').List[]>([])
+const { lists, reload, createList } = useLists()
+
+const isDialogOpen = ref(false)
+const newListName = ref('')
+const isSaving = ref(false)
+
+onMounted(() => {
+  void reload()
+})
+
+function openDialog(): void {
+  newListName.value = ''
+  isDialogOpen.value = true
+}
+
+async function submitDialog(): Promise<void> {
+  const name = newListName.value.trim()
+  if (name.length === 0 || isSaving.value) return
+
+  isSaving.value = true
+  try {
+    const created = await createList(name)
+    isDialogOpen.value = false
+    await navigateTo(`/app/lists/${created.id}`)
+  }
+  finally {
+    isSaving.value = false
+  }
+}
 </script>
 
 <template>
@@ -24,27 +52,20 @@ const listen = shallowRef<import('~/types/domain').List[]>([])
       class="flex w-full shrink-0 flex-col lg:w-86"
       style="background: var(--md-surface-low)"
     >
-      <header class="flex items-center justify-between gap-3 px-5 pt-5 pb-3">
-        <h1 class="text-[1.875rem] leading-8 font-extrabold">
-          Listen
-        </h1>
-        <!-- Statt schwebendem FAB: echter Knopf im Kopf. Auf Mobil unten rechts. -->
-        <UButton
-          icon="i-lucide-plus"
-          class="hidden rounded-full font-bold lg:flex"
-        >
-          Neu
-        </UButton>
-      </header>
+      <AppPageHeader
+        title="Listen"
+        action-label="Neu"
+        @action="openDialog"
+      />
 
       <div
-        v-if="listen.length"
+        v-if="lists.length"
         class="flex flex-col gap-2 px-4 pb-4"
       >
         <ListCard
-          v-for="liste in listen"
-          :key="liste.id"
-          :liste="liste"
+          v-for="list in lists"
+          :key="list.id"
+          :list="list"
         />
       </div>
 
@@ -69,12 +90,10 @@ const listen = shallowRef<import('~/types/domain').List[]>([])
         </p>
       </div>
 
-      <!-- Mobil: FAB wie in Android -->
-      <UButton
-        icon="i-lucide-plus"
-        size="xl"
-        class="fixed right-5 bottom-24 z-10 size-14 justify-center rounded-2xl shadow-md lg:hidden"
-        aria-label="Neue Liste"
+      <!-- Mobil: dieselbe Aktion als schwebender Knopf, wie in Android -->
+      <AppFab
+        label="Neue Liste"
+        @click="openDialog"
       />
     </section>
 
@@ -97,5 +116,41 @@ const listen = shallowRef<import('~/types/domain').List[]>([])
         </p>
       </div>
     </section>
+
+    <AppSheet
+      v-model:open="isDialogOpen"
+      title="Neue Liste"
+      description="Wie soll die Liste heissen?"
+    >
+      <UInput
+        v-model="newListName"
+        placeholder="z.B. Wocheneinkauf"
+        size="xl"
+        autofocus
+        :ui="{ root: 'w-full' }"
+        @keyup.enter="submitDialog"
+      />
+
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            class="font-bold"
+            @click="isDialogOpen = false"
+          >
+            Abbrechen
+          </UButton>
+          <UButton
+            :loading="isSaving"
+            :disabled="newListName.trim().length === 0"
+            class="font-bold"
+            @click="submitDialog"
+          >
+            Anlegen
+          </UButton>
+        </div>
+      </template>
+    </AppSheet>
   </div>
 </template>
