@@ -27,6 +27,8 @@ const {
   addStep,
   toggleStep,
   removeIngredient,
+  moveIngredientTo,
+  moveStepTo,
   renameRecipe,
   deleteRecipe,
 } = useRecipeDetail()
@@ -37,6 +39,32 @@ const { dataVersion, scheduleSync } = useSync()
 const newIngredient = ref('')
 const newStep = ref('')
 
+/**
+ * Sortiermodus, wie im Listenbereich und wie in der Android-App: Ziehen gibt
+ * es nur hier drin, damit beim Kochen ein Tippen abhakt und nichts verrutscht.
+ */
+const isSortMode = ref(false)
+const ingredientList = useTemplateRef<HTMLElement>('ingredientList')
+const stepList = useTemplateRef<HTMLElement>('stepList')
+
+useDragSort(ingredientList, {
+  enabled: () => isSortMode.value,
+  handle: '.drag-handle',
+  onMove: (from, to) => {
+    const row = ingredients.value[from]
+    if (row !== undefined) mutate(moveIngredientTo(to, row.id))
+  },
+})
+
+useDragSort(stepList, {
+  enabled: () => isSortMode.value,
+  handle: '.drag-handle',
+  onMove: (from, to) => {
+    const row = steps.value[from]
+    if (row !== undefined) mutate(moveStepTo(to, row.id))
+  },
+})
+
 const isRenameOpen = ref(false)
 const isDeleteOpen = ref(false)
 const renameValue = ref('')
@@ -44,6 +72,13 @@ const renameValue = ref('')
 // Dieselben Aktionen wie bei einer Liste, an derselben Stelle: Was gleich
 // funktioniert, soll auch gleich zu finden sein.
 const menuItems = computed(() => [[
+  {
+    label: 'Sortieren',
+    icon: 'i-lucide-arrow-up-down',
+    onSelect: () => {
+      isSortMode.value = true
+    },
+  },
   {
     label: 'Umbenennen',
     icon: 'i-lucide-pencil',
@@ -260,28 +295,48 @@ async function confirmDelete(): Promise<void> {
         </p>
 
         <div
-          v-for="ingredient in ingredients"
-          :key="ingredient.id"
-          class="group flex min-h-12 items-center gap-3 rounded-lg px-2"
+          ref="ingredientList"
+          class="flex flex-col"
         >
-          <span class="min-w-0 grow truncate text-[1.25rem]">{{ ingredient.name }}</span>
-          <span
-            v-if="ingredient.quantity > 1"
-            class="flex h-7 min-w-9 shrink-0 items-center justify-center rounded-lg px-2 text-[1.0625rem] font-bold"
-            style="background: var(--md-surface-high)"
-          >{{ ingredient.quantity }}&times;</span>
-          <UButton
-            icon="i-lucide-x"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            class="shrink-0 rounded-full opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-            :aria-label="`${ingredient.name} entfernen`"
-            @click="onRemoveIngredient(ingredient)"
-          />
+          <div
+            v-for="ingredient in ingredients"
+            :key="ingredient.id"
+            class="group flex min-h-12 items-center gap-3 rounded-lg px-2"
+            :class="isSortMode && 'mb-0.5'"
+            :style="isSortMode ? 'background: var(--md-surface-container)' : ''"
+          >
+            <span
+              v-if="isSortMode"
+              class="drag-handle flex size-8 shrink-0 cursor-grab items-center justify-center rounded-lg active:cursor-grabbing"
+              style="color: var(--md-on-surface-variant); touch-action: none"
+              aria-hidden="true"
+            >
+              <UIcon
+                name="i-lucide-grip-vertical"
+                class="size-5"
+              />
+            </span>
+            <span class="min-w-0 grow truncate text-[1.25rem]">{{ ingredient.name }}</span>
+            <span
+              v-if="ingredient.quantity > 1"
+              class="flex h-7 min-w-9 shrink-0 items-center justify-center rounded-lg px-2 text-[1.0625rem] font-bold"
+              style="background: var(--md-surface-high)"
+            >{{ ingredient.quantity }}&times;</span>
+            <UButton
+              v-if="!isSortMode"
+              icon="i-lucide-x"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              class="shrink-0 rounded-full opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+              :aria-label="`${ingredient.name} entfernen`"
+              @click="onRemoveIngredient(ingredient)"
+            />
+          </div>
         </div>
 
         <UInput
+          v-if="!isSortMode"
           v-model="newIngredient"
           placeholder="Zutat hinzufügen"
           icon="i-lucide-plus"
@@ -309,8 +364,41 @@ async function confirmDelete(): Promise<void> {
           Noch keine Schritte.
         </p>
 
+        <div
+          ref="stepList"
+          class="flex flex-col"
+        >
+          <!-- Im Sortiermodus ist die Zeile ein Container mit Griff statt ein
+               Knopf: Ein Griff IM Knopf waere ein verschachteltes Bedienelement
+               und fuer Tastatur wie Screenreader kaputt. -->
+          <div
+            v-for="(step, index) in steps"
+            v-show="isSortMode"
+            :key="`sort-${step.id}`"
+            class="mb-0.5 flex min-h-14 w-full items-center gap-1 rounded-lg px-2 py-2"
+            style="background: var(--md-surface-container)"
+          >
+            <span
+              class="drag-handle flex size-8 shrink-0 cursor-grab items-center justify-center rounded-lg active:cursor-grabbing"
+              style="color: var(--md-on-surface-variant); touch-action: none"
+              aria-hidden="true"
+            >
+              <UIcon
+                name="i-lucide-grip-vertical"
+                class="size-5"
+              />
+            </span>
+            <span
+              class="flex size-7 shrink-0 items-center justify-center rounded-full text-[1rem] font-bold"
+              style="background: var(--md-surface-high); color: var(--md-on-surface-variant)"
+            >{{ index + 1 }}</span>
+            <span class="min-w-0 grow text-[1.25rem]">{{ step.description }}</span>
+          </div>
+        </div>
+
         <button
           v-for="(step, index) in steps"
+          v-show="!isSortMode"
           :key="step.id"
           type="button"
           class="flex min-h-14 w-full items-start gap-3.5 rounded-lg px-2 py-2 text-left transition-colors"
@@ -339,6 +427,7 @@ async function confirmDelete(): Promise<void> {
         </button>
 
         <UInput
+          v-if="!isSortMode"
           v-model="newStep"
           placeholder="Schritt hinzufügen"
           icon="i-lucide-plus"
@@ -348,6 +437,25 @@ async function confirmDelete(): Promise<void> {
           @keyup.enter="submitStep"
         />
       </section>
+    </div>
+
+    <!-- Sortiermodus: der sichtbare Weg hinaus. Ein Modus ohne Ende ist eine
+         Falle. -->
+    <div
+      v-if="isSortMode"
+      class="flex shrink-0 items-center justify-between gap-3 border-t px-3 py-3.5 lg:px-5"
+      style="border-color: var(--md-outline-variant)"
+    >
+      <span
+        class="text-[1rem]"
+        style="color: var(--md-on-surface-variant)"
+      >Zieh Zutaten und Schritte am Griff in die richtige Reihenfolge.</span>
+      <UButton
+        class="shrink-0 rounded-xl font-bold"
+        @click="isSortMode = false"
+      >
+        Fertig
+      </UButton>
     </div>
   </div>
 </template>

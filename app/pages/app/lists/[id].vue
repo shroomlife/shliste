@@ -24,6 +24,35 @@ const { dataVersion, scheduleSync } = useSync()
 const { profile, isSignedIn } = useAuth()
 
 const isMembersOpen = ref(false)
+
+/**
+ * Sortiermodus — Ziehen gibt es nur hier drin.
+ *
+ * Wie in der Android-App: Beim Einkaufen bleibt die Liste ruhig und ein Tippen
+ * hakt ab. Wer umsortieren will, sagt das ausdrücklich; erst dann erscheinen
+ * die Anfasser, und ein Tippen hakt solange nichts mehr ab.
+ */
+const isSortMode = ref(false)
+const openList = useTemplateRef<HTMLElement>('openList')
+const doneList = useTemplateRef<HTMLElement>('doneList')
+
+useDragSort(openList, {
+  enabled: () => isSortMode.value,
+  handle: '.drag-handle',
+  onMove: (_from, to) => {
+    const item = openItems.value[_from]
+    if (item !== undefined) mutate(moveItemTo(openItems.value, item.id, to))
+  },
+})
+
+useDragSort(doneList, {
+  enabled: () => isSortMode.value,
+  handle: '.drag-handle',
+  onMove: (_from, to) => {
+    const item = doneItems.value[_from]
+    if (item !== undefined) mutate(moveItemTo(doneItems.value, item.id, to))
+  },
+})
 const isRenameOpen = ref(false)
 const isDeleteOpen = ref(false)
 const renameValue = ref('')
@@ -47,6 +76,13 @@ const isLocked = computed(() => list.value?.secret === true)
 const deleteLabel = computed(() => (isOwner.value ? 'Liste löschen' : 'Liste verlassen'))
 
 const menuItems = computed(() => [[
+  {
+    label: 'Sortieren',
+    icon: 'i-lucide-arrow-up-down',
+    onSelect: () => {
+      isSortMode.value = true
+    },
+  },
   {
     label: 'Umbenennen',
     icon: 'i-lucide-pencil',
@@ -100,6 +136,7 @@ const {
   load,
   toggleItem: setItemChecked,
   addItem: createItem,
+  moveItemTo,
   renameList,
   deleteList,
 } = useListDetail()
@@ -274,12 +311,21 @@ function addItem(): void {
       class="flex grow flex-col gap-0.5 px-3 py-2 lg:min-h-0 lg:overflow-y-auto lg:px-5"
     >
       <template v-if="items.length">
-        <ListItemRow
-          v-for="item in openItems"
-          :key="item.id"
-          :item="item"
-          @toggle="toggleItem(item)"
-        />
+        <!-- Eigene Behälter je Gruppe: Ziehen bleibt darin, denn die
+             Zugehörigkeit zu offen oder erledigt entscheidet das Häkchen und
+             nicht die Position. -->
+        <div
+          ref="openList"
+          class="flex flex-col gap-0.5"
+        >
+          <ListItemRow
+            v-for="item in openItems"
+            :key="item.id"
+            :item="item"
+            :sortable="isSortMode"
+            @toggle="toggleItem(item)"
+          />
+        </div>
 
         <div
           v-if="doneItems.length"
@@ -295,12 +341,18 @@ function addItem(): void {
           />
         </div>
 
-        <ListItemRow
-          v-for="item in doneItems"
-          :key="item.id"
-          :item="item"
-          @toggle="toggleItem(item)"
-        />
+        <div
+          ref="doneList"
+          class="flex flex-col gap-0.5"
+        >
+          <ListItemRow
+            v-for="item in doneItems"
+            :key="item.id"
+            :item="item"
+            :sortable="isSortMode"
+            @toggle="toggleItem(item)"
+          />
+        </div>
       </template>
 
       <div
@@ -392,9 +444,28 @@ function addItem(): void {
       :is-owner="isOwner"
     />
 
+    <!-- Sortiermodus: statt der Eingabe der Weg hinaus. Ein Modus ohne
+         sichtbares Ende ist eine Falle. -->
+    <div
+      v-if="isSortMode"
+      class="flex shrink-0 items-center justify-between gap-3 border-t px-3 py-3.5 lg:px-5"
+      style="border-color: var(--md-outline-variant)"
+    >
+      <span
+        class="text-[1rem]"
+        style="color: var(--md-on-surface-variant)"
+      >Zieh die Einträge am Griff in die Reihenfolge, die du im Laden abläufst.</span>
+      <UButton
+        class="shrink-0 rounded-xl font-bold"
+        @click="isSortMode = false"
+      >
+        Fertig
+      </UButton>
+    </div>
+
     <!-- Eingabe -->
     <div
-      v-if="!isLocked"
+      v-else-if="!isLocked"
       class="flex shrink-0 items-center gap-2.5 border-t px-3 py-3.5 lg:px-5"
       style="border-color: var(--md-outline-variant)"
     >

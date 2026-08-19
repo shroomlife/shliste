@@ -23,6 +23,7 @@ import {
 } from '../db/repositories'
 import type { RecipeIngredientRow, RecipeRow, RecipeStepRow } from '../db/schema'
 import { nowIso } from '../db/timestamps'
+import { planMoveTo, type OrderedRow } from '../sync/merge/reorder'
 
 /* ------------------------------------------------------------------ *
  * Reine Funktionen — ohne IndexedDB und ohne Vue, deshalb direkt testbar.
@@ -200,6 +201,48 @@ export function useRecipeDetail() {
     await reload()
   }
 
+  /**
+   * Legt eine Zutat oder einen Schritt an eine andere Stelle.
+   *
+   * Beide Listen laufen durch dieselbe Funktion, weil sie sich in nichts
+   * unterscheiden, was das Sortieren angeht — nur der Schreibweg ist ein
+   * anderer. Geschrieben wird in aller Regel genau eine Zeile (Begründung in
+   * `sync/merge/reorder.ts`).
+   */
+  async function moveRowTo(
+    rows: readonly OrderedRow[],
+    rowId: string,
+    toIndex: number,
+    write: (id: string, sortKey: string) => Promise<void>,
+  ): Promise<void> {
+    const plan = planMoveTo(rows, rowId, toIndex)
+    if (plan === null) return
+
+    for (const entry of [...plan.normalized, plan.moved]) {
+      await write(entry.id, entry.sortKey)
+    }
+
+    await reload()
+  }
+
+  async function moveIngredientTo(toIndex: number, ingredientId: string): Promise<void> {
+    const byId = new Map(ingredients.value.map(row => [row.id, row]))
+    await moveRowTo(ingredients.value, ingredientId, toIndex, async (id, sortKey) => {
+      const row = byId.get(id)
+      if (row === undefined) return
+      await upsertIngredient({ ...toIngredientDraft(row), sortKey })
+    })
+  }
+
+  async function moveStepTo(toIndex: number, stepId: string): Promise<void> {
+    const byId = new Map(steps.value.map(row => [row.id, row]))
+    await moveRowTo(steps.value, stepId, toIndex, async (id, sortKey) => {
+      const row = byId.get(id)
+      if (row === undefined) return
+      await upsertStep({ ...toStepDraft(row), sortKey })
+    })
+  }
+
   /** Benennt das Rezept um. Nur das Feld `name` wird neu gestempelt. */
   async function renameRecipe(name: string): Promise<void> {
     const target = recipe.value
@@ -252,6 +295,8 @@ export function useRecipeDetail() {
     toggleStep,
     removeIngredient,
     removeStep,
+    moveIngredientTo,
+    moveStepTo,
     renameRecipe,
     deleteRecipe,
   }

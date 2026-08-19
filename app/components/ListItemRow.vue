@@ -16,19 +16,57 @@ import type { ListItem } from '#shared/types/domain'
  * Barrierefreiheit: Die ganze Zeile ist ein Knopf mit mindestens 44 Pixel
  * Höhe, damit sie auch am Handy sicher zu treffen ist (WCAG 2.2 SC 2.5.8).
  */
-const { item, justChanged = false, changedBy = null } = defineProps<{
+const { item, justChanged = false, changedBy = null, sortable = false } = defineProps<{
   item: ListItem
   /** Wurde die Zeile gerade von einem anderen Gerät geändert? */
   justChanged?: boolean
   /** Anzeigename der Person, die geändert hat */
   changedBy?: string | null
+  /**
+   * Im Sortiermodus bekommt die Zeile einen Anfasser zum Ziehen — und nur
+   * dann. Beim Einkaufen soll niemand versehentlich umsortieren, und ein
+   * dauerhafter Griff an jeder Zeile macht aus einer ruhigen Liste ein
+   * Werkzeugbrett. Dieselbe Entscheidung wie in der Android-App.
+   */
+  sortable?: boolean
 }>()
 
 const emit = defineEmits<{ toggle: [] }>()
 </script>
 
 <template>
+  <!-- Im Sortiermodus ist die Zeile ein Container mit Anfasser, sonst der
+       schlichte Knopf von vorher: Ein Anfasser IM Knopf waere verschachteltes
+       Bedienelement und fuer Tastatur wie Screenreader kaputt. -->
+  <div
+    v-if="sortable"
+    class="flex min-h-14 w-full items-center gap-1 rounded-lg pl-1 transition-colors"
+    :class="item.checked && 'opacity-65'"
+    style="background: var(--md-surface-container)"
+  >
+    <span
+      class="drag-handle flex size-8 shrink-0 cursor-grab items-center justify-center rounded-lg active:cursor-grabbing"
+      style="color: var(--md-on-surface-variant); touch-action: none"
+      aria-hidden="true"
+    >
+      <UIcon
+        name="i-lucide-grip-vertical"
+        class="size-5"
+      />
+    </span>
+    <span
+      class="min-w-0 grow truncate px-1 text-[1.375rem]"
+      :class="item.checked && 'line-through'"
+    >{{ item.name }}</span>
+    <span
+      v-if="item.quantity > 1"
+      class="mr-2 flex h-7 min-w-9 shrink-0 items-center justify-center rounded-lg px-2 text-[1.0625rem] font-bold"
+      style="background: var(--md-surface-high)"
+    >{{ item.quantity }}&times;</span>
+  </div>
+
   <button
+    v-else
     type="button"
     class="flex min-h-14 w-full items-center gap-3.5 rounded-lg px-2 text-left transition-colors"
     :class="[justChanged && 'delta-flash', item.checked && 'opacity-65']"

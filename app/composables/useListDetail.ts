@@ -16,6 +16,7 @@
  */
 import type { ListItem } from '../../shared/types/domain'
 import { getItemsForList, getList, upsertItem, upsertList, type Draft } from '../db/repositories'
+import { planMoveTo } from '../sync/merge/reorder'
 import { nowIso } from '../db/timestamps'
 import type { ListItemRow, ListRow } from '../db/schema'
 
@@ -215,6 +216,33 @@ export function useListDetail() {
   }
 
   /**
+   * Legt einen Eintrag an eine andere Stelle.
+   *
+   * `group` ist die angezeigte Gruppe (offen oder erledigt) und `toIndex` die
+   * Zielposition darin — Einträge wechseln beim Ziehen nicht die Gruppe, das
+   * entscheidet allein das Häkchen.
+   *
+   * Geschrieben wird in aller Regel genau eine Zeile: Der Sortierschlüssel
+   * ist ein Bruchindex und entsteht zwischen den beiden neuen Nachbarn. Nur
+   * beim allerersten Umsortieren einer Liste bekommen alle Zeilen einen
+   * (Begründung in `sync/merge/reorder.ts`).
+   */
+  async function moveItemTo(group: readonly ListItemRow[], itemId: string, toIndex: number): Promise<void> {
+    const plan = planMoveTo(group, itemId, toIndex)
+    if (plan === null) return
+
+    const byId = new Map(items.value.map(row => [row.id, row]))
+
+    for (const entry of [...plan.normalized, plan.moved]) {
+      const row = byId.get(entry.id)
+      if (row === undefined) continue
+      await upsertItem({ ...toItemDraft(row), sortKey: entry.sortKey })
+    }
+
+    await reload()
+  }
+
+  /**
    * Benennt die Liste um.
    *
    * Über `upsertList`, das dabei nur das Feld `name` neu stempelt — genau
@@ -278,6 +306,7 @@ export function useListDetail() {
     toggleItem,
     addItem,
     removeItem,
+    moveItemTo,
     renameList,
     deleteList,
   }
