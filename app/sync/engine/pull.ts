@@ -102,7 +102,7 @@ export function parsePullResponse(value: unknown): PullResponse {
  * Engt eine Liste samt ihrer Positionen und Mitglieder ein.
  *
  * Exportiert, weil der Delta-Abruf dieselbe Form bekommt (siehe `delta.ts`).
- * Ein zweiter Parser dort waere eine zweite Gelegenheit, unterschiedlich streng
+ * Ein zweiter Parser dort wäre eine zweite Gelegenheit, unterschiedlich streng
  * zu sein.
  */
 export function parsePulledList(value: unknown): PulledList | null {
@@ -432,7 +432,7 @@ async function applyChatMessage(rows: RowStores, server: RecipeChatMessage): Pro
 /**
  * Zeilen, wie der Server sie liefert.
  *
- * Alle Felder sind wahlweise, weil nicht jede Antwort alle Arten enthaelt: Der
+ * Alle Felder sind wahlweise, weil nicht jede Antwort alle Arten enthält: Der
  * volle Pull bringt Listen, Rezepte und Abzeichen, ein Delta je nach Anlass nur
  * eine Liste, einzelne Positionen oder ein Rezept.
  */
@@ -448,12 +448,12 @@ export interface PulledRows {
  * Schreibt gezogene Zeilen in die lokale Datenbank.
  *
  * IDEMPOTENT, UND ZWAR ZWINGEND: Dieselben Zeilen kommen wegen der
- * Cursor-Ueberlappung mehrfach herunter, und ein Delta ueberschneidet sich
- * regelmaessig mit dem naechsten vollen Pull. Jeder Aufruf fuehrt deshalb neu
+ * Cursor-Ueberlappung mehrfach herunter, und ein Delta überschneidet sich
+ * regelmässig mit dem nächsten vollen Pull. Jeder Aufruf führt deshalb neu
  * zusammen, statt auf "schon gesehen" zu setzen.
  *
  * Von Pull und Delta gemeinsam benutzt. Zwei Wege, dieselben Zeilen zu
- * schreiben, waeren zwei Gelegenheiten, die Merge-Semantik auseinanderlaufen
+ * schreiben, wären zwei Gelegenheiten, die Merge-Semantik auseinanderlaufen
  * zu lassen.
  */
 export async function applyPulledRows(store: PullStore, rows: PulledRows): Promise<void> {

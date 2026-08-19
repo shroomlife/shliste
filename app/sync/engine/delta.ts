@@ -2,18 +2,18 @@
  * Der Delta-Abruf: eine einzelne Liste, einzelne Positionen oder ein Rezept.
  *
  * WOZU ES IHN GIBT: Ein Echtzeit-Ereignis sagt "an dieser Liste hat sich etwas
- * geaendert". Darauf den gesamten Bestand zu ziehen waere fuer den Server wie
- * fuer das Geraet unverhaeltnismaessig — jedes Abhaken auf einem anderen Geraet
- * loeste einen vollen Pull aus. Der Delta-Abruf holt genau das Betroffene.
+ * geändert". Darauf den gesamten Bestand zu ziehen wäre für den Server wie
+ * für das Gerät unverhältnismässig — jedes Abhaken auf einem anderen Gerät
+ * löste einen vollen Pull aus. Der Delta-Abruf holt genau das Betroffene.
  *
- * DAS WASSERZEICHEN RUECKT DABEI NIE VOR. Ein Delta ist ein Ausschnitt und
- * nicht der Serverstand: Wuerde `lastSyncedAt` danach weiterwandern, fielen
- * alle Aenderungen, die im selben Zeitraum an ANDEREN Zeilen passiert sind,
- * dauerhaft aus dem Fenster des naechsten Pulls und fehlten still fuer immer.
+ * DAS WASSERZEICHEN RÜCKT DABEI NIE VOR. Ein Delta ist ein Ausschnitt und
+ * nicht der Serverstand: Würde `lastSyncedAt` danach weiterwandern, fielen
+ * alle Änderungen, die im selben Zeitraum an ANDEREN Zeilen passiert sind,
+ * dauerhaft aus dem Fenster des nächsten Pulls und fehlten still für immer.
  * Deshalb schreibt diese Datei den Cursor nicht, und deshalb nimmt sie auch
  * `PullStore` und nicht dessen Schreibseite in die Hand.
  *
- * Gegenstueck in der API: `api.shliste.app/src/routes/sync/delta.ts`.
+ * Gegenstück in der API: `api.shliste.app/src/routes/sync/delta.ts`.
  */
 import type { ListItem } from '../../../shared/types/domain'
 import { parseListItem } from './entities'
@@ -88,7 +88,7 @@ export function deltaQuery(target: DeltaTarget): string {
  * Ebene ist der Fall `type=items`, bei dem es keine Liste dazu gibt.
  *
  * `serverTime` liefert der Server mit, wird hier aber bewusst NICHT gelesen:
- * Es gibt keinen Weg, an dem es richtig waere, es als Cursor zu benutzen (siehe
+ * Es gibt keinen Weg, an dem es richtig wäre, es als Cursor zu benutzen (siehe
  * Kopf dieser Datei), und ein ungenutzt herumliegender Zeitstempel ist eine
  * Einladung, genau das doch zu tun.
  */
@@ -102,7 +102,7 @@ export interface DeltaResponse {
  * Engt die Antwort ein.
  *
  * Die Verschachtelung ist dieselbe wie beim Pull, deshalb werden dessen Parser
- * benutzt statt eigener. Zwei Parser fuer dieselbe Form waeren zwei
+ * benutzt statt eigener. Zwei Parser für dieselbe Form wären zwei
  * Gelegenheiten, unterschiedlich streng zu sein.
  */
 export function parseDeltaResponse(value: unknown): DeltaResponse {
@@ -127,17 +127,17 @@ export interface DeltaOutcome {
   lists: number
   items: number
   recipes: number
-  /** Wurde ueberhaupt etwas geschrieben? */
+  /** Wurde überhaupt etwas geschrieben? */
   changed: boolean
 }
 
 /**
- * Holt ein Delta und fuehrt es lokal zusammen.
+ * Holt ein Delta und führt es lokal zusammen.
  *
  * Eine leere Antwort ist kein Fehler: Sie ist die normale Auskunft "diese
- * Liste gehoert dir nicht (mehr)". Der Server antwortet dann mit leeren Feldern
+ * Liste gehört dir nicht (mehr)". Der Server antwortet dann mit leeren Feldern
  * statt mit 403, und dieselbe Antwort kommt auch, wenn die Zeile inzwischen
- * geloescht wurde.
+ * gelöscht wurde.
  */
 export async function runDelta(
   store: PullStore,

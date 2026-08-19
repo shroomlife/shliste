@@ -23,9 +23,9 @@ import type { UserProfile } from '#shared/types/domain'
 import { isRecord } from './guards'
 
 // Der Typ wird hier nur benutzt, nicht weitergereicht: app/ und server/ sind
-// getrennte Build-Bereiche und duerfen nicht voneinander abhaengen, shared/ ist
-// der dafuer vorgesehene gemeinsame Bereich. Wer den Typ braucht, holt ihn von
-// dort — ein Weiterexport waere ein zweiter Name fuer dieselbe Sache und haette
+// getrennte Build-Bereiche und dürfen nicht voneinander abhängen, shared/ ist
+// der dafür vorgesehene gemeinsame Bereich. Wer den Typ braucht, holt ihn von
+// dort — ein Weiterexport wäre ein zweiter Name für dieselbe Sache und hätte
 // Nuxt bei den automatischen Importen zwei gleichnamige Kandidaten geliefert.
 
 export const SESSION_COOKIE = 'shliste_session'

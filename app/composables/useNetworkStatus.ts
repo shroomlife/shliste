@@ -3,12 +3,12 @@
  *
  * Bewusst kein blosses `navigator.onLine`: Das meldet nur, ob eine Verbindung
  * zum lokalen Netz besteht, nicht ob das Internet erreichbar ist. Ein WLAN im
- * Supermarkt ohne Durchgang meldet damit faelschlich "online". Deshalb laesst
- * sich der Wert zusaetzlich korrigieren, sobald ein echter Aufruf an die eigene
+ * Supermarkt ohne Durchgang meldet damit fälschlich "online". Deshalb lässt
+ * sich der Wert zusätzlich korrigieren, sobald ein echter Aufruf an die eigene
  * BFF scheitert oder gelingt.
  *
  * SSR-sicher: Auf dem Server gibt es keinen Navigator, dort gilt "online",
- * damit nichts faelschlich als offline gerendert wird.
+ * damit nichts fälschlich als offline gerendert wird.
  */
 export function useNetworkStatus() {
   // useState statt ref: der Zustand soll app-weit derselbe sein, nicht pro
@@ -16,8 +16,8 @@ export function useNetworkStatus() {
   const isOnline = useState<boolean>('network-online', () => true)
 
   /**
-   * Meldet das Ergebnis eines echten Netzaufrufs zurueck. Damit korrigiert
-   * sich die Anzeige auch dann, wenn der Browser faelschlich "online" meldet.
+   * Meldet das Ergebnis eines echten Netzaufrufs zurück. Damit korrigiert
+   * sich die Anzeige auch dann, wenn der Browser fälschlich "online" meldet.
    */
   function reportResult(succeeded: boolean): void {
     isOnline.value = succeeded

@@ -3,12 +3,12 @@
  * Leerer Detailbereich neben dem Index.
  *
  * Nur auf dem Desktop sichtbar: dort steht die Detailspalte immer, auch wenn
- * noch nichts gewaehlt ist. Auf Mobil ist der Index selbst der Inhalt dieser
- * Ebene, ein zweiter Hinweis waere dort nur im Weg.
+ * noch nichts gewählt ist. Auf Mobil ist der Index selbst der Inhalt dieser
+ * Ebene, ein zweiter Hinweis wäre dort nur im Weg.
  *
  * Kein definePageMeta: das Layout kommt von der Elternroute. Ein eigener
- * Eintrag wuerde den geerbten Wert ueberschreiben, weil vue-router die
- * Metadaten aller gefundenen Routen zusammenfuehrt und das Kind gewinnt.
+ * Eintrag würde den geerbten Wert überschreiben, weil vue-router die
+ * Metadaten aller gefundenen Routen zusammenführt und das Kind gewinnt.
  */
 </script>
 
@@ -27,7 +27,7 @@
         class="text-[1.25rem]"
         style="color: var(--md-on-surface-variant)"
       >
-        Waehle links eine Liste aus.
+        Wähle links eine Liste aus.
       </p>
     </div>
   </section>

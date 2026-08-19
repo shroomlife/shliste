@@ -8,9 +8,9 @@
  *   rechts auf 1600 Pixel das klassische Handy-Klon-Signal ist
  * - auf Mobil bleibt beides so, wie es Android macht
  *
- * Hier und nur hier laeuft der Abgleich an: Das Layout umschliesst den ganzen
+ * Hier und nur hier läuft der Abgleich an: Das Layout umschliesst den ganzen
  * App-Bereich und lebt genau so lange wie er. Ein zweiter Aufruf an anderer
- * Stelle oeffnete eine zweite Echtzeit-Verbindung.
+ * Stelle öffnete eine zweite Echtzeit-Verbindung.
  */
 const route = useRoute()
 
@@ -88,7 +88,7 @@ function isActive(destination: Destination): boolean {
       <!-- Konto und Abgleich stehen zusammen am unteren Ende der Rail: beides
            betrifft nicht den Inhalt, sondern den Zustand der App. -->
       <div class="flex flex-col items-center gap-2">
-        <!-- Ohne Konto gibt es nichts abzugleichen. Eine Anzeige waere dann
+        <!-- Ohne Konto gibt es nichts abzugleichen. Eine Anzeige wäre dann
              kein Hinweis, sondern eine Frage ohne Anlass. -->
         <SyncStatus
           v-if="isSignedIn"
@@ -98,8 +98,8 @@ function isActive(destination: Destination): boolean {
       </div>
     </nav>
 
-    <!-- Mobil: schmale Kopfzeile fuer Konto und Abgleich. Auf dem Desktop
-         uebernimmt das die Rail, deshalb dort ausgeblendet. -->
+    <!-- Mobil: schmale Kopfzeile für Konto und Abgleich. Auf dem Desktop
+         übernimmt das die Rail, deshalb dort ausgeblendet. -->
     <div
       class="flex h-12 shrink-0 items-center justify-end gap-2 px-3 lg:hidden"
       style="background: var(--md-surface-container)"

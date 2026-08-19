@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Schwebender Aktionsknopf, wie ihn die Android-App kennt — aber nur auf
- * kleinen Schirmen. Auf dem Desktop uebernimmt der Knopf im Seitenkopf
+ * kleinen Schirmen. Auf dem Desktop übernimmt der Knopf im Seitenkopf
  * (AppPageHeader), weil ein schwebender Kreis in der Ecke eines 1600 Pixel
  * breiten Fensters das klassische Handy-Klon-Signal ist.
  *

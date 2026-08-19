@@ -11,13 +11,13 @@ useSeoMeta({ title: 'Impressum ~ shliste', robots: 'noindex' })
       to="/"
       class="text-[1rem] hover:underline"
       style="color: var(--md-primary)"
-    >Zurueck</NuxtLink>
+    >Zurück</NuxtLink>
     <h1 class="mt-4 text-[2rem] font-black tracking-tight">
       Impressum
     </h1>
 
     <h2 class="mt-8 text-[1.25rem] font-bold">
-      Angaben gemaess Paragraf 5 DDG
+      Angaben gemäss Paragraf 5 DDG
     </h2>
     <p class="mt-2 text-[1.125rem]">
       Robin Lehmann<br>
@@ -46,7 +46,7 @@ useSeoMeta({ title: 'Impressum ~ shliste', robots: 'noindex' })
       class="mt-8 text-[1rem]"
       style="color: var(--md-on-surface-variant)"
     >
-      Hinweis: Die vollstaendige Anschrift ist vor Veroeffentlichung zu ergaenzen.
+      Hinweis: Die vollständige Anschrift ist vor Veröffentlichung zu ergänzen.
     </p>
   </div>
 </template>

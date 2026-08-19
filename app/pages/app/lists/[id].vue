@@ -5,14 +5,14 @@ import type { ListItem } from '#shared/types/domain'
  * Detailansicht einer Liste — der Bildschirm, auf dem in dieser App die meiste
  * Zeit verbracht wird.
  *
- * Design-Richtung A: Der Kopf traegt die Listenfarbe als 20-Prozent-Lasur,
- * darunter die offenen Eintraege, dann getrennt die erledigten. Auf dem Desktop
+ * Design-Richtung A: Der Kopf trägt die Listenfarbe als 20-Prozent-Lasur,
+ * darunter die offenen Einträge, dann getrennt die erledigten. Auf dem Desktop
  * steht diese Ansicht rechts neben dem Index, auf Mobil ist sie eine eigene
- * Seite mit Zurueck-Pfeil.
+ * Seite mit Zurück-Pfeil.
  *
  * Die Daten kommen aus der lokalen Datenbank und damit ohne Konto aus.
- * Abhaken und Hinzufuegen funktionieren offline; der Abgleich mit dem Server
- * laeuft getrennt davon.
+ * Abhaken und Hinzufügen funktionieren offline; der Abgleich mit dem Server
+ * läuft getrennt davon.
  *
  * Kein definePageMeta: das Layout kommt von der Elternroute /app/lists.
  */
@@ -43,7 +43,7 @@ useHead({ title: () => `${list.value?.name ?? 'Liste'} ~ shliste` })
 
 /**
  * Die Ereignisbehandler der Vorlage sind synchron, die Datenbankzugriffe nicht.
- * Alles laeuft deshalb hier durch: So endet ein gescheiterter Zugriff (privater
+ * Alles läuft deshalb hier durch: So endet ein gescheiterter Zugriff (privater
  * Modus, gesperrter Speicher) nicht als unbehandelte Zusage im Nichts, sondern
  * im Protokoll.
  */
@@ -56,38 +56,38 @@ function run(work: Promise<unknown>): void {
 /**
  * Wie `run`, aber danach wird der Index aufgefrischt.
  *
- * Die Zaehler auf den Karten sind abgeleitete Werte. Sie stehen absichtlich
- * nicht in der Zeile selbst, muessen nach einer Aenderung also neu gelesen
+ * Die Zähler auf den Karten sind abgeleitete Werte. Sie stehen absichtlich
+ * nicht in der Zeile selbst, müssen nach einer Änderung also neu gelesen
  * werden — sonst zeigt der Index daneben veraltete Zahlen.
  */
 function mutate(work: Promise<unknown>): void {
   run(work.then(async () => {
     await reloadOverview()
-    // Gesammelt statt sofort: Beim Abhaken faellt eine Aenderung nach der
-    // anderen an, und ein Push je Haken waere eine Runde je Handbewegung.
+    // Gesammelt statt sofort: Beim Abhaken fällt eine Änderung nach der
+    // anderen an, und ein Push je Haken wäre eine Runde je Handbewegung.
     scheduleSync()
   }))
 }
 
 /**
- * Laedt Liste und Eintraege aus der lokalen Datenbank.
+ * Lädt Liste und Einträge aus der lokalen Datenbank.
  *
  * Bewusst kein useFetch: Die Daten liegen offline-first in IndexedDB und nicht
- * hinter einem Endpunkt. Der Abgleich mit dem Server laeuft getrennt davon und
- * schreibt in dieselbe Datenbank zurueck, woraufhin diese Ansicht neu laedt.
+ * hinter einem Endpunkt. Der Abgleich mit dem Server läuft getrennt davon und
+ * schreibt in dieselbe Datenbank zurück, woraufhin diese Ansicht neu lädt.
  */
 async function loadList(): Promise<void> {
   await load(listId.value)
 }
 
-// watch mit immediate statt onMounted: so laedt die Ansicht auch neu, wenn auf
-// dem Desktop im Index eine andere Liste gewaehlt wird, ohne dass die
+// watch mit immediate statt onMounted: so lädt die Ansicht auch neu, wenn auf
+// dem Desktop im Index eine andere Liste gewählt wird, ohne dass die
 // Komponente neu erzeugt wird.
 watch(listId, () => {
   run(loadList())
 }, { immediate: true })
 
-// Hat der Abgleich etwas geschrieben, koennen es Eintraege dieser Liste sein.
+// Hat der Abgleich etwas geschrieben, können es Einträge dieser Liste sein.
 watch(dataVersion, () => {
   run(loadList())
 })
@@ -100,7 +100,7 @@ function addItem(): void {
   const name = newItemName.value.trim()
   if (name.length === 0) return
 
-  // Sofort leeren statt erst nach dem Schreiben: Der naechste Artikel soll ohne
+  // Sofort leeren statt erst nach dem Schreiben: Der nächste Artikel soll ohne
   // Wartezeit tippbar sein, und ein zweites Enter darf nicht denselben Eintrag
   // ein zweites Mal anlegen.
   newItemName.value = ''
@@ -122,7 +122,7 @@ function addItem(): void {
         <NuxtLink
           to="/app/lists"
           class="mt-1 shrink-0 lg:hidden"
-          aria-label="Zurueck zur Uebersicht"
+          aria-label="Zurück zur Übersicht"
         >
           <UIcon
             name="i-lucide-arrow-left"
@@ -166,7 +166,7 @@ function addItem(): void {
       </div>
     </header>
 
-    <!-- Eintraege -->
+    <!-- Einträge -->
     <div class="flex grow flex-col gap-0.5 px-3 py-2 lg:min-h-0 lg:overflow-y-auto lg:px-5">
       <template v-if="items.length">
         <ListItemRow
@@ -226,7 +226,7 @@ function addItem(): void {
     >
       <UInput
         v-model="newItemName"
-        placeholder="Artikel hinzufuegen"
+        placeholder="Artikel hinzufügen"
         icon="i-lucide-plus"
         size="xl"
         class="grow"
@@ -239,7 +239,7 @@ function addItem(): void {
         variant="subtle"
         size="xl"
         class="shrink-0 rounded-xl font-bold"
-        aria-label="Vorschlaege"
+        aria-label="Vorschläge"
       />
     </div>
   </div>

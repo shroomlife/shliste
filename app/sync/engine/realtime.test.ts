@@ -7,13 +7,13 @@
  *    Ein Delta zieht nur. Ohne diese Regel holte es den Serverstand herein,
  *    ohne den eigenen hinauszugeben.
  * 2. ENTFERNUNGEN LAUFEN IMMER, auch neben einem vollen Lauf. Ein Pull
- *    erwaehnt eine Liste, deren Mitgliedschaft endete, gar nicht mehr — sie
- *    bliebe sonst fuer immer sichtbar.
- * 3. `list_changed` SCHLAEGT `item_changed` derselben Liste. Es ist die
- *    Obermenge; zwei Abrufe waeren einer zuviel.
- * 4. WAS SICH NICHT ABBILDEN LAESST, WIRD EIN VOLLER LAUF. Auch ein kuenftiger,
+ *    erwähnt eine Liste, deren Mitgliedschaft endete, gar nicht mehr — sie
+ *    bliebe sonst für immer sichtbar.
+ * 3. `list_changed` SCHLÄGT `item_changed` derselben Liste. Es ist die
+ *    Obermenge; zwei Abrufe wären einer zuviel.
+ * 4. WAS SICH NICHT ABBILDEN LÄSST, WIRD EIN VOLLER LAUF. Auch ein künftiger,
  *    hier unbekannter Ereignistyp. Lieber eine Runde zuviel als eine
- *    Aenderung, die niemand holt.
+ *    Änderung, die niemand holt.
  */
 import { describe, expect, test } from 'bun:test'
 import type { RealtimeEvent } from '../realtime/events'
@@ -60,7 +60,7 @@ interface Recorder {
 function recorder(options: {
   dirtyLists?: readonly string[]
   dirtyRecipes?: readonly string[]
-  /** Was der Delta-Abruf zurueckgibt. Standard: eine leere Antwort. */
+  /** Was der Delta-Abruf zurückgibt. Standard: eine leere Antwort. */
   deltaResponse?: unknown
 } = {}): Recorder {
   const dirtyLists = new Set(options.dirtyLists ?? [])
@@ -116,7 +116,7 @@ function syncFor(deps: Recorder) {
   })
 }
 
-/** Eine Antwort, die tatsaechlich eine Zeile enthaelt. */
+/** Eine Antwort, die tatsächlich eine Zeile enthält. */
 const CHANGED_RESPONSE = {
   lists: [],
   items: [{
@@ -159,7 +159,7 @@ describe('planRealtimeActions', () => {
     expect(plan.deltas).toEqual([{ kind: 'items', listId: 'l1', itemIds: ['a', 'b'] }])
   })
 
-  test('list_changed schlaegt item_changed — in beide Richtungen', () => {
+  test('list_changed schlägt item_changed — in beide Richtungen', () => {
     const itemsFirst = planRealtimeActions([
       { type: 'item_changed', listId: 'l1', itemIds: ['a'] },
       { type: 'list_changed', listId: 'l1' },
@@ -206,11 +206,11 @@ describe('planRealtimeActions', () => {
 })
 
 /* ------------------------------------------------------------------ *
- * Die Ausfuehrung
+ * Die Ausführung
  * ------------------------------------------------------------------ */
 
 describe('createRealtimeSync', () => {
-  test('holt das Delta und meldet die Aenderung', async () => {
+  test('holt das Delta und meldet die Änderung', async () => {
     const deps = recorder({ deltaResponse: CHANGED_RESPONSE })
 
     await syncFor(deps).handleEvents([{ type: 'item_changed', listId: 'l1', itemIds: ['i1'] }])
@@ -220,7 +220,7 @@ describe('createRealtimeSync', () => {
     expect(deps.applied).toBe(1)
   })
 
-  test('ein Delta ohne Inhalt meldet keine Aenderung', async () => {
+  test('ein Delta ohne Inhalt meldet keine Änderung', async () => {
     const deps = recorder()
 
     await syncFor(deps).handleEvents([{ type: 'list_changed', listId: 'l1' }])
@@ -238,7 +238,7 @@ describe('createRealtimeSync', () => {
     expect(deps.queries).toEqual([])
   })
 
-  test('dasselbe gilt fuer Rezepte', async () => {
+  test('dasselbe gilt für Rezepte', async () => {
     const deps = recorder({ dirtyRecipes: ['r1'] })
 
     await syncFor(deps).handleEvents([{ type: 'recipe_changed', recipeId: 'r1' }])
@@ -247,7 +247,7 @@ describe('createRealtimeSync', () => {
     expect(deps.queries).toEqual([])
   })
 
-  test('eine schmutzige Liste zieht die uebrigen Abrufe mit in den vollen Lauf', async () => {
+  test('eine schmutzige Liste zieht die übrigen Abrufe mit in den vollen Lauf', async () => {
     const deps = recorder({ dirtyLists: ['l2'] })
 
     await syncFor(deps).handleEvents([
@@ -260,7 +260,7 @@ describe('createRealtimeSync', () => {
     expect(deps.fullSyncs).toBe(1)
   })
 
-  test('sync_needed loest genau einen vollen Lauf aus, auch neben Deltas', async () => {
+  test('sync_needed löst genau einen vollen Lauf aus, auch neben Deltas', async () => {
     const deps = recorder()
 
     await syncFor(deps).handleEvents([
@@ -284,7 +284,7 @@ describe('createRealtimeSync', () => {
     expect(deps.fullSyncs).toBe(1)
   })
 
-  test('eine Entfernung meldet die Aenderung auch ohne Delta', async () => {
+  test('eine Entfernung meldet die Änderung auch ohne Delta', async () => {
     const deps = recorder()
 
     await syncFor(deps).handleEvents([{ type: 'list_removed', listId: 'l1' }])
@@ -326,10 +326,10 @@ describe('createRealtimeSync', () => {
     expect(deps.queries).toEqual(['type=list&listId=l1', 'type=recipe&id=r1'])
   })
 
-  test('der Plan bleibt bei ungebuendelten Ereignissen richtig', async () => {
+  test('der Plan bleibt bei ungebündelten Ereignissen richtig', async () => {
     const deps = recorder()
 
-    // So kaeme es an, wenn die Buendelung ausfiele: dieselbe Liste dreimal.
+    // So käme es an, wenn die Bündelung ausfiele: dieselbe Liste dreimal.
     await syncFor(deps).handleEvents([
       { type: 'item_changed', listId: 'l1', itemIds: ['a'] },
       { type: 'item_changed', listId: 'l1', itemIds: ['b'] },

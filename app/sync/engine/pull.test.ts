@@ -366,13 +366,13 @@ describe('runPull — Anwenden', () => {
 
     await runPull(store, () => Promise.resolve(body))
     const nachErstem = store.items.get('i1')
-    const schreibvorgaenge = store.itemWrites()
+    const writesBefore = store.itemWrites()
 
     await runPull(store, () => Promise.resolve(body))
 
     expect(store.items.get('i1')).toEqual(nachErstem)
     // Der zweite Lauf hat wirklich wieder geschrieben statt zu überspringen.
-    expect(store.itemWrites()).toBeGreaterThan(schreibvorgaenge)
+    expect(store.itemWrites()).toBeGreaterThan(writesBefore)
   })
 
   test('die Mitglieder einer Liste werden ersetzt, nicht ergänzt', async () => {

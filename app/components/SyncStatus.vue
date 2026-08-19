@@ -4,7 +4,7 @@
  * SemanticColors.kt der Android-App, damit beide Clients dasselbe aussagen.
  *
  * Solange die Sync-Schicht noch nicht steht, meldet die Anzeige ehrlich
- * "offline" statt einen Erfolg vorzutaeuschen.
+ * "offline" statt einen Erfolg vorzutäuschen.
  */
 export type SyncState = 'synced' | 'syncing' | 'pending' | 'error' | 'offline'
 
@@ -15,9 +15,9 @@ const display = computed(() => {
     case 'synced':
       return { icon: 'i-lucide-refresh-cw', color: 'var(--md-sync-success)', label: 'Synchron' }
     case 'syncing':
-      return { icon: 'i-lucide-loader-circle', color: 'var(--md-on-surface-variant)', label: 'Abgleich laeuft' }
+      return { icon: 'i-lucide-loader-circle', color: 'var(--md-on-surface-variant)', label: 'Abgleich läuft' }
     case 'pending':
-      return { icon: 'i-lucide-cloud-upload', color: 'var(--md-sync-warning)', label: 'Aenderungen warten' }
+      return { icon: 'i-lucide-cloud-upload', color: 'var(--md-sync-warning)', label: 'Änderungen warten' }
     case 'error':
       return { icon: 'i-lucide-triangle-alert', color: 'var(--md-delete-content)', label: 'Abgleich fehlgeschlagen' }
     default:

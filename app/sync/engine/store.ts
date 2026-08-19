@@ -1,17 +1,17 @@
 /**
  * Die Anbindung der Ports an die lokale Datenbank.
  *
- * Alle Datenbankzugriffe laufen ueber `app/db/repositories.ts`, auch die
- * rohen Lese- und Schreibpaare fuer den Abgleich. Die brauchen einen eigenen
- * Satz, weil die Funktionen fuer den normalen Betrieb hier falsch waeren:
+ * Alle Datenbankzugriffe laufen über `app/db/repositories.ts`, auch die
+ * rohen Lese- und Schreibpaare für den Abgleich. Die brauchen einen eigenen
+ * Satz, weil die Funktionen für den normalen Betrieb hier falsch wären:
  * `upsert*` setzt `dirty = 1` und stempelt `updatedAt` auf jetzt — genau
- * verkehrt fuer eine Zeile, die gerade vom Server kommt und ihre
+ * verkehrt für eine Zeile, die gerade vom Server kommt und ihre
  * Server-Zeitstempel behalten muss. Und die Lesefunktionen blenden Tombstones
- * aus, die das Zusammenfuehren braucht, um eine Loeschung von "gibt es nicht"
+ * aus, die das Zusammenführen braucht, um eine Löschung von "gibt es nicht"
  * zu unterscheiden.
  *
- * Alles, wofuer es bereits eine Repository-Funktion gibt, benutzt sie:
- * insbesondere `clearDirtyFlags` mit seiner Snapshot-Pruefung, die nirgends
+ * Alles, wofür es bereits eine Repository-Funktion gibt, benutzt sie:
+ * insbesondere `clearDirtyFlags` mit seiner Snapshot-Prüfung, die nirgends
  * ein zweites Mal stehen darf.
  */
 import type { IsoUtc, ListMember } from '../../../shared/types/domain'

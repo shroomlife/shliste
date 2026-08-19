@@ -7,7 +7,7 @@ import { useMediaQuery } from '@vueuse/core'
  * wie es die Android-App macht.
  *
  * Das ist das offiziell dokumentierte Muster von Nuxt UI ("Responsive drawer"):
- * dieselbe Bedienlogik, zwei Darstellungen. Alle Dialoge der App laufen ueber
+ * dieselbe Bedienlogik, zwei Darstellungen. Alle Dialoge der App laufen über
  * diese Komponente, damit sich keine zwei Varianten auseinanderentwickeln.
  *
  * Der Umbruch liegt bei 1024 Pixeln und damit auf derselben Grenze wie der
@@ -23,7 +23,7 @@ const open = defineModel<boolean>('open', { default: false })
 
 // SSR-sicher: useMediaQuery liefert auf dem Server false, der Dialog startet
 // also als Blatt und korrigiert sich nach der Hydration. Da die App-Seiten
-// ohnehin client-seitig rendern (routeRules), faellt das nicht auf.
+// ohnehin client-seitig rendern (routeRules), fällt das nicht auf.
 const isDesktop = useMediaQuery('(min-width: 1024px)')
 </script>
 

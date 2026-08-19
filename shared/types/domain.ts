@@ -1,12 +1,12 @@
 /**
- * Domaenenmodell — exakt am Contract von api.shliste.app ausgerichtet.
+ * Domänenmodell — exakt am Contract von api.shliste.app ausgerichtet.
  *
- * Wichtig gegenueber der alten Web-App:
- * - Schluessel heisst `id`, nicht `uuid`
+ * Wichtig gegenüber der alten Web-App:
+ * - Schlüssel heisst `id`, nicht `uuid`
  * - Items liegen in einer eigenen Tabelle, nicht eingebettet in der Liste
  * - Rezeptschritte sind Zeilen mit eigenen Feldern, kein string[]
  * - Zeitstempel sind ISO-UTC mit GENAU drei Millisekundenstellen
- * - Jede synchronisierte Zeile traegt `fieldTimestamps` und `deletedAt`
+ * - Jede synchronisierte Zeile trägt `fieldTimestamps` und `deletedAt`
  */
 
 /**
@@ -18,16 +18,16 @@
  */
 export type IsoUtc = string
 
-/** Feldname -> Zeitpunkt der letzten Aenderung dieses Feldes */
+/** Feldname -> Zeitpunkt der letzten Änderung dieses Feldes */
 export type FieldTimestamps = Record<string, IsoUtc>
 
-/** Gemeinsame Felder jeder synchronisierten Entitaet */
+/** Gemeinsame Felder jeder synchronisierten Entität */
 export interface SyncedEntity {
   id: string
   createdAt: IsoUtc
   /** Client-gestempelt, speist das Last-Write-Wins. NICHT der Server-Cursor. */
   updatedAt: IsoUtc
-  /** Tombstone. Loeschungen sind immer weich. */
+  /** Tombstone. Löschungen sind immer weich. */
   deletedAt: IsoUtc | null
   fieldTimestamps: FieldTimestamps | null
 }
@@ -40,7 +40,7 @@ export interface List extends SyncedEntity {
   secret: boolean
   lastSuggestedItems: string
   sourceUrl: string | null
-  /** UUID des Eigentuemers. Aus dem Pull als `ownerUserId ?? userId` lesen. */
+  /** UUID des Eigentümers. Aus dem Pull als `ownerUserId ?? userId` lesen. */
   ownerUserId: string | null
 }
 
@@ -50,12 +50,12 @@ export interface ListItem extends SyncedEntity {
   quantity: number
   checked: boolean
   /**
-   * Zweiter Loeschmarker neben deletedAt: "rausgeworfen", per Undo
-   * wiederherstellbar, bleibt als Verlauf fuer Vorschlaege erhalten.
+   * Zweiter Löschmarker neben deletedAt: "rausgeworfen", per Undo
+   * wiederherstellbar, bleibt als Verlauf für Vorschläge erhalten.
    */
   removed: boolean
   orderIndex: number
-  /** Base-62 Bruchindex. Lieber null als gekuerzt — ein gekuerzter Key ist ungueltig. */
+  /** Base-62 Bruchindex. Lieber null als gekürzt — ein gekürzter Key ist ungültig. */
   sortKey: string | null
   createdBy: string | null
   modifiedBy: string | null
@@ -116,7 +116,7 @@ export interface ListMember {
   /** UUID des Nutzers, nicht die interne Ganzzahl-ID */
   userId: string
   /**
-   * Nur fuer den Eigentuemer der Liste gefuellt. `null` heisst
+   * Nur für den Eigentümer der Liste gefüllt. `null` heisst
    * "Adresse nicht sichtbar" und NICHT "kein Konto".
    */
   email: string | null

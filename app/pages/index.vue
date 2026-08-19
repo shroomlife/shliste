@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // Oeffentliche Startseite. Wird per routeRules vorgerendert (SEO, First Paint),
-// waehrend der App-Bereich unter /app rein client-seitig laeuft.
+// während der App-Bereich unter /app rein client-seitig läuft.
 useSeoMeta({
   title: 'shliste ~ Deine smarte Einkaufsliste',
   description: 'Einkaufslisten teilen und gemeinsam abhaken, in Echtzeit. Rezepte verwalten und Zutaten mit einem Tippen auf die Liste holen. Funktioniert auch ohne Netz.',
@@ -10,12 +10,12 @@ const features = [
   {
     icon: 'i-lucide-users',
     title: 'Gemeinsam statt getrennt',
-    text: 'Lade jemanden zu einer Liste ein. Aenderungen erscheinen sofort auf allen Geraeten, ohne Neuladen.',
+    text: 'Lade jemanden zu einer Liste ein. Änderungen erscheinen sofort auf allen Geräten, ohne Neuladen.',
   },
   {
     icon: 'i-lucide-cloud-off',
     title: 'Auch ohne Netz',
-    text: 'Im Laden zaehlt nicht der Empfang. Abhaken geht offline, der Abgleich passiert automatisch, sobald wieder Netz da ist.',
+    text: 'Im Laden zählt nicht der Empfang. Abhaken geht offline, der Abgleich passiert automatisch, sobald wieder Netz da ist.',
   },
   {
     icon: 'i-lucide-chef-hat',

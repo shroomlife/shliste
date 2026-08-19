@@ -4,10 +4,10 @@ import type { List } from '#shared/types/domain'
 /**
  * Listenkarte, Design-Richtung A.
  *
- * Die Listenfarbe wird als 20-Prozent-Lasur gelegt, nicht voll gesaettigt —
+ * Die Listenfarbe wird als 20-Prozent-Lasur gelegt, nicht voll gesättigt —
  * genau wie ColorUtils.colorWith20Opacity in Android. Weil die Farben echtes
- * Zufalls-RGB sind (Summe der Kanaele zwischen 100 und 700), waere jede
- * kraeftigere Darstellung unruhig.
+ * Zufalls-RGB sind (Summe der Kanäle zwischen 100 und 700), wäre jede
+ * kräftigere Darstellung unruhig.
  */
 const { list, openCount = 0, doneCount = 0, active = false } = defineProps<{
   list: List

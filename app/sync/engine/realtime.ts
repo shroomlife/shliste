@@ -1,20 +1,20 @@
 /**
  * Von Echtzeit-Ereignissen zu Datenabrufen.
  *
- * Hier schliesst sich der Kreis: `app/sync/realtime/` haelt die Verbindung und
- * buendelt die Hinweise, diese Datei entscheidet, was daraufhin geholt wird.
+ * Hier schliesst sich der Kreis: `app/sync/realtime/` hält die Verbindung und
+ * bündelt die Hinweise, diese Datei entscheidet, was daraufhin geholt wird.
  * Die Trennung ist Absicht — die Verbindung soll nichts von Datenbanken wissen
  * und der Abgleich nichts von `EventSource`.
  *
  * DIE ENTSCHEIDUNG IN EINEM SATZ: Ein Ereignis mit klarem Bezug (Liste,
  * Positionen, Rezept) wird mit einem Delta beantwortet, alles andere mit einem
- * vollstaendigen Lauf. Und sobald an der betroffenen Zeile lokal etwas
- * ungesendet ist, wird auch aus dem Delta ein vollstaendiger Lauf: Ein Delta
+ * vollständigen Lauf. Und sobald an der betroffenen Zeile lokal etwas
+ * ungesendet ist, wird auch aus dem Delta ein vollständiger Lauf: Ein Delta
  * zieht nur, es pusht nicht, und der eigene Stand darf dabei nicht unter den
  * Tisch fallen.
  *
  * Vorbild ist der Android-Client, der aus denselben Ereignissen dieselben
- * Schluesse zieht. Weichen die beiden voneinander ab, sehen zwei Geraete nach
+ * Schlüsse zieht. Weichen die beiden voneinander ab, sehen zwei Geräte nach
  * demselben Ereignis unterschiedliche Daten.
  */
 import type { RealtimeEvent } from '../realtime/events'
@@ -28,9 +28,9 @@ import type { RealtimeStore } from './ports'
 
 export interface RealtimePlan {
   /**
-   * Listen, die dieses Konto nicht mehr sieht. Werden IMMER ausgefuehrt, auch
-   * wenn zusaetzlich ein vollstaendiger Lauf ansteht: Ein Pull erwaehnt eine
-   * Liste, deren Mitgliedschaft endete, gar nicht mehr — sie bliebe sonst fuer
+   * Listen, die dieses Konto nicht mehr sieht. Werden IMMER ausgeführt, auch
+   * wenn zusätzlich ein vollständiger Lauf ansteht: Ein Pull erwähnt eine
+   * Liste, deren Mitgliedschaft endete, gar nicht mehr — sie bliebe sonst für
    * immer sichtbar.
    */
   removals: string[]
@@ -41,15 +41,15 @@ export interface RealtimePlan {
 }
 
 /**
- * Bildet gebuendelte Ereignisse auf Abrufe ab.
+ * Bildet gebündelte Ereignisse auf Abrufe ab.
  *
  * Rein und ohne Datenbank, damit die Regel ohne Netz und ohne IndexedDB
- * pruefbar ist. Die Frage "ist lokal etwas ungesendet" beantwortet erst die
- * Ausfuehrung, weil nur sie den Speicher kennt.
+ * prüfbar ist. Die Frage "ist lokal etwas ungesendet" beantwortet erst die
+ * Ausführung, weil nur sie den Speicher kennt.
  *
- * Die Buendelung (`coalesceEvents`) hat bereits je Liste hoechstens ein
- * Ereignis uebriggelassen. Die Maps hier sind trotzdem da: Diese Funktion soll
- * auch mit ungebuendelten Ereignissen richtig sein, sonst waere sie an eine
+ * Die Bündelung (`coalesceEvents`) hat bereits je Liste höchstens ein
+ * Ereignis übriggelassen. Die Maps hier sind trotzdem da: Diese Funktion soll
+ * auch mit ungebündelten Ereignissen richtig sein, sonst wäre sie an eine
  * Eigenschaft ihres Aufrufers gebunden.
  */
 export function planRealtimeActions(events: Iterable<RealtimeEvent>): RealtimePlan {
@@ -65,7 +65,7 @@ export function planRealtimeActions(events: Iterable<RealtimeEvent>): RealtimePl
 
       case 'list_changed':
         // Ueberschreibt ein bereits geplantes `items`-Delta derselben Liste:
-        // Die Liste zieht ihre Positionen ohnehin mit, der engere Abruf waere
+        // Die Liste zieht ihre Positionen ohnehin mit, der engere Abruf wäre
         // eine zweite Runde ohne Mehrwert.
         deltas.set(`list:${event.listId}`, { kind: 'list', listId: event.listId })
         break
@@ -75,7 +75,7 @@ export function planRealtimeActions(events: Iterable<RealtimeEvent>): RealtimePl
         const planned = deltas.get(key)
         // Ein bereits geplanter Listen-Abruf bleibt stehen, er ist die
         // Obermenge. Zwei Positions-Ereignisse derselben Liste vereinigen ihre
-        // Ids, statt dass das spaetere das fruehere verdraengt.
+        // Ids, statt dass das spätere das frühere verdrängt.
         if (planned?.kind === 'list') break
 
         const previous = planned?.kind === 'items' ? planned.itemIds : []
@@ -91,7 +91,7 @@ export function planRealtimeActions(events: Iterable<RealtimeEvent>): RealtimePl
         deltas.set(`recipe:${event.recipeId}`, { kind: 'recipe', recipeId: event.recipeId })
         break
 
-      // Einladungen und Abzeichen haben keinen Delta-Abruf. Ein vollstaendiger
+      // Einladungen und Abzeichen haben keinen Delta-Abruf. Ein vollständiger
       // Lauf holt beides mit, denn `GET /sync/pull` liefert `pendingInvites`
       // und `badges` gleich mit.
       case 'member_invited':
@@ -110,23 +110,23 @@ export function planRealtimeActions(events: Iterable<RealtimeEvent>): RealtimePl
 }
 
 /* ------------------------------------------------------------------ *
- * Die Ausfuehrung
+ * Die Ausführung
  * ------------------------------------------------------------------ */
 
 export interface RealtimeSyncDeps {
   store: RealtimeStore
   fetchDelta: DeltaFetcher
   /**
-   * Der vollstaendige Lauf (pushen, dann ziehen). Bewusst als Rueckruf statt
+   * Der vollständige Lauf (pushen, dann ziehen). Bewusst als Rückruf statt
    * als Import der Engine: So bleibt diese Datei ohne Zyklus zur Engine
-   * pruefbar, und die Engine behaelt ihren Mutex fuer sich.
+   * prüfbar, und die Engine behält ihren Mutex für sich.
    */
   runFullSync: () => Promise<unknown>
   /**
-   * Es wurde lokal etwas geschrieben. Die Oberflaeche soll neu lesen.
+   * Es wurde lokal etwas geschrieben. Die Oberfläche soll neu lesen.
    *
-   * Nur nach tatsaechlichen Aenderungen gerufen, nicht nach jedem Ereignis:
-   * Ein Delta, das nichts zurueckbringt, ist kein Grund, jede Ansicht neu
+   * Nur nach tatsächlichen Änderungen gerufen, nicht nach jedem Ereignis:
+   * Ein Delta, das nichts zurückbringt, ist kein Grund, jede Ansicht neu
    * aufzubauen.
    */
   onApplied?: () => void
@@ -139,7 +139,7 @@ export interface RealtimeSync {
 export function createRealtimeSync(deps: RealtimeSyncDeps): RealtimeSync {
   const { store, fetchDelta, runFullSync, onApplied } = deps
 
-  /** Liegt an dem, was das Delta holen wuerde, lokal etwas Ungesendetes? */
+  /** Liegt an dem, was das Delta holen würde, lokal etwas Ungesendetes? */
   const hasLocalChanges = async (target: DeltaTarget): Promise<boolean> =>
     target.kind === 'recipe'
       ? await store.isRecipeDirty(target.recipeId)
@@ -151,8 +151,8 @@ export function createRealtimeSync(deps: RealtimeSyncDeps): RealtimeSync {
     const plan = planRealtimeActions(events)
     let changed = false
 
-    // Zuerst und unabhaengig von allem anderen: Was diesem Konto entzogen
-    // wurde, verschwindet lokal. Ein Delta danach koennte es nicht neu
+    // Zuerst und unabhängig von allem anderen: Was diesem Konto entzogen
+    // wurde, verschwindet lokal. Ein Delta danach könnte es nicht neu
     // anlegen, denn ohne Mitgliedschaft antwortet der Server mit leeren
     // Feldern.
     for (const listId of plan.removals) {
@@ -160,9 +160,9 @@ export function createRealtimeSync(deps: RealtimeSyncDeps): RealtimeSync {
       changed = true
     }
 
-    // Ein vollstaendiger Lauf deckt jedes Delta ab. Erst pruefen, dann
+    // Ein vollständiger Lauf deckt jedes Delta ab. Erst prüfen, dann
     // abrufen — sonst liefe ein Delta, dessen Ergebnis der Lauf gleich darauf
-    // ohnehin mitbraechte.
+    // ohnehin mitbrächte.
     let full = plan.needsFullSync
     const targets: DeltaTarget[] = []
 
@@ -178,8 +178,8 @@ export function createRealtimeSync(deps: RealtimeSyncDeps): RealtimeSync {
 
     if (full) {
       await runFullSync()
-      // Der Lauf meldet selbst, was er getan hat; hier zaehlt nur, dass die
-      // Ansichten danach neu lesen muessen.
+      // Der Lauf meldet selbst, was er getan hat; hier zählt nur, dass die
+      // Ansichten danach neu lesen müssen.
       onApplied?.()
       return
     }

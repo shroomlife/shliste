@@ -1,18 +1,18 @@
 /**
- * Der Abgleich, wie ihn die Oberflaeche sieht.
+ * Der Abgleich, wie ihn die Oberfläche sieht.
  *
  * Zwei Composables mit klar getrennten Rollen:
  *
- * - `useSync()` ist die LESENDE Seite plus die Ausloeser. Ueberall aufrufbar,
- *   haelt selbst nichts am Laufen.
+ * - `useSync()` ist die LESENDE Seite plus die Auslöser. Ueberall aufrufbar,
+ *   hält selbst nichts am Laufen.
  * - `useSyncRunner()` ist die LAUFENDE Seite: Verbindung, Zeitgeber,
  *   Ereignisbehandlung. GENAU EINMAL aufrufen, im App-Layout. Ein zweiter
- *   Aufruf oeffnete eine zweite Echtzeit-Verbindung, und der Server schliesst
- *   ab der sechsten Verbindung eines Kontos die jeweils aelteste.
+ *   Aufruf öffnete eine zweite Echtzeit-Verbindung, und der Server schliesst
+ *   ab der sechsten Verbindung eines Kontos die jeweils älteste.
  *
- * OHNE KONTO PASSIERT HIER NICHTS. Die App ist vollstaendig ohne Anmeldung
- * benutzbar; der Abgleich ist ein Zusatz, kein Unterbau. Jeder Ausloeser
- * prueft das, statt sich auf den Aufrufer zu verlassen — sonst liefe ein
+ * OHNE KONTO PASSIERT HIER NICHTS. Die App ist vollständig ohne Anmeldung
+ * benutzbar; der Abgleich ist ein Zusatz, kein Unterbau. Jeder Auslöser
+ * prüft das, statt sich auf den Aufrufer zu verlassen — sonst liefe ein
  * Anonymer in eine Kette aus 401 und Wiederholungen.
  */
 import { createRealtimeSync } from '../sync/engine/realtime'
@@ -32,52 +32,52 @@ import { useRealtime } from '../sync/realtime/useRealtime'
 /**
  * Abstand der Ersatz-Abfrage, solange der Echtzeit-Strom nicht steht.
  *
- * Eine Minute ist der Kompromiss: kurz genug, dass eine Aenderung auf einem
- * anderen Geraet nicht spuerbar liegen bleibt, lang genug, dass ein dauerhaft
- * gestoerter Strom den Server nicht mit Abfragen belegt.
+ * Eine Minute ist der Kompromiss: kurz genug, dass eine Änderung auf einem
+ * anderen Gerät nicht spürbar liegen bleibt, lang genug, dass ein dauerhaft
+ * gestörter Strom den Server nicht mit Abfragen belegt.
  */
 export const FALLBACK_POLL_MS = 60_000
 
 /**
- * Wartezeit nach einer lokalen Aenderung, bevor gepusht wird.
+ * Wartezeit nach einer lokalen Änderung, bevor gepusht wird.
  *
- * Beim Abhaken einer Einkaufsliste fallen Aenderungen in Serie an. Ohne diese
- * Pause bekaeme der Server je Haken eine eigene Runde; mit ihr fasst ein Push
+ * Beim Abhaken einer Einkaufsliste fallen Änderungen in Serie an. Ohne diese
+ * Pause bekäme der Server je Haken eine eigene Runde; mit ihr fasst ein Push
  * zusammen, was in derselben Handbewegung entstanden ist.
  */
 export const MUTATION_DEBOUNCE_MS = 1_500
 
 /**
- * Der Zeitgeber der Verzoegerung.
+ * Der Zeitgeber der Verzögerung.
  *
  * Auf Modulebene und nicht in `useState`: Er ist kein Zustand, den eine
  * Ansicht anzeigt, sondern ein Handle. Auf dem Server wird er nie gesetzt
- * (`scheduleSync` kehrt dort sofort zurueck), ein Uebersprechen zwischen
+ * (`scheduleSync` kehrt dort sofort zurück), ein Uebersprechen zwischen
  * Anfragen ist damit ausgeschlossen.
  */
 let mutationTimer: ReturnType<typeof setTimeout> | null = null
 
 /* ------------------------------------------------------------------ *
- * Lesende Seite und Ausloeser
+ * Lesende Seite und Auslöser
  * ------------------------------------------------------------------ */
 
 export interface UseSync {
   /** Der letzte gemeldete Zustand der Engine. */
   snapshot: Readonly<Ref<SyncSnapshot>>
-  /** Fuer `SyncStatus.vue`. */
+  /** Für `SyncStatus.vue`. */
   display: ComputedRef<SyncStatusDisplay>
   /**
-   * Zaehler, der nach jeder Aenderung an den lokalen Daten steigt.
+   * Zähler, der nach jeder Änderung an den lokalen Daten steigt.
    *
-   * Ansichten beobachten ihn und lesen dann neu. Bewusst ein Zaehler und kein
-   * Ereignisbus: Die Engine schiebt keine Daten in die Oberflaeche, die
-   * Oberflaeche holt sie sich — dieselbe Richtung wie beim uebrigen Lesen aus
+   * Ansichten beobachten ihn und lesen dann neu. Bewusst ein Zähler und kein
+   * Ereignisbus: Die Engine schiebt keine Daten in die Oberfläche, die
+   * Oberfläche holt sie sich — dieselbe Richtung wie beim übrigen Lesen aus
    * der lokalen Datenbank.
    */
   dataVersion: Readonly<Ref<number>>
   /** Sofort abgleichen. Ohne Konto folgenlos. */
   requestSync: () => Promise<void>
-  /** Nach einer lokalen Aenderung: abgleichen, aber gesammelt. */
+  /** Nach einer lokalen Änderung: abgleichen, aber gesammelt. */
   scheduleSync: () => void
 }
 
@@ -91,7 +91,7 @@ export function useSync(): UseSync {
 
     const outcome = await syncEngine.sync()
     // `ran: false` heisst, dass bereits ein Lauf unterwegs war. Dessen
-    // Ergebnis kommt ueber das Abonnement, hier ist nichts zu tun.
+    // Ergebnis kommt über das Abonnement, hier ist nichts zu tun.
     if (outcome.ran) dataVersion.value += 1
   }
 
@@ -119,14 +119,14 @@ export function useSync(): UseSync {
  * ------------------------------------------------------------------ */
 
 /**
- * Haelt den Abgleich am Laufen: spiegelt den Zustand der Engine, verbindet den
- * Echtzeit-Strom und loest bei den bekannten Anlaessen aus.
+ * Hält den Abgleich am Laufen: spiegelt den Zustand der Engine, verbindet den
+ * Echtzeit-Strom und löst bei den bekannten Anlässen aus.
  *
- * DIE ANLAESSE, und warum es genau diese sind:
- * - Anmeldung und App-Start — der erste Blick auf fremde Aenderungen
- * - Rueckkehr in den Vordergrund — waehrend der Strom geschlossen war, ist
- *   moeglicherweise etwas passiert
- * - Netz wieder da — Ungesendetes soll nicht auf die naechste Handlung warten
+ * DIE ANLÄSSE, und warum es genau diese sind:
+ * - Anmeldung und App-Start — der erste Blick auf fremde Änderungen
+ * - Rückkehr in den Vordergrund — während der Strom geschlossen war, ist
+ *   möglicherweise etwas passiert
+ * - Netz wieder da — Ungesendetes soll nicht auf die nächste Handlung warten
  * - Echtzeit-Ereignis — der eigentliche Zweck des ganzen Umbaus
  * - Ersatz-Abfrage, solange der Strom nicht steht
  */
@@ -150,11 +150,11 @@ export function useSyncRunner(): void {
   })
 
   /**
-   * Ein gescheiterter Delta-Abruf faellt auf den vollen Lauf zurueck.
+   * Ein gescheiterter Delta-Abruf fällt auf den vollen Lauf zurück.
    *
    * Selbstheilend statt still: Der Grund kann ein abgelaufenes Ticket, ein
-   * Netzaussetzer oder eine veraenderte Mitgliedschaft sein. Der volle Lauf
-   * klaert alle drei Faelle und meldet, falls auch er scheitert, ueber den
+   * Netzaussetzer oder eine veränderte Mitgliedschaft sein. Der volle Lauf
+   * klärt alle drei Fälle und meldet, falls auch er scheitert, über den
    * Zustand der Engine.
    */
   async function handleEvents(events: RealtimeEvent[]): Promise<void> {
@@ -162,7 +162,7 @@ export function useSyncRunner(): void {
       await realtimeSync.handleEvents(events)
     }
     catch (error) {
-      console.warn('[Sync] Delta-Abruf fehlgeschlagen, es folgt ein vollstaendiger Abgleich:', error)
+      console.warn('[Sync] Delta-Abruf fehlgeschlagen, es folgt ein vollständiger Abgleich:', error)
       await requestSync()
     }
   }
@@ -174,7 +174,7 @@ export function useSyncRunner(): void {
     },
   })
 
-  /** Laeuft nur, solange der Echtzeit-Strom nicht zur Verfuegung steht. */
+  /** Läuft nur, solange der Echtzeit-Strom nicht zur Verfügung steht. */
   let fallbackTimer: ReturnType<typeof setInterval> | null = null
 
   function stopFallbackPolling(): void {
@@ -200,8 +200,8 @@ export function useSyncRunner(): void {
 
   onMounted(() => {
     // Der Zustand der Engine lebt ausserhalb von Vue (siehe `state.ts`) und
-    // wird hier gespiegelt. Die Richtung der Abhaengigkeit zeigt damit von der
-    // Oberflaeche zur Engine, nicht umgekehrt.
+    // wird hier gespiegelt. Die Richtung der Abhängigkeit zeigt damit von der
+    // Oberfläche zur Engine, nicht umgekehrt.
     const unsubscribe = syncState.subscribe((next) => {
       snapshot.value = next
     })
@@ -218,7 +218,7 @@ export function useSyncRunner(): void {
     if (isSignedIn.value) syncNow()
   })
 
-  // Anmelden loest den ersten Abgleich aus, Abmelden beendet die Ersatzabfrage.
+  // Anmelden löst den ersten Abgleich aus, Abmelden beendet die Ersatzabfrage.
   watch(isSignedIn, (signedIn) => {
     if (signedIn) {
       syncNow()
@@ -227,7 +227,7 @@ export function useSyncRunner(): void {
     stopFallbackPolling()
   })
 
-  // Nur die Flanke nach online zaehlt: Beim Wechsel nach offline gibt es
+  // Nur die Flanke nach online zählt: Beim Wechsel nach offline gibt es
   // nichts zu holen, und ein Versuch endete ohnehin im Fehlerzustand.
   watch(isOnline, (online, wasOnline) => {
     if (online && !wasOnline) syncNow()
@@ -246,7 +246,7 @@ export function useSyncRunner(): void {
  * Ein gescheiterter Abgleich ist kein Grund, die App anzuhalten.
  *
  * Die Engine hat den Fehler bereits in ihren Zustand geschrieben, die
- * Oberflaeche zeigt ihn an. Hier bleibt nur die Konsole — aber eben nicht ein
+ * Oberfläche zeigt ihn an. Hier bleibt nur die Konsole — aber eben nicht ein
  * stillschweigend verschlucktes Versprechen.
  */
 function reportSyncFailure(error: unknown): void {

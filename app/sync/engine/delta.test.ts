@@ -3,13 +3,13 @@
  *
  * Drei Eigenschaften tragen alles andere:
  *
- * 1. DER CURSOR RUECKT NIE VOR. Ein Delta ist ein Ausschnitt; wuerde das
- *    Wasserzeichen danach weiterwandern, fielen alle gleichzeitigen Aenderungen
- *    an anderen Zeilen dauerhaft aus dem Fenster des naechsten Pulls.
+ * 1. DER CURSOR RÜCKT NIE VOR. Ein Delta ist ein Ausschnitt; würde das
+ *    Wasserzeichen danach weiterwandern, fielen alle gleichzeitigen Änderungen
+ *    an anderen Zeilen dauerhaft aus dem Fenster des nächsten Pulls.
  * 2. DIE ADRESSE PASST ZUR API. `type`, `listId`, `id` und das kommagetrennte
  *    `ids` sind genau die Parameter, die `routes/sync/delta.ts` liest — ein
  *    falscher Name ergibt dort 400 oder, schlimmer, eine stille Vollantwort.
- * 3. EINE LEERE ANTWORT IST KEIN FEHLER. So sagt der Server "gehoert dir nicht
+ * 3. EINE LEERE ANTWORT IST KEIN FEHLER. So sagt der Server "gehört dir nicht
  *    (mehr)", und genau daran darf nichts kaputtgehen.
  */
 import { describe, expect, test } from 'bun:test'
@@ -174,7 +174,7 @@ describe('deltaQuery', () => {
     expect(deltaQuery({ kind: 'items', listId: 'l1', itemIds: [] })).toBe('type=items&listId=l1')
   })
 
-  test('ein Rezept wird ueber id angefragt, nicht ueber listId', () => {
+  test('ein Rezept wird über id angefragt, nicht über listId', () => {
     expect(deltaQuery({ kind: 'recipe', recipeId: 'r1' })).toBe('type=recipe&id=r1')
   })
 
@@ -214,7 +214,7 @@ describe('parseDeltaResponse', () => {
     expect(parseDeltaResponse('kaputt').items).toEqual([])
   })
 
-  test('eine unvollstaendige Zeile faellt raus, die uebrigen bleiben', () => {
+  test('eine unvollständige Zeile fällt raus, die übrigen bleiben', () => {
     const response = parseDeltaResponse({
       items: [serverItem(), { id: 'ohne-alles' }],
     })
@@ -247,7 +247,7 @@ describe('runDelta', () => {
     expect(outcome.changed).toBe(true)
   })
 
-  test('RUECKT DAS WASSERZEICHEN NIE VOR', async () => {
+  test('RÜCKT DAS WASSERZEICHEN NIE VOR', async () => {
     const store = fakeStore()
 
     await runDelta(
@@ -259,7 +259,7 @@ describe('runDelta', () => {
     expect(store.cursorWrites).toBe(0)
   })
 
-  test('eine leere Antwort aendert nichts und meldet changed = false', async () => {
+  test('eine leere Antwort ändert nichts und meldet changed = false', async () => {
     const store = fakeStore({ items: [localItem()] })
 
     const outcome = await runDelta(
@@ -302,7 +302,7 @@ describe('runDelta', () => {
     expect(store.members.get('l1')).toHaveLength(1)
   })
 
-  test('das lokale Feld gewinnt, wenn es juenger ist — dieselbe Regel wie im Pull', async () => {
+  test('das lokale Feld gewinnt, wenn es jünger ist — dieselbe Regel wie im Pull', async () => {
     const store = fakeStore({
       items: [localItem({
         name: 'Lokal neuer',
@@ -313,15 +313,15 @@ describe('runDelta', () => {
 
     await runDelta(
       store,
-      () => Promise.resolve({ lists: [], items: [serverItem({ name: 'Server aelter' })], recipes: [] }),
+      () => Promise.resolve({ lists: [], items: [serverItem({ name: 'Server älter' })], recipes: [] }),
       { kind: 'items', listId: 'l1', itemIds: ['i1'] },
     )
 
     const merged = store.items.get('i1')
     expect(merged?.name).toBe('Lokal neuer')
-    // Der lokale Gewinner muss beim naechsten Push hinaus.
+    // Der lokale Gewinner muss beim nächsten Push hinaus.
     expect(merged?.dirty).toBe(DIRTY)
-    // Das Serverfeld ohne lokalen Gegenspieler wird trotzdem uebernommen.
+    // Das Serverfeld ohne lokalen Gegenspieler wird trotzdem übernommen.
     expect(merged?.checked).toBe(true)
   })
 

@@ -2,12 +2,12 @@
 /**
  * Listenbereich, Design-Richtung A.
  *
- * Der Index liegt als eigene Routen-Ebene ueber der Detailansicht. Damit
- * bleiben auf dem Desktop beide gleichzeitig sichtbar (Master-Detail), waehrend
- * sich derselbe Baum auf Mobil wie der Stack der Android-App verhaelt: der
- * Index tritt zurueck, sobald eine Liste offen ist.
+ * Der Index liegt als eigene Routen-Ebene über der Detailansicht. Damit
+ * bleiben auf dem Desktop beide gleichzeitig sichtbar (Master-Detail), während
+ * sich derselbe Baum auf Mobil wie der Stack der Android-App verhält: der
+ * Index tritt zurück, sobald eine Liste offen ist.
  *
- * Dass der Index hier haengt und nicht in den Kindseiten, ist der eigentliche
+ * Dass der Index hier hängt und nicht in den Kindseiten, ist der eigentliche
  * Gewinn: beim Wechsel zwischen Listen wird er nicht neu erzeugt, liest die
  * lokale Datenbank nicht erneut und flackert nicht.
  */
@@ -30,8 +30,8 @@ onMounted(() => {
 })
 
 // Der Abgleich schreibt in dieselbe lokale Datenbank. Statt dass er in die
-// Ansicht hineinschiebt, beobachtet die Ansicht seinen Zaehler und liest neu —
-// dieselbe Richtung wie beim uebrigen Lesen.
+// Ansicht hineinschiebt, beobachtet die Ansicht seinen Zähler und liest neu —
+// dieselbe Richtung wie beim übrigen Lesen.
 watch(dataVersion, () => {
   void reload()
 })
@@ -105,8 +105,8 @@ async function submitDialog(): Promise<void> {
           class="text-[1rem]"
           style="color: var(--md-on-surface-variant); text-wrap: pretty"
         >
-          Leg einfach los. Ein Konto brauchst du erst, wenn du zwischen Geraeten
-          abgleichen oder eine Liste teilen moechtest.
+          Leg einfach los. Ein Konto brauchst du erst, wenn du zwischen Geräten
+          abgleichen oder eine Liste teilen möchtest.
         </p>
       </div>
 

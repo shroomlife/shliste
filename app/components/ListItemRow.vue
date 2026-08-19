@@ -5,22 +5,22 @@ import type { ListItem } from '#shared/types/domain'
  * Eine Zeile der Einkaufsliste.
  *
  * Anatomie und Farben stammen aus der Android-App (SemanticColors.kt):
- * abgehakte Eintraege werden gedaempft und durchgestrichen, die Mengenkachel
- * wechselt dabei auf den gedaempften Ton.
+ * abgehakte Einträge werden gedämpft und durchgestrichen, die Mengenkachel
+ * wechselt dabei auf den gedämpften Ton.
  *
- * `justChanged` loest den einen orchestrierten Bewegungsmoment der App aus:
- * eine Zeile, die gerade ein anderes Geraet geaendert hat, leuchtet kurz auf
- * und traegt links eine Akzentleiste. Die Spezifikation dazu steht in
+ * `justChanged` löst den einen orchestrierten Bewegungsmoment der App aus:
+ * eine Zeile, die gerade ein anderes Gerät geändert hat, leuchtet kurz auf
+ * und trägt links eine Akzentleiste. Die Spezifikation dazu steht in
  * SemanticColors.deltaFlashSurface.
  *
  * Barrierefreiheit: Die ganze Zeile ist ein Knopf mit mindestens 44 Pixel
- * Hoehe, damit sie auch am Handy sicher zu treffen ist (WCAG 2.2 SC 2.5.8).
+ * Höhe, damit sie auch am Handy sicher zu treffen ist (WCAG 2.2 SC 2.5.8).
  */
 const { item, justChanged = false, changedBy = null } = defineProps<{
   item: ListItem
-  /** Wurde die Zeile gerade von einem anderen Geraet geaendert? */
+  /** Wurde die Zeile gerade von einem anderen Gerät geändert? */
   justChanged?: boolean
-  /** Anzeigename der Person, die geaendert hat */
+  /** Anzeigename der Person, die geändert hat */
   changedBy?: string | null
 }>()
 

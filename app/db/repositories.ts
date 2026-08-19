@@ -658,21 +658,21 @@ export async function setLastEventId(value: string | null): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Rohzugriff fuer den Abgleich
+// Rohzugriff für den Abgleich
 //
-// Die Funktionen oben sind fuer den Betrieb der App gedacht: `upsert*` setzt
+// Die Funktionen oben sind für den Betrieb der App gedacht: `upsert*` setzt
 // `dirty = 1` und stempelt `updatedAt` auf jetzt, die Lesefunktionen blenden
-// Tombstones aus. Fuer den Abgleich ist beides falsch — eine Zeile vom Server
-// ist nicht schmutzig, und das Zusammenfuehren braucht die Tombstones, weil es
-// sonst eine Loeschung nicht von "gibt es nicht" unterscheiden kann.
+// Tombstones aus. Für den Abgleich ist beides falsch — eine Zeile vom Server
+// ist nicht schmutzig, und das Zusammenführen braucht die Tombstones, weil es
+// sonst eine Löschung nicht von "gibt es nicht" unterscheiden kann.
 //
 // Deshalb hier ein zweiter, roher Satz. Er liegt bewusst trotzdem in dieser
-// Datei: Jeder Datenbankzugriff der App gehoert an genau einen Ort, sonst muss
-// bei einer Schemaaenderung an mehreren Stellen gesucht werden.
+// Datei: Jeder Datenbankzugriff der App gehört an genau einen Ort, sonst muss
+// bei einer Schemaänderung an mehreren Stellen gesucht werden.
 //
 // Ausgeschrieben statt generisch, weil `idb` Storename und Wertetyp aneinander
-// bindet — ein gemeinsamer Helfer braeuchte einen Cast und damit genau die
-// Typloecher, die diese Schicht vermeiden soll.
+// bindet — ein gemeinsamer Helfer bräuchte einen Cast und damit genau die
+// Typlöcher, die diese Schicht vermeiden soll.
 // ---------------------------------------------------------------------------
 
 export async function readListRow(id: string): Promise<ListRow | undefined> {

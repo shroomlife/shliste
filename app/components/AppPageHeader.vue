@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Einheitlicher Seitenkopf fuer die Uebersichten (Listen, Rezepte).
+ * Einheitlicher Seitenkopf für die Uebersichten (Listen, Rezepte).
  *
  * Die Aktion erscheint auf dem Desktop hier als beschrifteter Knopf und auf
  * Mobil stattdessen als schwebender Knopf (AppFab) — dieselbe Aktion, zwei

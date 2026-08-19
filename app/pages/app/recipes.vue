@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
- * Rezepte-Uebersicht. Wie bei den Listen gilt: ohne Konto nutzbar, die Daten
- * liegen lokal. Ein Konto braucht es erst fuer Abgleich und Teilen.
+ * Rezepte-Übersicht. Wie bei den Listen gilt: ohne Konto nutzbar, die Daten
+ * liegen lokal. Ein Konto braucht es erst für Abgleich und Teilen.
  */
 definePageMeta({ layout: 'app' })
 useHead({ title: 'Rezepte ~ shliste' })
@@ -86,7 +86,7 @@ async function submitDialog(): Promise<void> {
         class="text-[1rem]"
         style="color: var(--md-on-surface-variant); text-wrap: pretty"
       >
-        Lege ein Rezept an und hol seine Zutaten spaeter mit einem Tippen auf die Einkaufsliste.
+        Lege ein Rezept an und hol seine Zutaten später mit einem Tippen auf die Einkaufsliste.
       </p>
     </div>
 

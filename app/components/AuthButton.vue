@@ -79,9 +79,9 @@ const clientId = publicConfig.googleClientId
 const hasClientId = clientId.length > 0
 
 /**
- * `compact` laesst die Beschriftung weg. Die Icon-Rail auf dem Desktop ist nur
+ * `compact` lässt die Beschriftung weg. Die Icon-Rail auf dem Desktop ist nur
  * 84 Pixel breit — ein beschrifteter Knopf ragt dort heraus und wird
- * abgeschnitten. Die Bedeutung traegt dann `aria-label` und `title`.
+ * abgeschnitten. Die Bedeutung trägt dann `aria-label` und `title`.
  */
 const { compact = false } = defineProps<{ compact?: boolean }>()
 
