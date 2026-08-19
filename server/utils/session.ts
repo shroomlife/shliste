@@ -19,22 +19,14 @@
  * JWT, das die API selbst signiert und prüft.
  */
 import type { H3Event } from 'h3'
+import type { UserProfile } from '#shared/types/domain'
 import { isRecord } from './guards'
 
-/**
- * Das Profil, das der Client nach der Anmeldung zu sehen bekommt.
- *
- * Bewusst hier definiert und nicht aus app/ importiert: app/ und server/ sind
- * in Nuxt getrennte Build-Bereiche, und eine Abhängigkeit von der einen in die
- * andere Richtung überschreitet diese Grenze. Es sind ausschliesslich die
- * unkritischen Anzeigefelder — die interne Ganzzahl-Id der API gehört nicht dazu.
- */
-export interface UserProfile {
-  userId: string
-  email: string
-  displayName: string | null
-  photoUrl: string | null
-}
+// Der Typ wird hier nur benutzt, nicht weitergereicht: app/ und server/ sind
+// getrennte Build-Bereiche und duerfen nicht voneinander abhaengen, shared/ ist
+// der dafuer vorgesehene gemeinsame Bereich. Wer den Typ braucht, holt ihn von
+// dort — ein Weiterexport waere ein zweiter Name fuer dieselbe Sache und haette
+// Nuxt bei den automatischen Importen zwei gleichnamige Kandidaten geliefert.
 
 export const SESSION_COOKIE = 'shliste_session'
 export const PROFILE_COOKIE = 'shliste_profile'

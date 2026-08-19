@@ -17,20 +17,18 @@ interface Destination {
 }
 
 const destinations: Destination[] = [
-  { label: 'Listen', to: '/app', icon: 'i-lucide-list-checks' },
+  { label: 'Listen', to: '/app/lists', icon: 'i-lucide-list-checks' },
   { label: 'Rezepte', to: '/app/recipes', icon: 'i-lucide-chef-hat' },
 ]
 
 function isActive(destination: Destination): boolean {
-  return destination.to === '/app'
-    ? route.path === '/app' || route.path.startsWith('/app/liste')
-    : route.path.startsWith(destination.to)
+  return route.path.startsWith(destination.to)
 }
 </script>
 
 <template>
   <div
-    class="flex min-h-dvh flex-col lg:flex-row"
+    class="flex min-h-dvh flex-col lg:h-dvh lg:min-h-0 lg:flex-row lg:overflow-hidden"
     style="background: var(--md-background)"
   >
     <!-- Desktop: Icon-Rail. Auf Mobil ausgeblendet. -->
@@ -82,7 +80,7 @@ function isActive(destination: Destination): boolean {
            betrifft nicht den Inhalt, sondern den Zustand der App. -->
       <div class="flex flex-col items-center gap-2">
         <SyncStatus />
-        <AuthButton />
+        <AuthButton compact />
       </div>
     </nav>
 
@@ -96,7 +94,7 @@ function isActive(destination: Destination): boolean {
       <AuthButton />
     </div>
 
-    <main class="flex min-w-0 grow flex-col">
+    <main class="flex min-w-0 grow flex-col lg:min-h-0">
       <slot />
     </main>
 

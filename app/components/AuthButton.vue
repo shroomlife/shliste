@@ -78,6 +78,13 @@ const { public: publicConfig } = useRuntimeConfig()
 const clientId = publicConfig.googleClientId
 const hasClientId = clientId.length > 0
 
+/**
+ * `compact` laesst die Beschriftung weg. Die Icon-Rail auf dem Desktop ist nur
+ * 84 Pixel breit — ein beschrifteter Knopf ragt dort heraus und wird
+ * abgeschnitten. Die Bedeutung traegt dann `aria-label` und `title`.
+ */
+const { compact = false } = defineProps<{ compact?: boolean }>()
+
 const { profile, isSignedIn, signIn, signOut, loadSession } = useAuth()
 const toast = useToast()
 
@@ -251,6 +258,8 @@ function reportFailure(title: string, error: unknown): void {
     icon="i-lucide-log-in"
     color="neutral"
     variant="subtle"
+    :square="compact"
+    :aria-label="compact ? 'Anmelden' : undefined"
     class="rounded-xl font-bold"
     :loading="isSigningIn"
     :disabled="!hasClientId"
@@ -259,6 +268,6 @@ function reportFailure(title: string, error: unknown): void {
       : 'Anmelden ist hier nicht eingerichtet (NUXT_PUBLIC_GOOGLE_CLIENT_ID fehlt).'"
     @click="startSignIn"
   >
-    Anmelden
+    <span v-if="!compact">Anmelden</span>
   </UButton>
 </template>

@@ -1,6 +1,19 @@
-import type { ListRow } from '~/db/schema'
-import { getListsForView, upsertList } from '~/db/repositories'
-import { randomListColor } from '~/utils/color'
+import type { ListRow } from '../db/schema'
+import { getItemsForList, getListsForView, upsertList } from '../db/repositories'
+import { randomListColor } from '../utils/color'
+
+/**
+ * Eine Liste samt der Zaehler, die die Uebersicht anzeigt.
+ *
+ * Die Zaehler stehen bewusst nicht in der Zeile selbst: Sie sind abgeleitet und
+ * wuerden sonst bei jeder Item-Aenderung mitgepflegt und synchronisiert werden
+ * muessen — eine zweite Wahrheit, die auseinanderlaufen kann.
+ */
+export interface ListWithCounts {
+  list: ListRow
+  openCount: number
+  doneCount: number
+}
 
 /**
  * Listenuebersicht aus der lokalen Datenbank.
@@ -14,7 +27,7 @@ import { randomListColor } from '~/utils/color'
  * eine Anmeldung gebraucht.
  */
 export function useLists() {
-  const lists = useState<ListRow[]>('lists', () => [])
+  const entries = useState<ListWithCounts[]>('lists', () => [])
   const isLoading = useState<boolean>('lists-loading', () => false)
 
   async function reload(): Promise<void> {
@@ -24,7 +37,20 @@ export function useLists() {
 
     isLoading.value = true
     try {
-      lists.value = await getListsForView()
+      const lists = await getListsForView()
+      // Die Zaehler parallel holen: bei wenigen Listen ist das eine Runde
+      // statt einer Kette, und IndexedDB verarbeitet die Lesevorgaenge ohnehin
+      // nebenlaeufig.
+      entries.value = await Promise.all(
+        lists.map(async (list) => {
+          const items = await getItemsForList(list.id)
+          return {
+            list,
+            openCount: items.filter(item => !item.checked).length,
+            doneCount: items.filter(item => item.checked).length,
+          }
+        }),
+      )
     }
     finally {
       isLoading.value = false
@@ -54,7 +80,7 @@ export function useLists() {
   }
 
   return {
-    lists: readonly(lists),
+    entries: readonly(entries),
     isLoading: readonly(isLoading),
     reload,
     createList,

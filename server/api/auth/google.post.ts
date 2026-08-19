@@ -8,7 +8,8 @@
  */
 import { apiFetch } from '../../utils/apiFetch'
 import { isRecord } from '../../utils/guards'
-import { parseUserProfile, persistSession, type UserProfile } from '../../utils/session'
+import type { UserProfile } from '#shared/types/domain'
+import { parseUserProfile, persistSession } from '../../utils/session'
 
 interface ApiSession {
   sessionToken: string

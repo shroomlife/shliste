@@ -38,7 +38,7 @@ async function submitDialog(): Promise<void> {
 
 <template>
   <div
-    class="flex min-w-0 grow flex-col"
+    class="flex min-w-0 grow flex-col lg:min-h-0 lg:overflow-y-auto"
     style="background: var(--md-surface-low)"
   >
     <AppPageHeader

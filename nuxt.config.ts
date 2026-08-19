@@ -72,6 +72,11 @@ export default defineNuxtConfig({
     // Rankings verloren gehen.
     '/impressum': { redirect: { to: '/imprint', statusCode: 301 } },
     '/datenschutz': { redirect: { to: '/privacy', statusCode: 301 } },
+    // Der Listenbereich ist der Einstieg in die App. Die Umleitung greift
+    // serverseitig und damit genau dort, wo /app noch ankommen kann:
+    // Lesezeichen und der Start der installierten PWA. Innerhalb der App
+    // zeigen alle Verweise direkt auf /app/lists.
+    '/app': { redirect: { to: '/app/lists', statusCode: 302 } },
     // Der App-Bereich rendert ausschliesslich im Client — seine Daten liegen
     // in IndexedDB und sind auf dem Server nicht vorhanden.
     '/app/**': { ssr: false },

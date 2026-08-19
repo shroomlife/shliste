@@ -1,17 +1,24 @@
 <script setup lang="ts">
 /**
- * Listenuebersicht, Design-Richtung A.
+ * Listenbereich, Design-Richtung A.
  *
- * Auf Desktop ist das die mittlere Spalte (Index) neben dem Detailbereich,
- * auf Mobil die erste Ebene des bekannten Stacks.
+ * Der Index liegt als eigene Routen-Ebene ueber der Detailansicht. Damit
+ * bleiben auf dem Desktop beide gleichzeitig sichtbar (Master-Detail), waehrend
+ * sich derselbe Baum auf Mobil wie der Stack der Android-App verhaelt: der
+ * Index tritt zurueck, sobald eine Liste offen ist.
  *
- * Die Daten kommen aus IndexedDB und damit ohne Konto aus. Angemeldet werden
- * muss man erst fuer Abgleich und Teilen.
+ * Dass der Index hier haengt und nicht in den Kindseiten, ist der eigentliche
+ * Gewinn: beim Wechsel zwischen Listen wird er nicht neu erzeugt, liest die
+ * lokale Datenbank nicht erneut und flackert nicht.
  */
 definePageMeta({ layout: 'app' })
 useHead({ title: 'Listen ~ shliste' })
 
-const { lists, reload, createList } = useLists()
+const route = useRoute()
+const { entries, reload, createList } = useLists()
+
+/** Auf Mobil zeigt der Bereich entweder den Index oder das Detail, nie beides. */
+const isDetailOpen = computed(() => typeof route.params.id === 'string')
 
 const isDialogOpen = ref(false)
 const newListName = ref('')
@@ -44,12 +51,13 @@ async function submitDialog(): Promise<void> {
 
 <template>
   <div
-    class="flex min-w-0 grow lg:divide-x"
+    class="flex min-w-0 grow lg:min-h-0 lg:divide-x"
     style="border-color: var(--md-outline-variant)"
   >
     <!-- Index -->
     <section
-      class="flex w-full shrink-0 flex-col lg:w-86"
+      class="w-full shrink-0 flex-col lg:flex lg:w-86 lg:overflow-y-auto"
+      :class="isDetailOpen ? 'hidden' : 'flex'"
       style="background: var(--md-surface-low)"
     >
       <AppPageHeader
@@ -59,13 +67,16 @@ async function submitDialog(): Promise<void> {
       />
 
       <div
-        v-if="lists.length"
+        v-if="entries.length"
         class="flex flex-col gap-2 px-4 pb-4"
       >
         <ListCard
-          v-for="list in lists"
-          :key="list.id"
-          :list="list"
+          v-for="entry in entries"
+          :key="entry.list.id"
+          :list="entry.list"
+          :open-count="entry.openCount"
+          :done-count="entry.doneCount"
+          :active="entry.list.id === route.params.id"
         />
       </div>
 
@@ -97,25 +108,8 @@ async function submitDialog(): Promise<void> {
       />
     </section>
 
-    <!-- Detail: auf Desktop dauerhaft sichtbar, auf Mobil eine eigene Route -->
-    <section
-      class="hidden min-w-0 grow lg:flex lg:flex-col"
-      style="background: var(--md-surface)"
-    >
-      <div class="flex grow flex-col items-center justify-center gap-2 px-8 text-center">
-        <UIcon
-          name="i-lucide-arrow-left"
-          class="size-6"
-          style="color: var(--md-on-surface-variant)"
-        />
-        <p
-          class="text-[1.25rem]"
-          style="color: var(--md-on-surface-variant)"
-        >
-          Waehle links eine Liste aus.
-        </p>
-      </div>
-    </section>
+    <!-- Detail: auf Desktop dauerhaft daneben, auf Mobil eine eigene Ebene -->
+    <NuxtPage />
 
     <AppSheet
       v-model:open="isDialogOpen"

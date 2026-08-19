@@ -43,7 +43,7 @@ const features = [
       <span class="text-[1.625rem] font-black tracking-tight">shliste</span>
       <div class="grow" />
       <UButton
-        to="/app"
+        to="/app/lists"
         size="lg"
         class="rounded-full font-bold"
       >
@@ -68,7 +68,7 @@ const features = [
         </p>
         <div class="mt-8 flex flex-wrap gap-3">
           <UButton
-            to="/app"
+            to="/app/lists"
             size="xl"
             class="rounded-full font-bold"
           >

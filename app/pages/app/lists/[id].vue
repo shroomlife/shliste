@@ -13,11 +13,13 @@ import type { ListItem } from '#shared/types/domain'
  * Die Daten kommen aus der lokalen Datenbank und damit ohne Konto aus.
  * Abhaken und Hinzufuegen funktionieren offline; der Abgleich mit dem Server
  * laeuft getrennt davon.
+ *
+ * Kein definePageMeta: das Layout kommt von der Elternroute /app/lists.
  */
-definePageMeta({ layout: 'app' })
-
 const route = useRoute()
 const listId = computed(() => String(route.params.id))
+
+const { reload: reloadOverview } = useLists()
 
 const {
   list,
@@ -51,6 +53,17 @@ function run(work: Promise<unknown>): void {
 }
 
 /**
+ * Wie `run`, aber danach wird der Index aufgefrischt.
+ *
+ * Die Zaehler auf den Karten sind abgeleitete Werte. Sie stehen absichtlich
+ * nicht in der Zeile selbst, muessen nach einer Aenderung also neu gelesen
+ * werden — sonst zeigt der Index daneben veraltete Zahlen.
+ */
+function mutate(work: Promise<unknown>): void {
+  run(work.then(() => reloadOverview()))
+}
+
+/**
  * Laedt Liste und Eintraege aus der lokalen Datenbank.
  *
  * Bewusst kein useFetch: Die Daten liegen offline-first in IndexedDB und nicht
@@ -69,7 +82,7 @@ watch(listId, () => {
 }, { immediate: true })
 
 function toggleItem(item: ListItem): void {
-  run(setItemChecked(item))
+  mutate(setItemChecked(item))
 }
 
 function addItem(): void {
@@ -80,23 +93,23 @@ function addItem(): void {
   // Wartezeit tippbar sein, und ein zweites Enter darf nicht denselben Eintrag
   // ein zweites Mal anlegen.
   newItemName.value = ''
-  run(createItem(name))
+  mutate(createItem(name))
 }
 </script>
 
 <template>
   <div
-    class="flex min-w-0 grow flex-col"
+    class="flex min-w-0 grow flex-col lg:min-h-0"
     style="background: var(--md-surface)"
   >
     <!-- Kopf in der Listenfarbe -->
     <header
-      class="list-tint flex flex-col gap-2.5 px-5 py-5 lg:px-7"
+      class="list-tint flex shrink-0 flex-col gap-2.5 px-5 py-5 lg:px-7"
       :style="{ '--list-color': list?.color ?? 'var(--md-primary)' }"
     >
       <div class="flex items-start gap-3">
         <NuxtLink
-          to="/app"
+          to="/app/lists"
           class="mt-1 shrink-0 lg:hidden"
           aria-label="Zurueck zur Uebersicht"
         >
@@ -143,7 +156,7 @@ function addItem(): void {
     </header>
 
     <!-- Eintraege -->
-    <div class="flex grow flex-col gap-0.5 px-3 py-2 lg:px-5">
+    <div class="flex grow flex-col gap-0.5 px-3 py-2 lg:min-h-0 lg:overflow-y-auto lg:px-5">
       <template v-if="items.length">
         <ListItemRow
           v-for="item in openItems"
@@ -197,7 +210,7 @@ function addItem(): void {
 
     <!-- Eingabe -->
     <div
-      class="flex items-center gap-2.5 border-t px-3 py-3.5 lg:px-5"
+      class="flex shrink-0 items-center gap-2.5 border-t px-3 py-3.5 lg:px-5"
       style="border-color: var(--md-outline-variant)"
     >
       <UInput

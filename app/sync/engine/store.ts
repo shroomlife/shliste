@@ -1,26 +1,20 @@
 /**
  * Die Anbindung der Ports an die lokale Datenbank.
  *
- * OFFENE SCHULD, BEWUSST AN EINER STELLE GEBÜNDELT: Die Lese- und
- * Schreibpaare unten greifen über `getDb()` direkt auf die Stores zu, statt
- * `app/db/repositories.ts` zu benutzen. Das ist kein Versehen, sondern eine
- * Lücke im Bestand: Die Repository-Funktionen sind für LOKALE Bearbeitungen
- * gebaut. Jedes `upsert*` dort setzt `dirty = 1` und stempelt `updatedAt` auf
- * jetzt — genau falsch für eine Zeile, die gerade vom Server kommt und ihre
- * Server-Zeitstempel behalten muss. Zum Lesen fehlt ausserdem der Zugriff auf
- * gelöschte Zeilen: `getItemsForList` und Geschwister filtern Tombstones
- * heraus, das Merge braucht sie aber.
+ * Alle Datenbankzugriffe laufen ueber `app/db/repositories.ts`, auch die
+ * rohen Lese- und Schreibpaare fuer den Abgleich. Die brauchen einen eigenen
+ * Satz, weil die Funktionen fuer den normalen Betrieb hier falsch waeren:
+ * `upsert*` setzt `dirty = 1` und stempelt `updatedAt` auf jetzt — genau
+ * verkehrt fuer eine Zeile, die gerade vom Server kommt und ihre
+ * Server-Zeitstempel behalten muss. Und die Lesefunktionen blenden Tombstones
+ * aus, die das Zusammenfuehren braucht, um eine Loeschung von "gibt es nicht"
+ * zu unterscheiden.
  *
- * Diese sieben Paare gehören deshalb nach `app/db/repositories.ts` (etwa als
- * `putPulledRow` je Entität). Bis dahin stehen sie hier — an genau einer
- * Stelle, damit der Umzug ein einziger Handgriff bleibt.
- *
- * Alles, wofür es bereits eine Repository-Funktion gibt, benutzt sie:
- * insbesondere `clearDirtyFlags` mit seiner Snapshot-Prüfung, die nirgends
+ * Alles, wofuer es bereits eine Repository-Funktion gibt, benutzt sie:
+ * insbesondere `clearDirtyFlags` mit seiner Snapshot-Pruefung, die nirgends
  * ein zweites Mal stehen darf.
  */
 import type { IsoUtc, ListMember } from '../../../shared/types/domain'
-import { getDb } from '../../db/client'
 import type {
   BadgeRow,
   ListItemRow,
@@ -51,53 +45,69 @@ import {
   type DirtyStoreName,
 } from '../../db/repositories'
 import type { DirtyRows, EntityStore, LocalDataCounts, RowStores, SyncStore } from './ports'
+import {
+  putBadgeRow,
+  putChatMessageRow,
+  putIngredientRow,
+  putItemRow,
+  putListRow,
+  putRecipeRow,
+  putStepRow,
+  readBadgeRow,
+  readChatMessageRow,
+  readIngredientRow,
+  readItemRow,
+  readListRow,
+  readRecipeRow,
+  readStepRow,
+} from '../../db/repositories'
 
 const lists: EntityStore<ListRow> = {
-  read: async id => (await getDb()).get('lists', id),
+  read: readListRow,
   write: async (row) => {
-    await (await getDb()).put('lists', row)
+    await putListRow(row)
   },
 }
 
 const items: EntityStore<ListItemRow> = {
-  read: async id => (await getDb()).get('list_items', id),
+  read: readItemRow,
   write: async (row) => {
-    await (await getDb()).put('list_items', row)
+    await putItemRow(row)
   },
 }
 
 const recipes: EntityStore<RecipeRow> = {
-  read: async id => (await getDb()).get('recipes', id),
+  read: readRecipeRow,
   write: async (row) => {
-    await (await getDb()).put('recipes', row)
+    await putRecipeRow(row)
   },
 }
 
 const ingredients: EntityStore<RecipeIngredientRow> = {
-  read: async id => (await getDb()).get('recipe_ingredients', id),
+  read: readIngredientRow,
   write: async (row) => {
-    await (await getDb()).put('recipe_ingredients', row)
+    await putIngredientRow(row)
   },
 }
 
 const steps: EntityStore<RecipeStepRow> = {
-  read: async id => (await getDb()).get('recipe_steps', id),
+  read: readStepRow,
   write: async (row) => {
-    await (await getDb()).put('recipe_steps', row)
+    await putStepRow(row)
   },
 }
 
 const badges: EntityStore<BadgeRow> = {
-  read: async id => (await getDb()).get('badges', id),
+  read: readBadgeRow,
   write: async (row) => {
-    await (await getDb()).put('badges', row)
+    await putBadgeRow(row)
   },
 }
 
 const chatMessages: EntityStore<RecipeChatMessageRow> = {
-  read: async id => (await getDb()).get('recipe_chat_messages', id),
+  read: readChatMessageRow,
   write: async (row) => {
-    await (await getDb()).put('recipe_chat_messages', row)
+    await putChatMessageRow(row)
   },
 }
 

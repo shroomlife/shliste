@@ -18,7 +18,8 @@
  * beim Anmelden aus).
  */
 import { apiFetch, isSessionExpiredError } from '../../utils/apiFetch'
-import { clearSessionCookies, readProfile, readSessionToken, type UserProfile } from '../../utils/session'
+import type { UserProfile } from '#shared/types/domain'
+import { clearSessionCookies, readProfile, readSessionToken } from '../../utils/session'
 
 interface SessionState {
   authenticated: boolean
