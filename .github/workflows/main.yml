@@ -48,10 +48,16 @@ jobs:
     needs: Build
     runs-on: ubuntu-latest
     steps:
+      # Der Deploy-Key trägt auf dem Server einen forced command
+      # (/home/shliste/deploy-pwa.sh). Das `script:` unten wird deshalb NICHT
+      # ausgeführt — sshd startet immer nur dieses Skript. Es steht hier
+      # trotzdem, weil die Action ein `script` verlangt, und spiegelt wortgleich,
+      # was das Skript tut. Ändert sich der Ablauf, gehört die Änderung in
+      # /home/shliste/deploy-pwa.sh auf xva001, nicht hierher.
       - name: Deploy to Production Server
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ vars.DEPLOY_HOST }}
           username: ${{ vars.DEPLOY_USERNAME }}
           key: ${{ secrets.DEPLOY_KEY }}
-          script: docker compose pull shliste_app && docker compose up -d shliste_app
+          script: cd /home/shliste/production && docker compose pull shliste_app && docker compose up -d shliste_app
