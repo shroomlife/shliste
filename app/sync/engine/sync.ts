@@ -299,6 +299,10 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
       pendingCount,
       notSyncedCount,
       conflict: null,
+      // Nur aus einem gelaufenen Pull übernehmen: Ein Lauf, der gar nicht
+      // gezogen hat, weiss nichts über Einladungen und dürfte die zuletzt
+      // bekannten nicht wegwerfen.
+      ...(pull === null ? {} : { pendingInvites: pull.pendingInvites }),
       ...(pull?.cursorAdvanced === true ? { lastSyncedAt: pull.serverTime } : {}),
     })
   }

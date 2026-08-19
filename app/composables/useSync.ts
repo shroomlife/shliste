@@ -62,8 +62,14 @@ let mutationTimer: ReturnType<typeof setTimeout> | null = null
  * ------------------------------------------------------------------ */
 
 export interface UseSync {
-  /** Der letzte gemeldete Zustand der Engine. */
-  snapshot: Readonly<Ref<SyncSnapshot>>
+  /**
+   * Der letzte gemeldete Zustand der Engine.
+   *
+   * Als `computed` und nicht als `readonly()`: Letzteres macht auch die
+   * enthaltenen Listen unveränderlich, und der Typ passt dann nicht mehr zu
+   * `SyncSnapshot` — lesbar ist beides gleichermassen.
+   */
+  snapshot: ComputedRef<SyncSnapshot>
   /** Für `SyncStatus.vue`. */
   display: ComputedRef<SyncStatusDisplay>
   /**
@@ -120,7 +126,7 @@ export function useSync(): UseSync {
   }
 
   return {
-    snapshot: readonly(snapshot),
+    snapshot: computed(() => snapshot.value),
     display: computed(() => toDisplayState(snapshot.value.phase)),
     dataVersion: readonly(dataVersion),
     requestSync,

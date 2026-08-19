@@ -21,6 +21,20 @@ const listId = computed(() => String(route.params.id))
 
 const { reload: reloadOverview } = useLists()
 const { dataVersion, scheduleSync } = useSync()
+const { profile, isSignedIn } = useAuth()
+
+const isMembersOpen = ref(false)
+
+/**
+ * Ist das die eigene Liste?
+ *
+ * `ownerUserId` ist `null`, solange die Liste nur lokal existiert — dann
+ * gehört sie zwangsläufig dem, der sie angelegt hat. Nach dem ersten Abgleich
+ * trägt sie die Kennung ihres Eigentümers.
+ */
+const isOwner = computed(() =>
+  list.value?.ownerUserId === null || list.value?.ownerUserId === profile.value?.userId,
+)
 
 const {
   list,
@@ -134,12 +148,16 @@ function addItem(): void {
           {{ list?.name ?? 'Liste' }}
         </h1>
 
+        <!-- Teilen setzt ein Konto voraus: Eine Einladung braucht jemanden,
+             der sie ausspricht, und einen Server, der sie zustellt. -->
         <UButton
+          v-if="isSignedIn"
           icon="i-lucide-users"
           color="neutral"
           variant="ghost"
           class="shrink-0 rounded-full"
           aria-label="Mitglieder verwalten"
+          @click="isMembersOpen = true"
         />
         <UButton
           icon="i-lucide-ellipsis-vertical"
@@ -218,6 +236,12 @@ function addItem(): void {
         </p>
       </div>
     </div>
+
+    <ListMembersSheet
+      v-model:open="isMembersOpen"
+      :list-id="listId"
+      :is-owner="isOwner"
+    />
 
     <!-- Eingabe -->
     <div

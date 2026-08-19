@@ -8,7 +8,7 @@
  * Richtung der Abhängigkeit zeigt damit von der Oberfläche zur Engine und
  * nicht umgekehrt.
  */
-import type { IsoUtc } from '../../../shared/types/domain'
+import type { IsoUtc, PendingInvite } from '../../../shared/types/domain'
 import type { SyncError } from './errors'
 
 /**
@@ -64,6 +64,15 @@ export interface SyncSnapshot {
   retryAfterMs: number | null
   /** Gesetzt, solange eine Nutzerentscheidung aussteht. */
   conflict: SyncConflictReport | null
+  /**
+   * Einladungen zu fremden Listen, die noch nicht beantwortet sind.
+   *
+   * Sie kommen mit jedem Pull und werden bewusst NICHT lokal gespeichert: Eine
+   * Einladung ist eine Aussage des Servers über den Augenblick, und sie trägt
+   * mit Listenname und Einladendem Angaben aus einem fremden Konto. Was nach
+   * dem Abmelden auf dem Gerät bliebe, hätte dort nichts zu suchen.
+   */
+  pendingInvites: PendingInvite[]
 }
 
 export const INITIAL_SNAPSHOT: SyncSnapshot = {
@@ -74,6 +83,7 @@ export const INITIAL_SNAPSHOT: SyncSnapshot = {
   lastSyncedAt: null,
   retryAfterMs: null,
   conflict: null,
+  pendingInvites: [],
 }
 
 export type SyncStateListener = (snapshot: SyncSnapshot) => void

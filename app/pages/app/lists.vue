@@ -16,7 +16,7 @@ useHead({ title: 'Listen ~ shliste' })
 
 const route = useRoute()
 const { entries, reload, createList } = useLists()
-const { dataVersion, scheduleSync } = useSync()
+const { dataVersion, scheduleSync, snapshot, requestSync } = useSync()
 
 /** Auf Mobil zeigt der Bereich entweder den Index oder das Detail, nie beides. */
 const isDetailOpen = computed(() => typeof route.params.id === 'string')
@@ -73,6 +73,13 @@ async function submitDialog(): Promise<void> {
         title="Listen"
         action-label="Neu"
         @action="openDialog"
+      />
+
+      <!-- Offene Einladungen stehen über den eigenen Listen: Es sind Listen,
+           die gleich dazugehören könnten. -->
+      <PendingInvites
+        :invites="snapshot.pendingInvites"
+        @answered="requestSync"
       />
 
       <div
