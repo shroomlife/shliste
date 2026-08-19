@@ -17,6 +17,7 @@ import {
   getRecipe,
   getStepsForRecipe,
   upsertIngredient,
+  upsertRecipe,
   upsertStep,
   type Draft,
 } from '../db/repositories'
@@ -199,6 +200,45 @@ export function useRecipeDetail() {
     await reload()
   }
 
+  /** Benennt das Rezept um. Nur das Feld `name` wird neu gestempelt. */
+  async function renameRecipe(name: string): Promise<void> {
+    const target = recipe.value
+    const trimmed = name.trim()
+    if (target === null || trimmed.length === 0 || trimmed === target.name) return
+
+    await upsertRecipe({
+      id: target.id,
+      name: trimmed,
+      color: target.color,
+      sourceUrl: target.sourceUrl,
+      imagePath: target.imagePath,
+      deletedAt: target.deletedAt,
+    })
+    await reload()
+  }
+
+  /**
+   * Löscht das Rezept.
+   *
+   * Mit Grabstein und nicht durch Entfernen der Zeile: Ohne `deletedAt`
+   * erführe der Server nie davon und brächte es beim nächsten Pull zurück.
+   * Rezepte werden nicht geteilt, hier gibt es also anders als bei den Listen
+   * keinen zweiten Fall.
+   */
+  async function deleteRecipe(): Promise<void> {
+    const target = recipe.value
+    if (target === null) return
+
+    await upsertRecipe({
+      id: target.id,
+      name: target.name,
+      color: target.color,
+      sourceUrl: target.sourceUrl,
+      imagePath: target.imagePath,
+      deletedAt: nowIso(),
+    })
+  }
+
   return {
     recipe: readonly(recipe),
     ingredients: readonly(ingredients),
@@ -212,5 +252,7 @@ export function useRecipeDetail() {
     toggleStep,
     removeIngredient,
     removeStep,
+    renameRecipe,
+    deleteRecipe,
   }
 }

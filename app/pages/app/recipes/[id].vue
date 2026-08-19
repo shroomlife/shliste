@@ -27,6 +27,8 @@ const {
   addStep,
   toggleStep,
   removeIngredient,
+  renameRecipe,
+  deleteRecipe,
 } = useRecipeDetail()
 
 const { reload: reloadOverview } = useRecipes()
@@ -34,6 +36,31 @@ const { dataVersion, scheduleSync } = useSync()
 
 const newIngredient = ref('')
 const newStep = ref('')
+
+const isRenameOpen = ref(false)
+const isDeleteOpen = ref(false)
+const renameValue = ref('')
+
+// Dieselben Aktionen wie bei einer Liste, an derselben Stelle: Was gleich
+// funktioniert, soll auch gleich zu finden sein.
+const menuItems = computed(() => [[
+  {
+    label: 'Umbenennen',
+    icon: 'i-lucide-pencil',
+    onSelect: () => {
+      renameValue.value = recipe.value?.name ?? ''
+      isRenameOpen.value = true
+    },
+  },
+  {
+    label: 'Rezept löschen',
+    icon: 'i-lucide-trash-2',
+    color: 'error' as const,
+    onSelect: () => {
+      isDeleteOpen.value = true
+    },
+  },
+]])
 
 useHead({ title: () => `${recipe.value?.name ?? 'Rezept'} ~ shliste` })
 
@@ -83,6 +110,22 @@ function onToggleStep(step: RecipeStep): void {
 function onRemoveIngredient(ingredient: RecipeIngredient): void {
   mutate(removeIngredient(ingredient))
 }
+
+function submitRename(): void {
+  const name = renameValue.value.trim()
+  if (name.length === 0) return
+
+  isRenameOpen.value = false
+  mutate(renameRecipe(name))
+}
+
+async function confirmDelete(): Promise<void> {
+  isDeleteOpen.value = false
+  await deleteRecipe()
+  await reloadOverview()
+  scheduleSync()
+  await navigateTo('/app/recipes')
+}
 </script>
 
 <template>
@@ -110,6 +153,16 @@ function onRemoveIngredient(ingredient: RecipeIngredient): void {
         <h1 class="min-w-0 grow text-[2.25rem] leading-9 font-extrabold">
           {{ recipe?.name ?? 'Rezept' }}
         </h1>
+
+        <UDropdownMenu :items="menuItems">
+          <UButton
+            icon="i-lucide-ellipsis-vertical"
+            color="neutral"
+            variant="ghost"
+            class="shrink-0 rounded-full"
+            aria-label="Weitere Aktionen"
+          />
+        </UDropdownMenu>
       </div>
 
       <div
@@ -127,6 +180,66 @@ function onRemoveIngredient(ingredient: RecipeIngredient): void {
         />
       </div>
     </header>
+
+    <AppSheet
+      v-model:open="isRenameOpen"
+      title="Rezept umbenennen"
+      description="Wie soll es heissen?"
+    >
+      <UInput
+        v-model="renameValue"
+        size="xl"
+        autofocus
+        :ui="{ root: 'w-full' }"
+        @keyup.enter="submitRename"
+      />
+
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            class="font-bold"
+            @click="isRenameOpen = false"
+          >
+            Abbrechen
+          </UButton>
+          <UButton
+            :disabled="renameValue.trim().length === 0"
+            class="font-bold"
+            @click="submitRename"
+          >
+            Speichern
+          </UButton>
+        </div>
+      </template>
+    </AppSheet>
+
+    <AppSheet
+      v-model:open="isDeleteOpen"
+      title="Rezept löschen"
+      description="Zutaten und Zubereitung verschwinden mit."
+    >
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            class="font-bold"
+            @click="isDeleteOpen = false"
+          >
+            Abbrechen
+          </UButton>
+          <UButton
+            color="error"
+            class="font-bold"
+            @click="confirmDelete"
+          >
+            Löschen
+          </UButton>
+        </div>
+      </template>
+    </AppSheet>
 
     <div class="flex grow flex-col gap-6 px-3 py-4 lg:min-h-0 lg:overflow-y-auto lg:px-5">
       <!-- Zutaten -->
