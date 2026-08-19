@@ -1,94 +1,106 @@
 import svgLoader from 'vite-svg-loader'
 
 export default defineNuxtConfig({
-  modules: ['@nuxt/ui', '@nuxt/eslint', '@pinia/nuxt', '@nuxtjs/seo'],
-  ssr: false,
+  modules: [
+    '@nuxt/ui',
+    '@nuxt/eslint',
+    '@nuxt/fonts',
+    '@pinia/nuxt',
+    '@nuxtjs/seo',
+  ],
+
+  // SSR bleibt an: der Nitro-Server wird ohnehin gebraucht, weil er das
+  // APP_SECRET haelt und die Anfragen an api.shliste.app signiert.
+  // Die App-Seiten selbst rendern client-seitig (siehe routeRules) — ihre Daten
+  // liegen offline-first in IndexedDB und existieren auf dem Server gar nicht.
+  ssr: true,
+
   devtools: { enabled: false },
+
   app: {
     head: {
       title: 'shliste ~ Deine smarte Einkaufsliste',
-      htmlAttrs: {
-        lang: 'de',
-      },
+      htmlAttrs: { lang: 'de' },
       meta: [
-        { name: 'description', content: 'Erstelle und verwalte mühelos deine Einkaufslisten mit shliste. Pack Produkte ein, hake sie ab und behalte immer den Überblick beim Shoppen!' },
-        { name: 'theme-color', content: '#FCE7F3' },
+        { name: 'description', content: 'Erstelle und verwalte muehelos deine Einkaufslisten mit shliste. Pack Produkte ein, hake sie ab und behalte immer den Ueberblick beim Shoppen!' },
+        // Entspricht --color-secondary aus dem Android-Farbschema (SecondaryColor)
+        { name: 'theme-color', content: '#FDECF5' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
       ],
       link: [
-        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'anonymous' },
-        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Zain:wght@200;300;400;700;800;900&display=swap' },
-        { rel: 'manifest', href: '/manifest.json' },
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
-      ],
-      script: [
-        { src: '/initSw.js' },
       ],
     },
   },
-  css: [
-    '@/assets/css/main.scss',
-  ],
+
+  css: ['~/assets/css/main.css'],
+
   site: {
     indexable: true,
     url: 'https://shliste.app',
   },
+
+  // Start-Vibe Light. Dark Mode bleibt als Feature erhalten, ist aber nie
+  // der Initialzustand ohne gespeicherte Praeferenz.
   colorMode: {
     preference: 'light',
   },
+
   runtimeConfig: {
-    environment: process.env.NUXT_ENVIRONMENT,
-    google: {
-      client: {
-        id: process.env.NUXT_GOOGLE_CLIENT_ID,
-        secret: process.env.NUXT_GOOGLE_CLIENT_SECRET,
-        redirectUri: process.env.NUXT_GOOGLE_REDIRECT_URI,
-      },
+    // NUR serverseitig. Landet niemals im Client-Bundle — alles unterhalb von
+    // `public` wuerde beim Build ins Browser-Bundle inlined und waere damit
+    // fuer jeden Besucher lesbar, unabhaengig davon ob das Repo public ist.
+    apiBase: process.env.NUXT_API_BASE || 'https://api.shliste.app',
+    appSecret: process.env.NUXT_APP_SECRET || '',
+
+    public: {
+      // Nur fuer die direkte SSE-Verbindung des Browsers zum Stream-Endpunkt.
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'https://api.shliste.app',
+      // Oeffentliche Google-Client-ID (kein Geheimnis). Muss identisch zu
+      // GOOGLE_CLIENT_ID der API sein, sonst scheitert die aud-Pruefung.
+      googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID || '',
     },
-    openai: {
-      apiKey: process.env.NUXT_OPENAI_API_KEY,
-    },
   },
-  build: {
-    transpile: ['tailwindcss'],
+
+  routeRules: {
+    // Oeffentliche Seiten werden vorgerendert: gut fuer SEO und First Paint.
+    '/': { prerender: true },
+    '/impressum': { prerender: true },
+    '/datenschutz': { prerender: true },
+    // Der App-Bereich rendert ausschliesslich im Client — seine Daten liegen
+    // in IndexedDB und sind auf dem Server nicht vorhanden.
+    '/app/**': { ssr: false },
   },
-  future: {
-    compatibilityVersion: 4,
-  },
-  compatibilityDate: '2024-09-10',
+
+  future: { compatibilityVersion: 4 },
+  compatibilityDate: '2026-08-19',
+
   nitro: {
-    publicAssets: [
-      {
-        baseURL: '/server',
-        dir: 'static',
-      },
-    ],
     preset: 'bun',
   },
+
   vite: {
-    plugins: [
-      svgLoader({}),
-    ],
+    plugins: [svgLoader({})],
     build: {
-      sourcemap: true,
-      minify: 'terser',
+      // Keine Sourcemaps in Produktion: sie geben den Quelltext preis und
+      // kosten Bandbreite, ohne dass sie jemand auswertet.
+      sourcemap: false,
       cssCodeSplit: true,
-      terserOptions: {
-        compress: {
-          drop_console: true,
-          drop_debugger: true,
-        },
-      },
     },
-    cacheDir: '.vite',
   },
+
   eslint: {
-    config: {
-      stylistic: true,
-    },
+    config: { stylistic: true },
   },
-  seo: {
-    enabled: true,
+
+  // Zain wird selbst gehostet statt per Link von Google geladen: eine
+  // Offline-PWA darf nicht auf einen fremden Host angewiesen sein, und
+  // @nuxt/fonts legt passende Fallback-Metriken an, was CLS verhindert.
+  fonts: {
+    families: [
+      { name: 'Zain', provider: 'google', weights: [200, 300, 400, 700, 800, 900] },
+    ],
   },
+
+  seo: { enabled: true },
 })

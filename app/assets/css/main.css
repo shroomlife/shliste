@@ -1,0 +1,187 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+/*
+ * Design-Tokens — 1:1 aus dem Android-Quellcode uebernommen, nicht geschaetzt.
+ * Quellen: ui/theme/Color.kt, ui/theme/Theme.kt, ui/theme/Type.kt,
+ *          ui/theme/SemanticColors.kt, utils/ColorUtils.kt
+ *
+ * Bewusste Abweichung: Android laeuft mit dynamicColor = true, also ab Android 12
+ * in der Wallpaper-Palette (Material You). Das gibt es im Web nicht. Die PWA
+ * benutzt deshalb die Marken-Palette — das Fallback-Schema von Android — und ist
+ * damit sogar markentreuer als die App auf den meisten Geraeten.
+ */
+
+@theme {
+  /* --- Schrift ---------------------------------------------------------
+   * Zain laeuft schmal und hoch. Der Android-Quellcode haelt ausdruecklich
+   * fest: "18sp Zain wirkt etwa wie 14sp Roboto". Die Groessen liegen deshalb
+   * durchweg ueber den ueblichen Web-Werten. Nicht auf text-sm/text-base
+   * zurueckdrehen, sonst wirkt die App winzig.
+   * Verfuegbare Gewichte: 200/300/400/700/800/900 — kein 500, kein 600.
+   */
+  --font-sans: "Zain", "Trebuchet MS", ui-sans-serif, system-ui, sans-serif;
+
+  /* Typo-Skala, uebernommen aus AppTypography */
+  --text-label-small: 0.75rem;    /* 12 */
+  --text-label-medium: 0.9375rem; /* 15 */
+  --text-body-small: 1rem;        /* 16 */
+  --text-title-small: 1.125rem;   /* 18 */
+  --text-body-medium: 1.25rem;    /* 20 */
+  --text-title-medium: 1.25rem;   /* 20 */
+  --text-title-large: 1.375rem;   /* 22 */
+  --text-body-large: 1.5rem;      /* 24 */
+  --text-headline-small: 1.625rem;/* 26 */
+  --text-headline-medium: 1.875rem;/* 30 */
+  --text-display-large: 2rem;     /* 32 */
+  --text-headline-large: 2.25rem; /* 36 */
+
+  /* --- Radien ----------------------------------------------------------
+   * Android hat keine Shapes.kt; die Werte stehen inline. Dominant sind
+   * 8 und 12, groessere Flaechen nutzen 16/20/24.
+   */
+  --radius-sm: 0.5rem;   /* 8  */
+  --radius-md: 0.75rem;  /* 12 */
+  --radius-lg: 1rem;     /* 16 */
+  --radius-xl: 1.25rem;  /* 20 */
+  --radius-2xl: 1.5rem;  /* 24 */
+
+  /* --- Marke ----------------------------------------------------------- */
+  --color-brand: #E064B2;      /* PrimaryColor   — identisch zum Web-Logo */
+  --color-brand-soft: #FDECF5; /* SecondaryColor — identisch zum Header   */
+  --color-mint: #7FD1AE;       /* MainGreen                                */
+}
+
+/*
+ * Material-3-Rollen als CSS-Variablen. Light ist der Initialzustand
+ * (Start-Vibe Light), Dark wird ueber .dark ergaenzt.
+ */
+:root {
+  --md-primary: #E064B2;
+  --md-on-primary: #FFFFFF;
+  --md-primary-container: #FFD8EC;
+  --md-on-primary-container: #3B0021;
+
+  --md-secondary: #FDECF5;
+  --md-on-secondary: #3B0021;
+  --md-secondary-container: #FBE0EF;
+  --md-on-secondary-container: #3B0021;
+
+  --md-tertiary: #B84C8F;
+  --md-on-tertiary: #FFFFFF;
+  --md-tertiary-container: #F7D6E9;
+  --md-on-tertiary-container: #3A0022;
+
+  --md-background: #FFFFFF;
+  --md-on-background: #1E1E1E;
+  --md-surface: #FDFDFD;
+  --md-on-surface: #1E1E1E;
+  --md-surface-variant: #F7EDF3;
+  --md-on-surface-variant: #6B5A64;
+
+  /* Die fuenf Stufen sind die M3-Elevationsleiter und tragen im Web die
+     Flaechenhierarchie — Android ist fast schattenlos (shadowElevation 1dp). */
+  --md-surface-lowest: #FFFFFF;
+  --md-surface-low: #FDF7FA;
+  --md-surface-container: #FAF1F6;
+  --md-surface-high: #F5E9F1;
+  --md-surface-highest: #F0E2EB;
+
+  --md-outline: #DDDDDD;
+  --md-outline-variant: #EBD9E4;
+
+  /* Semantische Farben aus SemanticColors.kt */
+  --md-check-surface: #EFFAF5;
+  --md-check-content: #2D9C74;
+  --md-undo-surface: #FFF7ED;
+  --md-undo-content: #F97316;
+  --md-delete-surface: #FDECF5;
+  --md-delete-content: #F53F96;
+  --md-muted-surface: #E6E2E4;
+  --md-sync-success: #2E7D32;
+  --md-sync-warning: #EF6C00;
+
+  /* Delta-Flash: Anteil, um den der Zeilenhintergrund Richtung primary
+     interpoliert wird, wenn ein anderes Geraet die Zeile geaendert hat. */
+  --md-delta-peak: 12%;
+}
+
+.dark {
+  --md-primary: #FF8CCB;
+  --md-on-primary: #3B0021;
+  --md-primary-container: #5C2440;
+  --md-on-primary-container: #FFD8EC;
+
+  --md-secondary: #402438;
+  --md-on-secondary: #FDECF5;
+  --md-secondary-container: #4A2A3F;
+  --md-on-secondary-container: #FBE0EF;
+
+  --md-tertiary: #E490C3;
+  --md-on-tertiary: #3A0022;
+  --md-tertiary-container: #64304F;
+  --md-on-tertiary-container: #F7D6E9;
+
+  --md-background: #121212;
+  --md-on-background: #EDEDED;
+  --md-surface: #1E1E1E;
+  --md-on-surface: #EDEDED;
+  --md-surface-variant: #2A2028;
+  --md-on-surface-variant: #CBBCC5;
+
+  --md-surface-lowest: #0E0E0E;
+  --md-surface-low: #1A1A1A;
+  --md-surface-container: #221E21;
+  --md-surface-high: #2C262B;
+  --md-surface-highest: #372F35;
+
+  --md-outline: #5E5E5E;
+  --md-outline-variant: #3D343A;
+
+  --md-check-surface: #16302A;
+  --md-check-content: #6FD3AA;
+  --md-undo-surface: #33261A;
+  --md-undo-content: #FFB067;
+  --md-delete-surface: #33202B;
+  --md-delete-content: #FF8FC4;
+  --md-muted-surface: #332E31;
+  --md-sync-success: #81C784;
+  --md-sync-warning: #FFB74D;
+
+  --md-delta-peak: 20%;
+}
+
+body {
+  background: var(--md-background);
+  color: var(--md-on-background);
+}
+
+/*
+ * Listenfarben sind echtes Zufalls-RGB (r+g+b zwischen 100 und 700) und werden
+ * als 20-Prozent-Lasur eingesetzt, nie voll gesaettigt — genau deshalb wirken
+ * auch stumpfe Zufallswerte ruhig. Entspricht ColorUtils.colorWith20Opacity.
+ * Die Elemente setzen --list-color, den Rest macht diese Utility.
+ */
+@utility list-tint {
+  background-color: color-mix(in srgb, var(--list-color, var(--md-primary)) 20%, transparent);
+}
+
+/*
+ * Der eine orchestrierte Bewegungsmoment: eine Zeile, die gerade von einem
+ * anderen Geraet geaendert wurde. Akzentleiste links plus Hintergrund, der
+ * Richtung primary interpoliert und wieder zurueckfaellt. Spezifikation aus
+ * SemanticColors.deltaFlashSurface.
+ */
+@keyframes delta-flash {
+  from { background-color: color-mix(in srgb, var(--md-primary) var(--md-delta-peak), var(--md-surface)); }
+  to   { background-color: var(--md-surface); }
+}
+
+@utility delta-flash {
+  animation: delta-flash 2s ease-out both;
+  box-shadow: inset 3px 0 0 0 var(--md-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delta-flash { animation: none; }
+}
