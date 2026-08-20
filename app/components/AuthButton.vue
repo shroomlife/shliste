@@ -11,7 +11,26 @@ import type { DropdownMenuItem } from '@nuxt/ui'
  *
  * Das Skript von Google wird erst beim Klick nachgeladen und nie auf dem
  * Server: Es taugt dort nicht (es braucht `document`), und eine App, die man
- * ohne Konto benutzt, soll für einen Besuch keine fremde Verbindung öffnen.
+ * ohne Konto benutzt, soll für einen blossen Besuch keine fremde Verbindung
+ * öffnen.
+ *
+ * WARUM EIN DIALOG UND NICHT DER KNOPF DIREKT — der wichtigste Punkt hier:
+ * Google kennt zwei Wege zum ID-Token. `prompt()` ist One Tap, das beiläufige
+ * Fenster oben rechts. Google dokumentiert ausdrücklich, dass es NICHT
+ * verlässlich erscheint: Wer es dreimal wegklickt, sieht es eine Woche lang
+ * nicht mehr (danach vier Wochen), und wer "Anmeldung bei Drittanbietern" im
+ * Browser abschaltet, sieht es nie. Ein Anmeldeknopf, der daran hängt, tut bei
+ * genau diesen Leuten scheinbar nichts — der klassische Fehler, den hinterher
+ * niemand nachstellen kann.
+ *
+ * Der dokumentierte Weg für eine ausdrückliche Anmeldung ist `renderButton()`,
+ * Googles eigener Knopf. Der erscheint immer, muss aber gezeichnet werden und
+ * braucht dafür Platz: Die Icon-Rail ist 84 Pixel breit, die Kopfzeile auf dem
+ * Handy kaum mehr. Deshalb öffnet unser Knopf einen Dialog, und darin steht
+ * Googles Knopf in voller Grösse.
+ *
+ * One Tap fehlt damit bewusst. Sein einziger Vorteil ist das ungefragte
+ * Erscheinen beim Seitenaufruf — und genau das wollen wir nicht, siehe oben.
  *
  * Das ID-Token wird hier nur entgegengenommen und weitergereicht. Geprüft wird
  * es von api.shliste.app (Signatur, Aussteller, aud) — eine Prüfung im Browser
@@ -24,9 +43,19 @@ interface GoogleCredentialResponse {
   credential: string
 }
 
-interface GooglePromptNotification {
-  isSkippedMoment: () => boolean
-  isDismissedMoment: () => boolean
+/**
+ * Die Optionen von `renderButton`, beschränkt auf das, was hier gesetzt wird.
+ * Die Breite ist laut Google auf 400 Pixel gedeckelt.
+ */
+interface GoogleButtonOptions {
+  type: 'standard' | 'icon'
+  theme: 'outline' | 'filled_blue' | 'filled_black'
+  size: 'small' | 'medium' | 'large'
+  text: 'signin_with' | 'signup_with' | 'continue_with' | 'signin'
+  shape: 'rectangular' | 'pill' | 'circle' | 'square'
+  logo_alignment: 'left' | 'center'
+  width: number
+  locale: string
 }
 
 interface GoogleIdentityApi {
@@ -35,15 +64,19 @@ interface GoogleIdentityApi {
       initialize: (config: {
         client_id: string
         callback: (response: GoogleCredentialResponse) => void
-        cancel_on_tap_outside?: boolean
+        use_fedcm_for_button: boolean
       }) => void
-      prompt: (listener?: (notification: GooglePromptNotification) => void) => void
+      renderButton: (parent: HTMLElement, options: GoogleButtonOptions) => void
       disableAutoSelect: () => void
     }
   }
 }
 
 const GOOGLE_SCRIPT_SRC = 'https://accounts.google.com/gsi/client'
+
+/** Grenzen, die Google für die Knopfbreite vorgibt beziehungsweise verträgt. */
+const BUTTON_MIN_WIDTH = 200
+const BUTTON_MAX_WIDTH = 400
 
 /**
  * Engt das globale `google` ein, statt es zu casten.
@@ -62,7 +95,7 @@ function isGoogleIdentityApi(value: unknown): value is GoogleIdentityApi {
   if (typeof id !== 'object' || id === null) return false
 
   return 'initialize' in id && typeof id.initialize === 'function'
-    && 'prompt' in id && typeof id.prompt === 'function'
+    && 'renderButton' in id && typeof id.renderButton === 'function'
     && 'disableAutoSelect' in id && typeof id.disableAutoSelect === 'function'
 }
 
@@ -74,14 +107,6 @@ function readGoogleIdentityApi(): GoogleIdentityApi | null {
   return isGoogleIdentityApi(candidate) ? candidate : null
 }
 
-// NICHT aus `runtimeConfig.public`: Der App-Bereich wird vorgerendert, und
-// dabei wird die oeffentliche Konfiguration zur Bauzeit eingebacken — im
-// Docker-Build, wo keine Umgebungsvariablen stehen. Genau daran ist der Knopf
-// in Produktion haengen geblieben. Der Wert kommt jetzt vom Server (siehe
-// server/api/auth/me.get.ts).
-const clientId = computed(() => clientConfig.value.googleClientId)
-const hasClientId = computed(() => clientId.value.length > 0)
-
 /**
  * `compact` lässt die Beschriftung weg. Die Icon-Rail auf dem Desktop ist nur
  * 84 Pixel breit — ein beschrifteter Knopf ragt dort heraus und wird
@@ -92,12 +117,30 @@ const { compact = false } = defineProps<{ compact?: boolean }>()
 const { profile, clientConfig, isSignedIn, signIn, signOut } = useAuth()
 const toast = useToast()
 
+// NICHT aus `runtimeConfig.public`: Der App-Bereich wird vorgerendert, und
+// dabei wird die öffentliche Konfiguration zur Bauzeit eingebacken — im
+// Docker-Build, wo keine Umgebungsvariablen stehen. Genau daran ist der Knopf
+// in Produktion hängen geblieben. Der Wert kommt jetzt vom Server (siehe
+// server/api/auth/me.get.ts).
+const clientId = computed(() => clientConfig.value.googleClientId)
+const hasClientId = computed(() => clientId.value.length > 0)
+
+/** Der Anmeldedialog mit Googles Knopf darin. */
+const isDialogOpen = ref(false)
+
+/** Läuft gerade der Tausch des ID-Tokens gegen eine Sitzung? */
+const isExchanging = ref(false)
+
 /**
- * Läuft gerade ein Anmeldeversuch? Getrennt von `isLoading` aus `useAuth`,
- * weil dazu auch die Zeit gehört, in der Googles Dialog offen steht — da läuft
- * noch keine einzige eigene Anfrage.
+ * Wohin Google seinen Knopf zeichnet.
+ *
+ * Existiert erst, wenn der Dialog offen ist: Sowohl `UModal` als auch
+ * `UDrawer` hängen ihren Inhalt beim Öffnen in den DOM.
  */
-const isSigningIn = ref(false)
+const buttonHost = useTemplateRef<HTMLElement>('buttonHost')
+
+/** Konnte der Knopf nicht gezeichnet werden, steht hier der Grund für den Nutzer. */
+const renderError = ref<string | null>(null)
 
 /**
  * Das laufende Laden des Skripts. Liegt im Setup und damit je Komponente vor:
@@ -159,10 +202,28 @@ function loadGoogleIdentity(): Promise<GoogleIdentityApi> {
   return pending
 }
 
-async function startSignIn(): Promise<void> {
-  if (!hasClientId.value || isSigningIn.value) return
+/**
+ * Googles Knopf verlangt eine Breite in Pixeln, keine Prozentangabe.
+ *
+ * Sie wird deshalb am tatsächlich vorhandenen Platz gemessen und in Googles
+ * Grenzen gehalten. Stünde hier eine feste Zahl, liefe sie auf einem schmalen
+ * Handy über den Rand.
+ */
+function measureButtonWidth(host: HTMLElement): number {
+  const available = Math.round(host.getBoundingClientRect().width)
+  if (available <= 0) return BUTTON_MIN_WIDTH
+  return Math.min(BUTTON_MAX_WIDTH, Math.max(BUTTON_MIN_WIDTH, available))
+}
 
-  isSigningIn.value = true
+/**
+ * Zeichnet Googles Knopf in den geöffneten Dialog.
+ *
+ * Ausgelöst über einen Watcher auf das Ziel-Element und nicht direkt im Klick:
+ * Im Moment des Klicks existiert das Element noch gar nicht.
+ */
+async function renderGoogleButton(host: HTMLElement): Promise<void> {
+  renderError.value = null
+
   try {
     const identity = await loadGoogleIdentity()
 
@@ -171,36 +232,60 @@ async function startSignIn(): Promise<void> {
       callback: (response) => {
         void completeSignIn(response)
       },
-      // Ein Klick daneben soll den Dialog nicht wegnehmen: Wer den Knopf
-      // gedrückt hat, will sich anmelden.
-      cancel_on_tap_outside: false,
+      /*
+       * FedCM ist der Weg, auf den Google alle Anmeldungen umstellt: Nicht
+       * mehr Google zeigt das Fenster, sondern der Browser selbst — ohne
+       * Drittanbieter-Cookies. Chrome hat die Umstellung im April 2024
+       * begonnen und schaltet sie am Ende verbindlich.
+       *
+       * Wir stellen freiwillig vorher um, statt das Datum abzuwarten. Zwei
+       * Gründe: Wer wiederkommt, sieht seinen Namen auch dann noch auf dem
+       * Knopf, wenn der Browser Drittanbieter-Cookies blockiert (ohne FedCM
+       * fällt genau das weg), und die einmalige Neubestätigung, die FedCM je
+       * Browser verlangt, verteilt sich so über Monate statt alle an einem Tag
+       * zu treffen.
+       */
+      use_fedcm_for_button: true,
     })
 
-    identity.accounts.id.prompt((notification) => {
-      // Seit der Umstellung auf FedCM meldet der Rückruf keinen Anzeigegrund
-      // mehr. Mehr als "es geht gerade nicht weiter" ist daraus nicht
-      // abzuleiten, und genau darauf beschränkt sich die Reaktion: den Knopf
-      // wieder freigeben, damit er nicht endlos lädt.
-      if (notification.isSkippedMoment() || notification.isDismissedMoment()) {
-        isSigningIn.value = false
-      }
+    // Beim erneuten Öffnen stünden sonst zwei Knöpfe übereinander.
+    host.replaceChildren()
+
+    identity.accounts.id.renderButton(host, {
+      type: 'standard',
+      theme: 'filled_blue',
+      size: 'large',
+      text: 'signin_with',
+      shape: 'pill',
+      logo_alignment: 'left',
+      width: measureButtonWidth(host),
+      // Fest auf Deutsch: Ohne Angabe richtet sich Google nach dem Konto des
+      // Besuchers, und der Knopf bekäme je nach Sprache eine andere Breite.
+      locale: 'de',
     })
   }
   catch (error) {
-    isSigningIn.value = false
-    reportFailure('Anmeldung nicht möglich', error)
+    console.warn('[AuthButton] Googles Anmeldeknopf konnte nicht gezeichnet werden:', error)
+    renderError.value = 'Der Anmeldeknopf von Google liess sich nicht laden. Prüfe die Verbindung und versuche es noch einmal.'
   }
 }
 
+watch(buttonHost, (host) => {
+  if (host === null || host === undefined) return
+  void renderGoogleButton(host)
+})
+
 async function completeSignIn(response: GoogleCredentialResponse): Promise<void> {
+  isExchanging.value = true
   try {
     await signIn(response.credential)
+    isDialogOpen.value = false
   }
   catch (error) {
     reportFailure('Anmeldung fehlgeschlagen', error)
   }
   finally {
-    isSigningIn.value = false
+    isExchanging.value = false
   }
 }
 
@@ -258,21 +343,59 @@ function reportFailure(title: string, error: unknown): void {
     </UButton>
   </UDropdownMenu>
 
-  <UButton
-    v-else
-    icon="i-lucide-log-in"
-    color="neutral"
-    variant="subtle"
-    :square="compact"
-    :aria-label="compact ? 'Anmelden' : undefined"
-    class="rounded-xl font-bold"
-    :loading="isSigningIn"
-    :disabled="!hasClientId"
-    :title="hasClientId
-      ? 'Mit Google anmelden, um zwischen Geräten abzugleichen'
-      : 'Anmelden ist hier nicht eingerichtet (NUXT_PUBLIC_GOOGLE_CLIENT_ID fehlt).'"
-    @click="startSignIn"
-  >
-    <span v-if="!compact">Anmelden</span>
-  </UButton>
+  <template v-else>
+    <UButton
+      icon="i-lucide-log-in"
+      color="neutral"
+      variant="subtle"
+      :square="compact"
+      :aria-label="compact ? 'Anmelden' : undefined"
+      class="rounded-xl font-bold"
+      :disabled="!hasClientId"
+      :title="hasClientId
+        ? 'Mit Google anmelden, um zwischen Geräten abzugleichen'
+        : 'Anmelden ist auf diesem Server nicht eingerichtet.'"
+      @click="isDialogOpen = true"
+    >
+      <span v-if="!compact">Anmelden</span>
+    </UButton>
+
+    <AppSheet
+      v-model:open="isDialogOpen"
+      title="Anmelden"
+      description="Mit einem Google-Konto gleichst du deine Listen zwischen Geräten ab und kannst sie teilen."
+    >
+      <div class="flex flex-col items-center gap-4 py-2">
+        <!-- Googles eigener Knopf wird hier hineingezeichnet. Der Rahmen bleibt
+             absichtlich leer: Was darin steht, bestimmt Google. -->
+        <div
+          ref="buttonHost"
+          class="flex w-full max-w-100 justify-center"
+        />
+
+        <p
+          v-if="isExchanging"
+          class="text-center text-[0.9375rem]"
+          style="color: var(--md-on-surface-variant)"
+        >
+          Einen Moment, die Sitzung wird eingerichtet …
+        </p>
+
+        <UAlert
+          v-else-if="renderError !== null"
+          color="error"
+          variant="subtle"
+          icon="i-lucide-triangle-alert"
+          :description="renderError"
+        />
+
+        <p
+          class="text-center text-[0.9375rem]"
+          style="color: var(--md-on-surface-variant)"
+        >
+          Ohne Konto bleibt die App vollständig nutzbar — deine Listen liegen dann nur auf diesem Gerät.
+        </p>
+      </div>
+    </AppSheet>
+  </template>
 </template>

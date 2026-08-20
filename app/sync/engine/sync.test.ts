@@ -68,6 +68,8 @@ interface FakeSyncStore extends SyncStore, ConflictStore {
   /** Mitschrift der Konfliktauflösung. */
   clearedDeleted: number
   wiped: number
+  /** Listen, die der Pull als entzogen gemeldet und entfernt hat. */
+  removed: string[]
 }
 
 function fakeSyncStore(options: {
@@ -94,6 +96,7 @@ function fakeSyncStore(options: {
     pending: options.pending ?? 0,
     clearedDeleted: 0,
     wiped: 0,
+    removed: [],
     readDirty: () => Promise.resolve({ ...emptyDirty(), ...options.dirty }),
     clearDirty: () => Promise.resolve(),
     replaceMembers: (_listId: string, _members: readonly ListMember[]) => Promise.resolve(),
@@ -117,6 +120,10 @@ function fakeSyncStore(options: {
     wipeLocalData: () => {
       store.wiped += 1
       store.cursor = null
+      return Promise.resolve()
+    },
+    removeList: (listId) => {
+      store.removed.push(listId)
       return Promise.resolve()
     },
   }
@@ -371,6 +378,22 @@ describe('createSyncEngine — Push und Pull', () => {
     // Trotz gelungenem Pull kein "alles gut": Es liegt etwas ungesendet herum.
     expect(state.get().phase).toBe('error')
     expect(state.get().message).toContain('abgelehnt')
+  })
+
+  test('eine entzogene Liste aus der Pull-Antwort wird endgültig entfernt', async () => {
+    // Der Weg vom Feld `revokedListIds` bis zum harten Löschpfad, einmal
+    // durchgezogen: Kein Grabstein, denn der ginge beim nächsten Push als
+    // Löschabsicht zurück und zerstörte die Liste für die übrigen Mitglieder.
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/push': () => PUSH_OK,
+      '/api/sync/pull': () => ({ ...PULL_OK, revokedListIds: ['l9'] }),
+    })
+    const store = fakeSyncStore()
+
+    await createSyncEngine({ store, state: createSyncStateStore(), request }).sync()
+
+    expect(store.removed).toEqual(['l9'])
   })
 
   test('ein Rate-Limit reicht die Wartezeit an die Oberfläche durch', async () => {

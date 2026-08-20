@@ -208,13 +208,12 @@ export function applyAddWins(
   // Der Marker braucht einen nicht-leeren Zeitstempel: Ohne ihn ist unbekannt,
   // wann gelöscht wurde, und "danach bearbeitet" liesse sich nicht belegen.
   //
-  // BEKANNTE ABWEICHUNG ANDROID: `FieldTimestampManager.applyAddWins` prüft an
-  // dieser Stelle nur auf `!= null`. Ein LEERER Marker-Zeitstempel ("") kommt
-  // dort also durch, wird zu null geparst und gilt dann als "älter als alles" —
-  // die Zeile wird wiederhergestellt, während API und Web sie gelöscht lassen.
-  // Erreichbar ist das nur, wenn eine gelöschte Zeile gar keinen
-  // deletedAt-Zeitstempel trägt. Hier gilt bewusst die API-Fassung, weil sie
-  // die massgebliche ist; die Abweichung gehört im Android-Client behoben.
+  // Hier lief Android bis zum 20.08.2026 auseinander: `applyAddWins` prüfte dort
+  // nur auf `!= null`, liess den leeren String durch und stellte die Zeile
+  // wieder her, während API und Web sie gelöscht liessen. Behoben, und seither
+  // durch den Fixture-Fall "gelöschte Zeile ohne deletedAt-Zeitstempel bleibt
+  // gelöscht" abgesichert, der in allen drei Repos läuft. Nicht wieder auf eine
+  // reine null-Prüfung zurückbauen.
   const deletedAtTs = mergedTimestamps['deletedAt']
   if (mergedValues['deletedAt'] != null && deletedAtTs && hasLaterContentEdit(deletedAtTs)) {
     mergedValues['deletedAt'] = null

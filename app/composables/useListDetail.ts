@@ -16,7 +16,7 @@
  */
 import type { ListItem } from '../../shared/types/domain'
 import { getItemsForList, getList, upsertItem, upsertList, type Draft } from '../db/repositories'
-import { planMoveTo } from '../sync/merge/reorder'
+import { nextSortKey, planMoveTo } from '../sync/merge/reorder'
 import { nowIso } from '../db/timestamps'
 import type { ListItemRow, ListRow } from '../db/schema'
 
@@ -59,9 +59,10 @@ export function groupByChecked<T extends { readonly checked: boolean }>(items: r
 /**
  * Der Ordnungswert für einen neuen Eintrag: hinter allen bestehenden.
  *
- * Neue Einträge bekommen keinen Sortierschlüssel (`sortKey: null`) — den
- * vergibt erst das Umsortieren von Hand. `compareByManualOrder` reiht Zeilen
- * ohne Schlüssel nach `orderIndex` ein, und deshalb muss dieser Wert stimmen.
+ * Bleibt neben dem Sortierschlüssel bestehen: `orderIndex` ist die
+ * Rückfallordnung für Zeilen ohne Schlüssel (siehe `compareByManualOrder`),
+ * und die kann es weiterhin geben — auf anderen Geräten und in Daten, die vor
+ * der Einführung der Schlüssel entstanden sind.
  */
 export function nextOrderIndex(items: readonly { readonly orderIndex: number }[]): number {
   return items.reduce((highest, item) => Math.max(highest, item.orderIndex), -1) + 1
@@ -178,6 +179,11 @@ export function useListDetail() {
    * Gibt `null` zurück, wenn nichts angelegt wurde: bei leerem Namen und wenn
    * keine Liste geladen ist. Ein Eintrag ohne existierende Liste wäre eine
    * Waise, die beim Push niemandem zuzuordnen wäre.
+   *
+   * Der Sortierschlüssel entsteht sofort und nicht erst beim Umsortieren
+   * (Begründung in `nextSortKey`). Seinen Feld-Zeitstempel bekommt er dabei
+   * wie jedes andere Feld: `upsertItem` stempelt bei einer neuen Zeile alles,
+   * was übergeben wurde (`changedFields` in `db/repositories.ts`).
    */
   async function addItem(name: string, quantity: number = 1): Promise<ListItemRow | null> {
     const trimmed = name.trim()
@@ -192,7 +198,7 @@ export function useListDetail() {
       checked: false,
       removed: false,
       orderIndex: nextOrderIndex(items.value),
-      sortKey: null,
+      sortKey: nextSortKey(items.value),
       createdBy: null,
       modifiedBy: null,
       deletedAt: null,
@@ -231,17 +237,26 @@ export function useListDetail() {
   /**
    * Legt einen Eintrag an eine andere Stelle.
    *
-   * `group` ist die angezeigte Gruppe (offen oder erledigt) und `toIndex` die
-   * Zielposition darin — Einträge wechseln beim Ziehen nicht die Gruppe, das
-   * entscheidet allein das Häkchen.
+   * `toIndex` ist die Zielposition INNERHALB der angezeigten Gruppe (offen
+   * oder erledigt) — Einträge wechseln beim Ziehen nicht die Gruppe, das
+   * entscheidet allein das Häkchen. Gerechnet wird trotzdem auf der
+   * vollständigen Liste: Die Gruppen sind eine Sache der Anzeige, die
+   * Schlüssel gelten geräteübergreifend für die eine Liste (Begründung in
+   * `planMoveTo`).
    *
    * Geschrieben wird in aller Regel genau eine Zeile: Der Sortierschlüssel
    * ist ein Bruchindex und entsteht zwischen den beiden neuen Nachbarn. Nur
    * beim allerersten Umsortieren einer Liste bekommen alle Zeilen einen
    * (Begründung in `sync/merge/reorder.ts`).
    */
-  async function moveItemTo(group: readonly ListItemRow[], itemId: string, toIndex: number): Promise<void> {
-    const plan = planMoveTo(group, itemId, toIndex)
+  async function moveItemTo(itemId: string, toIndex: number): Promise<void> {
+    // Der Block, in dem gezogen wurde — offen oder erledigt. `toIndex` zählt
+    // darin, und nur darin steigen die Schlüssel an (Begründung in planMoveTo).
+    const moved = items.value.find(item => item.id === itemId)
+    if (moved === undefined) return
+    const group = items.value.filter(item => item.checked === moved.checked)
+
+    const plan = planMoveTo(items.value, group, itemId, toIndex)
     if (plan === null) return
 
     const byId = new Map(items.value.map(row => [row.id, row]))

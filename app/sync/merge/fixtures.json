@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "description": "Golden Fixtures für den Field-Level-LWW-Merge in Pull-Richtung (Server -> Gerät). Bewusst als JSON und nicht als TypeScript abgelegt, damit dieselben Fälle auch im API-Repo und perspektivisch im Android-Projekt gegen die dortige Implementierung laufen können. Jeder Fall beschreibt eine Zeile: den lokalen Stand (oder null), den Serverstand und das erwartete Merge-Ergebnis.",
+  "description": "Golden Fixtures für den Field-Level-LWW-Merge in Pull-Richtung (Server -> Gerät). Bewusst als JSON und nicht als TypeScript abgelegt, damit dieselben Fälle auch im API-Repo und im Android-Projekt gegen die dortige Implementierung laufen. Jeder Fall beschreibt eine Zeile: den lokalen Stand (oder null), den Serverstand und das erwartete Merge-Ergebnis. QUELLE DER WAHRHEIT ist shliste.app/app/sync/merge/fixtures.json. Weil die drei GitHub-Repos getrennt sind, liegt dieselbe Datei zusätzlich als wortgleiche Kopie in api.shliste.app/src/lib/fixtures.json und in android-app/app/src/test/resources/fixtures.json. Geändert oder ergänzt wird ausschliesslich die Quelle, danach werden beide Kopien neu gezogen. Jeder der drei Loader prüft schemaVersion und die Anzahl der Fälle, damit eine einseitig ergänzte Kopie sofort auffällt statt still zu driften.",
   "contract": {
     "comparison": "numerisch in Epoch-Millisekunden; fehlende und unparsbare Zeitstempel verlieren jeden Vergleich",
     "tie": "beim Pull gewinnt der Server (beim Push gewinnt serverseitig der Client - die Asymmetrie ist Absicht)",
@@ -420,6 +420,26 @@
       "expected": {
         "values": { "name": "geändert", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
         "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "dirty": true,
+        "restored": false
+      }
+    },
+    {
+      "name": "gelöschte Zeile ohne deletedAt-Zeitstempel bleibt gelöscht",
+      "why": "Der leere Marker. Trägt eine gelöschte Zeile keinen deletedAt-Zeitstempel, ist unbekannt, WANN gelöscht wurde, und 'danach bearbeitet' lässt sich nicht belegen. Genau hier lief Android auseinander: Die Prüfung stand dort auf != null statt auf 'nicht leer', der leere String kam durch, wurde zu null geparst und galt damit als älter als jeder Edit. Die Zeile kam auf Android zurück, während API und PWA sie gelöscht liessen.",
+      "entityType": "listItem",
+      "local": {
+        "dirty": true,
+        "values": { "name": "neu", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T11:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "alt", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": {}
+      },
+      "expected": {
+        "values": { "name": "neu", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "name": "2026-07-16T11:00:00.000Z", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "deletedAt": "" },
         "dirty": true,
         "restored": false
       }

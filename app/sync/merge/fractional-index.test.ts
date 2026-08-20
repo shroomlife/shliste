@@ -109,3 +109,33 @@ describe('generateNKeysBetween', () => {
     }
   })
 })
+
+describe('Kopfzeichen-Grenze Z nach a', () => {
+  /*
+   * REGRESSION: `incInt` sprang von 'Z' auf '[' statt auf 'a' und warf damit
+   * "Ungültiges Kopfzeichen". Erreichbar war das im Alltag — 'Zz' vergibt die
+   * Implementierung selbst, und danach warf jedes Anhängen.
+   *
+   * Der Fehler steckte gleichlautend in API, PWA und Android. Diese Fälle
+   * gehören deshalb in alle drei Testsuiten.
+   */
+  test('hängt hinter dem kleinsten Schlüssel an, statt zu werfen', () => {
+    expect(generateKeyBetween('Zz', null)).toBe('a0')
+  })
+
+  test('hält dabei die Reihenfolge ein', () => {
+    expect('Zz' < generateKeyBetween('Zz', null)).toBe(true)
+  })
+
+  test('überlebt wiederholtes Voranstellen über die Kopfzeichen-Grenze hinweg', () => {
+    let smallest = generateKeyBetween(null, null)
+    for (let step = 0; step < 70; step += 1) {
+      const next = generateKeyBetween(null, smallest)
+      expect(next < smallest).toBe(true)
+      // Nach jedem Schritt muss auch das Anhängen möglich bleiben.
+      expect(() => generateKeyBetween(next, null)).not.toThrow()
+      smallest = next
+    }
+    expect(smallest).toBe('ZN')
+  })
+})

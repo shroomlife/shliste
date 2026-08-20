@@ -78,7 +78,17 @@ function incInt(x: string): string {
   // Das Kopfzeichen wird von der Schleife nie angefasst (sie endet bei i === 1).
   const head = x.charAt(0)
   if (head === 'z') return 'z' + digitAt(BASE - 1)
-  const nextHead = String.fromCharCode(x.charCodeAt(0) + 1)
+  // 'Z' und 'a' grenzen im Schlüsselraum aneinander, im Zeichensatz aber NICHT:
+  // dazwischen liegen sechs Zeichen ('[' bis '`'). Ohne diesen Sprung rechnet die
+  // Zeile darunter 'Z' + 1 = '[' — kein gültiges Kopfzeichen, intLen wirft.
+  //
+  // Das ist im Alltag erreichbar: generateKeyBetween(null, 'a0') liefert selbst
+  // 'Zz', und wer danach etwas anhängt, landet genau hier. Nachgemessen: nach 32
+  // Voranstellungen ab dem Startschlüssel steht 'Zz' vorn.
+  //
+  // Die Referenzimplementierung hat diesen Sonderfall; beim Portieren ist er in
+  // allen drei Fassungen verlorengegangen. Nur gemeinsam ändern.
+  const nextHead = head === 'Z' ? 'a' : String.fromCharCode(x.charCodeAt(0) + 1)
   return nextHead + DIGITS.charAt(0).repeat(intLen(nextHead) - 1)
 }
 

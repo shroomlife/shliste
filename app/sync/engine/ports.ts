@@ -80,19 +80,14 @@ export interface PullStore {
 }
 
 /**
- * Was die Echtzeit-Auswertung zusätzlich zum Pull braucht.
+ * Der harte Löschpfad für Listen, die dieses Konto nicht mehr sieht.
  *
- * Die beiden Dirty-Abfragen entscheiden, ob ein Ereignis mit einem Delta
- * beantwortet werden darf: Liegt lokal eine ungesendete Änderung an derselben
- * Zeile, wäre ein Delta die halbe Wahrheit — es würde den Serverstand
- * hereinholen, ohne den eigenen hinauszugeben. In dem Fall gehört ein
- * vollständiger Lauf her, der erst pusht und dann zieht.
+ * Eigene Schnittstelle, weil ihn zwei voneinander unabhängige Wege brauchen:
+ * das Ereignis `list_removed` und das Feld `revokedListIds` der Pull-Antwort.
+ * Der Delta-Abruf braucht ihn nicht und bekommt ihn deshalb auch nicht — wer
+ * weniger sehen darf, kann weniger kaputt machen.
  */
-export interface RealtimeStore extends PullStore {
-  /** Ist die Liste selbst oder eine ihrer Positionen ungesendet? */
-  isListDirty: (listId: string) => Promise<boolean>
-  /** Ist das Rezept oder eines seiner Kinder ungesendet? */
-  isRecipeDirty: (recipeId: string) => Promise<boolean>
+export interface ListRemovalStore {
   /**
    * Entfernt eine Liste samt Kindern ENDGÜLTIG und ohne Grabstein.
    *
@@ -101,6 +96,22 @@ export interface RealtimeStore extends PullStore {
    * zerstören, obwohl dieses Konto sie nur nicht mehr sieht.
    */
   removeList: (listId: string) => Promise<void>
+}
+
+/**
+ * Was die Echtzeit-Auswertung zusätzlich zum Pull braucht.
+ *
+ * Die beiden Dirty-Abfragen entscheiden, ob ein Ereignis mit einem Delta
+ * beantwortet werden darf: Liegt lokal eine ungesendete Änderung an derselben
+ * Zeile, wäre ein Delta die halbe Wahrheit — es würde den Serverstand
+ * hereinholen, ohne den eigenen hinauszugeben. In dem Fall gehört ein
+ * vollständiger Lauf her, der erst pusht und dann zieht.
+ */
+export interface RealtimeStore extends PullStore, ListRemovalStore {
+  /** Ist die Liste selbst oder eine ihrer Positionen ungesendet? */
+  isListDirty: (listId: string) => Promise<boolean>
+  /** Ist das Rezept oder eines seiner Kinder ungesendet? */
+  isRecipeDirty: (recipeId: string) => Promise<boolean>
 }
 
 export interface LocalDataCounts {
@@ -144,5 +155,10 @@ export interface SessionStore {
   countPending: () => Promise<number>
 }
 
-/** Der vollständige Port, wie `sync.ts` ihn braucht. */
-export interface SyncStore extends PushStore, PullStore, SessionStore {}
+/**
+ * Der vollständige Port, wie `sync.ts` ihn braucht.
+ *
+ * `ListRemovalStore` ist dabei: Die Pull-Antwort nennt entzogene Listen, und
+ * `runPull` muss sie hart entfernen können (siehe `pull.ts`).
+ */
+export interface SyncStore extends PushStore, PullStore, SessionStore, ListRemovalStore {}

@@ -57,8 +57,12 @@ export function readNumberOr(source: Record<string, unknown>, key: string, fallb
  * Die API erlaubt beide Schreibweisen (`ISO_UTC_TIMESTAMP_PATTERN` in
  * `api.shliste.app/src/routes/sync/schemas.ts`), weil Javas
  * `Instant.toString()` die `.000` weglässt.
+ *
+ * Exportiert, weil der Push dasselbe Muster braucht: Was hereinkommt, wird
+ * daran geprüft, und was hinausgeht, muss ihm genügen (siehe `push.ts`). Zwei
+ * Abschriften desselben Vertrags wären zwei Gelegenheiten auseinanderzulaufen.
  */
-const API_ISO_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/
+export const API_ISO_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/
 
 /**
  * Liest einen Zeitstempel und normalisiert ihn auf GENAU drei

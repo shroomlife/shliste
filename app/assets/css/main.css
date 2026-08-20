@@ -301,3 +301,42 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .delta-flash { animation: none; }
 }
+
+/*
+ * Dasselbe Aufleuchten für Flächen, die schon eine eigene Farbe tragen — der
+ * Kopf der Detailansicht liegt in der Listenfarbe. `delta-flash` ersetzt die
+ * Hintergrundfarbe und würde die Tönung während der zwei Sekunden
+ * überschreiben; hier liegt der Puls stattdessen als eigene Schicht darüber
+ * und verschwindet, die Fläche darunter bleibt unangetastet.
+ *
+ * Gleiche Dauer, gleiche Spitzenfarbe, gleiche Akzentleiste wie bei den
+ * Zeilen: Es ist derselbe Moment, nur an einer anderen Stelle.
+ */
+@keyframes delta-flash-overlay {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@utility delta-flash-overlay {
+  position: relative;
+  box-shadow: inset 3px 0 0 0 var(--md-primary);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-color: color-mix(in srgb, var(--md-primary) var(--md-delta-peak), transparent);
+    animation: delta-flash-overlay 2s ease-out both;
+  }
+}
+
+/*
+ * Ohne Bewegung bleibt auch hier nichts stehen: `animation: none` allein
+ * liesse die Schicht bei voller Deckkraft liegen, also genau die Fläche, die
+ * sonst wegblendet. Das Ergebnis entspricht dem der Zeilen — keine Bewegung
+ * und keine Farbänderung.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .delta-flash-overlay::after { animation: none; opacity: 0; }
+}

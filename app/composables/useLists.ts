@@ -1,5 +1,5 @@
 import type { ListRow } from '../db/schema'
-import { getItemsForList, getListsForView, upsertList } from '../db/repositories'
+import { getItemsForList, getListsForView, getMembersForList, upsertList } from '../db/repositories'
 import { randomListColor } from '../utils/color'
 
 /**
@@ -13,6 +13,16 @@ export interface ListWithCounts {
   list: ListRow
   openCount: number
   doneCount: number
+  /**
+   * Liest hier jemand anderes mit?
+   *
+   * Nur angenommene Mitgliedschaften zählen, und das eigene Konto zählt nicht
+   * mit — es steht selbst in der Mitgliederliste. Wer eingeladen ist, aber noch
+   * nicht bestätigt hat, sieht von der Liste nichts; ihn mitzuzählen würde
+   * behaupten, die Liste sei bereits geteilt. Dieselbe Regel wie
+   * `otherAcceptedMemberCount` in der Android-App.
+   */
+  isShared: boolean
 }
 
 /**
@@ -27,6 +37,8 @@ export interface ListWithCounts {
  * eine Anmeldung gebraucht.
  */
 export function useLists() {
+  const { profile } = useAuth()
+
   const entries = useState<ListWithCounts[]>('lists', () => [])
   const isLoading = useState<boolean>('lists-loading', () => false)
 
@@ -34,6 +46,11 @@ export function useLists() {
     // IndexedDB gibt es nur im Browser. Auf dem Server bleibt die Liste leer,
     // was für den App-Bereich folgenlos ist (routeRules: ssr false).
     if (import.meta.server) return
+
+    // Einmal vor der Schleife gelesen: Wer angemeldet ist, ändert sich während
+    // eines Durchlaufs nicht, und je Liste danach zu fragen wäre dieselbe
+    // Antwort mehrfach.
+    const currentUserId = profile.value?.userId ?? null
 
     isLoading.value = true
     try {
@@ -43,11 +60,17 @@ export function useLists() {
       // nebenläufig.
       entries.value = await Promise.all(
         lists.map(async (list) => {
-          const items = await getItemsForList(list.id)
+          const [items, members] = await Promise.all([
+            getItemsForList(list.id),
+            getMembersForList(list.id),
+          ])
           return {
             list,
             openCount: items.filter(item => !item.checked).length,
             doneCount: items.filter(item => item.checked).length,
+            isShared: members.some(
+              member => member.status === 'accepted' && member.userId !== currentUserId,
+            ),
           }
         }),
       )

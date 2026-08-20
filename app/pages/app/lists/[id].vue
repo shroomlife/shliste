@@ -64,12 +64,17 @@ const isSortMode = ref(false)
 const openList = useTemplateRef<HTMLElement>('openList')
 const doneList = useTemplateRef<HTMLElement>('doneList')
 
+// Beide Blöcke melden ihre Zielposition innerhalb des eigenen Blocks; die
+// Umrechnung auf die vollständige Liste macht `moveItemTo`. Die Anzeige bleibt
+// damit zweigeteilt, die Sortierschlüssel gelten für die eine Liste — und nur
+// so sieht die Android-App, die alles in einem Block rendert, dieselbe
+// Reihenfolge (Begründung in `planMoveTo`).
 useDragSort(openList, {
   enabled: () => isSortMode.value,
   handle: '.drag-handle',
   onMove: (_from, to) => {
     const item = openItems.value[_from]
-    if (item !== undefined) mutate(moveItemTo(openItems.value, item.id, to))
+    if (item !== undefined) mutate(moveItemTo(item.id, to))
   },
 })
 
@@ -78,7 +83,7 @@ useDragSort(doneList, {
   handle: '.drag-handle',
   onMove: (_from, to) => {
     const item = doneItems.value[_from]
-    if (item !== undefined) mutate(moveItemTo(doneItems.value, item.id, to))
+    if (item !== undefined) mutate(moveItemTo(item.id, to))
   },
 })
 const isRenameOpen = ref(false)
@@ -282,9 +287,12 @@ function addItem(): void {
     class="flex min-w-0 grow flex-col lg:min-h-0"
     style="background: var(--md-surface)"
   >
-    <!-- Kopf in der Listenfarbe -->
+    <!-- Kopf in der Listenfarbe. Ändert ein anderes Mitglied Name oder Farbe,
+         leuchtet er kurz auf — derselbe Moment wie bei einer Zeile, nur als
+         Schicht darüber, damit die Listenfarbe darunter stehen bleibt. -->
     <header
       class="list-tint flex shrink-0 flex-col gap-2.5 px-5 py-5 lg:px-7"
+      :class="isRecent(listId) && 'delta-flash-overlay'"
       :style="{ '--list-color': list?.color ?? 'var(--md-primary)' }"
     >
       <div class="flex items-start gap-3">

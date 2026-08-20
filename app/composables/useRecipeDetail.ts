@@ -23,7 +23,7 @@ import {
 } from '../db/repositories'
 import type { RecipeIngredientRow, RecipeRow, RecipeStepRow } from '../db/schema'
 import { nowIso } from '../db/timestamps'
-import { planMoveTo, type OrderedRow } from '../sync/merge/reorder'
+import { nextSortKey, planMoveTo, type OrderedRow } from '../sync/merge/reorder'
 
 /* ------------------------------------------------------------------ *
  * Reine Funktionen — ohne IndexedDB und ohne Vue, deshalb direkt testbar.
@@ -32,10 +32,10 @@ import { planMoveTo, type OrderedRow } from '../sync/merge/reorder'
 /**
  * Der Ordnungswert für einen neuen Eintrag: hinter allen bestehenden.
  *
- * Wie bei den Listeneinträgen: `sortKey` bleibt leer, den vergibt erst das
- * Umsortieren. `orderIndex` ist die Rückfallordnung und muss trotzdem
- * eindeutig hinten liegen, sonst springt der neue Eintrag an eine
- * willkürliche Stelle.
+ * Wie bei den Listeneinträgen: Den Sortierschlüssel vergibt `nextSortKey`
+ * bereits beim Anlegen. `orderIndex` bleibt daneben die Rückfallordnung für
+ * Zeilen ohne Schlüssel und muss deshalb weiterhin eindeutig hinten liegen,
+ * sonst springt der neue Eintrag an eine willkürliche Stelle.
  */
 export function nextOrderIndex(rows: readonly { readonly orderIndex: number }[]): number {
   return rows.reduce((highest, row) => Math.max(highest, row.orderIndex), -1) + 1
@@ -133,6 +133,10 @@ export function useRecipeDetail() {
   /**
    * Legt eine Zutat an. Die ID kommt vom Client — dieselbe Begründung wie bei
    * den Listeneinträgen: ohne eigene Schlüssel kein Offline-Betrieb.
+   *
+   * Der Sortierschlüssel entsteht sofort und nicht erst beim Umsortieren
+   * (Begründung in `nextSortKey`); seinen Feld-Zeitstempel bekommt er dabei
+   * wie jedes andere Feld einer neuen Zeile.
    */
   async function addIngredient(name: string, quantity: number = 1): Promise<RecipeIngredientRow | null> {
     const trimmed = name.trim()
@@ -145,7 +149,7 @@ export function useRecipeDetail() {
       name: trimmed,
       quantity,
       orderIndex: nextOrderIndex(ingredients.value),
-      sortKey: null,
+      sortKey: nextSortKey(ingredients.value),
       createdBy: null,
       modifiedBy: null,
       deletedAt: null,
@@ -165,7 +169,7 @@ export function useRecipeDetail() {
       recipeId: target.id,
       description: trimmed,
       orderIndex: nextOrderIndex(steps.value),
-      sortKey: null,
+      sortKey: nextSortKey(steps.value),
       isChecked: false,
       aiExplanation: null,
       createdBy: null,
@@ -215,7 +219,8 @@ export function useRecipeDetail() {
     toIndex: number,
     write: (id: string, sortKey: string) => Promise<void>,
   ): Promise<void> {
-    const plan = planMoveTo(rows, rowId, toIndex)
+    // Zutaten und Schritte kennen keine Blöcke: Der Block IST die Liste.
+    const plan = planMoveTo(rows, rows, rowId, toIndex)
     if (plan === null) return
 
     for (const entry of [...plan.normalized, plan.moved]) {

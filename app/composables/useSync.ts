@@ -48,6 +48,30 @@ export const FALLBACK_POLL_MS = 60_000
 export const MUTATION_DEBOUNCE_MS = 1_500
 
 /**
+ * Abstand des regelmässigen Sicherheitsabgleichs — auch bei gesund
+ * aussehender Echtzeit-Verbindung.
+ *
+ * WARUM ES IHN BRAUCHT: Die Ersatz-Abfrage oben springt erst an, wenn die
+ * Verbindung als gestört GEMELDET ist, und das geschieht erst nach drei
+ * Fehlversuchen. Eine stehende, aber verstopfte Verbindung meldet gar nichts:
+ * Der Server verwirft Ereignisse, die er nicht loswird, ersatzlos und liefert
+ * sie erst beim nächsten Verbindungsaufbau nach. Ein sichtbarer Tab könnte so
+ * beliebig lange veraltet dastehen, ohne dass irgendetwas danach aussieht.
+ *
+ * WARUM AUSGERECHNET FÜNFZEHN MINUTEN: Dieselbe Grössenordnung wie der
+ * periodische Job der Android-App, und aus demselben Grund. Das hier ist kein
+ * Ersatz für die Echtzeit, sondern das Netz darunter — Änderungen kommen im
+ * Normalfall in Sekunden an. Ein Tab, der den ganzen Tag offen steht, kostet
+ * damit vier Abfragen je Stunde statt sechzig bei einem Minutentakt; kürzer
+ * wäre Aufwand ohne spürbaren Gewinn, deutlich länger liesse einen stillen
+ * Ausfall über eine ganze Arbeitssitzung stehen.
+ *
+ * Sparsam gehalten: Der Zeitgeber löst nur bei sichtbarem Tab und bestehender
+ * Sitzung aus (siehe `useSyncRunner`).
+ */
+export const RECONCILE_INTERVAL_MS = 15 * 60_000
+
+/**
  * Der Zeitgeber der Verzögerung.
  *
  * Auf Modulebene und nicht in `useState`: Er ist kein Zustand, den eine
@@ -163,6 +187,8 @@ export function useSync(): UseSync {
  * - Netz wieder da — Ungesendetes soll nicht auf die nächste Handlung warten
  * - Echtzeit-Ereignis — der eigentliche Zweck des ganzen Umbaus
  * - Ersatz-Abfrage, solange der Strom nicht steht
+ * - regelmässiger Abgleich alle fünfzehn Minuten, auch wenn der Strom gesund
+ *   aussieht (siehe `RECONCILE_INTERVAL_MS`)
  */
 export function useSyncRunner(): void {
   const snapshot = useState<SyncSnapshot>('sync-snapshot', () => INITIAL_SNAPSHOT)
@@ -212,8 +238,14 @@ export function useSyncRunner(): void {
       // Vor dem Abruf markieren, nicht danach: Das Aufleuchten soll mit dem
       // Ereignis beginnen und nicht erst, wenn die Daten da sind — sonst
       // erschiene die Änderung vor ihrer eigenen Ankündigung.
+      //
+      // Auch die Liste selbst: Benennt jemand anderes sie um oder ändert ihre
+      // Farbe, ist das genauso eine fremde Änderung wie ein abgehakter
+      // Eintrag — und sie geschah bisher lautlos. Listen- und Eintrags-Ids
+      // sind beide UUIDs und liegen deshalb gefahrlos im selben Vorrat.
       for (const event of events) {
         if (event.type === 'item_changed') mark(event.itemIds)
+        if (event.type === 'list_changed') mark([event.listId])
       }
 
       void handleEvents(events).catch(reportSyncFailure)
@@ -234,6 +266,32 @@ export function useSyncRunner(): void {
     fallbackTimer = setInterval(() => {
       void requestSync().catch(reportSyncFailure)
     }, FALLBACK_POLL_MS)
+  }
+
+  /** Läuft, solange jemand angemeldet ist — unabhängig vom Zustand des Stroms. */
+  let reconcileTimer: ReturnType<typeof setInterval> | null = null
+
+  function stopReconcilePolling(): void {
+    if (reconcileTimer === null) return
+    clearInterval(reconcileTimer)
+    reconcileTimer = null
+  }
+
+  /**
+   * Der regelmässige Abgleich, der auch ohne jeden Anlass läuft.
+   *
+   * Die beiden Bedingungen im Zeitgeber sind der Sparsamkeit wegen da: Ein
+   * Tab im Hintergrund hat niemandem etwas anzuzeigen, und ohne Sitzung liefe
+   * die Abfrage in einen 401. Beim Zurückkehren in den Vordergrund gleicht
+   * ohnehin `handleVisibilityChange` ab, die ausgelassene Runde fehlt also
+   * nicht.
+   */
+  function startReconcilePolling(): void {
+    if (reconcileTimer !== null) return
+    reconcileTimer = setInterval(() => {
+      if (document.visibilityState !== 'visible' || !isSignedIn.value) return
+      void requestSync().catch(reportSyncFailure)
+    }, RECONCILE_INTERVAL_MS)
   }
 
   function syncNow(): void {
@@ -259,18 +317,24 @@ export function useSyncRunner(): void {
       unsubscribe()
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       stopFallbackPolling()
+      stopReconcilePolling()
     })
 
-    if (isSignedIn.value) syncNow()
+    if (isSignedIn.value) {
+      syncNow()
+      startReconcilePolling()
+    }
   })
 
-  // Anmelden löst den ersten Abgleich aus, Abmelden beendet die Ersatzabfrage.
+  // Anmelden löst den ersten Abgleich aus, Abmelden beendet beide Zeitgeber.
   watch(isSignedIn, (signedIn) => {
     if (signedIn) {
       syncNow()
+      startReconcilePolling()
       return
     }
     stopFallbackPolling()
+    stopReconcilePolling()
   })
 
   // Nur die Flanke nach online zählt: Beim Wechsel nach offline gibt es

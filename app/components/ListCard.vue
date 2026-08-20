@@ -9,11 +9,13 @@ import type { List } from '#shared/types/domain'
  * Zufalls-RGB sind (Summe der Kanäle zwischen 100 und 700), wäre jede
  * kräftigere Darstellung unruhig.
  */
-const { list, openCount = 0, doneCount = 0, active = false } = defineProps<{
+const { list, openCount = 0, doneCount = 0, active = false, isShared = false } = defineProps<{
   list: List
   openCount?: number
   doneCount?: number
   active?: boolean
+  /** Liest jemand anderes mit? Wird wie das Schloss als Symbol am Namen gezeigt. */
+  isShared?: boolean
 }>()
 
 const summary = computed(() => {
@@ -33,11 +35,28 @@ const summary = computed(() => {
     }"
   >
     <div class="flex items-center gap-2">
+      <!-- Geteilt und geheim sind dieselbe Art von Aussage: "mit dieser Liste
+           stimmt etwas Besonderes". Deshalb stehen sie am selben Platz, in
+           derselben Grösse und derselben Tönung.
+
+           `role="img"` samt Beschriftung ist nicht schmückend: Ohne beides
+           liest eine Sprachausgabe hier gar nichts vor, und die Aussage
+           "geteilt" bzw. "geheim" steht nirgendwo sonst auf der Karte. -->
+      <UIcon
+        v-if="isShared"
+        name="i-lucide-users"
+        class="size-4 shrink-0"
+        style="color: var(--md-on-surface-variant)"
+        role="img"
+        aria-label="Geteilte Liste"
+      />
       <UIcon
         v-if="list.secret"
         name="i-lucide-lock"
         class="size-4 shrink-0"
         style="color: var(--md-on-surface-variant)"
+        role="img"
+        aria-label="Geheime Liste"
       />
       <span class="min-w-0 grow truncate text-[1.25rem] font-bold">{{ list.name }}</span>
       <slot name="badge" />

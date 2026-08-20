@@ -598,4 +598,64 @@ describe('buildPushPayload', () => {
     expect(sent['dirty']).toBeUndefined()
     expect(sent['ownerUserId']).toBeUndefined()
   })
+
+  /**
+   * Das Merge schreibt einen LEEREN Zeitstempel, wenn weder lokal noch auf dem
+   * Server einer für ein Feld existiert (`mergeFields` in
+   * `app/sync/merge/field-lww.ts`). Dort ist das richtig — er bedeutet
+   * "ältestmöglich". Die API lehnt `""` aber gegen ihr Muster ab, und ein 422
+   * kippt nicht die Zeile, sondern den GESAMTEN Push. Deshalb wird an dieser
+   * Kante gesiebt und nicht im Merge (`fixtures.json` schreibt `""` als
+   * erwartetes Merge-Ergebnis fest).
+   */
+  test('ein leerer Feld-Zeitstempel geht nicht hinaus', () => {
+    const built = buildPushPayload({
+      ...emptyDirty(),
+      lists: [{ ...dirtyList('l1'), fieldTimestamps: { name: TS, color: '' } }],
+    })
+
+    expect(built.lists[0]?.fieldTimestamps).toEqual({ name: TS })
+  })
+
+  test('bleibt kein einziger Stempel übrig, wird null gesendet', () => {
+    // Wie `.ifEmpty { null }` im Android-Client: Ein leeres Objekt und `null`
+    // bedeuten für die API dasselbe, `null` ist die schlankere Angabe.
+    const built = buildPushPayload({
+      ...emptyDirty(),
+      lists: [{ ...dirtyList('l1'), fieldTimestamps: { name: '' } }],
+    })
+
+    expect(built.lists[0]?.fieldTimestamps).toBeNull()
+  })
+
+  test('ein Stempel ohne Millisekunden bleibt stehen', () => {
+    // Javas `Instant.toString()` lässt die `.000` weg, und die API nimmt beide
+    // Schreibweisen an. Ein Stempel vom Android-Client darf hier nicht als
+    // kaputt gelten.
+    const built = buildPushPayload({
+      ...emptyDirty(),
+      lists: [{ ...dirtyList('l1'), fieldTimestamps: { name: '2026-01-15T10:00:00Z' } }],
+    })
+
+    expect(built.lists[0]?.fieldTimestamps).toEqual({ name: '2026-01-15T10:00:00Z' })
+  })
+
+  test('gültige Stempel bleiben in jeder Entität unangetastet', () => {
+    // Nicht nur Listen: Jede `toPush…`-Funktion muss durch dieselbe Kante.
+    const stamps = { name: TS }
+    const built = buildPushPayload({
+      ...emptyDirty(),
+      lists: [{ ...dirtyList('l1'), fieldTimestamps: { ...stamps, color: '' } }],
+      items: [{ ...dirtyItem('i1', 'l1'), fieldTimestamps: { ...stamps, checked: '' } }],
+    })
+
+    expect(built.lists[0]?.fieldTimestamps).toEqual(stamps)
+    expect(built.listItems[0]?.fieldTimestamps).toEqual(stamps)
+  })
+
+  test('ohne Feld-Zeitstempel bleibt es bei null', () => {
+    const built = buildPushPayload({ ...emptyDirty(), lists: [dirtyList('l1')] })
+
+    expect(built.lists[0]?.fieldTimestamps).toBeNull()
+  })
 })

@@ -15,6 +15,12 @@
  * weiterwandern, fiele alles jenseits der Serverobergrenze dauerhaft aus dem
  * Fenster und fehlte still für immer. Stillstand ist besser als eine
  * unsichtbare Lücke.
+ *
+ * DAS EINZIGE, WAS EIN PULL LÖSCHT, SIND ENTZOGENE LISTEN (`revokedListIds`).
+ * Sonst ergänzt er nur: Eine Zeile, die der Server nicht erwähnt, ist deshalb
+ * nicht weg. Ein Entzug ist der Gegenfall — er lässt sich gar nicht anders
+ * mitteilen, denn ohne Mitgliedschaft taucht die Liste in keiner Antwort mehr
+ * auf.
  */
 import type {
   Badge,
@@ -44,7 +50,7 @@ import {
   parseStep,
 } from './entities'
 import { isRecord, parseAll, readArray, readBooleanOr, readIso, readNumberOr } from './json'
-import type { PullStore, RowStores } from './ports'
+import type { ListRemovalStore, PullStore, RowStores } from './ports'
 
 /* ------------------------------------------------------------------ *
  * Die Antwort des Servers
@@ -76,6 +82,15 @@ export interface PullResponse {
   recipes: PulledRecipe[]
   badges: Badge[]
   pendingInvites: PendingInvite[]
+  /**
+   * Listen, auf die dieses Konto keinen Zugriff mehr hat: entfernt worden,
+   * selbst gegangen oder vom Eigentümer gelöscht.
+   *
+   * Sie stehen in KEINER der anderen Mengen — genau das ist der Punkt: Ohne
+   * diese Aufzählung erwähnt eine Pull-Antwort sie schlicht nicht mehr, und
+   * sie blieben auf diesem Gerät für immer sichtbar.
+   */
+  revokedListIds: string[]
   /** `null`, wenn der Server keinen brauchbaren Zeitpunkt geliefert hat. */
   serverTime: IsoUtc | null
   truncated: boolean
@@ -90,6 +105,11 @@ export function parsePullResponse(value: unknown): PullResponse {
     recipes: parseAll(readArray(record, 'recipes'), parsePulledRecipe),
     badges: parseAll(readArray(record, 'badges'), parseBadge),
     pendingInvites: parseAll(readArray(record, 'pendingInvites'), parsePendingInvite),
+    // Fehlt das Feld, ist nichts entzogen worden — so verhielt sich der
+    // Server, bevor es das Feld gab. Ein älterer Server darf hier nicht in
+    // einen Fehler laufen, sonst hinge der Abgleich an der Reihenfolge des
+    // Rollouts.
+    revokedListIds: parseAll(readArray(record, 'revokedListIds'), readListId),
     serverTime: readIso(record, 'serverTime'),
     // Fehlt das Feld, gilt die Antwort als vollständig — so verhielt sich der
     // Server, bevor es das Feld gab.
@@ -127,6 +147,17 @@ export function parsePulledRecipe(value: unknown): PulledRecipe | null {
     steps: parseAll(readArray(value, 'steps'), parseStep),
     chatMessages: parseAll(readArray(value, 'chatMessages'), parseChatMessage),
   }
+}
+
+/**
+ * Eine Id aus `revokedListIds`. Alles, was kein nicht-leerer String ist, fällt
+ * weg — `parseAll` lässt es dann aus.
+ *
+ * Ein leerer String träfe keine Zeile und wäre bestenfalls wirkungslos; ein
+ * anderer Typ ist ein Vertragsbruch, den eine Löschung nicht ausbaden soll.
+ */
+function readListId(value: unknown): string | null {
+  return typeof value === 'string' && value.length > 0 ? value : null
 }
 
 function parseChanges(value: unknown): PullChanges | null {
@@ -503,15 +534,40 @@ export interface PullOutcome {
   lists: number
   recipes: number
   badges: number
+  /**
+   * Wie viele Listen die Antwort als entzogen gemeldet hat. Nicht jede davon
+   * lag hier noch: Dieselbe Id kann wegen der Cursor-Überlappung mehrfach
+   * kommen, das Entfernen ist idempotent.
+   */
+  revokedLists: number
   pendingInvites: PendingInvite[]
   changes: PullChanges | null
 }
 
-export async function runPull(store: PullStore, fetchPull: PullFetcher): Promise<PullOutcome> {
+export async function runPull(
+  store: PullStore & ListRemovalStore,
+  fetchPull: PullFetcher,
+): Promise<PullOutcome> {
   const since = await store.readCursor()
   const response = parsePullResponse(await fetchPull(since))
 
   await applyPulledRows(store, response)
+
+  // Nach dem Anwenden und nicht davor: Nennt eine Antwort dieselbe Liste
+  // wider Erwarten in beiden Mengen, gewinnt der Entzug. Das ist die sichere
+  // Richtung — eine fälschlich entfernte Liste holt der nächste volle Pull
+  // zurück, eine fälschlich behaltene bliebe für immer stehen.
+  //
+  // DER HARTE WEG, ohne `deletedAt`: Ein Grabstein ginge beim nächsten Push
+  // als Löschabsicht hinaus und zerstörte die Liste für die übrigen
+  // Mitglieder, obwohl nur dieses Konto sie nicht mehr sieht (siehe
+  // `hardDeleteList` in `app/db/repositories.ts`).
+  //
+  // Auch bei `truncated` ausgeführt: Eine gekappte Antwort ist unvollständig,
+  // aber was sie sagt, stimmt. Nur das Wasserzeichen bleibt dann stehen.
+  for (const listId of response.revokedListIds) {
+    await store.removeList(listId)
+  }
 
   // Erst schreiben, dann vorrücken: Ein Abbruch mitten im Anwenden lässt das
   // Wasserzeichen stehen, und der nächste Pull holt dieselbe Menge erneut.
@@ -530,6 +586,7 @@ export async function runPull(store: PullStore, fetchPull: PullFetcher): Promise
     lists: response.lists.length,
     recipes: response.recipes.length,
     badges: response.badges.length,
+    revokedLists: response.revokedListIds.length,
     pendingInvites: response.pendingInvites,
     changes: response.changes,
   }

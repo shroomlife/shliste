@@ -92,6 +92,7 @@ async function submitDialog(): Promise<void> {
           :list="entry.list"
           :open-count="entry.openCount"
           :done-count="entry.doneCount"
+          :is-shared="entry.isShared"
           :active="entry.list.id === route.params.id"
         />
       </div>

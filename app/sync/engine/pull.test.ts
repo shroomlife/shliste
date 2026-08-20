@@ -23,7 +23,7 @@ import type {
   RecipeStepRow,
 } from '../../db/schema'
 import { CLEAN, DIRTY } from '../../db/schema'
-import type { EntityStore, PullStore, RowStores } from './ports'
+import type { EntityStore, ListRemovalStore, PullStore, RowStores } from './ports'
 import { parsePullResponse, runPull } from './pull'
 
 const OLD: IsoUtc = '2026-01-15T10:00:00.000Z'
@@ -51,13 +51,15 @@ function memoryEntityStore<TRow extends { id: string }>(
   return store
 }
 
-interface FakePullStore extends PullStore {
+interface FakePullStore extends PullStore, ListRemovalStore {
   cursor: IsoUtc | null
   members: Map<string, readonly ListMember[]>
   lists: Map<string, ListRow>
   items: Map<string, ListItemRow>
   chatMessages: Map<string, RecipeChatMessageRow>
   itemWrites: () => number
+  /** Welche Listen endgültig entfernt wurden, in der Reihenfolge der Aufrufe. */
+  removed: string[]
 }
 
 function fakePullStore(options: {
@@ -88,8 +90,20 @@ function fakePullStore(options: {
     items: itemStore.all,
     chatMessages: chatStore.all,
     itemWrites: () => itemStore.writes,
+    removed: [],
     replaceMembers: (listId, members) => {
       store.members.set(listId, members)
+      return Promise.resolve()
+    },
+    // Wie `hardDeleteList`: Die Zeilen verschwinden, ein Grabstein bleibt
+    // nicht zurück.
+    removeList: (listId) => {
+      store.removed.push(listId)
+      store.lists.delete(listId)
+      for (const [id, row] of store.items) {
+        if (row.listId === listId) store.items.delete(id)
+      }
+      store.members.delete(listId)
       return Promise.resolve()
     },
     readCursor: () => Promise.resolve(store.cursor),
@@ -152,8 +166,27 @@ function pullBody(overrides: Record<string, unknown> = {}): Record<string, unkno
     recipes: [],
     badges: [],
     pendingInvites: [],
+    revokedListIds: [],
     serverTime: SERVER_TIME,
     truncated: false,
+    ...overrides,
+  }
+}
+
+function localList(overrides: Partial<ListRow> = {}): ListRow {
+  return {
+    id: 'l1',
+    name: 'Lokal',
+    color: '#123456',
+    secret: false,
+    lastSuggestedItems: '',
+    sourceUrl: null,
+    ownerUserId: null,
+    createdAt: OLD,
+    updatedAt: OLD,
+    deletedAt: null,
+    fieldTimestamps: null,
+    dirty: CLEAN,
     ...overrides,
   }
 }
@@ -416,5 +449,92 @@ describe('runPull — Anwenden', () => {
 
     expect(store.chatMessages.get('m1')?.content).toBe('lokal')
     expect(store.chatMessages.get('m1')?.dirty).toBe(DIRTY)
+  })
+})
+
+/* ------------------------------------------------------------------ *
+ * Entzogene Listen
+ * ------------------------------------------------------------------ */
+
+describe('runPull — entzogene Listen', () => {
+  /**
+   * `revokedListIds` nennt Listen, auf die dieses Konto keinen Zugriff mehr
+   * hat. Sie stehen in keiner der anderen Mengen — ohne diese Aufzählung
+   * erwähnt eine Antwort sie gar nicht mehr, und sie blieben hier für immer
+   * sichtbar.
+   */
+  test('entfernt die genannte Liste samt ihrer Einträge', async () => {
+    const store = fakePullStore({
+      lists: [localList()],
+      items: [localItem()],
+    })
+
+    const outcome = await runPull(store, () => Promise.resolve(pullBody({ revokedListIds: ['l1'] })))
+
+    expect(store.removed).toEqual(['l1'])
+    expect(store.lists.has('l1')).toBe(false)
+    expect(store.items.has('i1')).toBe(false)
+    expect(outcome.revokedLists).toBe(1)
+  })
+
+  test('nimmt den harten Weg — kein Grabstein bleibt zurück', async () => {
+    // Ein lokales `deletedAt` ginge beim nächsten Push als Löschabsicht hinaus
+    // und zerstörte die Liste für alle übrigen Mitglieder. Deshalb wird die
+    // Zeile entfernt und nicht markiert.
+    const store = fakePullStore({ lists: [localList()] })
+
+    await runPull(store, () => Promise.resolve(pullBody({ revokedListIds: ['l1'] })))
+
+    expect(store.lists.get('l1')).toBeUndefined()
+  })
+
+  test('ein fehlendes Feld ist kein Fehler', async () => {
+    // Der Server kennt es womöglich noch nicht. Der Abgleich darf nicht an der
+    // Reihenfolge des Rollouts hängen.
+    const store = fakePullStore({ lists: [localList()] })
+    const body = pullBody()
+    delete body['revokedListIds']
+
+    const outcome = await runPull(store, () => Promise.resolve(body))
+
+    expect(store.removed).toEqual([])
+    expect(store.lists.has('l1')).toBe(true)
+    expect(outcome.revokedLists).toBe(0)
+  })
+
+  test('unbrauchbare Einträge fallen weg, die übrigen wirken', async () => {
+    const store = fakePullStore({ lists: [localList()] })
+
+    await runPull(store, () => Promise.resolve(pullBody({
+      revokedListIds: ['', 42, null, 'l1'],
+    })))
+
+    expect(store.removed).toEqual(['l1'])
+  })
+
+  test('eine unbekannte Liste zu entfernen bleibt folgenlos', async () => {
+    // Die Antwort überlappt sich mit früheren, dieselbe Id kommt also mehrfach.
+    // Der zweite Durchlauf darf nicht anders ausgehen als der erste.
+    const store = fakePullStore({ lists: [localList()] })
+
+    await runPull(store, () => Promise.resolve(pullBody({ revokedListIds: ['l1'] })))
+    await runPull(store, () => Promise.resolve(pullBody({ revokedListIds: ['l1'] })))
+
+    expect(store.removed).toEqual(['l1', 'l1'])
+    expect(store.lists.size).toBe(0)
+  })
+
+  test('wirkt auch bei einer gekappten Antwort — nur der Cursor bleibt stehen', async () => {
+    // Eine gekappte Antwort ist unvollständig, aber was sie sagt, stimmt.
+    const store = fakePullStore({ cursor: OLD, lists: [localList()] })
+
+    const outcome = await runPull(store, () => Promise.resolve(pullBody({
+      revokedListIds: ['l1'],
+      truncated: true,
+    })))
+
+    expect(store.lists.has('l1')).toBe(false)
+    expect(outcome.cursorAdvanced).toBe(false)
+    expect(store.cursor).toBe(OLD)
   })
 })

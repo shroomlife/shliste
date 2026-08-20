@@ -37,7 +37,7 @@ import {
   parseRecipe,
   parseStep,
 } from './entities'
-import { isRecord, parseAll, readArray, readIso, readNumberOr } from './json'
+import { API_ISO_PATTERN, isRecord, parseAll, readArray, readIso, readNumberOr } from './json'
 import type { DirtyRows, PushStore, RowStores } from './ports'
 
 /* ------------------------------------------------------------------ *
@@ -207,6 +207,10 @@ export function isEmptyPayload(payload: PushPayload): boolean {
  * den GESAMTEN Block mit 422 ablehnen und legt damit den Abgleich des Geräts
  * dauerhaft still (siehe `app/sync/merge/limits.ts`).
  *
+ * Die Feld-Zeitstempel sind von `sanitize` ausdrücklich ausgenommen — sie
+ * gehören dem Merge und nicht den Längenlimits. Ihre eigene Kante ist
+ * `toWireTimestamps`, das jede `toPush…`-Funktion durchläuft.
+ *
  * ABWEICHUNG VON ANDROID, MIT ANSAGE: Dort werden die gekappten Werte auch
  * lokal zurückgeschrieben, damit der lokale Content-Hash nicht vom gesendeten
  * Stand abdriftet. Hier passiert das nicht — der Web-Client bildet noch keinen
@@ -225,6 +229,47 @@ export function buildPushPayload(dirty: DirtyRows): PushPayload {
   }
 }
 
+/**
+ * Feld-Zeitstempel in der Form, die die API annimmt.
+ *
+ * DAS PROBLEM: Das Merge schreibt einen LEEREN String, wenn weder lokal noch
+ * auf dem Server ein Stempel für ein Feld existiert (`mergeFields` in
+ * `app/sync/merge/field-lww.ts`). Für das Merge ist das der richtige Wert — er
+ * bedeutet "ältestmöglich" und verliert jeden Vergleich. Die API dagegen nimmt
+ * nur Werte an, die ihrem ISO-Muster entsprechen.
+ *
+ * WARUM DAS TROTZ SERVERSEITIGER ABSICHERUNG HIER STEHT: Bis August 2026 lehnte
+ * die API einen ungültigen Zeitstempel mit 422 ab — und zwar nicht die Zeile,
+ * sondern den GESAMTEN Push. Ein einziger leerer String legte das Gerät
+ * dauerhaft lahm, ohne Ausweg in der Oberfläche. Seither verwirft die API
+ * stattdessen den einzelnen Eintrag und protokolliert ihn.
+ *
+ * Diese Kante bleibt trotzdem: Die beiden Seiten werden getrennt ausgerollt,
+ * ein Client trifft also auf beide Fassungen. Und ein Wert, den der Server
+ * verwirft, geht als Information verloren — ihn gar nicht erst zu senden ist
+ * ehrlicher, als sich auf das Aufräumen der Gegenseite zu verlassen.
+ *
+ * DESHALB HIER UND NICHT IM MERGE: Die Merge-Semantik ist zwischen Web, API
+ * und Android abgestimmt und in `fixtures.json` als gemeinsamer Vertrag
+ * festgeschrieben — `""` ist dort das erwartete Ergebnis. Repariert wird
+ * folglich nicht die Bedeutung, sondern die Kante zum Server. Vorbild ist
+ * `SyncSanitizer.sanitizeFieldTimestamps` im Android-Client.
+ *
+ * Bleibt nichts übrig, wird `null` gesendet statt eines leeren Objekts —
+ * ebenfalls wie dort (`.ifEmpty { null }`). Beides ist für die API dasselbe:
+ * keine feldgenaue Information.
+ */
+function toWireTimestamps(stamps: FieldTimestamps | null): FieldTimestamps | null {
+  if (stamps === null) return null
+
+  const clean: FieldTimestamps = {}
+  for (const [field, stamp] of Object.entries(stamps)) {
+    if (API_ISO_PATTERN.test(stamp)) clean[field] = stamp
+  }
+
+  return Object.keys(clean).length === 0 ? null : clean
+}
+
 function toPushList(row: List): PushList {
   return {
     id: row.id,
@@ -236,7 +281,7 @@ function toPushList(row: List): PushList {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deletedAt: row.deletedAt,
-    fieldTimestamps: row.fieldTimestamps,
+    fieldTimestamps: toWireTimestamps(row.fieldTimestamps),
   }
 }
 
@@ -253,7 +298,7 @@ function toPushListItem(row: ListItem): PushListItem {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deletedAt: row.deletedAt,
-    fieldTimestamps: row.fieldTimestamps,
+    fieldTimestamps: toWireTimestamps(row.fieldTimestamps),
     createdBy: row.createdBy,
     modifiedBy: row.modifiedBy,
   }
@@ -269,7 +314,7 @@ function toPushRecipe(row: Recipe): PushRecipe {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deletedAt: row.deletedAt,
-    fieldTimestamps: row.fieldTimestamps,
+    fieldTimestamps: toWireTimestamps(row.fieldTimestamps),
   }
 }
 
@@ -284,7 +329,7 @@ function toPushIngredient(row: RecipeIngredient): PushRecipeIngredient {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deletedAt: row.deletedAt,
-    fieldTimestamps: row.fieldTimestamps,
+    fieldTimestamps: toWireTimestamps(row.fieldTimestamps),
     createdBy: row.createdBy,
     modifiedBy: row.modifiedBy,
   }
@@ -302,7 +347,7 @@ function toPushStep(row: RecipeStep): PushRecipeStep {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deletedAt: row.deletedAt,
-    fieldTimestamps: row.fieldTimestamps,
+    fieldTimestamps: toWireTimestamps(row.fieldTimestamps),
     createdBy: row.createdBy,
     modifiedBy: row.modifiedBy,
   }
@@ -330,7 +375,7 @@ function toPushBadge(row: Badge): PushBadge {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deletedAt: row.deletedAt,
-    fieldTimestamps: row.fieldTimestamps,
+    fieldTimestamps: toWireTimestamps(row.fieldTimestamps),
   }
 }
 

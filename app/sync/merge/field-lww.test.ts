@@ -2,9 +2,13 @@
  * Vertrag des Field-Level-LWW-Merge in Pull-Richtung.
  *
  * Der Kern sind die Golden Fixtures aus `fixtures.json`: dieselbe Fallsammlung
- * soll später auch im API-Repo gegen die dortige Implementierung laufen können,
+ * läuft im API-Repo und im Android-Projekt gegen die dortige Implementierung,
  * deshalb liegt sie als JSON und nicht als TypeScript vor. Alles darunter sind
  * Invarianten, die sich nicht als Datensatz ausdrücken lassen.
+ *
+ * DIESE Fassung der Fixtures ist die Quelle der Wahrheit. Die Gegenstücke:
+ * - `api.shliste.app/src/lib/field-lww.fixtures.test.ts`
+ * - `android-app/app/src/test/java/com/shroomlife/shliste/sync/FieldLwwFixturesTest.kt`
  */
 import { describe, expect, test } from 'bun:test'
 import type { FieldTimestamps } from '../../../shared/types/domain'
@@ -43,6 +47,22 @@ interface FixtureCase {
   server: FixtureRow
   expected: FixtureExpectation
 }
+
+/**
+ * Der Vertrag, den alle drei Loader gemeinsam prüfen.
+ *
+ * `fixtures.json` liegt in drei getrennt versionierten Repos. Ein Fall, der nur
+ * in einem davon ergänzt wird, driftete ohne diese beiden Zahlen still: Jeder
+ * Loader liest brav, was bei ihm liegt, und meldet grün. Version und Anzahl
+ * zusammen machen jede einseitige Änderung sofort laut.
+ *
+ * Reihenfolge beim Ergänzen eines Falls: hier in der Quelle eintragen,
+ * `EXPECTED_CASE_COUNT` in allen drei Loadern hochsetzen, beide Kopien neu
+ * ziehen (`api.shliste.app/src/lib/fixtures.json`,
+ * `android-app/app/src/test/resources/fixtures.json`).
+ */
+const EXPECTED_SCHEMA_VERSION = 1
+const EXPECTED_CASE_COUNT = 24
 
 /**
  * Die Fixtures werden zur Laufzeit geprüft statt dem JSON-Import zu glauben.
@@ -88,6 +108,12 @@ function readNullableTimestamps(source: Record<string, unknown>, key: string, wh
   return source[key] === null ? null : readTimestamps(source, key, where)
 }
 
+function readNumber(source: Record<string, unknown>, key: string, where: string): number {
+  const value = source[key]
+  if (typeof value !== 'number') throw new Error(`${where}.${key}: Zahl erwartet`)
+  return value
+}
+
 function readRow(source: Record<string, unknown>, key: string, where: string): FixtureRow {
   const row = readRecord(source, key, where)
   return {
@@ -127,19 +153,33 @@ function readCase(value: unknown, index: number): FixtureCase {
   }
 }
 
-function readFixtures(value: unknown): FixtureCase[] {
+interface Fixtures {
+  schemaVersion: number
+  cases: FixtureCase[]
+}
+
+function readFixtures(value: unknown): Fixtures {
   if (!isRecord(value)) throw new Error('fixtures.json: Objekt erwartet')
   const list = value['cases']
   if (!Array.isArray(list)) throw new Error('fixtures.json.cases: Array erwartet')
-  return list.map(readCase)
+  return {
+    schemaVersion: readNumber(value, 'schemaVersion', 'fixtures.json'),
+    cases: list.map(readCase),
+  }
 }
 
 const raw: unknown = fixtures
-const cases: FixtureCase[] = readFixtures(raw)
+const { schemaVersion, cases } = readFixtures(raw)
 
 describe('Golden Fixtures', () => {
-  test('die Sammlung ist nicht versehentlich geschrumpft', () => {
-    expect(cases.length).toBeGreaterThan(20)
+  test('die Datei trägt die Vertragsversion, die dieser Loader kennt', () => {
+    expect(schemaVersion).toBe(EXPECTED_SCHEMA_VERSION)
+  })
+
+  test('die Sammlung hat exakt die erwartete Anzahl Fälle', () => {
+    // Bewusst exakt und nicht "mindestens": Auch ein ZUSÄTZLICHER Fall ist
+    // Drift, solange er nicht in allen drei Repos steht.
+    expect(cases.length).toBe(EXPECTED_CASE_COUNT)
   })
 
   test('jeder Fall hat einen eindeutigen Namen', () => {
@@ -300,9 +340,9 @@ describe('applyAddWins', () => {
   })
 
   test('auch ein leerer Marker-Zeitstempel nimmt nichts zurück', () => {
-    // Hier weicht der Android-Client ab: Er prüft nur auf != null, lässt den
-    // leeren String durch und stellt die Zeile wieder her. API und Web lassen
-    // sie gelöscht. Der Test hält die massgebliche Fassung fest.
+    // Genau hier wich Android bis zum 20.08.2026 ab (nur `!= null` geprüft).
+    // Seit dem Fix erfüllen alle drei Implementierungen diese Erwartung; der
+    // Fall steht zusätzlich als gemeinsamer Fixture-Fall in fixtures.json.
     const values: Record<string, unknown> = { name: 'neu', deletedAt: '2026-07-16T10:00:00.000Z' }
     const timestamps: FieldTimestamps = { name: '2026-07-16T11:00:00.000Z', deletedAt: '' }
 
