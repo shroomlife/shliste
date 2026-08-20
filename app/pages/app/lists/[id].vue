@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { ListItem } from '#shared/types/domain'
+import { getMembersForList } from '~/db/repositories'
+import type { ListMemberRow } from '~/db/schema'
 
 /**
  * Detailansicht einer Liste — der Bildschirm, auf dem in dieser App die meiste
@@ -22,6 +24,31 @@ const listId = computed(() => String(route.params.id))
 const { reload: reloadOverview } = useLists()
 const { dataVersion, scheduleSync } = useSync()
 const { profile, isSignedIn } = useAuth()
+const { isRecent } = useRecentlyChanged()
+
+/**
+ * Die Mitglieder dieser Liste aus der lokalen Datenbank.
+ *
+ * Nicht vom Server: Der Pull bringt sie ohnehin mit und legt sie in
+ * `list_members` ab. Für die Frage "wer hat das gerade geändert" genügt diese
+ * Projektion vollkommen — und sie steht auch ohne Netz zur Verfügung.
+ */
+const members = ref<ListMemberRow[]>([])
+
+/**
+ * Der Name hinter einer Änderung, oder `null`.
+ *
+ * `null` in drei Fällen, und alle drei sind Absicht: bei der eigenen Änderung
+ * (man weiss selbst, was man getan hat), bei einer Liste ohne Mitglieder (dann
+ * gibt es niemanden zu nennen) und wenn die Person unbekannt ist. Das
+ * Aufleuchten der Zeile bleibt in allen Fällen.
+ */
+function modifierName(modifiedBy: string | null): string | null {
+  if (modifiedBy === null || members.value.length < 2) return null
+  if (modifiedBy === profile.value?.userId) return null
+
+  return members.value.find(member => member.userId === modifiedBy)?.displayName ?? null
+}
 
 const isMembersOpen = ref(false)
 
@@ -187,6 +214,7 @@ function mutate(work: Promise<unknown>): void {
  */
 async function loadList(): Promise<void> {
   await load(listId.value)
+  members.value = await getMembersForList(listId.value)
 }
 
 // watch mit immediate statt onMounted: so lädt die Ansicht auch neu, wenn auf
@@ -323,6 +351,8 @@ function addItem(): void {
             :key="item.id"
             :item="item"
             :sortable="isSortMode"
+            :just-changed="isRecent(item.id)"
+            :changed-by="modifierName(item.modifiedBy)"
             @toggle="toggleItem(item)"
           />
         </div>
@@ -350,6 +380,8 @@ function addItem(): void {
             :key="item.id"
             :item="item"
             :sortable="isSortMode"
+            :just-changed="isRecent(item.id)"
+            :changed-by="modifierName(item.modifiedBy)"
             @toggle="toggleItem(item)"
           />
         </div>

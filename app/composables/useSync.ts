@@ -201,9 +201,18 @@ export function useSyncRunner(): void {
     }
   }
 
+  const { mark } = useRecentlyChanged()
+
   const { isDegraded } = useRealtime({
     isSignedIn: () => isSignedIn.value,
     onEvents: (events) => {
+      // Vor dem Abruf markieren, nicht danach: Das Aufleuchten soll mit dem
+      // Ereignis beginnen und nicht erst, wenn die Daten da sind — sonst
+      // erschiene die Änderung vor ihrer eigenen Ankündigung.
+      for (const event of events) {
+        if (event.type === 'item_changed') mark(event.itemIds)
+      }
+
       void handleEvents(events).catch(reportSyncFailure)
     },
   })

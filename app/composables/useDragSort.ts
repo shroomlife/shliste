@@ -47,9 +47,15 @@ export function useDragSort(
   }
 
   function create(element: HTMLElement): void {
+    // Wer Bewegung abbestellt hat, bekommt keine: Die Zeile springt dann
+    // sofort an ihren Platz, statt dorthin zu gleiten. Das Ziehen selbst
+    // bleibt unverändert — es ist die Handlung des Nutzers und keine
+    // Verzierung.
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
     sortable = Sortable.create(element, {
       handle: options.handle,
-      animation: 150,
+      animation: prefersReducedMotion ? 0 : 150,
       // Der Anfasser ist klein; ohne diese Schwelle löst schon ein Wackeln
       // beim Tippen eine Bewegung aus.
       touchStartThreshold: 4,
