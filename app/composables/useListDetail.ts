@@ -216,6 +216,19 @@ export function useListDetail() {
   }
 
   /**
+   * Macht ein Entfernen rückgängig.
+   *
+   * Möglich, weil `removed` ein Schalter ist und kein Löschen: Die Zeile war
+   * die ganze Zeit da, nur unsichtbar. Deshalb kommt sie mit ihrer Id, ihrer
+   * Position und ihren Feld-Zeitstempeln zurück — und auf anderen Geräten
+   * ebenso, weil das Zurücksetzen ein gewöhnliches Feld-Update ist.
+   */
+  async function restoreItem(item: ListItem): Promise<void> {
+    await upsertItem({ ...toItemDraft(item), removed: false })
+    await reload()
+  }
+
+  /**
    * Legt einen Eintrag an eine andere Stelle.
    *
    * `group` ist die angezeigte Gruppe (offen oder erledigt) und `toIndex` die
@@ -306,6 +319,7 @@ export function useListDetail() {
     toggleItem,
     addItem,
     removeItem,
+    restoreItem,
     moveItemTo,
     renameList,
     deleteList,

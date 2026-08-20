@@ -220,6 +220,69 @@ body {
 }
 
 /*
+ * Zeiger auf allem, was man anklicken kann.
+ *
+ * Tailwind 4 hat den Zeiger für Knöpfe abgeschafft: Sein Preflight setzt
+ * `cursor: default`, weil das der Browser-Standard für <button> ist. Für
+ * eine Oberfläche ist das die falsche Wahl — der Zeiger ist seit dreissig
+ * Jahren das Signal "hier passiert etwas", und ihn wegzulassen kostet
+ * Erkennbarkeit ohne Gegenwert.
+ *
+ * Ausgenommen bleibt, was gesperrt ist: Dort wäre der Zeiger ein Versprechen,
+ * das die Oberfläche nicht hält.
+ */
+@layer base {
+  button:not(:disabled):not([aria-disabled="true"]),
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  label[for],
+  a[href] {
+    cursor: pointer;
+  }
+}
+
+/*
+ * Statusschicht nach Material 3: eine halbdurchsichtige Lage in `on-surface`
+ * über dem eigenen Hintergrund.
+ *
+ * Als ::after und NICHT als background-color, weil Karten ihren eigenen Grund
+ * tragen (die Listenfarbe als 20-Prozent-Lasur). Ein background-color würde
+ * ihn ersetzen statt ihn zu überlagern, und die Karte verlöre beim
+ * Darüberfahren ihre Farbe.
+ *
+ * Die Werte sind die von M3: 8 Prozent beim Zeigen, 12 beim Drücken. Hier
+ * etwas zurückgenommen, weil die Flaechen dieser App ohnehin hell sind.
+ */
+@utility state-layer {
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: var(--md-on-surface);
+    opacity: 0;
+    transition: opacity 120ms ease-out;
+    pointer-events: none;
+  }
+
+  &:hover::after {
+    opacity: 0.06;
+  }
+
+  &:active::after {
+    opacity: 0.1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .state-layer::after {
+    transition: none;
+  }
+}
+
+/*
  * Der eine orchestrierte Bewegungsmoment: eine Zeile, die gerade von einem
  * anderen Geraet geaendert wurde. Akzentleiste links plus Hintergrund, der
  * Richtung primary interpoliert und wieder zurueckfaellt. Spezifikation aus

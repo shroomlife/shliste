@@ -28,7 +28,7 @@ const summary = computed(() => {
 <template>
   <NuxtLink
     :to="`/app/recipes/${recipe.id}`"
-    class="list-tint flex flex-col gap-1.5 rounded-xl p-3.5 transition-shadow"
+    class="state-layer list-tint flex flex-col gap-1.5 rounded-xl p-3.5 transition-shadow"
     :style="{
       '--list-color': recipe.color,
       ...(active ? { boxShadow: `inset 0 0 0 2px ${recipe.color}` } : {}),

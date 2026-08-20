@@ -1,52 +1,107 @@
+# Ein Push auf main baut, veröffentlicht und deployt die PWA auf xva001.
+#
+# Es gibt bewusst keine Testumgebung dazwischen: ein Push auf main IST das
+# Deployment. Deshalb steht die Prüfung davor und nicht daneben, und deshalb
+# darf ein laufender Deploy nicht abgebrochen werden.
+#
+# Alle Aktionen sind auf einen vollen Commit-SHA gepinnt. Ein verschiebbarer
+# Tag wie @v5 bedeutet, dass fremder Code jederzeit ausgetauscht werden kann,
+# und diese Pipeline hält den Docker-Token und den Deploy-Schlüssel in der
+# Hand. Die SHAs sind dieselben wie in api.shliste.app, dort seit Wochen im
+# Einsatz.
+
 name: Production CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
+
+# Zwei Pushes kurz hintereinander dürfen sich nicht überholen. Bewusst nicht
+# abbrechen: ein laufender Deploy wird zu Ende gebracht, der nächste wartet.
+concurrency:
+  group: deploy-pwa
+  cancel-in-progress: false
+
+# Kleinstmögliches Recht: die Jobs lesen nur den Quelltext.
+permissions:
+  contents: read
 
 jobs:
   Test:
+    name: Typen, Lint und Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: Check Out Repository
-        uses: actions/checkout@v5.0.0
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          bun-version: "1.2.22"
+          persist-credentials: false
 
-      - name: Install Dependencies
-        run: bun install
+      # Die Fassung MUSS zu `packageManager` in der package.json passen. Weicht
+      # sie ab, löst die Pipeline andere Abhängigkeiten auf als der Rechner,
+      # auf dem geprüft wurde — und das Lockfile ist dann nur noch Dekoration.
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: "1.3.14"
 
-      - name: Run Type Check
+      # --frozen-lockfile: die Pipeline darf keine anderen Versionen ziehen als
+      # lokal geprüfte. Weicht das Lockfile ab, bricht der Lauf ab, statt still
+      # etwas anderes zu bauen als getestet wurde.
+      - name: Abhaengigkeiten
+        run: bun install --frozen-lockfile
+
+      - name: Typen
         run: bun run typecheck
 
-      - name: Run Linter
+      - name: Lint
         run: bun run lint
 
+      # NEU: Die 378 Tests liefen bisher nie in der Pipeline. Sie decken die
+      # Merge-Semantik, die Sync-Engine, die Übernahme der alten Daten und die
+      # Sortierlogik ab — genau die Stellen, an denen ein Fehler still Daten
+      # kostet und auf dem Rechner niemandem auffällt.
+      - name: Tests
+        run: bun test
+
   Build:
+    name: Image bauen und veroeffentlichen
     needs: Test
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - name: Check Out Repository
-        uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - name: Log In to Docker Hub
-        uses: docker/login-action@v3.6.0
+      - uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           username: ${{ vars.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Build and Push Docker Production Image
-        run: |
-          docker build -t shroomlife/shliste:latest . &&
-          docker push shroomlife/shliste:latest
+      # Mit Layer-Cache über die GitHub-Actions-Cache-API: ohne den läuft bei
+      # jedem Push ein vollständiges bun install im Image durch.
+      #
+      # Zusätzlich zum latest-Tag der Commit-SHA: Bisher gab es nur `latest`,
+      # und damit kein Ziel, auf das man zurückrollen könnte. Ein kaputter
+      # Deploy liesse sich nur durch einen neuen Deploy heilen.
+      - name: Bauen und hochladen
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          push: true
+          tags: |
+            shroomlife/shliste:latest
+            shroomlife/shliste:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   Deploy:
+    name: Auf xva001 ausrollen
     needs: Build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       # Der Deploy-Key trägt auf dem Server einen forced command
       # (/home/shliste/deploy-pwa.sh). Das `script:` unten wird deshalb NICHT
@@ -55,9 +110,12 @@ jobs:
       # was das Skript tut. Ändert sich der Ablauf, gehört die Änderung in
       # /home/shliste/deploy-pwa.sh auf xva001, nicht hierher.
       - name: Deploy to Production Server
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         with:
           host: ${{ vars.DEPLOY_HOST }}
           username: ${{ vars.DEPLOY_USERNAME }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: cd /home/shliste/production && docker compose pull shliste_app && docker compose up -d shliste_app
+
+      - name: Bilanz
+        run: echo "PWA neu ausgerollt auf ${{ vars.DEPLOY_HOST }}." >> "$GITHUB_STEP_SUMMARY"

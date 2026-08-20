@@ -26,7 +26,7 @@ const summary = computed(() => {
 <template>
   <NuxtLink
     :to="`/app/lists/${list.id}`"
-    class="list-tint flex flex-col gap-1.5 rounded-xl p-3.5 transition-shadow"
+    class="state-layer list-tint flex flex-col gap-1.5 rounded-xl p-3.5 transition-shadow"
     :style="{
       '--list-color': list.color,
       ...(active ? { boxShadow: `inset 0 0 0 2px ${list.color}` } : {}),

@@ -301,7 +301,7 @@ async function confirmDelete(): Promise<void> {
           <div
             v-for="ingredient in ingredients"
             :key="ingredient.id"
-            class="group flex min-h-12 items-center gap-3 rounded-lg px-2"
+            class="state-layer group flex min-h-12 items-center gap-3 rounded-lg px-2"
             :class="isSortMode && 'mb-0.5'"
             :style="isSortMode ? 'background: var(--md-surface-container)' : ''"
           >
@@ -401,7 +401,7 @@ async function confirmDelete(): Promise<void> {
           v-show="!isSortMode"
           :key="step.id"
           type="button"
-          class="flex min-h-14 w-full items-start gap-3.5 rounded-lg px-2 py-2 text-left transition-colors"
+          class="state-layer flex min-h-14 w-full items-start gap-3.5 rounded-lg px-2 py-2 text-left transition-colors"
           :class="step.isChecked && 'opacity-65'"
           :aria-pressed="step.isChecked"
           @click="onToggleStep(step)"

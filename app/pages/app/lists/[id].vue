@@ -25,6 +25,7 @@ const { reload: reloadOverview } = useLists()
 const { dataVersion, scheduleSync } = useSync()
 const { profile, isSignedIn } = useAuth()
 const { isRecent } = useRecentlyChanged()
+const toast = useToast()
 
 /**
  * Die Mitglieder dieser Liste aus der lokalen Datenbank.
@@ -163,6 +164,8 @@ const {
   load,
   toggleItem: setItemChecked,
   addItem: createItem,
+  removeItem,
+  restoreItem,
   moveItemTo,
   renameList,
   deleteList,
@@ -231,6 +234,35 @@ watch(dataVersion, () => {
 
 function toggleItem(item: ListItem): void {
   mutate(setItemChecked(item))
+}
+
+/**
+ * Entfernt einen Eintrag — mit Rückgängig, wie in der Android-App.
+ *
+ * `removed` ist ein Schalter und kein Löschen: Die Zeile bleibt als Verlauf
+ * für die Vorschläge erhalten und kommt beim Zurücknehmen mit ihrer Id, ihrer
+ * Position und ihren Feld-Zeitstempeln zurück — auch auf den anderen Geräten,
+ * denn das Zurücksetzen ist ein gewöhnliches Feld-Update.
+ *
+ * Sechs Sekunden: kürzer wäre für einen Griff zum Rückgängig knapp, länger
+ * stünde der Hinweis noch da, wenn man längst weiter ist.
+ */
+function onRemoveItem(item: ListItem): void {
+  mutate(removeItem(item))
+
+  toast.add({
+    title: `${item.name} entfernt`,
+    icon: 'i-lucide-trash-2',
+    duration: 6000,
+    actions: [{
+      label: 'Rückgängig',
+      color: 'neutral',
+      variant: 'outline',
+      onClick: () => {
+        mutate(restoreItem(item))
+      },
+    }],
+  })
 }
 
 function addItem(): void {
@@ -354,6 +386,7 @@ function addItem(): void {
             :just-changed="isRecent(item.id)"
             :changed-by="modifierName(item.modifiedBy)"
             @toggle="toggleItem(item)"
+            @remove="onRemoveItem(item)"
           />
         </div>
 
@@ -383,6 +416,7 @@ function addItem(): void {
             :just-changed="isRecent(item.id)"
             :changed-by="modifierName(item.modifiedBy)"
             @toggle="toggleItem(item)"
+            @remove="onRemoveItem(item)"
           />
         </div>
       </template>

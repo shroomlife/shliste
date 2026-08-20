@@ -31,7 +31,7 @@ const { item, justChanged = false, changedBy = null, sortable = false } = define
   sortable?: boolean
 }>()
 
-const emit = defineEmits<{ toggle: [] }>()
+const emit = defineEmits<{ toggle: [], remove: [] }>()
 </script>
 
 <template>
@@ -65,45 +65,69 @@ const emit = defineEmits<{ toggle: [] }>()
     >{{ item.quantity }}&times;</span>
   </div>
 
-  <button
+  <!-- Ausserhalb des Sortiermodus: Abhaken und Löschen. Beides sind eigene
+       Knöpfe nebeneinander und nicht ineinander — verschachtelte
+       Bedienelemente sind ungültiges HTML und für Tastatur wie Screenreader
+       kaputt. -->
+  <div
     v-else
-    type="button"
-    class="flex min-h-14 w-full items-center gap-3.5 rounded-lg px-2 text-left transition-colors"
+    class="state-layer group flex min-h-14 w-full items-center rounded-lg transition-colors"
     :class="[justChanged && 'delta-flash', item.checked && 'opacity-65']"
-    :aria-pressed="item.checked"
-    @click="emit('toggle')"
   >
-    <span
-      class="flex size-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors"
-      :style="item.checked
-        ? 'background: var(--md-check-content); border-color: var(--md-check-content)'
-        : 'border-color: var(--md-on-surface-variant)'"
+    <button
+      type="button"
+      class="flex min-h-14 min-w-0 grow items-center gap-3.5 rounded-lg px-2 text-left"
+      :aria-pressed="item.checked"
+      @click="emit('toggle')"
+    >
+      <span
+        class="flex size-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors"
+        :style="item.checked
+          ? 'background: var(--md-check-content); border-color: var(--md-check-content)'
+          : 'border-color: var(--md-on-surface-variant)'"
+      >
+        <UIcon
+          v-if="item.checked"
+          name="i-lucide-check"
+          class="size-4 text-white"
+        />
+      </span>
+
+      <span class="flex min-w-0 grow flex-col">
+        <span
+          class="truncate text-[1.375rem]"
+          :class="item.checked && 'line-through'"
+        >{{ item.name }}</span>
+        <span
+          v-if="justChanged && changedBy"
+          class="text-[0.875rem] font-bold"
+          style="color: var(--md-primary)"
+        >{{ changedBy }} gerade</span>
+      </span>
+
+      <span
+        v-if="item.quantity > 1"
+        class="flex h-7 min-w-9 shrink-0 items-center justify-center rounded-lg px-2 text-[1.0625rem] font-bold"
+        :style="item.checked
+          ? 'background: var(--md-muted-surface)'
+          : 'background: var(--md-surface-high)'"
+      >{{ item.quantity }}&times;</span>
+    </button>
+
+    <!-- Auf grossen Schirmen erst bei Hover oder Fokus, auf schmalen immer:
+         Dort gibt es kein Hover, und eine unsichtbare Bedienung ist keine.
+         Die Farbe ist der Löschton aus SemanticColors.kt. -->
+    <button
+      type="button"
+      class="mr-1 flex size-9 shrink-0 items-center justify-center rounded-lg opacity-100 transition-opacity lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100"
+      style="color: var(--md-delete-content)"
+      :aria-label="`${item.name} entfernen`"
+      @click="emit('remove')"
     >
       <UIcon
-        v-if="item.checked"
-        name="i-lucide-check"
-        class="size-4 text-white"
+        name="i-lucide-trash-2"
+        class="size-4"
       />
-    </span>
-
-    <span class="flex min-w-0 grow flex-col">
-      <span
-        class="truncate text-[1.375rem]"
-        :class="item.checked && 'line-through'"
-      >{{ item.name }}</span>
-      <span
-        v-if="justChanged && changedBy"
-        class="text-[0.875rem] font-bold"
-        style="color: var(--md-primary)"
-      >{{ changedBy }} gerade</span>
-    </span>
-
-    <span
-      v-if="item.quantity > 1"
-      class="flex h-7 min-w-9 shrink-0 items-center justify-center rounded-lg px-2 text-[1.0625rem] font-bold"
-      :style="item.checked
-        ? 'background: var(--md-muted-surface)'
-        : 'background: var(--md-surface-high)'"
-    >{{ item.quantity }}&times;</span>
-  </button>
+    </button>
+  </div>
 </template>
