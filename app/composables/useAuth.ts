@@ -26,6 +26,19 @@ export function useAuth() {
   const profile = useState<UserProfile | null>('auth-profile', () => null)
   const isLoading = useState<boolean>('auth-loading', () => false)
 
+  /**
+   * Werte, die der Server liefert, weil die Seite sie nicht kennen kann.
+   *
+   * Der App-Bereich wird vorgerendert; dabei backt Nuxt `runtimeConfig.public`
+   * zur BAUZEIT ein — im Docker-Build, ohne Umgebungsvariablen. Was später auf
+   * dem Server gesetzt wird, erreicht diese Seite nie. Deshalb kommen die
+   * Werte über `/api/auth/me` mit, das ohnehin beim Start abgefragt wird.
+   */
+  const clientConfig = useState<{ googleClientId: string, apiBase: string }>(
+    'auth-client-config',
+    () => ({ googleClientId: '', apiBase: 'https://api.shliste.app' }),
+  )
+
   const isSignedIn = computed<boolean>(() => profile.value !== null)
 
   /**
@@ -42,6 +55,7 @@ export function useAuth() {
     try {
       const session = await $fetch('/api/auth/me')
       profile.value = session.profile
+      clientConfig.value = session.config
     }
     catch (error) {
       // Ein gescheiterter Aufruf ist kein Beweis für "abgemeldet": Der Endpunkt
@@ -104,6 +118,7 @@ export function useAuth() {
 
   return {
     profile: readonly(profile),
+    clientConfig: readonly(clientConfig),
     isSignedIn,
     isLoading: readonly(isLoading),
     loadSession,

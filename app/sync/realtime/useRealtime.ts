@@ -15,7 +15,6 @@
  */
 import type { ComputedRef, MaybeRefOrGetter } from 'vue'
 import { computed, onBeforeUnmount, onMounted, ref, toValue, watch } from 'vue'
-import { useRuntimeConfig } from '#imports'
 import { createRealtimeConnection, type RealtimeStatus } from './connection'
 import { createEventCoalescer } from './coalesce'
 import type { RealtimeEvent } from './events'
@@ -31,6 +30,16 @@ export interface UseRealtimeOptions {
    * ersten Auftretens. Hier holt der Aufrufer das Delta.
    */
   onEvents: (events: RealtimeEvent[]) => void
+  /**
+   * Basisadresse der API für den Strom.
+   *
+   * Wird hereingereicht statt aus `runtimeConfig.public` gelesen: Der
+   * App-Bereich wird vorgerendert, und dabei backt Nuxt die öffentliche
+   * Konfiguration zur BAUZEIT ein — im Docker-Build, wo keine
+   * Umgebungsvariablen stehen. Der Aufrufer holt den Wert zur Laufzeit vom
+   * eigenen Server.
+   */
+  apiBase: MaybeRefOrGetter<string>
 }
 
 export interface UseRealtime {
@@ -71,14 +80,12 @@ export function useRealtime(options: UseRealtimeOptions): UseRealtime {
   const status = ref<RealtimeStatus>('idle')
   const isDegraded = ref(false)
 
-  const config = useRuntimeConfig()
-
   const coalescer = createEventCoalescer((events) => {
     options.onEvents(events)
   })
 
   const connection = createRealtimeConnection({
-    apiBase: config.public.apiBase,
+    apiBase: toValue(options.apiBase),
     requestTicket,
     onEvent: (event) => {
       coalescer.push(event)

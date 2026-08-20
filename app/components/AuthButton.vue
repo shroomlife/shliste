@@ -74,9 +74,13 @@ function readGoogleIdentityApi(): GoogleIdentityApi | null {
   return isGoogleIdentityApi(candidate) ? candidate : null
 }
 
-const { public: publicConfig } = useRuntimeConfig()
-const clientId = publicConfig.googleClientId
-const hasClientId = clientId.length > 0
+// NICHT aus `runtimeConfig.public`: Der App-Bereich wird vorgerendert, und
+// dabei wird die oeffentliche Konfiguration zur Bauzeit eingebacken — im
+// Docker-Build, wo keine Umgebungsvariablen stehen. Genau daran ist der Knopf
+// in Produktion haengen geblieben. Der Wert kommt jetzt vom Server (siehe
+// server/api/auth/me.get.ts).
+const clientId = computed(() => clientConfig.value.googleClientId)
+const hasClientId = computed(() => clientId.value.length > 0)
 
 /**
  * `compact` lässt die Beschriftung weg. Die Icon-Rail auf dem Desktop ist nur
@@ -85,7 +89,7 @@ const hasClientId = clientId.length > 0
  */
 const { compact = false } = defineProps<{ compact?: boolean }>()
 
-const { profile, isSignedIn, signIn, signOut } = useAuth()
+const { profile, clientConfig, isSignedIn, signIn, signOut } = useAuth()
 const toast = useToast()
 
 /**
@@ -156,14 +160,14 @@ function loadGoogleIdentity(): Promise<GoogleIdentityApi> {
 }
 
 async function startSignIn(): Promise<void> {
-  if (!hasClientId || isSigningIn.value) return
+  if (!hasClientId.value || isSigningIn.value) return
 
   isSigningIn.value = true
   try {
     const identity = await loadGoogleIdentity()
 
     identity.accounts.id.initialize({
-      client_id: clientId,
+      client_id: clientId.value,
       callback: (response) => {
         void completeSignIn(response)
       },

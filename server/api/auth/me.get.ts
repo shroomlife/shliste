@@ -21,6 +21,27 @@ import { apiFetch, isSessionExpiredError } from '../../utils/apiFetch'
 import type { UserProfile } from '#shared/types/domain'
 import { clearSessionCookies, readProfile, readSessionToken } from '../../utils/session'
 
+/**
+ * Werte, die der Browser braucht, die aber vom Server kommen MÜSSEN.
+ *
+ * WARUM NICHT ÜBER `runtimeConfig.public`: Der App-Bereich wird vorgerendert
+ * (`/app/lists` dient dem Service Worker als Hülle für jede Adresse). Beim
+ * Vorrendern backt Nuxt die öffentliche Konfiguration in die Seite ein — im
+ * Docker-Build, wo keine Umgebungsvariablen gesetzt sind. Eine später auf dem
+ * Server gesetzte `NUXT_PUBLIC_*` erreicht diese Seite deshalb nie.
+ *
+ * Genau das ist in Produktion passiert: Der Anmeldeknopf blieb gesperrt mit
+ * "NUXT_PUBLIC_GOOGLE_CLIENT_ID fehlt", obwohl die Variable auf dem Server
+ * stand. Über diesen Endpunkt kommen die Werte zur Laufzeit — unabhängig
+ * davon, wann und wie die Seite gerendert wurde.
+ */
+interface ClientConfig {
+  /** Öffentliche Google-Client-ID. Kein Geheimnis, aber ohne sie kein Anmelden. */
+  googleClientId: string
+  /** Basisadresse der API für den Echtzeit-Strom des Browsers. */
+  apiBase: string
+}
+
 interface SessionState {
   authenticated: boolean
   /**
@@ -29,9 +50,16 @@ interface SessionState {
    */
   verified: boolean
   profile: UserProfile | null
+  config: ClientConfig
 }
 
-const SIGNED_OUT: SessionState = { authenticated: false, verified: true, profile: null }
+function readClientConfig(): ClientConfig {
+  const { public: publicConfig } = useRuntimeConfig()
+  return {
+    googleClientId: publicConfig.googleClientId,
+    apiBase: publicConfig.apiBase,
+  }
+}
 
 export default defineEventHandler(async (event): Promise<SessionState> => {
   const sessionToken = readSessionToken(event)
@@ -41,12 +69,12 @@ export default defineEventHandler(async (event): Promise<SessionState> => {
   // abgemeldet melden, statt mit einem unvollständigen Profil weiterzumachen.
   if (sessionToken === undefined || profile === null) {
     if (sessionToken !== undefined || profile !== null) clearSessionCookies(event)
-    return SIGNED_OUT
+    return { authenticated: false, verified: true, profile: null, config: readClientConfig() }
   }
 
   try {
     await apiFetch('/sync/status', { sessionToken })
-    return { authenticated: true, verified: true, profile }
+    return { authenticated: true, verified: true, profile, config: readClientConfig() }
   }
   catch (error) {
     // Nur 401 bedeutet "Session tot". Alles andere — 403 (Signatur oder
@@ -58,10 +86,10 @@ export default defineEventHandler(async (event): Promise<SessionState> => {
       // ein Konfigurationsproblem (Secret oder Serveruhr) und würde sonst
       // niemandem auffallen, weil die Oberfläche einfach weiterläuft.
       console.warn('[auth/me] Session nicht prüfbar:', error instanceof Error ? error.message : error)
-      return { authenticated: true, verified: false, profile }
+      return { authenticated: true, verified: false, profile, config: readClientConfig() }
     }
 
     clearSessionCookies(event)
-    return SIGNED_OUT
+    return { authenticated: false, verified: true, profile: null, config: readClientConfig() }
   }
 })

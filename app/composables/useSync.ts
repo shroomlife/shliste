@@ -167,7 +167,7 @@ export function useSync(): UseSync {
 export function useSyncRunner(): void {
   const snapshot = useState<SyncSnapshot>('sync-snapshot', () => INITIAL_SNAPSHOT)
   const dataVersion = useState<number>('sync-data-version', () => 0)
-  const { isSignedIn } = useAuth()
+  const { isSignedIn, clientConfig } = useAuth()
   const { isOnline } = useNetworkStatus()
   const { requestSync } = useSync()
 
@@ -205,6 +205,9 @@ export function useSyncRunner(): void {
 
   const { isDegraded } = useRealtime({
     isSignedIn: () => isSignedIn.value,
+    // Zur Laufzeit vom eigenen Server, nicht aus der eingebackenen
+    // Konfiguration — siehe server/api/auth/me.get.ts.
+    apiBase: () => clientConfig.value.apiBase,
     onEvents: (events) => {
       // Vor dem Abruf markieren, nicht danach: Das Aufleuchten soll mit dem
       // Ereignis beginnen und nicht erst, wenn die Daten da sind — sonst
