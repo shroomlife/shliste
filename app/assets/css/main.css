@@ -150,6 +150,16 @@
 }
 
 .dark {
+  /*
+   * Im Dunkeln gilt wieder der helle Markenton. Der tiefere aus dem hellen
+   * Schema (siehe :root) ist dort nötig, weil weisse Schrift auf #E064B2 nur
+   * 3,16:1 erreicht — hier trägt die gefüllte Fläche dunkle Schrift, und
+   * #FF8CCB mit #3B0021 sind gemessen 8,17:1. Ohne diese Zeile schleppte das
+   * dunkle Schema den Ton des hellen mit, obwohl die Android-Palette dafür
+   * einen eigenen vorsieht.
+   */
+  --ui-primary: var(--color-brand-400);
+
   --md-primary: #FF8CCB;
   --md-on-primary: #3B0021;
   --md-primary-container: #5C2440;

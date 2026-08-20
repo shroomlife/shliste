@@ -105,6 +105,7 @@ function isActive(destination: Destination): boolean {
       <!-- Konto und Abgleich stehen zusammen am unteren Ende der Rail: beides
            betrifft nicht den Inhalt, sondern den Zustand der App. -->
       <div class="flex flex-col items-center gap-2">
+        <ThemeToggle />
         <!-- Ohne Konto gibt es nichts abzugleichen. Eine Anzeige wäre dann
              kein Hinweis, sondern eine Frage ohne Anlass. -->
         <SyncStatus
@@ -136,6 +137,7 @@ function isActive(destination: Destination): boolean {
         >
       </NuxtLink>
       <div class="grow" />
+      <ThemeToggle />
       <SyncStatus
         v-if="isSignedIn"
         :state="display"
