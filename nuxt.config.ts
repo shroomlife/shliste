@@ -47,6 +47,10 @@ export default defineNuxtConfig({
   site: {
     indexable: true,
     url: 'https://shliste.app',
+    // @nuxtjs/seo setzt html lang zur LAUFZEIT aus dieser Locale und
+    // überschreibt damit still das htmlAttrs lang="de" aus app.head —
+    // ohne den Eintrag stünde auf jeder SSR-Seite lang="en".
+    defaultLocale: 'de',
   },
 
   // Start-Vibe Light. Dark Mode bleibt als Feature erhalten, ist aber nie
@@ -72,8 +76,13 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    // Oeffentliche Seiten werden vorgerendert: gut fuer SEO und First Paint.
-    '/': { prerender: true },
+    // Die Startseite wird NICHT prerendert, sondern gerendert und per SWR
+    // gecacht: Eine prerenderte Seite liefert Nitro aus der statischen
+    // Schicht aus, BEVOR Server-Middleware laeuft — der Eingeloggt-Redirect
+    // (server/middleware/signed-in-redirect.ts) kaeme nie zum Zug. Mit SWR
+    // laeuft die Middleware zuerst, Anonyme bekommen weiter die gecachte
+    // Antwort. Empirisch am Produktionsbuild verifiziert, nicht vermutet.
+    '/': { swr: 3600 },
     '/imprint': { prerender: true },
     '/privacy': { prerender: true },
     // Die alten deutschen Adressen sind seit Jahren im Umlauf und in

@@ -1,5 +1,13 @@
+<script setup lang="ts">
+// Ohne explizite Locale setzt UApp lang="en" auf das html-Element und
+// überschreibt damit still das globale htmlAttrs lang="de" aus nuxt.config.
+// Mit der deutschen Locale stimmen ausserdem die eingebauten Komponenten-
+// Texte (aria-Labels, Schliessen-Knöpfe) zur Sprache der App.
+import { de } from '@nuxt/ui/locale'
+</script>
+
 <template>
-  <UApp>
+  <UApp :locale="de">
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>

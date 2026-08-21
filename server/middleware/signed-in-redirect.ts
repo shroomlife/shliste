@@ -3,10 +3,11 @@ import { SESSION_COOKIE } from '../utils/session'
 /**
  * Eingeloggte landen direkt bei ihren Listen, nicht auf der Startseite.
  *
- * Serverseitig als Middleware, weil die Startseite prerendered ist: Ihr
- * statisches HTML wird ohne Seiten-Handler ausgeliefert, ein Redirect im
- * Seitencode käme also erst nach dem Client-Start. Die Middleware läuft vor
- * der Auslieferung und spart den sichtbaren Umweg über die Landing-Page.
+ * Serverseitig als Middleware, VOR dem Renderer: Die Startseite ist dafür
+ * bewusst SWR-gecacht statt prerendert (siehe routeRules in nuxt.config.ts) —
+ * eine prerenderte Seite liefert Nitro aus der statischen Schicht aus, bevor
+ * Middleware überhaupt läuft, und dieser Redirect käme nie zum Zug. So spart
+ * er Eingeloggten den sichtbaren Umweg über die Landing-Page.
  *
  * Geprüft wird nur, OB das Sitzungs-Cookie existiert — nicht, ob es noch
  * gültig ist. Das ist Absicht: Die Gültigkeit kennt allein die API, und eine
