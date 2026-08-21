@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import type { RecipeIngredient, RecipeStep } from '#shared/types/domain'
+import { toSyncImagePath } from '~/ai/images'
+import { attachRecipeImageById } from '~/ai/persist'
+import { buildChatRecipePayload, buildRecipeImageText } from '~/ai/recipeContract'
+import type { AiRecipeEditApplyPayload } from '~/ai/recipeDiff'
 
 /**
  * Detailansicht eines Rezepts.
@@ -27,14 +31,33 @@ const {
   addStep,
   toggleStep,
   removeIngredient,
+  removeStep,
   moveIngredientTo,
   moveStepTo,
+  updateIngredient,
+  updateStepDescription,
+  setStepExplanation,
   renameRecipe,
   deleteRecipe,
 } = useRecipeDetail()
 
 const { reload: reloadOverview } = useRecipes()
 const { dataVersion, scheduleSync } = useSync()
+const { isSignedIn } = useAuth()
+const toast = useToast()
+
+/**
+ * Serverbild des Rezepts. Nur `sync:`-Referenzen sind für die PWA auflösbar;
+ * lokale Android-Pfade ergeben null — dann wird gar keine Bildfläche gerendert
+ * und der Kopf behält seine heutige Höhe (kein Layout-Shift).
+ */
+const recipeImageUrl = computed(() => resolveRecipeImageUrl(recipe.value?.imagePath ?? null))
+
+/** Ladefehler blenden die Fläche aus — ein Broken-Image-Icon hilft niemandem. */
+const isImageBroken = ref(false)
+watch(recipeImageUrl, () => {
+  isImageBroken.value = false
+})
 
 const newIngredient = ref('')
 const newStep = ref('')
@@ -85,6 +108,13 @@ const menuItems = computed(() => [[
     onSelect: () => {
       renameValue.value = recipe.value?.name ?? ''
       isRenameOpen.value = true
+    },
+  },
+  {
+    label: 'Neues Bild',
+    icon: 'i-lucide-image',
+    onSelect: () => {
+      startImageGeneration()
     },
   },
   {
@@ -161,19 +191,185 @@ async function confirmDelete(): Promise<void> {
   scheduleSync()
   await navigateTo('/app/recipes')
 }
+
+/* ------------------------------------------------------------------ *
+ * AI Features — Chat, Bearbeitung, Schritt-Erklärung, Bild.
+ * ------------------------------------------------------------------ */
+
+/** Aufklapp-Zustand der Sektion am Rezeptende; startet zu wie in Android. */
+const isAiSectionOpen = ref(false)
+const isAiChatOpen = ref(false)
+const isAiEditOpen = ref(false)
+const isImageGenOpen = ref(false)
+
+/**
+ * Die Zeilen in der Form, die Diff und Anfrage brauchen. Die Reihenfolge ist
+ * die Anzeige-Reihenfolge — aus ihr entsteht der `idx`, über den die
+ * AI-Antwort den Zeilen wieder zugeordnet wird.
+ */
+const aiIngredients = computed(() =>
+  ingredients.value.map(row => ({ id: row.id, name: row.name, quantity: row.quantity })),
+)
+
+const aiSteps = computed(() =>
+  steps.value.map(row => ({ id: row.id, description: row.description })),
+)
+
+/** Das Rezept für Chat und Erklärung — Mengen ganzzahlig, sonst 422. */
+const chatRecipe = computed(() =>
+  buildChatRecipePayload(recipe.value?.name ?? 'Rezept', ingredients.value, steps.value),
+)
+
+/** Der Bild-Prompt im Android-Format (AiJobRepository.kt). */
+const recipeImageText = computed(() =>
+  buildRecipeImageText(recipe.value?.name ?? 'Rezept', ingredients.value, steps.value),
+)
+
+/**
+ * Wendet die angehakten Änderungen der Diff-Vorschau an — ausschliesslich
+ * über die bestehenden Schreibwege von useRecipeDetail. Eine Zeile, die der
+ * Sync zwischenzeitlich entfernt hat, wird still übersprungen.
+ */
+async function applyAiEditWork(payload: AiRecipeEditApplyPayload): Promise<void> {
+  for (const entry of payload.ingredientEntries) {
+    if (entry.kind === 'unchanged') continue
+
+    if (entry.kind === 'added') {
+      await addIngredient(entry.name, entry.quantity)
+      continue
+    }
+
+    const row = ingredients.value.find(item => item.id === entry.itemId)
+    if (row === undefined) continue
+
+    if (entry.kind === 'removed') {
+      await removeIngredient(row)
+    }
+    else if (entry.kind === 'modified') {
+      await updateIngredient(row, { quantity: entry.newQuantity })
+    }
+    else {
+      // renamed
+      await updateIngredient(row, { name: entry.newName, quantity: entry.newQuantity })
+    }
+  }
+
+  for (const entry of payload.stepEntries) {
+    // Schritte kennen weder Menge noch Häkchen im Diff — nur neu,
+    // entfernt und umformuliert (`renamed`, mit description als Name).
+    if (entry.kind === 'added') {
+      await addStep(entry.name)
+      continue
+    }
+    if (entry.kind !== 'removed' && entry.kind !== 'renamed') continue
+
+    const row = steps.value.find(item => item.id === entry.itemId)
+    if (row === undefined) continue
+
+    if (entry.kind === 'removed') {
+      await removeStep(row)
+    }
+    else {
+      await updateStepDescription(row, entry.newName)
+    }
+  }
+
+  const target = recipe.value
+  const newName = payload.name.trim()
+  if (target !== null && newName.length > 0 && newName !== target.name) {
+    await renameRecipe(newName)
+  }
+}
+
+function onAiEditApply(payload: AiRecipeEditApplyPayload): void {
+  mutate(applyAiEditWork(payload))
+}
+
+/* Schritt erklären: Zeile und Index zum Zeitpunkt des Öffnens. */
+const isExplainOpen = ref(false)
+const explainTarget = ref<{ step: RecipeStep, index: number } | null>(null)
+
+function openExplain(step: RecipeStep, index: number): void {
+  explainTarget.value = { step, index }
+  isExplainOpen.value = true
+}
+
+/** Speichert die Erklärung am Schritt — das Feld wird gesynct. */
+function onExplained(explanation: string): void {
+  const target = explainTarget.value
+  if (target === null) return
+  mutate(setStepExplanation(target.step, explanation))
+}
+
+/**
+ * Ziel der Bild-Generierung, beim Öffnen eingefroren.
+ *
+ * Die Generierung kann Minuten dauern; wer währenddessen zu einem anderen
+ * Rezept navigiert, verschiebt `recipe.value`. Id und Text werden deshalb
+ * beim Start festgehalten, und gespeichert wird über die festgehaltene Id
+ * (`attachRecipeImageById`) — nie über den geteilten Ansichts-Zustand.
+ */
+const imageGenTarget = ref<{ recipeId: string, recipeText: string } | null>(null)
+
+function startImageGeneration(): void {
+  // Die BFF signiert AI-Aufrufe nur für Angemeldete — ehrlicher Hinweis
+  // statt eines Fehlers nach fünf Sekunden Wartezeit.
+  if (!isSignedIn.value) {
+    toast.add({
+      title: 'Anmeldung erforderlich',
+      description: 'Melde dich an, um die AI-Funktionen zu nutzen.',
+      icon: 'i-lucide-lock',
+    })
+    return
+  }
+  const target = recipe.value
+  if (target === null) return
+
+  imageGenTarget.value = { recipeId: target.id, recipeText: recipeImageText.value }
+  isImageGenOpen.value = true
+}
+
+/** Das generierte Bild ist hochgeladen — nur noch die Referenz speichern. */
+function onImageGenerated(imageRef: string): void {
+  const target = imageGenTarget.value
+  if (target === null) return
+
+  mutate(attachRecipeImageById(target.recipeId, toSyncImagePath(imageRef)))
+  toast.add({ title: 'Neues Bild gespeichert', icon: 'i-lucide-sparkles' })
+}
 </script>
 
 <template>
   <div
-    class="flex min-w-0 grow flex-col lg:min-h-0"
+    class="flex min-h-0 min-w-0 grow flex-col"
     style="background: var(--md-surface)"
   >
     <!-- Kopf in der Rezeptfarbe -->
     <header
-      class="list-tint flex shrink-0 flex-col gap-2.5 px-5 py-5 lg:px-7"
+      class="list-tint relative flex shrink-0 flex-col gap-2.5 px-5 py-5 lg:px-7"
       :style="{ '--list-color': recipe?.color ?? 'var(--md-primary)' }"
     >
-      <div class="flex items-start gap-3">
+      <img
+        v-if="recipeImageUrl !== null && !isImageBroken"
+        :src="recipeImageUrl"
+        alt=""
+        class="aspect-[2/1] w-full rounded-xl object-cover"
+        @error="isImageBroken = true"
+      >
+
+      <!--
+        Vertikaler Verlauf des Kopfs wie in DefaultCard.kt der Android-App:
+        die Rezeptfarbe mit 20 % Deckkraft, nach unten auslaufend. Liegt über
+        dem Bild und bleibt auch ohne Bild — dieselbe Mischformel wie die
+        list-tint-Utility, nur als Verlauf statt als Fläche.
+      -->
+      <div
+        class="pointer-events-none absolute inset-0"
+        style="background: linear-gradient(to bottom, color-mix(in srgb, var(--list-color, var(--md-primary)) 20%, transparent), transparent)"
+        aria-hidden="true"
+      />
+
+      <div class="relative flex items-start gap-3">
         <NuxtLink
           to="/app/recipes"
           class="mt-1 shrink-0 lg:hidden"
@@ -202,7 +398,7 @@ async function confirmDelete(): Promise<void> {
 
       <div
         v-if="steps.length"
-        class="flex items-center gap-3.5"
+        class="relative flex items-center gap-3.5"
       >
         <span
           class="text-[1rem]"
@@ -276,7 +472,7 @@ async function confirmDelete(): Promise<void> {
       </template>
     </AppSheet>
 
-    <div class="flex grow flex-col gap-6 px-3 py-4 lg:min-h-0 lg:overflow-y-auto lg:px-5">
+    <div class="flex min-h-0 grow flex-col gap-6 overflow-y-auto px-3 py-4 lg:px-5">
       <!-- Zutaten -->
       <section class="flex flex-col gap-1">
         <h2
@@ -396,35 +592,57 @@ async function confirmDelete(): Promise<void> {
           </div>
         </div>
 
-        <button
+        <!-- Erklärung als Geschwister-Knopf statt im Toggle-Knopf: Ein Knopf
+             im Knopf wäre ein verschachteltes Bedienelement und für Tastatur
+             wie Screenreader kaputt (dieselbe Begründung wie im Sortiermodus). -->
+        <div
           v-for="(step, index) in steps"
           v-show="!isSortMode"
           :key="step.id"
-          type="button"
-          class="state-layer flex min-h-14 w-full items-start gap-3.5 rounded-lg px-2 py-2 text-left transition-colors"
-          :class="step.isChecked && 'opacity-65'"
-          :aria-pressed="step.isChecked"
-          @click="onToggleStep(step)"
+          class="group flex items-start"
         >
-          <span
-            class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-[1rem] font-bold transition-colors"
-            :style="step.isChecked
-              ? 'background: var(--md-check-content); color: white'
-              : 'background: var(--md-surface-high); color: var(--md-on-surface-variant)'"
+          <button
+            type="button"
+            class="state-layer flex min-h-14 w-full min-w-0 grow items-start gap-3.5 rounded-lg px-2 py-2 text-left transition-colors"
+            :class="step.isChecked && 'opacity-65'"
+            :aria-pressed="step.isChecked"
+            @click="onToggleStep(step)"
           >
-            <UIcon
-              v-if="step.isChecked"
-              name="i-lucide-check"
-              class="size-4"
-            />
-            <template v-else>{{ index + 1 }}</template>
-          </span>
-          <span
-            class="min-w-0 grow text-[1.25rem]"
-            :class="step.isChecked && 'line-through'"
-            style="text-wrap: pretty"
-          >{{ step.description }}</span>
-        </button>
+            <span
+              class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-[1rem] font-bold transition-colors"
+              :style="step.isChecked
+                ? 'background: var(--md-check-content); color: white'
+                : 'background: var(--md-surface-high); color: var(--md-on-surface-variant)'"
+            >
+              <UIcon
+                v-if="step.isChecked"
+                name="i-lucide-check"
+                class="size-4"
+              />
+              <template v-else>{{ index + 1 }}</template>
+            </span>
+            <span
+              class="min-w-0 grow text-[1.25rem]"
+              :class="step.isChecked && 'line-through'"
+              style="text-wrap: pretty"
+            >{{ step.description }}</span>
+          </button>
+
+          <!-- Immer sichtbar, nur gedimmt: Auf Touch-Geräten gibt es kein
+               Hover, und eine unerreichbare Funktion wäre keine Funktion. -->
+          <UButton
+            v-if="isSignedIn"
+            icon="i-lucide-sparkles"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            class="mt-2.5 shrink-0 rounded-full transition-opacity"
+            :class="step.aiExplanation === null && 'opacity-40 group-hover:opacity-100 focus-visible:opacity-100'"
+            :style="step.aiExplanation !== null ? 'color: var(--md-primary)' : ''"
+            :aria-label="`Schritt ${index + 1} erklären`"
+            @click="openExplain(step, index)"
+          />
+        </div>
 
         <UInput
           v-if="!isSortMode"
@@ -437,7 +655,119 @@ async function confirmDelete(): Promise<void> {
           @keyup.enter="submitStep"
         />
       </section>
+
+      <!-- AI Features am Ende des Inhalts, aufklappbar — wie in Android -->
+      <div
+        v-if="!isSortMode"
+        class="mt-2 flex shrink-0 flex-col gap-2 px-1 pb-2"
+      >
+        <button
+          type="button"
+          class="flex w-full items-center justify-between rounded-xl px-4 py-3"
+          style="background: var(--md-surface-low)"
+          :aria-expanded="isAiSectionOpen"
+          @click="isAiSectionOpen = !isAiSectionOpen"
+        >
+          <span
+            class="text-[0.9375rem] font-bold"
+            style="color: var(--md-on-surface-variant)"
+          >AI Features</span>
+          <UIcon
+            name="i-lucide-chevron-down"
+            class="size-5 transition-transform duration-300"
+            :class="isAiSectionOpen && 'rotate-180'"
+            style="color: var(--md-on-surface-variant)"
+          />
+        </button>
+
+        <template v-if="isAiSectionOpen">
+          <template v-if="isSignedIn">
+            <button
+              type="button"
+              class="flex w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left"
+              style="border-color: var(--md-outline-variant); background: var(--md-surface)"
+              @click="isAiChatOpen = true"
+            >
+              <UIcon
+                name="i-lucide-message-circle"
+                class="size-5 shrink-0"
+                style="color: var(--md-primary)"
+              />
+              <span class="flex min-w-0 flex-col">
+                <span class="text-[1rem] font-bold">Rezept-Chat</span>
+                <span
+                  class="text-[0.875rem]"
+                  style="color: var(--md-on-surface-variant)"
+                >Stelle Fragen zu diesem Rezept</span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              class="flex w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left"
+              style="border-color: var(--md-outline-variant); background: var(--md-surface)"
+              @click="isAiEditOpen = true"
+            >
+              <UIcon
+                name="i-lucide-wand-sparkles"
+                class="size-5 shrink-0"
+                style="color: var(--md-primary)"
+              />
+              <span class="flex min-w-0 flex-col">
+                <span class="text-[1rem] font-bold">AI-Bearbeitung</span>
+                <span
+                  class="text-[0.875rem]"
+                  style="color: var(--md-on-surface-variant)"
+                >Bearbeite dieses Rezept mit KI-Unterstützung</span>
+              </span>
+            </button>
+          </template>
+
+          <p
+            v-else
+            class="rounded-xl border px-4 py-3 text-[0.9375rem]"
+            style="border-color: var(--md-outline-variant); color: var(--md-on-surface-variant)"
+          >
+            Melde dich an, um die AI-Funktionen zu nutzen.
+          </p>
+        </template>
+      </div>
     </div>
+
+    <AiRecipeChatSheet
+      v-if="recipe"
+      v-model:open="isAiChatOpen"
+      :recipe-id="recipe.id"
+      :recipe="chatRecipe"
+    />
+
+    <AiRecipeEditSheet
+      v-if="recipe"
+      v-model:open="isAiEditOpen"
+      :recipe-id="recipe.id"
+      :recipe-name="recipe.name"
+      :ingredients="aiIngredients"
+      :steps="aiSteps"
+      @apply="onAiEditApply"
+    />
+
+    <AiRecipeExplainSheet
+      v-if="explainTarget"
+      v-model:open="isExplainOpen"
+      :recipe="chatRecipe"
+      :step-index="explainTarget.index"
+      :step-description="explainTarget.step.description"
+      :stored-explanation="explainTarget.step.aiExplanation"
+      @explained="onExplained"
+    />
+
+    <AiRecipeImageSheet
+      v-if="imageGenTarget"
+      v-model:open="isImageGenOpen"
+      :recipe-id="imageGenTarget.recipeId"
+      :recipe-text="imageGenTarget.recipeText"
+      @generated="onImageGenerated"
+    />
 
     <!-- Sortiermodus: der sichtbare Weg hinaus. Ein Modus ohne Ende ist eine
          Falle. -->

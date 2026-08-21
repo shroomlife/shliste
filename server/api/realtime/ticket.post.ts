@@ -27,7 +27,11 @@ export default defineEventHandler(async (event): Promise<RealtimeTicket> => {
 
   // Ohne Body: die API erwartet keinen. Der Body-Hash ist damit der des leeren
   // Strings — genau das, was die Gegenseite für einen Request ohne Body rechnet.
-  const payload = await apiFetch('/sync/realtime/ticket', { method: 'POST', sessionToken })
+  const payload = await apiFetch('/sync/realtime/ticket', {
+    method: 'POST',
+    sessionToken,
+    clientIp: resolveVisitorIp(event),
+  })
 
   if (!isRecord(payload) || typeof payload.ticket !== 'string' || typeof payload.expiresIn !== 'number') {
     throw createError({

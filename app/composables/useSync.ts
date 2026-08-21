@@ -26,8 +26,16 @@ import {
 import { localStore } from '../sync/engine/store'
 import { syncEngine, type ConflictStrategy } from '../sync/engine/sync'
 import { requestJson, SYNC_ENDPOINTS } from '../sync/engine/transport'
+import type { RealtimeStatus } from '../sync/realtime/connection'
 import type { RealtimeEvent } from '../sync/realtime/events'
 import { useRealtime } from '../sync/realtime/useRealtime'
+
+/** Verbindungszustand des Echtzeit-Stroms, wie die Anzeige ihn braucht. */
+export interface RealtimeStatusView {
+  status: RealtimeStatus
+  /** Der Strom scheitert wiederholt — es läuft die Ersatz-Abfrage. */
+  isDegraded: boolean
+}
 
 /**
  * Abstand der Ersatz-Abfrage, solange der Echtzeit-Strom nicht steht.
@@ -105,6 +113,12 @@ export interface UseSync {
    * der lokalen Datenbank.
    */
   dataVersion: Readonly<Ref<number>>
+  /**
+   * Zustand des Echtzeit-Stroms, gespiegelt aus dem Runner.
+   *
+   * `idle`, solange der Runner (noch) nicht läuft — etwa ohne Anmeldung.
+   */
+  realtime: ComputedRef<RealtimeStatusView>
   /** Sofort abgleichen. Ohne Konto folgenlos. */
   requestSync: () => Promise<void>
   /** Nach einer lokalen Änderung: abgleichen, aber gesammelt. */
@@ -129,6 +143,10 @@ export interface UseSync {
 export function useSync(): UseSync {
   const snapshot = useState<SyncSnapshot>('sync-snapshot', () => INITIAL_SNAPSHOT)
   const dataVersion = useState<number>('sync-data-version', () => 0)
+  const realtimeView = useState<RealtimeStatusView>('realtime-status', () => ({
+    status: 'idle',
+    isDegraded: false,
+  }))
   const { isSignedIn } = useAuth()
 
   async function requestSync(): Promise<void> {
@@ -165,6 +183,7 @@ export function useSync(): UseSync {
     snapshot: computed(() => snapshot.value),
     display: computed(() => toDisplayState(snapshot.value.phase)),
     dataVersion: readonly(dataVersion),
+    realtime: computed(() => realtimeView.value),
     requestSync,
     scheduleSync,
     resolveConflict,
@@ -229,7 +248,19 @@ export function useSyncRunner(): void {
 
   const { mark } = useRecentlyChanged()
 
-  const { isDegraded } = useRealtime({
+  /**
+   * Spiegel des Verbindungszustands für die Anzeige (Profilseite).
+   *
+   * Der Strom lebt nur hier im Runner; Ansichten lesen den geteilten
+   * `useState`-Schlüssel über `useSync().realtime`, statt selbst eine
+   * Verbindung aufzubauen.
+   */
+  const realtimeView = useState<RealtimeStatusView>('realtime-status', () => ({
+    status: 'idle',
+    isDegraded: false,
+  }))
+
+  const { isDegraded, status: realtimeStatus } = useRealtime({
     isSignedIn: () => isSignedIn.value,
     // Zur Laufzeit vom eigenen Server, nicht aus der eingebackenen
     // Konfiguration — siehe server/api/auth/me.get.ts.
@@ -250,6 +281,13 @@ export function useSyncRunner(): void {
 
       void handleEvents(events).catch(reportSyncFailure)
     },
+  })
+
+  watchEffect(() => {
+    realtimeView.value = {
+      status: realtimeStatus.value,
+      isDegraded: isDegraded.value,
+    }
   })
 
   /** Läuft nur, solange der Echtzeit-Strom nicht zur Verfügung steht. */

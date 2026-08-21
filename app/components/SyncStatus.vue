@@ -22,6 +22,12 @@ const { state = 'offline', actionable = false } = defineProps<{
 
 const emit = defineEmits<{ activate: [] }>()
 
+/**
+ * Aufgelöste Komponente statt String: `<component is="NuxtLink">` würde ein
+ * gleichnamiges DOM-Element erzeugen, nicht die Router-Komponente.
+ */
+const NuxtLinkComponent = resolveComponent('NuxtLink')
+
 const display = computed(() => {
   switch (state) {
     case 'synced':
@@ -39,11 +45,14 @@ const display = computed(() => {
 </script>
 
 <template>
+  <!-- Mit offener Frage ein Knopf (Konfliktdialog), sonst ein Link zur
+       Profilseite: Dort steht der ausführliche Sync-Status — das Symbol hier
+       ist die Kurzfassung und führt zur Langfassung. -->
   <component
-    :is="actionable ? 'button' : 'div'"
-    class="flex flex-col items-center gap-1"
-    :class="actionable && 'rounded-lg transition-opacity hover:opacity-70'"
+    :is="actionable ? 'button' : NuxtLinkComponent"
+    class="flex flex-col items-center gap-1 rounded-lg transition-opacity hover:opacity-70"
     :type="actionable ? 'button' : undefined"
+    :to="actionable ? undefined : '/app/profile'"
     :title="display.label"
     @click="actionable && emit('activate')"
   >

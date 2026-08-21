@@ -157,6 +157,11 @@ const initials = computed<string>(() => displayName.value.slice(0, 1).toUpperCas
 const menuItems = computed<DropdownMenuItem[][]>(() => [
   [{ label: profile.value?.email ?? displayName.value, type: 'label' }],
   [{
+    label: 'Mein Profil',
+    icon: 'i-lucide-user',
+    to: '/app/profile',
+  }],
+  [{
     label: 'Abmelden',
     icon: 'i-lucide-log-out',
     onSelect: () => {

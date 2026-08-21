@@ -437,6 +437,19 @@ export async function getChatMessagesForRecipe(recipeId: string): Promise<Recipe
   return rows.sort(compareByCreatedAtAsc)
 }
 
+/**
+ * Auszeichnung zu einem Rezept — auch eine gelöschte.
+ *
+ * Bewusst inklusive Gelöschter: Der Server erzwingt genau eine Auszeichnung
+ * pro Rezept und Konto. Wer seine Badges zurückgesetzt hat, soll durch
+ * erneutes Fertigkochen kein Duplikat erzeugen, das der Push dann verwirft.
+ */
+export async function getBadgeForRecipe(recipeId: string): Promise<BadgeRow | undefined> {
+  const db = await getDb()
+  const rows = await db.getAllFromIndex('badges', 'by-recipeId', recipeId)
+  return rows[0]
+}
+
 /** Alle nicht gelöschten Auszeichnungen, zuletzt verdiente zuerst. */
 export async function getBadgesForView(): Promise<BadgeRow[]> {
   const db = await getDb()

@@ -25,6 +25,15 @@ export interface ApiFetchOptions {
    * einem Feld, das der Browser frei setzen kann.
    */
   sessionToken?: string
+  /**
+   * Echte Besucher-IP für faire Rate-Limits.
+   *
+   * Ohne sie sähe die API alle Web-Nutzer unter der einen Peer-IP dieser BFF
+   * und zählte sie in einen gemeinsamen Eimer. Die API vertraut dem Header
+   * nur zusammen mit einer gültigen Signatur (lib/forwarded-client.ts dort) —
+   * ein Browser kann ihn also nicht für fremde Limits missbrauchen.
+   */
+  clientIp?: string
 }
 
 /**
@@ -37,7 +46,7 @@ export interface ApiFetchOptions {
  *             (z.B. `/sync/pull?since=...`).
  */
 export async function apiFetch(path: string, options: ApiFetchOptions = {}): Promise<unknown> {
-  const { method = 'GET', rawBody, sessionToken } = options
+  const { method = 'GET', rawBody, sessionToken, clientIp } = options
   const { apiBase } = useRuntimeConfig()
 
   // Die URL ist die einzige Quelle für den zu signierenden Pfad: `url.pathname`
@@ -60,6 +69,10 @@ export async function apiFetch(path: string, options: ApiFetchOptions = {}): Pro
 
   if (sessionToken !== undefined) {
     headers['authorization'] = `Bearer ${sessionToken}`
+  }
+
+  if (clientIp !== undefined) {
+    headers['x-shliste-client-ip'] = clientIp
   }
 
   let response: FetchResponse<unknown>
@@ -106,4 +119,71 @@ export async function apiFetch(path: string, options: ApiFetchOptions = {}): Pro
 /** Wahr, wenn die API die Session abgelehnt hat (abgelaufenes oder ungültiges JWT). */
 export function isSessionExpiredError(error: unknown): boolean {
   return isError(error) && error.statusCode === 401
+}
+
+/**
+ * Wie `apiFetch`, aber für Binärantworten (derzeit: Rezeptbilder als WebP).
+ *
+ * Eigene Funktion statt eines Flags an `apiFetch`: deren Vertrag ist "JSON als
+ * unknown", und ein Rückgabetyp, der je nach Option die Gestalt wechselt,
+ * verschiebt den Fehler nur vom Compiler zum Aufrufer. Signatur, Session und
+ * Fehlerdurchreichung folgen exakt demselben Protokoll wie oben.
+ */
+export async function apiFetchRaw(path: string, options: ApiFetchOptions = {}): Promise<Uint8Array> {
+  const { method = 'GET', rawBody, sessionToken, clientIp } = options
+  const { apiBase } = useRuntimeConfig()
+
+  // Wie oben: signiert wird ausschliesslich `url.pathname`. Ein Query-String
+  // (z.B. `?ref=...`) landet in `url.search` und bleibt aus der Signatur heraus.
+  const url = new URL(path, apiBase)
+
+  const headers: Record<string, string> = {
+    ...signRequest(method, url.pathname, rawBody),
+    'sync-version': '1',
+  }
+
+  if (rawBody !== undefined) {
+    headers['content-type'] = 'application/json'
+  }
+
+  if (sessionToken !== undefined) {
+    headers['authorization'] = `Bearer ${sessionToken}`
+  }
+
+  if (clientIp !== undefined) {
+    headers['x-shliste-client-ip'] = clientIp
+  }
+
+  let response: FetchResponse<ArrayBuffer>
+
+  try {
+    response = await $fetch.raw(url.toString(), {
+      method,
+      headers,
+      body: rawBody,
+      responseType: 'arrayBuffer',
+      ignoreResponseError: true,
+      retry: false,
+    })
+  }
+  catch (cause) {
+    throw createError({
+      statusCode: 502,
+      statusMessage: 'Bad Gateway',
+      message: 'api.shliste.app ist nicht erreichbar.',
+      cause,
+    })
+  }
+
+  if (!response.ok) {
+    // Nur der Status wandert weiter, nicht der Body: Die Fehlernutzlast ist
+    // hier ein ArrayBuffer, und rohe Fehler-Bytes als `data` weiterzureichen
+    // hilft keinem Aufrufer.
+    throw createError({
+      statusCode: response.status,
+      statusMessage: response.statusText,
+    })
+  }
+
+  return new Uint8Array(response._data ?? new ArrayBuffer(0))
 }

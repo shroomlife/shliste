@@ -6,6 +6,21 @@ useSeoMeta({
   description: 'Einkaufslisten teilen und gemeinsam abhaken, in Echtzeit. Rezepte verwalten und Zutaten mit einem Tippen auf die Liste holen. Funktioniert auch ohne Netz.',
 })
 
+// Eingeloggt hat die Landing nichts mehr zu sagen: Das Logo zeigt auf die
+// Listen, und wer hier ankommt, wird direkt dorthin gebracht. Beides nur
+// client-seitig wirksam: Die Seite ist vorgerendert, und der Client startet
+// ebenso ausgeloggt wie der Server — kein Hydration-Mismatch. Die Session
+// kommt danach asynchron, deshalb ein Watcher statt einer einmaligen Prüfung;
+// `immediate` fängt den Fall ab, dass sie beim Aufruf schon geladen ist.
+// Den serverseitigen Teil übernimmt die Nitro-Middleware.
+const { isSignedIn } = useAuth()
+
+if (import.meta.client) {
+  watch(isSignedIn, (signedIn) => {
+    if (signedIn) void navigateTo('/app/lists', { replace: true })
+  }, { immediate: true })
+}
+
 const features = [
   {
     icon: 'i-lucide-users',
@@ -34,8 +49,8 @@ const features = [
       <!-- Der echte Schriftzug der Android-App (drawable ci_brand), nicht
            nachgebaut: dieselben Pfade, damit beide Auftritte identisch sind. -->
       <NuxtLink
-        to="/"
-        aria-label="shliste, zur Startseite"
+        :to="isSignedIn ? '/app/lists' : '/'"
+        :aria-label="isSignedIn ? 'shliste, zu deinen Listen' : 'shliste, zur Startseite'"
       >
         <img
           src="/images/brand/wordmark.svg"

@@ -7,6 +7,10 @@
  *
  * Radius und weiche Schattenstufe entsprechen dem Android-Vorbild, das
  * durchgehend flach gestaltet ist (shadowElevation 1dp).
+ *
+ * Der Abstand nach unten: 6rem = 72px fixe Bottom-Nav (h-18) plus 24px Luft,
+ * dazu die Safe-Area (iOS-Homebar) — die Bar wächst um denselben Betrag,
+ * der Knopf schwebt also immer knapp über ihr.
  */
 const { label, icon = 'i-lucide-plus' } = defineProps<{
   /** Wird als aria-label gesetzt, weil der Knopf nur ein Symbol zeigt */
@@ -22,7 +26,7 @@ const emit = defineEmits<{ click: [] }>()
     :icon="icon"
     :aria-label="label"
     size="xl"
-    class="fixed right-5 bottom-24 z-10 size-14 justify-center rounded-2xl shadow-md lg:hidden"
+    class="fixed right-5 bottom-[calc(6rem_+_env(safe-area-inset-bottom,0px))] z-10 size-14 justify-center rounded-2xl shadow-md lg:hidden"
     @click="emit('click')"
   />
 </template>

@@ -23,6 +23,7 @@
     "docker:push": "docker push shroomlife/shliste:latest",
     "generate": "nuxt generate",
     "lint": "eslint .",
+    "test": "bun test",
     "lint:fix": "eslint . --fix",
     "pb": "docker build -t shroomlife/shliste:latest . && docker push shroomlife/shliste:latest",
     "postinstall": "nuxt prepare",

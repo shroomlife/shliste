@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { ListItem } from '#shared/types/domain'
-import { getMembersForList } from '~/db/repositories'
+import { getMembersForList, upsertItem, upsertList } from '~/db/repositories'
 import type { ListMemberRow } from '~/db/schema'
+import type { AiEditApplyPayload } from '~/ai/diff'
+import { joinSuggestionCache } from '~/ai/suggestions'
 
 /**
  * Detailansicht einer Liste — der Bildschirm, auf dem in dieser App die meiste
@@ -167,6 +169,7 @@ const {
   openItems,
   doneItems,
   load,
+  reload: reloadDetail,
   toggleItem: setItemChecked,
   addItem: createItem,
   removeItem,
@@ -280,20 +283,139 @@ function addItem(): void {
   newItemName.value = ''
   mutate(createItem(name))
 }
+
+/* ------------------------------------------------------------------ *
+ * AI Features — Bearbeitung und Vorschläge, wie in der Android-App.
+ * ------------------------------------------------------------------ */
+
+/** Aufklapp-Zustand der Sektion am Listenende; startet zu wie in Android. */
+const isAiSectionOpen = ref(false)
+const isAiEditOpen = ref(false)
+const isSuggestionsOpen = ref(false)
+
+/**
+ * Die Einträge in der Form, die Diff und Anfrage brauchen. Die Reihenfolge
+ * ist die Anzeige-Reihenfolge — aus ihr entsteht der `idx`, über den die
+ * AI-Antwort den Einträgen wieder zugeordnet wird.
+ */
+const aiItems = computed(() =>
+  items.value.map(item => ({ id: item.id, name: item.name, quantity: item.quantity, checked: item.checked })),
+)
+
+const activeItemNames = computed(() => items.value.map(item => item.name))
+
+/**
+ * Wendet die angehakten Änderungen der Diff-Vorschau an — ausschliesslich
+ * über die bestehenden Schreibwege: Neues über `createItem` (vergibt Id,
+ * Position und Sortierschlüssel), alles andere über `upsertItem` mit
+ * `toItemDraft`, das nur die setzbaren Felder durchlässt. Ein Eintrag, den
+ * der Sync zwischenzeitlich entfernt hat, wird still übersprungen.
+ */
+async function applyAiEditWork(payload: AiEditApplyPayload): Promise<void> {
+  for (const entry of payload.entries) {
+    if (entry.kind === 'unchanged') continue
+
+    if (entry.kind === 'added') {
+      const row = await createItem(entry.name, entry.quantity)
+      // Selten, aber möglich: Die AI legt einen Eintrag gleich abgehakt an.
+      if (row !== null && entry.checked) {
+        await upsertItem({ ...toItemDraft(row), checked: true })
+      }
+      continue
+    }
+
+    const row = items.value.find(item => item.id === entry.itemId)
+    if (row === undefined) continue
+
+    if (entry.kind === 'removed') {
+      await removeItem(row)
+      continue
+    }
+
+    if (entry.kind === 'modified') {
+      await upsertItem({ ...toItemDraft(row), quantity: entry.newQuantity, checked: entry.newChecked })
+      continue
+    }
+
+    // renamed
+    await upsertItem({
+      ...toItemDraft(row),
+      name: entry.newName.trim(),
+      quantity: entry.newQuantity,
+      checked: entry.newChecked,
+    })
+  }
+
+  const target = list.value
+  const newName = payload.name.trim()
+  if (target !== null && newName.length > 0 && newName !== target.name) {
+    await renameList(newName)
+  }
+
+  await reloadDetail()
+}
+
+function onAiEditApply(payload: AiEditApplyPayload): void {
+  mutate(applyAiEditWork(payload))
+}
+
+/**
+ * Schreibt den Vorschlags-Cache (`lastSuggestedItems`) zurück — über
+ * `upsertList`, denselben Weg wie jedes andere Listenfeld. Das Feld wird
+ * gesynct, damit die Android-App dieselben Vorschläge sieht.
+ */
+async function writeSuggestionCacheWork(remaining: readonly string[]): Promise<void> {
+  const target = list.value
+  if (target === null) return
+
+  await upsertList({
+    id: target.id,
+    name: target.name,
+    color: target.color,
+    secret: target.secret,
+    lastSuggestedItems: joinSuggestionCache(remaining),
+    sourceUrl: target.sourceUrl,
+    ownerUserId: target.ownerUserId,
+    deletedAt: target.deletedAt,
+  })
+  await reloadDetail()
+}
+
+function onSuggestionsRefreshed(freshItems: string[]): void {
+  mutate(writeSuggestionCacheWork(freshItems))
+}
+
+async function addSuggestionsWork(names: readonly string[], remaining: readonly string[]): Promise<void> {
+  for (const name of names) {
+    await createItem(name, 1)
+  }
+  await writeSuggestionCacheWork(remaining)
+}
+
+function onSuggestionsAdd(names: string[], remaining: string[]): void {
+  mutate(addSuggestionsWork(names, remaining))
+}
 </script>
 
 <template>
   <div
-    class="flex min-w-0 grow flex-col lg:min-h-0"
+    class="flex min-h-0 min-w-0 grow flex-col"
     style="background: var(--md-surface)"
   >
     <!-- Kopf in der Listenfarbe. Ändert ein anderes Mitglied Name oder Farbe,
          leuchtet er kurz auf — derselbe Moment wie bei einer Zeile, nur als
-         Schicht darüber, damit die Listenfarbe darunter stehen bleibt. -->
+         Schicht darüber, damit die Listenfarbe darunter stehen bleibt.
+
+         Als Verlauf statt flacher Tönung: Android legt die 20-Prozent-Lasur
+         als vertikalen Farbverlauf über den Kartenkopf, nach unten auslaufend
+         (DefaultCard.kt). Derselbe Wiedererkennungsmoment gehört ins Web. -->
     <header
-      class="list-tint flex shrink-0 flex-col gap-2.5 px-5 py-5 lg:px-7"
+      class="flex shrink-0 flex-col gap-2.5 px-5 py-5 lg:px-7"
       :class="isRecent(listId) && 'delta-flash-overlay'"
-      :style="{ '--list-color': list?.color ?? 'var(--md-primary)' }"
+      :style="{
+        '--list-color': list?.color ?? 'var(--md-primary)',
+        'backgroundImage': 'linear-gradient(to bottom, color-mix(in srgb, var(--list-color) 20%, transparent), transparent)',
+      }"
     >
       <div class="flex items-start gap-3">
         <NuxtLink
@@ -376,7 +498,7 @@ function addItem(): void {
     <!-- Einträge -->
     <div
       v-else
-      class="flex grow flex-col gap-0.5 px-3 py-2 lg:min-h-0 lg:overflow-y-auto lg:px-5"
+      class="flex min-h-0 grow flex-col gap-0.5 overflow-y-auto px-3 py-2 lg:px-5"
     >
       <template v-if="items.length">
         <!-- Eigene Behälter je Gruppe: Ziehen bleibt darin, denn die
@@ -448,6 +570,84 @@ function addItem(): void {
           Trag unten ein, was du brauchst. Abhaken geht auch ohne Netz.
         </p>
       </div>
+
+      <!-- AI Features am Ende des Inhalts, aufklappbar — wie in Android -->
+      <div
+        v-if="!isSortMode"
+        class="mt-4 flex shrink-0 flex-col gap-2 px-1 pb-2"
+      >
+        <button
+          type="button"
+          class="flex w-full items-center justify-between rounded-xl px-4 py-3"
+          style="background: var(--md-surface-low)"
+          :aria-expanded="isAiSectionOpen"
+          @click="isAiSectionOpen = !isAiSectionOpen"
+        >
+          <span
+            class="text-[0.9375rem] font-bold"
+            style="color: var(--md-on-surface-variant)"
+          >AI Features</span>
+          <UIcon
+            name="i-lucide-chevron-down"
+            class="size-5 transition-transform duration-300"
+            :class="isAiSectionOpen && 'rotate-180'"
+            style="color: var(--md-on-surface-variant)"
+          />
+        </button>
+
+        <template v-if="isAiSectionOpen">
+          <template v-if="isSignedIn">
+            <button
+              type="button"
+              class="flex w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left"
+              style="border-color: var(--md-outline-variant); background: var(--md-surface)"
+              @click="isAiEditOpen = true"
+            >
+              <UIcon
+                name="i-lucide-wand-sparkles"
+                class="size-5 shrink-0"
+                style="color: var(--md-primary)"
+              />
+              <span class="flex min-w-0 flex-col">
+                <span class="text-[1rem] font-bold">AI-Bearbeitung</span>
+                <span
+                  class="text-[0.875rem]"
+                  style="color: var(--md-on-surface-variant)"
+                >Bearbeite diese Liste mit KI-Unterstützung</span>
+              </span>
+            </button>
+
+            <button
+              v-if="items.length"
+              type="button"
+              class="flex w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left"
+              style="border-color: var(--md-outline-variant); background: var(--md-surface)"
+              @click="isSuggestionsOpen = true"
+            >
+              <UIcon
+                name="i-lucide-sparkles"
+                class="size-5 shrink-0"
+                style="color: var(--md-primary)"
+              />
+              <span class="flex min-w-0 flex-col">
+                <span class="text-[1rem] font-bold">AI-Vorschläge</span>
+                <span
+                  class="text-[0.875rem]"
+                  style="color: var(--md-on-surface-variant)"
+                >Lass dir passende Einträge vorschlagen</span>
+              </span>
+            </button>
+          </template>
+
+          <p
+            v-else
+            class="rounded-xl border px-4 py-3 text-[0.9375rem]"
+            style="border-color: var(--md-outline-variant); color: var(--md-on-surface-variant)"
+          >
+            Melde dich an, um die AI-Funktionen zu nutzen.
+          </p>
+        </template>
+      </div>
     </div>
 
     <AppSheet
@@ -518,6 +718,26 @@ function addItem(): void {
       :is-owner="isOwner"
     />
 
+    <AiEditListSheet
+      v-if="list"
+      v-model:open="isAiEditOpen"
+      :list-id="list.id"
+      :list-name="list.name"
+      :items="aiItems"
+      @apply="onAiEditApply"
+    />
+
+    <AiSuggestionsSheet
+      v-if="list"
+      v-model:open="isSuggestionsOpen"
+      :list-id="list.id"
+      :list-name="list.name"
+      :cached-suggestions="list.lastSuggestedItems"
+      :active-names="activeItemNames"
+      @add="onSuggestionsAdd"
+      @refreshed="onSuggestionsRefreshed"
+    />
+
     <!-- Sortiermodus: statt der Eingabe der Weg hinaus. Ein Modus ohne
          sichtbares Ende ist eine Falle. -->
     <div
@@ -552,13 +772,16 @@ function addItem(): void {
         :ui="{ root: 'w-full' }"
         @keyup.enter="addItem"
       />
+      <!-- Direkter Griff zu den AI-Vorschlägen; braucht Einträge und ein Konto -->
       <UButton
         icon="i-lucide-sparkles"
         color="neutral"
         variant="subtle"
         size="xl"
         class="shrink-0 rounded-xl font-bold"
-        aria-label="Vorschläge"
+        aria-label="AI-Vorschläge"
+        :disabled="!isSignedIn || items.length === 0"
+        @click="isSuggestionsOpen = true"
       />
     </div>
   </div>

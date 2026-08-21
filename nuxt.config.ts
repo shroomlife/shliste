@@ -23,6 +23,9 @@ export default defineNuxtConfig({
       title: 'shliste ~ Deine smarte Einkaufsliste',
       htmlAttrs: { lang: 'de' },
       meta: [
+        // viewport-fit=cover: Ohne dieses Attribut liefert env(safe-area-inset-*)
+        // auf iOS immer 0 — die fixe Bottom-Nav braucht den echten Wert.
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
         { name: 'description', content: 'Erstelle und verwalte muehelos deine Einkaufslisten mit shliste. Pack Produkte ein, hake sie ab und behalte immer den Ueberblick beim Shoppen!' },
         // Entspricht --color-secondary aus dem Android-Farbschema (SecondaryColor)
         { name: 'theme-color', content: '#FDECF5' },
@@ -184,6 +187,25 @@ export default defineNuxtConfig({
       // keine HTML-Seite.
       navigateFallbackDenylist: [/^\/api\//],
       cleanupOutdatedCaches: true,
+      // Die eine bewusste Ausnahme vom "BFF-Aufrufe nie cachen" direkt darüber:
+      // Rezeptbilder. Ihre Adresse trägt einen Inhalts-Hash — ein geändertes
+      // Bild bekommt eine neue Adresse, ein Eintrag kann also nie veralten.
+      // CacheFirst spart offline wie online jede zweite Anfrage; gecacht wird
+      // nur eine echte 200, niemals eine Fehlerantwort.
+      runtimeCaching: [
+        {
+          urlPattern: /\/api\/images\//,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'recipe-images',
+            expiration: {
+              maxEntries: 200,
+              maxAgeSeconds: 60 * 60 * 24 * 30,
+            },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
+      ],
     },
 
     // In der Entwicklung aus: Ein Service Worker, der neben dem HMR-Server

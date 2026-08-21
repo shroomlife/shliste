@@ -110,6 +110,13 @@ export function useAuth() {
     try {
       await $fetch('/api/auth/logout', { method: 'POST' })
       profile.value = null
+
+      // Der Service-Worker-Cache der Rezeptbilder überlebt das Cookie —
+      // auf einem geteilten Gerät sollen die Bilder mit der Sitzung gehen.
+      // Best effort: Ein Fehler hier darf das Abmelden nicht aufhalten.
+      if (typeof caches !== 'undefined') {
+        await caches.delete('recipe-images').catch(() => false)
+      }
     }
     finally {
       isLoading.value = false

@@ -33,6 +33,7 @@ export default defineEventHandler(async (event): Promise<UserProfile> => {
   const payload = await apiFetch('/auth/google', {
     method: 'POST',
     rawBody: JSON.stringify({ idToken }),
+    clientIp: resolveVisitorIp(event),
   })
 
   const session = parseApiSession(payload)

@@ -86,6 +86,8 @@ export default defineEventHandler(async (event): Promise<unknown> => {
     method,
     rawBody,
     sessionToken,
+    // Besucher-IP für faire Rate-Limits pro Person statt pro BFF (s. apiFetch).
+    clientIp: resolveVisitorIp(event),
   })
 })
 

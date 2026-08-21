@@ -49,7 +49,7 @@ function isActive(destination: Destination): boolean {
 
 <template>
   <div
-    class="flex min-h-dvh flex-col lg:h-dvh lg:min-h-0 lg:flex-row lg:overflow-hidden"
+    class="flex h-dvh flex-col overflow-hidden lg:flex-row"
     style="background: var(--md-background)"
   >
     <!-- Desktop: Icon-Rail. Auf Mobil ausgeblendet. -->
@@ -62,9 +62,9 @@ function isActive(destination: Destination): boolean {
            Vorher stand hier ein Menü-Symbol, das kein Menü öffnete — genau die
            Art Versprechen, das eine Oberfläche nicht halten kann. -->
       <NuxtLink
-        to="/"
+        :to="isSignedIn ? '/app/lists' : '/'"
         class="mb-4 flex size-10 items-center justify-center"
-        aria-label="shliste, zur Startseite"
+        :aria-label="isSignedIn ? 'shliste, zu deinen Listen' : 'shliste, zur Startseite'"
       >
         <img
           src="/images/brand/mark.svg"
@@ -125,8 +125,8 @@ function isActive(destination: Destination): boolean {
       style="background: var(--md-surface-container)"
     >
       <NuxtLink
-        to="/"
-        aria-label="shliste, zur Startseite"
+        :to="isSignedIn ? '/app/lists' : '/'"
+        :aria-label="isSignedIn ? 'shliste, zu deinen Listen' : 'shliste, zur Startseite'"
       >
         <img
           src="/images/brand/wordmark.svg"
@@ -147,7 +147,7 @@ function isActive(destination: Destination): boolean {
       <AuthButton />
     </div>
 
-    <main class="flex min-w-0 grow flex-col lg:min-h-0">
+    <main class="flex min-h-0 min-w-0 grow flex-col overflow-y-auto">
       <slot />
     </main>
 
@@ -161,7 +161,7 @@ function isActive(destination: Destination): boolean {
 
     <!-- Mobil: Bottom-Nav wie in Android. Auf Desktop ausgeblendet. -->
     <nav
-      class="flex h-18 shrink-0 items-center border-t lg:hidden"
+      class="flex min-h-18 shrink-0 items-center border-t pb-[env(safe-area-inset-bottom)] lg:hidden"
       style="background: var(--md-surface-container); border-color: var(--md-outline-variant)"
       aria-label="Hauptnavigation"
     >

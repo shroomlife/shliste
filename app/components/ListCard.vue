@@ -8,6 +8,13 @@ import type { List } from '#shared/types/domain'
  * genau wie ColorUtils.colorWith20Opacity in Android. Weil die Farben echtes
  * Zufalls-RGB sind (Summe der Kanäle zwischen 100 und 700), wäre jede
  * kräftigere Darstellung unruhig.
+ *
+ * ALS VERLAUF, NICHT ALS FLÄCHE: Android legt die Lasur als vertikalen
+ * Farbverlauf über die Karte — oben die Farbe, nach unten auslaufend
+ * (DefaultCard.kt, Brush.verticalGradient). Die flache Tönung der ersten
+ * Fassung hat genau diesen Wiedererkennungswert verschluckt. Damit der
+ * Verlauf unten nicht im Seitenhintergrund verschwindet, liegt er auf
+ * einer Kartenfläche (surface) statt auf transparent.
  */
 const { list, openCount = 0, doneCount = 0, active = false, isShared = false } = defineProps<{
   list: List
@@ -28,9 +35,11 @@ const summary = computed(() => {
 <template>
   <NuxtLink
     :to="`/app/lists/${list.id}`"
-    class="state-layer list-tint flex flex-col gap-1.5 rounded-xl p-3.5 transition-shadow"
+    class="state-layer flex flex-col gap-1.5 rounded-xl p-3.5 shadow-sm transition-shadow"
     :style="{
       '--list-color': list.color,
+      'backgroundColor': 'var(--md-surface)',
+      'backgroundImage': 'linear-gradient(to bottom, color-mix(in srgb, var(--list-color) 20%, transparent), transparent)',
       ...(active ? { boxShadow: `inset 0 0 0 2px ${list.color}` } : {}),
     }"
   >

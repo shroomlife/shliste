@@ -6,18 +6,111 @@
  * Wer Listen bedienen kann, kann auch Rezepte bedienen, ohne etwas Neues zu
  * lernen. Auf Mobil tritt der Index zurück, sobald ein Rezept offen ist.
  */
+import type { GeneratedRecipe } from '~/ai/recipeContract'
+import type { AiCreateMode } from '~/ai/transport'
+import { base64ToWebpBlob, toSyncImagePath, uploadRecipeImage } from '~/ai/images'
+import { attachRecipeImageById, persistGeneratedRecipeDetails } from '~/ai/persist'
+
 definePageMeta({ layout: 'app' })
 useHead({ title: 'Rezepte ~ shliste' })
 
 const route = useRoute()
 const { entries, reload, createRecipe } = useRecipes()
 const { dataVersion, scheduleSync } = useSync()
+const { isSignedIn } = useAuth()
+const toast = useToast()
 
 const isDetailOpen = computed(() => typeof route.params.id === 'string')
 
 const isDialogOpen = ref(false)
 const newRecipeName = ref('')
 const isSaving = ref(false)
+
+/* ------------------------------------------------------------------ *
+ * Neues Rezept per AI: Sprache, Foto, Link.
+ * ------------------------------------------------------------------ */
+
+/** Mobil: Der FAB öffnet erst diese Auswahl (Neu + die drei AI-Wege). */
+const isChooserOpen = ref(false)
+
+const aiMode = ref<AiCreateMode>('voice')
+const isAiCreateOpen = ref(false)
+
+function openChooser(): void {
+  isChooserOpen.value = true
+}
+
+function chooseManualCreate(): void {
+  isChooserOpen.value = false
+  openDialog()
+}
+
+function startAiCreate(mode: AiCreateMode): void {
+  isChooserOpen.value = false
+
+  // Die BFF signiert AI-Aufrufe nur für Angemeldete — ehrlicher Hinweis
+  // statt eines Fehlers nach fünf Sekunden Wartezeit.
+  if (!isSignedIn.value) {
+    toast.add({
+      title: 'Anmeldung erforderlich',
+      description: 'Melde dich an, um die AI-Funktionen zu nutzen.',
+      icon: 'i-lucide-lock',
+    })
+    return
+  }
+
+  aiMode.value = mode
+  isAiCreateOpen.value = true
+}
+
+/**
+ * Legt das von der AI gelieferte Rezept an — direkt über die Datenbank,
+ * gebunden an die neue Rezept-Id (`app/ai/persist.ts`). BEWUSST NICHT über
+ * den geteilten Detail-Zustand: Der gehört der offenen Detailansicht, und
+ * ein Sync-Tick während der AI-Wartezeit würde die restlichen Schreibzüge
+ * sonst an das dort geöffnete Rezept umleiten. `sourceUrl` (bei „Per Link")
+ * wandert wie in Android an den Datensatz, und ein mitgeliefertes Bild geht
+ * sofort zum Server, damit es als `sync:`-Referenz auf allen Geräten ankommt.
+ */
+async function createRecipeFromAi(result: GeneratedRecipe): Promise<void> {
+  const created = await createRecipe(result.name)
+  await persistGeneratedRecipeDetails(created.id, result)
+
+  if (result.imageData !== null) {
+    // Ein gescheiterter Bild-Upload lässt das Rezept trotzdem entstehen:
+    // Zutaten und Schritte sind der Kern, das Bild ist die Zugabe.
+    const blob = base64ToWebpBlob(result.imageData)
+    const upload = blob !== null ? await uploadRecipeImage(created.id, blob) : null
+    const attached = upload !== null && upload.ok
+      ? await attachRecipeImageById(created.id, toSyncImagePath(upload.value))
+      : false
+    if (!attached) {
+      toast.add({
+        title: 'Bild konnte nicht gespeichert werden',
+        description: 'Das Rezept wurde ohne Bild angelegt.',
+        icon: 'i-lucide-image-off',
+      })
+    }
+  }
+
+  await reload()
+  scheduleSync()
+
+  toast.add({ title: `Rezept "${created.name}" erstellt`, icon: 'i-lucide-sparkles' })
+  await navigateTo(`/app/recipes/${created.id}`)
+}
+
+function onAiRecipeCreated(result: GeneratedRecipe): void {
+  void createRecipeFromAi(result).catch((error: unknown) => {
+    console.error('[Rezepte] Anlegen des AI-Rezepts fehlgeschlagen:', error)
+    toast.add({
+      title: 'Rezept konnte nicht angelegt werden',
+      description: 'Bitte versuche es erneut.',
+      icon: 'i-lucide-triangle-alert',
+      color: 'error',
+    })
+  })
+}
 
 onMounted(() => {
   void reload()
@@ -52,12 +145,12 @@ async function submitDialog(): Promise<void> {
 
 <template>
   <div
-    class="flex min-w-0 grow lg:min-h-0 lg:divide-x"
+    class="flex min-h-0 min-w-0 grow lg:divide-x"
     style="border-color: var(--md-outline-variant)"
   >
     <!-- Index -->
     <section
-      class="w-full shrink-0 flex-col lg:flex lg:w-86 lg:overflow-y-auto"
+      class="w-full shrink-0 flex-col overflow-y-auto lg:flex lg:w-86"
       :class="isDetailOpen ? 'hidden' : 'flex'"
       style="background: var(--md-surface-low)"
     >
@@ -66,6 +159,41 @@ async function submitDialog(): Promise<void> {
         action-label="Neu"
         @action="openDialog"
       />
+
+      <!-- Desktop: die drei AI-Wege neben „Neu" — auf Mobil stecken sie im
+           Menü hinter dem FAB, ein zweiter Ort wäre dort nur Rauschen. -->
+      <div class="hidden items-center gap-2 px-5 pb-3 lg:flex">
+        <UButton
+          icon="i-lucide-mic"
+          color="neutral"
+          variant="subtle"
+          size="sm"
+          class="rounded-full font-bold"
+          @click="startAiCreate('voice')"
+        >
+          Per Sprache
+        </UButton>
+        <UButton
+          icon="i-lucide-camera"
+          color="neutral"
+          variant="subtle"
+          size="sm"
+          class="rounded-full font-bold"
+          @click="startAiCreate('photo')"
+        >
+          Per Foto
+        </UButton>
+        <UButton
+          icon="i-lucide-link"
+          color="neutral"
+          variant="subtle"
+          size="sm"
+          class="rounded-full font-bold"
+          @click="startAiCreate('url')"
+        >
+          Per Link
+        </UButton>
+      </div>
 
       <div
         v-if="entries.length"
@@ -101,10 +229,10 @@ async function submitDialog(): Promise<void> {
         </p>
       </div>
 
-      <!-- Mobil: dieselbe Aktion als schwebender Knopf, wie bei den Listen -->
+      <!-- Mobil: der schwebende Knopf öffnet die Auswahl aus Neu + AI-Wegen -->
       <AppFab
         label="Neues Rezept"
-        @click="openDialog"
+        @click="openChooser"
       />
     </section>
 
@@ -145,5 +273,61 @@ async function submitDialog(): Promise<void> {
         </div>
       </template>
     </AppSheet>
+
+    <!-- Mobil: Auswahl hinter dem FAB — Neu plus die drei AI-Wege -->
+    <AppSheet
+      v-model:open="isChooserOpen"
+      title="Neues Rezept"
+      description="Wie möchtest du starten?"
+    >
+      <div class="flex flex-col gap-2">
+        <UButton
+          icon="i-lucide-plus"
+          color="neutral"
+          variant="subtle"
+          size="xl"
+          class="justify-start rounded-xl font-bold"
+          @click="chooseManualCreate"
+        >
+          Selbst eintragen
+        </UButton>
+        <UButton
+          icon="i-lucide-mic"
+          color="neutral"
+          variant="subtle"
+          size="xl"
+          class="justify-start rounded-xl font-bold"
+          @click="startAiCreate('voice')"
+        >
+          Per Sprache
+        </UButton>
+        <UButton
+          icon="i-lucide-camera"
+          color="neutral"
+          variant="subtle"
+          size="xl"
+          class="justify-start rounded-xl font-bold"
+          @click="startAiCreate('photo')"
+        >
+          Per Foto
+        </UButton>
+        <UButton
+          icon="i-lucide-link"
+          color="neutral"
+          variant="subtle"
+          size="xl"
+          class="justify-start rounded-xl font-bold"
+          @click="startAiCreate('url')"
+        >
+          Per Link
+        </UButton>
+      </div>
+    </AppSheet>
+
+    <AiRecipeCreateSheet
+      v-model:open="isAiCreateOpen"
+      :mode="aiMode"
+      @created="onAiRecipeCreated"
+    />
   </div>
 </template>

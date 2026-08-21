@@ -8,14 +8,16 @@
  * Ohne Konto nutzbar. Die Daten liegen in IndexedDB; der Abgleich schreibt in
  * dieselbe Datenbank zurück, danach genügt hier ein erneutes `load()`.
  *
- * Der Gesprächsverlauf (`recipe_chat_messages`) bleibt aussen vor: Er gehört
- * zur KI-Unterstützung, und die ist die zweite Welle.
+ * Der Gesprächsverlauf (`recipe_chat_messages`) bleibt aussen vor: Er hat
+ * seine eigene Schicht (`useRecipeChat`) mit eigenem, append-only Schreibweg.
  */
 import type { RecipeIngredient, RecipeStep } from '../../shared/types/domain'
 import {
+  getBadgeForRecipe,
   getIngredientsForRecipe,
   getRecipe,
   getStepsForRecipe,
+  upsertBadge,
   upsertIngredient,
   upsertRecipe,
   upsertStep,
@@ -87,7 +89,19 @@ function toStepDraft(row: RecipeStep): Draft<RecipeStep> {
  * Der Zustand der Ansicht
  * ------------------------------------------------------------------ */
 
+/**
+ * Serialisiert die Badge-Vergabe.
+ *
+ * `awardBadgeIfFirstTime` ist ein Lesen-dann-Schreiben: Zwei schnelle Tipps
+ * auf den letzten offenen Schritt könnten beide "kein Badge vorhanden" lesen,
+ * bevor einer schreibt — die lokale Dublette bliebe für immer, denn der
+ * Server überspringt sie nur, entfernt sie aber nicht. Die Kette lässt die
+ * zweite Prüfung erst laufen, wenn die erste fertig geschrieben hat.
+ */
+let badgeAwardChain: Promise<void> = Promise.resolve()
+
 export function useRecipeDetail() {
+  const toast = useToast()
   const recipe = useState<RecipeRow | null>('recipe-detail', () => null)
   const ingredients = useState<RecipeIngredientRow[]>('recipe-detail-ingredients', () => [])
   const steps = useState<RecipeStepRow[]>('recipe-detail-steps', () => [])
@@ -181,10 +195,58 @@ export function useRecipeDetail() {
     return row
   }
 
-  /** Hakt einen Schritt beim Kochen ab oder nimmt das Häkchen zurück. */
+  /**
+   * Hakt einen Schritt beim Kochen ab oder nimmt das Häkchen zurück.
+   *
+   * Wird mit diesem Häkchen der letzte offene Schritt erledigt, ist das
+   * Rezept fertig gekocht und es gibt eine Auszeichnung — dieselbe Regel wie
+   * in der Android-App. Der Server erzwingt eine Auszeichnung pro Rezept und
+   * Konto; existiert schon eine (auch eine zurückgesetzte), entsteht keine
+   * zweite.
+   */
   async function toggleStep(step: RecipeStep): Promise<void> {
+    const finishesRecipe = !step.isChecked
+      && steps.value.length > 0
+      && steps.value.every(row => row.isChecked || row.id === step.id)
+
     await upsertStep({ ...toStepDraft(step), isChecked: !step.isChecked })
+
+    if (finishesRecipe) {
+      // Über die Kette statt direkt — Begründung an `badgeAwardChain`. Die
+      // Kette selbst schluckt Fehler (sonst bliebe sie für immer gerissen),
+      // der Aufrufer hier bekommt sie trotzdem zu sehen.
+      const attempt = badgeAwardChain.then(() => awardBadgeIfFirstTime())
+      badgeAwardChain = attempt.catch(() => undefined)
+      await attempt
+    }
+
     await reload()
+  }
+
+  /** Legt die Auszeichnung zum aktuellen Rezept an, falls es noch keine gibt. */
+  async function awardBadgeIfFirstTime(): Promise<void> {
+    const row = recipe.value
+    if (row === null) return
+
+    const existing = await getBadgeForRecipe(row.id)
+    if (existing !== undefined) return
+
+    await upsertBadge({
+      id: crypto.randomUUID(),
+      recipeId: row.id,
+      recipeName: row.name,
+      recipeImagePath: row.imagePath,
+      recipeColor: row.color,
+      earnedAt: nowIso(),
+      deletedAt: null,
+    })
+
+    toast.add({
+      title: 'Badge verdient!',
+      description: `Du hast „${row.name}" fertig gekocht.`,
+      icon: 'i-lucide-award',
+      color: 'primary',
+    })
   }
 
   /**
@@ -248,6 +310,81 @@ export function useRecipeDetail() {
     })
   }
 
+  /**
+   * Ändert Name und/oder Menge einer Zutat — der Schreibweg der
+   * AI-Bearbeitung. Nur die übergebenen Felder werden neu gestempelt.
+   */
+  async function updateIngredient(
+    ingredient: RecipeIngredient,
+    changes: { name?: string, quantity?: number },
+  ): Promise<void> {
+    const name = changes.name?.trim()
+    await upsertIngredient({
+      ...toIngredientDraft(ingredient),
+      ...(name !== undefined && name.length > 0 ? { name } : {}),
+      ...(changes.quantity !== undefined ? { quantity: changes.quantity } : {}),
+    })
+    await reload()
+  }
+
+  /** Formuliert einen Schritt um — der Schreibweg der AI-Bearbeitung. */
+  async function updateStepDescription(step: RecipeStep, description: string): Promise<void> {
+    const trimmed = description.trim()
+    if (trimmed.length === 0) return
+
+    await upsertStep({ ...toStepDraft(step), description: trimmed })
+    await reload()
+  }
+
+  /**
+   * Speichert die AI-Erklärung eines Schritts. Das Feld wird gesynct —
+   * beim nächsten Öffnen zeigt jedes Gerät das Gespeicherte statt neu zu laden.
+   */
+  async function setStepExplanation(step: RecipeStep, explanation: string): Promise<void> {
+    // Frisch aus der Datenbank statt aus dem eingefrorenen Ansichts-Snapshot:
+    // Die Erklärung kann Minuten unterwegs sein, und ein alter Draft würde
+    // zwischenzeitliche Änderungen (etwa ein per Pull angekommenes Häkchen)
+    // mit frischen Zeitstempeln zurückdrehen. So ändert sich genau ein Feld.
+    const rows = await getStepsForRecipe(step.recipeId)
+    const fresh = rows.find(row => row.id === step.id)
+    if (fresh === undefined || fresh.deletedAt !== null) return
+
+    await upsertStep({ ...toStepDraft(fresh), aiExplanation: explanation })
+    await reload()
+  }
+
+  /** Setzt die Server-Bildreferenz (`sync:…`) nach einem Upload. */
+  async function setRecipeImagePath(imagePath: string): Promise<void> {
+    const target = recipe.value
+    if (target === null) return
+
+    await upsertRecipe({
+      id: target.id,
+      name: target.name,
+      color: target.color,
+      sourceUrl: target.sourceUrl,
+      imagePath,
+      deletedAt: target.deletedAt,
+    })
+    await reload()
+  }
+
+  /** Setzt die Quelle eines per Link erzeugten Rezepts — wie in Android. */
+  async function setRecipeSourceUrl(sourceUrl: string): Promise<void> {
+    const target = recipe.value
+    if (target === null) return
+
+    await upsertRecipe({
+      id: target.id,
+      name: target.name,
+      color: target.color,
+      sourceUrl,
+      imagePath: target.imagePath,
+      deletedAt: target.deletedAt,
+    })
+    await reload()
+  }
+
   /** Benennt das Rezept um. Nur das Feld `name` wird neu gestempelt. */
   async function renameRecipe(name: string): Promise<void> {
     const target = recipe.value
@@ -302,6 +439,11 @@ export function useRecipeDetail() {
     removeStep,
     moveIngredientTo,
     moveStepTo,
+    updateIngredient,
+    updateStepDescription,
+    setStepExplanation,
+    setRecipeImagePath,
+    setRecipeSourceUrl,
     renameRecipe,
     deleteRecipe,
   }

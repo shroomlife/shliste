@@ -340,3 +340,41 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .delta-flash-overlay::after { animation: none; opacity: 0; }
 }
+
+/*
+ * Scrollbalken, schmal und zurückhaltend: Die App-Shell lässt mehrere
+ * Flächen nebeneinander scrollen (Index-Spalte, Detail-Spalte, Hauptbereich),
+ * und der breite Systembalken sägt sichtbar in die Karten.
+ *
+ * Zwei Wege zum selben Bild: `scrollbar-width`/`scrollbar-color` ist der
+ * Standard (Firefox, Chromium ab 121, Safari ab 18.2), `::-webkit-scrollbar`
+ * deckt ältere WebKit-Stände ab. Browser, die den Standard können,
+ * ignorieren die Webkit-Pseudoelemente von selbst.
+ *
+ * Die Farben hängen an den Material-Tokens und wandern im Dark-Mode über
+ * den vorhandenen .dark-Block automatisch mit.
+ */
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--md-on-surface-variant) 35%, transparent) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background-color: color-mix(in srgb, var(--md-on-surface-variant) 35%, transparent);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--md-on-surface-variant) 55%, transparent);
+  }
+}
