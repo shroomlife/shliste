@@ -68,6 +68,8 @@ function recorder(options: {
 
   const base: PullStore = {
     rows,
+    putPulledHistoryEntry: () => Promise.resolve(),
+    trimHistoryForParent: () => Promise.resolve(),
     replaceMembers: () => Promise.resolve(),
     readCursor: () => Promise.resolve(null),
     writeCursor: () => Promise.resolve(),

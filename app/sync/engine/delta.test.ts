@@ -76,6 +76,8 @@ function fakeStore(options: { items?: ListItemRow[] } = {}): FakeStore {
     items: itemStore.all,
     recipes: recipeStore.all,
     members: new Map<string, readonly ListMember[]>(),
+    putPulledHistoryEntry: () => Promise.resolve(),
+    trimHistoryForParent: () => Promise.resolve(),
     replaceMembers: (listId, members) => {
       store.members.set(listId, members)
       return Promise.resolve()

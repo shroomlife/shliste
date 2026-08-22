@@ -89,6 +89,20 @@ export const RECONCILE_INTERVAL_MS = 15 * 60_000
  */
 let mutationTimer: ReturnType<typeof setTimeout> | null = null
 
+/**
+ * Sichtbarkeit des Blatts „Deine Anmeldung ist abgelaufen"
+ * (SessionExpiredSheet.vue).
+ *
+ * Als eigenes Composable statt eines nackten String-Schlüssels an zwei
+ * Stellen: Der Runner öffnet das Blatt, wenn die Engine `authRequired`
+ * meldet, die Komponente zeigt und schliesst es — beide greifen über diese
+ * eine Funktion auf denselben `useState` zu, ein Tippfehler im Schlüssel
+ * kann sie nicht auseinanderlaufen lassen.
+ */
+export function useSessionExpiredSheet(): Ref<boolean> {
+  return useState<boolean>('session-expired-sheet-open', () => false)
+}
+
 /* ------------------------------------------------------------------ *
  * Lesende Seite und Auslöser
  * ------------------------------------------------------------------ */
@@ -212,9 +226,28 @@ export function useSync(): UseSync {
 export function useSyncRunner(): void {
   const snapshot = useState<SyncSnapshot>('sync-snapshot', () => INITIAL_SNAPSHOT)
   const dataVersion = useState<number>('sync-data-version', () => 0)
-  const { isSignedIn, clientConfig } = useAuth()
+  const { isSignedIn, clientConfig, loadSession } = useAuth()
   const { isOnline } = useNetworkStatus()
   const { requestSync } = useSync()
+  const isSessionExpiredOpen = useSessionExpiredSheet()
+
+  /**
+   * Sichtbarer Re-Login statt stillem Sync-Stopp (Audit K2).
+   *
+   * Meldet die Engine `authRequired`, ist der stille Refresh der BFF bereits
+   * gescheitert — die Session ist wirklich am Ende. Zwei Dinge passieren
+   * dann: `loadSession()` holt den ehrlichen Zustand vom Server (Avatar und
+   * `isSignedIn` hören auf, eine tote Session anzuzeigen), und das Blatt
+   * „Anmeldung abgelaufen" öffnet sich. Nur die FLANKE zählt: Wer das Blatt
+   * wegwischt, soll es nicht bei jedem weiteren fehlgeschlagenen Lauf sofort
+   * wieder vor sich haben — erst ein erneuter Wechsel nach `authRequired`
+   * öffnet es erneut.
+   */
+  watch(() => snapshot.value.phase, (phase, previousPhase) => {
+    if (phase !== 'authRequired' || previousPhase === 'authRequired') return
+    void loadSession()
+    isSessionExpiredOpen.value = true
+  })
 
   const fetchDelta = (query: string): Promise<unknown> =>
     requestJson(`${SYNC_ENDPOINTS.delta}?${query}`)

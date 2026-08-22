@@ -13,6 +13,7 @@ import { describe, expect, test } from 'bun:test'
 import type { IsoUtc } from '../../../shared/types/domain'
 import type {
   BadgeRow,
+  HistoryEntryRow,
   ListItemRow,
   ListRow,
   RecipeChatMessageRow,
@@ -423,7 +424,7 @@ interface FakePushStore extends PushStore {
 }
 
 function emptyDirty(): DirtyRows {
-  return { lists: [], items: [], recipes: [], ingredients: [], steps: [], chatMessages: [], badges: [] }
+  return { lists: [], items: [], recipes: [], ingredients: [], steps: [], chatMessages: [], badges: [], historyEntries: [] }
 }
 
 function fakePushStore(dirty: Partial<DirtyRows> = {}, local: { lists?: ListRow[], items?: ListItemRow[] } = {}): FakePushStore {
@@ -473,6 +474,24 @@ const OK_RESPONSE = {
 }
 
 describe('runPush', () => {
+  test('schmutzige Historie wird gesendet und ihr Flag nach dem Erfolg geräumt', async () => {
+    const store = fakePushStore({ historyEntries: [dirtyHistoryEntry('h1', 'l1'), dirtyHistoryEntry('h2', 'l1')] })
+    const sentBodies: PushPayload[] = []
+
+    await runPush(store, (body) => {
+      sentBodies.push(body)
+      // h2 lehnt der Server ab (etwa: Parent nicht zugreifbar) — die Zeile
+      // muss schmutzig bleiben und beim nächsten Push wieder mitgehen.
+      return Promise.resolve({ ...OK_RESPONSE, skippedIds: { ...OK_RESPONSE.skippedIds, historyEntries: ['h2'] } })
+    })
+
+    const sentHistory = sentBodies.flatMap(body => body.historyEntries)
+    expect(sentHistory.map(row => row.id)).toEqual(['h1', 'h2'])
+
+    const historyClear = store.cleared.find(call => call.store === 'history_entries')
+    expect(historyClear?.ids).toEqual(['h1'])
+  })
+
   test('ohne schmutzige Zeilen wird nichts gesendet', async () => {
     const store = fakePushStore()
     let calls = 0
@@ -583,7 +602,38 @@ describe('runPush', () => {
   })
 })
 
+function dirtyHistoryEntry(id: string, parentId: string): HistoryEntryRow {
+  return {
+    id,
+    parentId,
+    parentType: 'list',
+    actionType: 'deleted',
+    entityType: 'list_item',
+    entityId: `${id}-item`,
+    description: 'Milch gelöscht',
+    snapshotJson: '{"uuid":"a1","name":"Milch"}',
+    createdBy: null,
+    createdAt: TS,
+    dirty: DIRTY,
+  }
+}
+
 describe('buildPushPayload', () => {
+  test('eine schmutzige Historien-Zeile wandert mit allen Vertragsfeldern in den Push', () => {
+    const built = buildPushPayload({ ...emptyDirty(), historyEntries: [dirtyHistoryEntry('h1', 'l1')] })
+    expect(built.historyEntries).toEqual([{
+      id: 'h1',
+      parentId: 'l1',
+      parentType: 'list',
+      actionType: 'deleted',
+      entityType: 'list_item',
+      entityId: 'h1-item',
+      description: 'Milch gelöscht',
+      snapshotJson: '{"uuid":"a1","name":"Milch"}',
+      createdAt: TS,
+    }])
+  })
+
   test('kappt zu lange Werte, bevor sie die API mit 422 kippen', () => {
     const long = 'x'.repeat(600)
     const built = buildPushPayload({ ...emptyDirty(), lists: [{ ...dirtyList('l1'), name: long }] })

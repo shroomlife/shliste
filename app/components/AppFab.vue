@@ -1,19 +1,21 @@
 <script setup lang="ts">
 /**
- * Schwebender Aktionsknopf, wie ihn die Android-App kennt — aber nur auf
- * kleinen Schirmen. Auf dem Desktop übernimmt der Knopf im Seitenkopf
- * (AppPageHeader), weil ein schwebender Kreis in der Ecke eines 1600 Pixel
- * breiten Fensters das klassische Handy-Klon-Signal ist.
+ * Schwebender Aktionsknopf, wie ihn die Android-App kennt — als Extended-FAB
+ * mit Beschriftung (PrimaryFloatingButton.kt), aber nur auf kleinen Schirmen.
+ * Auf dem Desktop übernimmt der Knopf im Seitenkopf (AppPageHeader), weil ein
+ * schwebender Knopf in der Ecke eines 1600 Pixel breiten Fensters das
+ * klassische Handy-Klon-Signal ist.
  *
- * Radius und weiche Schattenstufe entsprechen dem Android-Vorbild, das
- * durchgehend flach gestaltet ist (shadowElevation 1dp).
+ * Fläche und Schrift folgen dem Android-Vorbild: Markenfarbe, Radius 16px,
+ * Text in 20px fett. Die weisse Schrift auf #E064B2 misst 3,16:1 — das
+ * genügt WCAG AA, weil 20px fett als grosse Schrift gilt (dort 3:1).
  *
  * Der Abstand nach unten: 6rem = 72px fixe Bottom-Nav (h-18) plus 24px Luft,
  * dazu die Safe-Area (iOS-Homebar) — die Bar wächst um denselben Betrag,
  * der Knopf schwebt also immer knapp über ihr.
  */
 const { label, icon = 'i-lucide-plus' } = defineProps<{
-  /** Wird als aria-label gesetzt, weil der Knopf nur ein Symbol zeigt */
+  /** Sichtbare Beschriftung, z. B. "Liste" — wie Androids caption. */
   label: string
   icon?: string
 }>()
@@ -22,11 +24,15 @@ const emit = defineEmits<{ click: [] }>()
 </script>
 
 <template>
+  <!-- state-layer statt der Hover-Töne von Nuxt UI: Die Markenfläche ist hier
+       fest gesetzt und würde jede hover:bg-Klasse überdecken. -->
   <UButton
     :icon="icon"
-    :aria-label="label"
     size="xl"
-    class="fixed right-5 bottom-[calc(6rem_+_env(safe-area-inset-bottom,0px))] z-10 size-14 justify-center rounded-2xl shadow-md lg:hidden"
+    class="state-layer fixed right-5 bottom-[calc(6rem_+_env(safe-area-inset-bottom,0px))] z-10 h-14 gap-2 rounded-lg px-5 text-[1.25rem] font-bold shadow-md lg:hidden"
+    style="background-color: var(--md-primary); color: var(--md-on-primary)"
     @click="emit('click')"
-  />
+  >
+    {{ label }}
+  </UButton>
 </template>

@@ -4,17 +4,32 @@ import type { ListItem } from '#shared/types/domain'
 /**
  * Eine Zeile der Einkaufsliste.
  *
- * Anatomie und Farben stammen aus der Android-App (SemanticColors.kt):
- * abgehakte Einträge werden gedämpft und durchgestrichen, die Mengenkachel
- * wechselt dabei auf den gedämpften Ton.
+ * Anatomie und Farben stammen aus der Android-App (ListItemContent.kt und
+ * SemanticColors.kt): links die Mengenkachel in voller Zeilenhöhe, rechts die
+ * Aktionsflächen — grün zum Abhaken auf offenen Zeilen, orange (Rückgängig)
+ * und pink (Entfernen) auf abgehakten. Abgehakte Namen stehen in halber
+ * Deckkraft statt durchgestrichen, die Mengenkachel wechselt auf den
+ * gedämpften Ton.
+ *
+ * Die Bedienlogik bleibt die der PWA: Ein Tipp auf den Namensbereich hakt ab
+ * oder wieder auf, Erledigtes wandert in den eigenen Block. Die Aktionsflächen
+ * sind zusätzliche, sichtbare Griffe — und eigene Knöpfe NEBEN dem
+ * Namensknopf, nie darin: verschachtelte Bedienelemente sind ungültiges HTML
+ * und für Tastatur wie Screenreader kaputt.
+ *
+ * Bearbeiten öffnet sich über den Stift oder einen Long-Press auf den
+ * Namensbereich (500 ms, bricht bei mehr als 8 px Bewegung ab — dieselben
+ * Schwellen wie ein Plattform-Long-Press). Der Stift ist die sichtbare,
+ * WCAG-taugliche Alternative: Eine Geste, die man nicht sehen kann, ist
+ * keine Bedienung.
  *
  * `justChanged` löst den einen orchestrierten Bewegungsmoment der App aus:
  * eine Zeile, die gerade ein anderes Gerät geändert hat, leuchtet kurz auf
  * und trägt links eine Akzentleiste. Die Spezifikation dazu steht in
  * SemanticColors.deltaFlashSurface.
  *
- * Barrierefreiheit: Die ganze Zeile ist ein Knopf mit mindestens 44 Pixel
- * Höhe, damit sie auch am Handy sicher zu treffen ist (WCAG 2.2 SC 2.5.8).
+ * Barrierefreiheit: Alle Knöpfe halten mindestens 44 Pixel Zeilenhöhe, damit
+ * sie auch am Handy sicher zu treffen sind (WCAG 2.2 SC 2.5.8).
  */
 const { item, justChanged = false, changedBy = null, sortable = false } = defineProps<{
   item: ListItem
@@ -31,7 +46,72 @@ const { item, justChanged = false, changedBy = null, sortable = false } = define
   sortable?: boolean
 }>()
 
-const emit = defineEmits<{ toggle: [], remove: [] }>()
+const emit = defineEmits<{ toggle: [], remove: [], edit: [] }>()
+
+const haptics = useHaptics()
+
+/** Nach so viel Halten gilt der Druck als Long-Press (Plattform-Konvention). */
+const LONG_PRESS_MS = 500
+
+/** Mehr Bewegung als das ist ein Wischen oder Scrollen, kein Halten. */
+const MOVE_TOLERANCE_PX = 8
+
+let longPressTimer: ReturnType<typeof setTimeout> | null = null
+let pressStart: { x: number, y: number } | null = null
+
+/**
+ * Nach einem ausgelösten Long-Press feuert der Browser beim Loslassen noch
+ * ein Click-Ereignis — das ist nur das Ende derselben Geste und darf nicht
+ * zusätzlich abhaken.
+ */
+let longPressFired = false
+
+function onNamePointerDown(event: PointerEvent): void {
+  // Nur der primäre Zeiger mit der Haupttaste: Die rechte Maustaste und ein
+  // zweiter Finger sollen kein Bearbeiten öffnen.
+  if (!event.isPrimary || event.button !== 0) return
+
+  pressStart = { x: event.clientX, y: event.clientY }
+  longPressFired = false
+  longPressTimer = setTimeout(() => {
+    longPressTimer = null
+    longPressFired = true
+    // Haptik SYNCHRON im Moment des Auslösens — wie beim Abhaken auf der
+    // Seite: ein Summen, das der Geste hinterherläuft, fühlt sich kaputt an.
+    haptics.longPress()
+    emit('edit')
+  }, LONG_PRESS_MS)
+}
+
+function onNamePointerMove(event: PointerEvent): void {
+  if (longPressTimer === null || pressStart === null) return
+
+  const distance = Math.hypot(event.clientX - pressStart.x, event.clientY - pressStart.y)
+  if (distance > MOVE_TOLERANCE_PX) cancelLongPress()
+}
+
+function cancelLongPress(): void {
+  if (longPressTimer !== null) {
+    clearTimeout(longPressTimer)
+    longPressTimer = null
+  }
+  pressStart = null
+}
+
+function onNameClick(event: MouseEvent): void {
+  if (longPressFired) {
+    longPressFired = false
+    // Verschluckt wird nur der Klick derselben Geste. Eine Tastatur-
+    // Aktivierung (detail === 0) ist nie das Ende eines Long-Press — sie
+    // darf auch dann abhaken, wenn zuvor eine Geste ohne Klick endete.
+    if (event.detail !== 0) return
+  }
+  emit('toggle')
+}
+
+// Ein laufender Timer darf die Komponente nicht überleben — sonst feuert er
+// ins Leere einer bereits entfernten Zeile.
+onBeforeUnmount(cancelLongPress)
 </script>
 
 <template>
@@ -65,38 +145,41 @@ const emit = defineEmits<{ toggle: [], remove: [] }>()
     >{{ item.quantity }}&times;</span>
   </div>
 
-  <!-- Ausserhalb des Sortiermodus: Abhaken und Löschen. Beides sind eigene
-       Knöpfe nebeneinander und nicht ineinander — verschachtelte
-       Bedienelemente sind ungültiges HTML und für Tastatur wie Screenreader
-       kaputt. -->
+  <!-- Ausserhalb des Sortiermodus: die Android-Anatomie. Mengenkachel links,
+       Namensknopf in der Mitte, Aktionsflächen rechts — alles Geschwister
+       in voller Zeilenhöhe (items-stretch), wie in ListItemContent.kt. -->
   <div
     v-else
-    class="state-layer group flex min-h-14 w-full items-center rounded-lg transition-colors"
-    :class="[justChanged && 'delta-flash', item.checked && 'opacity-65']"
+    class="group flex min-h-14 w-full items-stretch rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-colors"
+    :class="[justChanged && 'delta-flash']"
+    style="background: var(--md-surface)"
   >
+    <!-- Mengenkachel: nur ab 2 Stück — die 1 ist der Normalfall und kein
+         Etikett wert. Abgehakt wechselt sie auf den gedämpften Ton. -->
+    <span
+      v-if="item.quantity > 1"
+      class="flex min-w-11 shrink-0 items-center justify-center rounded-l-sm px-2 text-[1.25rem] font-bold"
+      :style="item.checked
+        ? 'background: var(--md-muted-surface); color: var(--md-on-surface-variant)'
+        : 'background: var(--md-secondary); color: var(--md-on-secondary)'"
+    >{{ item.quantity }}&times;</span>
+
     <button
       type="button"
-      class="flex min-h-14 min-w-0 grow items-center gap-3.5 rounded-lg px-2 text-left"
+      class="state-layer flex min-h-14 min-w-0 grow items-center rounded-sm px-3.5 py-2 text-left"
       :aria-pressed="item.checked"
-      @click="emit('toggle')"
+      @click="onNameClick"
+      @pointerdown="onNamePointerDown"
+      @pointermove="onNamePointerMove"
+      @pointerup="cancelLongPress"
+      @pointerleave="cancelLongPress"
+      @pointercancel="cancelLongPress"
+      @contextmenu.prevent
     >
-      <span
-        class="flex size-6 shrink-0 items-center justify-center rounded-md border-2 transition-colors"
-        :style="item.checked
-          ? 'background: var(--md-check-content); border-color: var(--md-check-content)'
-          : 'border-color: var(--md-on-surface-variant)'"
-      >
-        <UIcon
-          v-if="item.checked"
-          name="i-lucide-check"
-          class="size-4 text-white"
-        />
-      </span>
-
       <span class="flex min-w-0 grow flex-col">
         <span
-          class="truncate text-[1.375rem]"
-          :class="item.checked && 'line-through'"
+          class="truncate text-[1.25rem]"
+          :class="item.checked && 'opacity-50'"
         >{{ item.name }}</span>
         <span
           v-if="justChanged && changedBy"
@@ -104,30 +187,68 @@ const emit = defineEmits<{ toggle: [], remove: [] }>()
           style="color: var(--md-primary)"
         >{{ changedBy }} gerade</span>
       </span>
-
-      <span
-        v-if="item.quantity > 1"
-        class="flex h-7 min-w-9 shrink-0 items-center justify-center rounded-lg px-2 text-[1.0625rem] font-bold"
-        :style="item.checked
-          ? 'background: var(--md-muted-surface)'
-          : 'background: var(--md-surface-high)'"
-      >{{ item.quantity }}&times;</span>
     </button>
 
-    <!-- Auf grossen Schirmen erst bei Hover oder Fokus, auf schmalen immer:
-         Dort gibt es kein Hover, und eine unsichtbare Bedienung ist keine.
-         Die Farbe ist der Löschton aus SemanticColors.kt. -->
+    <!-- Der Stift: sichtbarer Einstieg ins Bearbeiten, gleichwertig zum
+         Long-Press. Auf grossen Schirmen erst bei Hover oder Fokus, auf
+         schmalen immer — dort gibt es kein Hover, und eine unsichtbare
+         Bedienung ist keine. -->
     <button
       type="button"
-      class="mr-1 flex size-9 shrink-0 items-center justify-center rounded-lg opacity-100 transition-opacity lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100"
-      style="color: var(--md-delete-content)"
-      :aria-label="`${item.name} entfernen`"
-      @click="emit('remove')"
+      class="flex size-9 shrink-0 items-center justify-center self-center rounded-sm opacity-100 transition-opacity lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100"
+      style="color: var(--md-on-surface-variant)"
+      :aria-label="`${item.name} bearbeiten`"
+      @click="emit('edit')"
     >
       <UIcon
-        name="i-lucide-trash-2"
+        name="i-lucide-pencil"
         class="size-4"
       />
     </button>
+
+    <!-- Offene Zeile: die grüne Abhak-Fläche (SemanticColors.itemCheckSurface).
+         Zusätzlich zum Zeilen-Tap — der grosse, immer sichtbare Griff. -->
+    <button
+      v-if="!item.checked"
+      type="button"
+      class="flex w-14 shrink-0 items-center justify-center rounded-r-sm"
+      style="background: var(--md-check-surface); color: var(--md-check-content)"
+      :aria-label="`${item.name} abhaken`"
+      @click="emit('toggle')"
+    >
+      <UIcon
+        name="i-lucide-check"
+        class="size-6"
+      />
+    </button>
+
+    <!-- Abgehakte Zeile: Rückgängig (orange) und Entfernen (pink)
+         nebeneinander, wie in der Android-App. -->
+    <template v-else>
+      <button
+        type="button"
+        class="flex w-13 shrink-0 items-center justify-center"
+        style="background: var(--md-undo-surface); color: var(--md-undo-content)"
+        :aria-label="`${item.name} wieder auf offen setzen`"
+        @click="emit('toggle')"
+      >
+        <UIcon
+          name="i-lucide-undo-2"
+          class="size-6"
+        />
+      </button>
+      <button
+        type="button"
+        class="flex w-13 shrink-0 items-center justify-center rounded-r-sm"
+        style="background: var(--md-delete-surface); color: var(--md-delete-content)"
+        :aria-label="`${item.name} entfernen`"
+        @click="emit('remove')"
+      >
+        <UIcon
+          name="i-lucide-x"
+          class="size-6"
+        />
+      </button>
+    </template>
   </div>
 </template>

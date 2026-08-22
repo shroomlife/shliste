@@ -15,7 +15,8 @@
  * Alias-Auflösung (dieselbe Begründung wie in `db/timestamps.ts`).
  */
 import type { ListItem } from '../../shared/types/domain'
-import { getItemsForList, getList, upsertItem, upsertList, type Draft } from '../db/repositories'
+import { appendHistoryEntry, getItemRow, getItemsForList, getList, upsertItem, upsertList, type Draft } from '../db/repositories'
+import { listItemSnapshotJson } from '../history/snapshot'
 import { nextSortKey, planMoveTo } from '../sync/merge/reorder'
 import { nowIso } from '../db/timestamps'
 import type { ListItemRow, ListRow } from '../db/schema'
@@ -66,6 +67,25 @@ export function groupByChecked<T extends { readonly checked: boolean }>(items: r
  */
 export function nextOrderIndex(items: readonly { readonly orderIndex: number }[]): number {
   return items.reduce((highest, item) => Math.max(highest, item.orderIndex), -1) + 1
+}
+
+/** Kleinste sinnvolle Menge — ein Eintrag ohne Stück wäre keiner. */
+export const QUANTITY_MIN = 1
+
+/** Obergrenze der Menge — derselbe Wert wie in Androids NumberSliderInput. */
+export const QUANTITY_MAX = 999
+
+/**
+ * Zieht eine Menge in den gültigen Bereich 1–999.
+ *
+ * Hier und nicht in jeder Ansicht einzeln: Die Grenzen sind Domänenwissen
+ * (SSOT), und jede Stelle, die Mengen entgegennimmt — Bearbeiten-Blatt,
+ * Eingabeleiste, AI-Anlage — soll dieselbe Regel anwenden. Nachkommastellen
+ * werden abgeschnitten, Unsinn (NaN, Infinity) fällt auf die 1 zurück.
+ */
+export function clampQuantity(value: number): number {
+  if (!Number.isFinite(value)) return QUANTITY_MIN
+  return Math.min(QUANTITY_MAX, Math.max(QUANTITY_MIN, Math.trunc(value)))
 }
 
 /**
@@ -194,7 +214,7 @@ export function useListDetail() {
       id: crypto.randomUUID(),
       listId: target.id,
       name: trimmed,
-      quantity,
+      quantity: clampQuantity(quantity),
       checked: false,
       removed: false,
       orderIndex: nextOrderIndex(items.value),
@@ -209,14 +229,59 @@ export function useListDetail() {
   }
 
   /**
+   * Ändert Name und/oder Menge eines Eintrags — der Speicherweg des
+   * Bearbeiten-Blatts.
+   *
+   * Der Eintrag wird frisch aus `items` nachgeschlagen: Zwischen dem Öffnen
+   * des Blatts und dem Speichern kann der Sync die Zeile verändert haben, und
+   * geschrieben werden soll auf dem letzten Stand — nicht auf dem, den das
+   * Blatt beim Öffnen gesehen hat. Ist die Zeile inzwischen weg, passiert
+   * still nichts.
+   *
+   * In den Draft wandern nur tatsächlich übergebene Felder; was sich nicht
+   * unterscheidet, stempelt `upsertItem` ohnehin nicht neu — so überträgt der
+   * Push später genau diese eine Änderung, ohne fremde Felder anzufassen.
+   */
+  async function updateItem(item: ListItem, changes: { name?: string, quantity?: number }): Promise<void> {
+    const current = items.value.find(row => row.id === item.id)
+    if (current === undefined) return
+
+    const draft = toItemDraft(current)
+    const name = changes.name?.trim()
+    if (name !== undefined && name.length > 0) draft.name = name
+    if (changes.quantity !== undefined) draft.quantity = clampQuantity(changes.quantity)
+
+    await upsertItem(draft)
+    await reload()
+  }
+
+  /**
    * Wirft einen Eintrag aus der Liste.
    *
    * `removed` und nicht `deletedAt`: Das ist der weiche Löschmarker der
    * Domäne. Der Eintrag verschwindet aus der Ansicht, bleibt aber als Verlauf
    * für die Vorschläge erhalten und lässt sich per Rückgängig wiederherstellen
    * — dafür genügt es, `removed` wieder auf `false` zu setzen.
+   *
+   * VOR dem Entfernen kommt die Löschung in den Verlauf — die Zeile existiert
+   * dann noch und der Snapshot trägt ihren letzten Stand. Wortlaut und Ablauf
+   * wie `removeItemFromList` in Androids ListStore. Das Rückgängig im Toast
+   * (`restoreItem`) schreibt bewusst KEINEN Eintrag: Es hebt die Löschung auf,
+   * statt eine neue Tat festzuhalten.
    */
   async function removeItem(item: ListItem): Promise<void> {
+    await appendHistoryEntry({
+      id: crypto.randomUUID(),
+      parentId: item.listId,
+      parentType: 'list',
+      actionType: 'deleted',
+      entityType: 'list_item',
+      entityId: item.id,
+      description: `${item.name} gelöscht`,
+      snapshotJson: listItemSnapshotJson(item),
+      createdBy: null,
+      createdAt: nowIso(),
+    })
     await upsertItem({ ...toItemDraft(item), removed: true })
     await reload()
   }
@@ -230,7 +295,14 @@ export function useListDetail() {
    * ebenso, weil das Zurücksetzen ein gewöhnliches Feld-Update ist.
    */
   async function restoreItem(item: ListItem): Promise<void> {
-    await upsertItem({ ...toItemDraft(item), removed: false })
+    // Frisch aus der Datenbank statt aus dem eingefrorenen Klick-Snapshot:
+    // Der Toast steht sechs Sekunden — ändert ein Mitglied währenddessen
+    // Menge oder Haken, würde der alte Stand hier jedes Feld mit frischem
+    // Stempel überschreiben und die Fremdänderung still gewinnen. So ändert
+    // sich genau das eine Feld `removed` (Muster: setStepExplanation).
+    const fresh = await getItemRow(item.id)
+    const source = fresh ?? item
+    await upsertItem({ ...toItemDraft(source), removed: false })
     await reload()
   }
 
@@ -333,6 +405,7 @@ export function useListDetail() {
     reload,
     toggleItem,
     addItem,
+    updateItem,
     removeItem,
     restoreItem,
     moveItemTo,

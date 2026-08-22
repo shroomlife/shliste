@@ -20,8 +20,8 @@
 import { createHash, createHmac } from 'node:crypto'
 import type { FetchResponse } from 'ofetch'
 import { buildSignatureMessage } from '../../utils/apiSignature'
-import { readSessionToken } from '../../utils/session'
-import { isSessionValid } from '../../utils/sessionCheck'
+import { getFreshSessionToken } from '../../utils/sessionRefresh'
+import { checkSession } from '../../utils/sessionCheck'
 
 /**
  * Obergrenzen für den gepufferten Body, VOR dem Lesen geprüft.
@@ -66,8 +66,8 @@ export default defineEventHandler(async (event): Promise<unknown> => {
 
   // Ohne Session gar nicht erst signieren: AI-Aufrufe kosten Budget, und ein
   // Unangemeldeter soll diesen Server nicht als Signaturquelle benutzen können.
-  const sessionToken = readSessionToken(event)
-  if (sessionToken === undefined) {
+  const sessionToken = await getFreshSessionToken(event)
+  if (sessionToken === null) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized', message: 'Nicht angemeldet.' })
   }
 
@@ -88,8 +88,23 @@ export default defineEventHandler(async (event): Promise<unknown> => {
   // Die eigentliche Prüfung des Cookies: Der rohe Wert beweist nichts, ein
   // beliebiger HTTP-Client kann ihn erfinden. Ob die Sitzung GILT, weiss nur
   // die API — kurz gecacht, damit nicht jeder AI-Aufruf doppelt kostet.
-  if (!(await isSessionValid(sessionToken, resolveVisitorIp(event)))) {
+  //
+  // DREIWERTIG (Audit W1): Nur ein echtes 401 der API heisst „Sitzung
+  // abgelaufen". Ist die API gerade nicht erreichbar (Netz, 5xx, 429), ist
+  // die Anmeldung des Nutzers völlig in Ordnung — dann 503 statt eines
+  // falschen 401, das die Oberfläche als „ausgeloggt" deuten würde. Fail
+  // closed bleibt es trotzdem: Ohne bestätigte Sitzung wird kein
+  // kostenpflichtiger OpenAI-Aufruf signiert.
+  const sessionState = await checkSession(sessionToken, resolveVisitorIp(event))
+  if (sessionState === 'invalid') {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized', message: 'Sitzung abgelaufen.' })
+  }
+  if (sessionState === 'unknown') {
+    throw createError({
+      statusCode: 503,
+      statusMessage: 'Service Unavailable',
+      message: 'Der Dienst ist gerade nicht erreichbar — deine Anmeldung ist in Ordnung.',
+    })
   }
 
   const { apiBase, appSecret } = useRuntimeConfig()

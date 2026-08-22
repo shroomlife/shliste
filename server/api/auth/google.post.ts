@@ -5,15 +5,22 @@
  * schickt es hierher. Geprüft wird es ausschliesslich von der API (Signatur,
  * Aussteller und aud gegen GOOGLE_CLIENT_ID) — diese Schicht leitet es nur
  * signiert weiter und verwahrt danach das Ergebnis.
+ *
+ * `supportsRefresh: true` meldet der API, dass diese BFF den stillen Refresh
+ * beherrscht: Sie antwortet dann mit einem kurzlebigen Session-JWT (1 h) PLUS
+ * einem rotierenden Refresh-Token statt des alten 30-Tage-JWT. Beide wandern
+ * in httpOnly-Cookies (siehe session.ts); erneuert wird in sessionRefresh.ts.
  */
 import { apiFetch } from '../../utils/apiFetch'
 import { isRecord } from '../../utils/guards'
 import type { UserProfile } from '#shared/types/domain'
-import { parseUserProfile, persistSession } from '../../utils/session'
+import { parseUserProfile, persistSession, type RefreshGrant } from '../../utils/session'
 
 interface ApiSession {
   sessionToken: string
   profile: UserProfile
+  /** null, falls die API (noch) ohne Refresh-Token antwortet. */
+  refresh: RefreshGrant | null
 }
 
 export default defineEventHandler(async (event): Promise<UserProfile> => {
@@ -32,7 +39,7 @@ export default defineEventHandler(async (event): Promise<UserProfile> => {
   // und Meldung durch — hier ist nichts abzufangen.
   const payload = await apiFetch('/auth/google', {
     method: 'POST',
-    rawBody: JSON.stringify({ idToken }),
+    rawBody: JSON.stringify({ idToken, supportsRefresh: true }),
     clientIp: resolveVisitorIp(event),
   })
 
@@ -45,11 +52,11 @@ export default defineEventHandler(async (event): Promise<UserProfile> => {
     })
   }
 
-  persistSession(event, session.sessionToken, session.profile)
+  persistSession(event, session.sessionToken, session.profile, session.refresh ?? undefined)
 
-  // Ausschliesslich das Anzeigeprofil. Das sessionToken bleibt im
-  // httpOnly-Cookie und taucht in keiner Antwort an den Browser auf — sonst
-  // stünde es sofort wieder im Zugriff von JavaScript und wäre nichts mehr wert.
+  // Ausschliesslich das Anzeigeprofil. Session- und Refresh-Token bleiben in
+  // httpOnly-Cookies und tauchen in keiner Antwort an den Browser auf — sonst
+  // stünden sie sofort wieder im Zugriff von JavaScript und wären nichts mehr wert.
   return session.profile
 })
 
@@ -63,5 +70,20 @@ function parseApiSession(payload: unknown): ApiSession | null {
   const profile = parseUserProfile(payload.user)
   if (profile === null) return null
 
-  return { sessionToken, profile }
+  return { sessionToken, profile, refresh: parseRefreshGrant(payload) }
+}
+
+/**
+ * Refresh-Token und dessen Laufzeit, falls die API sie mitgeschickt hat.
+ *
+ * Fehlt eines von beiden, wird OHNE Refresh weitergemacht statt die Anmeldung
+ * scheitern zu lassen: Das ist exakt das Alt-Verhalten (30-Tage-JWT) und
+ * deckt eine API ab, die das Flag noch nicht kennt.
+ */
+function parseRefreshGrant(payload: Record<string, unknown>): RefreshGrant | null {
+  const { refreshToken, refreshExpiresIn } = payload
+  if (typeof refreshToken !== 'string' || refreshToken.length === 0) return null
+  if (typeof refreshExpiresIn !== 'number' || !(refreshExpiresIn > 0)) return null
+
+  return { refreshToken, refreshExpiresIn }
 }

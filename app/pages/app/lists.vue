@@ -193,7 +193,7 @@ async function submitDialog(): Promise<void> {
 
       <div
         v-if="entries.length"
-        class="flex flex-col gap-2 px-4 pb-4"
+        class="flex flex-col gap-4 px-3 pb-4"
       >
         <ListCard
           v-for="entry in entries"
@@ -202,6 +202,8 @@ async function submitDialog(): Promise<void> {
           :open-count="entry.openCount"
           :done-count="entry.doneCount"
           :is-shared="entry.isShared"
+          :unseen-count="entry.unseenCount"
+          :just-changed="entry.isRecentlyChanged"
           :active="entry.list.id === route.params.id"
         />
       </div>
@@ -225,11 +227,19 @@ async function submitDialog(): Promise<void> {
           Leg einfach los. Ein Konto brauchst du erst, wenn du zwischen Geräten
           abgleichen oder eine Liste teilen möchtest.
         </p>
+        <UButton
+          icon="i-lucide-plus"
+          size="xl"
+          class="mt-1 min-h-12 rounded-full font-bold"
+          @click="openDialog"
+        >
+          Erste Liste anlegen
+        </UButton>
       </div>
 
       <!-- Mobil: der schwebende Knopf öffnet die Auswahl aus Neu + AI-Wegen -->
       <AppFab
-        label="Neue Liste"
+        label="Liste"
         @click="openChooser"
       />
     </section>

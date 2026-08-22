@@ -19,6 +19,7 @@
  */
 import type {
   Badge,
+  HistoryEntry,
   List,
   ListItem,
   Recipe,
@@ -50,6 +51,16 @@ export const SYNC_FIELD_LIMITS = {
   CHAT_CONTENT: 50_000,
   /** RecipeChatMessage.role — "user" / "assistant" / "error" */
   ROLE: 20,
+  /** HistoryEntry.parentType/actionType/entityType — kurze Enum-Strings */
+  HISTORY_TYPE: 40,
+  /** HistoryEntry.description — z.B. "Milch gelöscht" */
+  HISTORY_DESCRIPTION: 500,
+  /**
+   * HistoryEntry.snapshotJson — die gelöschte Zeile als JSON für die
+   * Wiederherstellung. Grosszügig, weil ein Rezeptschritt mit aiExplanation
+   * (bis 50k) plus JSON-Overhead hineinpassen muss.
+   */
+  HISTORY_SNAPSHOT: 100_000,
   /** quantity und orderIndex */
   NUMBER_MIN: 0,
   NUMBER_MAX: 1_000_000,
@@ -133,10 +144,10 @@ export function userRefForSync(value: string | null): string | null {
 /**
  * Entitätstypen, für die es einen Sanitizer gibt.
  *
- * Das sind die sechs gemergten Typen aus `field-lww.ts` plus
- * `recipeChatMessage`: Chat-Nachrichten sind append-only und nehmen deshalb
- * nicht am LWW-Merge teil, gehen aber im selben Push-Body mit — ein zu langer
- * `content` kippt denselben Request.
+ * Das sind die sechs gemergten Typen aus `field-lww.ts` plus die beiden
+ * append-only Typen `recipeChatMessage` und `historyEntry`: Sie nehmen nicht
+ * am LWW-Merge teil, gehen aber im selben Push-Body mit — ein zu langer
+ * Wert kippt denselben Request.
  */
 export interface SanitizableRowByType {
   list: List
@@ -146,6 +157,7 @@ export interface SanitizableRowByType {
   recipeStep: RecipeStep
   badge: Badge
   recipeChatMessage: RecipeChatMessage
+  historyEntry: HistoryEntry
 }
 
 export type SanitizableType = keyof SanitizableRowByType
@@ -240,6 +252,26 @@ function sanitizeRecipeChatMessage(row: RecipeChatMessage): RecipeChatMessage {
   }
 }
 
+/**
+ * Die drei Typfelder (`parentType`, `actionType`, `entityType`) werden nicht
+ * gekappt: Der Domänentyp lässt nur Literale zu, die weit unter `HISTORY_TYPE`
+ * liegen, und ein Kappen würde die Literaltypen zerstören — dieselbe
+ * Begründung wie bei der Chat-Rolle.
+ *
+ * Ein gekappter `snapshotJson` ist kein gültiges JSON mehr — das ist der
+ * bewusste Preis: `parseHistorySnapshot` liest ihn tolerant und meldet `null`,
+ * die Wiederherstellung greift dann nur noch auf die Original-Zeile zurück.
+ * Ein 422, der den GESAMTEN Push kippt, wäre der schlechtere Tausch.
+ */
+function sanitizeHistoryEntry(row: HistoryEntry): HistoryEntry {
+  return {
+    ...row,
+    description: capText(row.description, SYNC_FIELD_LIMITS.HISTORY_DESCRIPTION),
+    snapshotJson: capText(row.snapshotJson, SYNC_FIELD_LIMITS.HISTORY_SNAPSHOT),
+    createdBy: userRefForSync(row.createdBy),
+  }
+}
+
 const SANITIZERS: { [K in SanitizableType]: (row: SanitizableRowByType[K]) => SanitizableRowByType[K] } = {
   list: sanitizeList,
   listItem: sanitizeListItem,
@@ -248,6 +280,7 @@ const SANITIZERS: { [K in SanitizableType]: (row: SanitizableRowByType[K]) => Sa
   recipeStep: sanitizeRecipeStep,
   badge: sanitizeBadge,
   recipeChatMessage: sanitizeRecipeChatMessage,
+  historyEntry: sanitizeHistoryEntry,
 }
 
 /**

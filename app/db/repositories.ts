@@ -23,6 +23,7 @@
 import type {
   Badge,
   FieldTimestamps,
+  HistoryEntry,
   IsoUtc,
   List,
   ListItem,
@@ -33,12 +34,14 @@ import type {
   RecipeStep,
   SyncedEntity,
 } from '../../shared/types/domain'
+import { sanitize } from '../sync/merge/limits'
 import { getDb } from './client'
 import {
   CLEAN,
   DIRTY,
   type BadgeRow,
   type DirtyFlag,
+  type HistoryEntryRow,
   type ListItemRow,
   type ListMemberRow,
   type ListRow,
@@ -67,6 +70,7 @@ export type DirtyStoreName
     | 'recipe_steps'
     | 'recipe_chat_messages'
     | 'badges'
+    | 'history_entries'
 
 export const DIRTY_STORES: readonly DirtyStoreName[] = [
   'lists',
@@ -76,6 +80,7 @@ export const DIRTY_STORES: readonly DirtyStoreName[] = [
   'recipe_steps',
   'recipe_chat_messages',
   'badges',
+  'history_entries',
 ]
 
 /* ------------------------------------------------------------------ *
@@ -215,6 +220,54 @@ export function compareByManualOrder(a: ManualOrder, b: ManualOrder): number {
   return compareIso(a.createdAt, b.createdAt)
 }
 
+/**
+ * Hat jemand ANDERES diesen Eintrag geändert, seit die Liste zuletzt offen war?
+ *
+ * Die Bedingung an `modifiedBy` ist wortgleich `isRemoteAddition` in der
+ * Listendetailansicht (und in Androids Detail.kt): ein Wert muss da sein UND
+ * ein fremder. Lokale Einträge tragen entweder noch gar keinen (optimistisches
+ * Anlegen) oder die eigene UUID. Ohne eigenes Konto gibt es keinen Abgleich und
+ * damit keine Fremden — dann zählt nichts.
+ *
+ * `seenAt === null` heisst "noch nie geöffnet" und zählt deshalb alles Fremde.
+ * Das ist der Fall einer gerade angenommenen Einladung: Da ist tatsächlich der
+ * gesamte Inhalt neu.
+ */
+export function isUnseenForeignChange(
+  item: { readonly modifiedBy: string | null, readonly updatedAt: IsoUtc },
+  ownUserId: string | null,
+  seenAt: IsoUtc | null,
+): boolean {
+  if (ownUserId === null) return false
+  if (item.modifiedBy === null || item.modifiedBy === ownUserId) return false
+
+  return seenAt === null || compareIso(item.updatedAt, seenAt) > 0
+}
+
+/**
+ * Obergrenze der Historie je Parent (Liste oder Rezept) — Spiegel von
+ * `HISTORY_MAX_PER_PARENT` in `api.shliste.app/src/routes/sync/history.ts`
+ * und der Android-Regel (HistoryDao.trimEntries). Läuft der Client aus dem
+ * Takt, gleicht der Server-Trim ihn beim nächsten Pull wieder an.
+ */
+export const HISTORY_MAX_PER_PARENT = 50
+
+/**
+ * Neueste zuerst; bei gleichem Zeitpunkt entscheidet die Id absteigend —
+ * derselbe deterministische Tie-Breaker wie im Server-Trim
+ * (`ORDER BY createdAt DESC, id DESC`). Nur so behalten Client und Server
+ * beim Kappen dieselben 50 Einträge.
+ */
+export function compareHistoryNewestFirst(
+  a: { readonly createdAt: IsoUtc, readonly id: string },
+  b: { readonly createdAt: IsoUtc, readonly id: string },
+): number {
+  const byCreatedAt = compareIso(b.createdAt, a.createdAt)
+  if (byCreatedAt !== 0) return byCreatedAt
+  if (a.id === b.id) return 0
+  return a.id < b.id ? 1 : -1
+}
+
 /* ------------------------------------------------------------------ *
  * Schreiben
  *
@@ -226,17 +279,26 @@ export function compareByManualOrder(a: ManualOrder, b: ManualOrder): number {
 
 export async function upsertList(input: Draft<List>): Promise<ListRow> {
   const db = await getDb()
-  const previous = await db.get('lists', input.id)
+  // Lesen und Schreiben in EINER Transaktion: `seenAt` wird aus der
+  // gelesenen Zeile bewahrt — ein `markListSeen` zwischen einem freien
+  // get und put ginge sonst still verloren (dieselbe Begründung, aus der
+  // markListSeen und putListRow transaktional gebaut sind).
+  const tx = db.transaction('lists', 'readwrite')
+  const previous = await tx.store.get(input.id)
   const changed = changedFields(previous, input)
 
   // Ein Schreibvorgang ohne inhaltliche Änderung würde die Zeile grundlos
   // schmutzig machen und einen Push auslösen.
   if (previous !== undefined && changed.length === 0) {
+    await tx.done
     return previous
   }
 
-  const row: ListRow = { ...input, ...buildRowMeta(previous, changed, nowIso()) }
-  await db.put('lists', row)
+  // `seenAt` ist rein lokal und steht nicht im Draft — ohne diese Zeile
+  // würde jedes Umbenennen das Gesehen-Wasserzeichen der Liste verwerfen.
+  const row: ListRow = { ...input, ...buildRowMeta(previous, changed, nowIso()), seenAt: previous?.seenAt ?? null }
+  await tx.store.put(row)
+  await tx.done
   return row
 }
 
@@ -324,6 +386,74 @@ export async function appendChatMessage(message: RecipeChatMessage): Promise<Rec
 }
 
 /**
+ * Zeichnet eine Löschung im Verlauf auf — append-only wie `appendChatMessage`.
+ *
+ * `description` und `snapshotJson` werden BEIM SCHREIBEN auf die Sync-Limits
+ * gekappt, nicht erst beim Push: So zeigt die lokale Verlaufsansicht exakt
+ * das, was später auf allen Geräten steht — derselbe Grund, aus dem Android
+ * die gekappten Werte lokal zurückschreibt.
+ *
+ * Trimmt danach den Parent auf 50 Einträge, wie `HistoryRepository.logEntry`
+ * in Android (dao.insert + dao.trimEntries).
+ */
+export async function appendHistoryEntry(entry: HistoryEntry): Promise<HistoryEntryRow> {
+  const db = await getDb()
+  const row: HistoryEntryRow = { ...sanitize('historyEntry', entry), dirty: DIRTY }
+  await db.put('history_entries', row)
+  await trimHistoryForParent(entry.parentId)
+  return row
+}
+
+/**
+ * Übernimmt einen gepullten Historien-Eintrag — nur, wenn seine Id lokal
+ * unbekannt ist. Gepullte Einträge sind die Wahrheit des Servers und deshalb
+ * sauber (`dirty = 0`).
+ *
+ * `add` statt `put`: schlägt bei vorhandener Id fehl und lässt insbesondere
+ * das Dirty-Flag einer noch nicht gepushten eigenen Zeile in Ruhe — dieselbe
+ * Begründung wie `applyChatMessage` im Pull, hier aber atomar statt
+ * Lesen-dann-Schreiben.
+ */
+export async function putPulledHistoryEntry(entry: HistoryEntry): Promise<void> {
+  const db = await getDb()
+  try {
+    await db.add('history_entries', { ...entry, dirty: CLEAN })
+  }
+  catch (error) {
+    // ConstraintError: die Zeile gibt es schon — wegen der Cursor-Überlappung
+    // des Pulls der Normalfall, kein Fehler.
+    if (error instanceof DOMException && error.name === 'ConstraintError') return
+    throw error
+  }
+}
+
+/**
+ * Behält je Parent die 50 neuesten Einträge — Spiegel des Server-Trims
+ * (`trimHistoryEntries` in der API) und von `HistoryDao.trimEntries` in
+ * Android. Alle Aktionsarten zählen mit, nicht nur Löschungen: Der Server
+ * trimmt genauso, sonst hielten beide Seiten verschiedene 50 fest.
+ */
+export async function trimHistoryForParent(parentId: string): Promise<void> {
+  const db = await getDb()
+  const tx = db.transaction('history_entries', 'readwrite')
+  const store = tx.objectStore('history_entries')
+
+  const rows = await store.index('by-parentId').getAll(parentId)
+  const excess = rows
+    .sort(compareHistoryNewestFirst)
+    .slice(HISTORY_MAX_PER_PARENT)
+    // Dirty NIE lokal wegtrimmen: Liegt die eigene Uhr hinter den Stempeln
+    // von 50 gepullten Peer-Einträgen, fiele sonst genau der eben
+    // geschriebene, noch nie gepushte Eintrag dem Trim zum Opfer. Nach dem
+    // Push ist die Zeile sauber und der nächste Trim darf sie räumen —
+    // der Server hält die 50 ohnehin verbindlich.
+    .filter(row => row.dirty === CLEAN)
+  await Promise.all(excess.map(row => store.delete(row.id)))
+
+  await tx.done
+}
+
+/**
  * Ersetzt die Mitglieder einer Liste durch den Stand des Servers.
  *
  * Ersetzen statt Zusammenführen, weil der Server hier die Quelle der Wahrheit
@@ -348,28 +478,36 @@ export async function replaceListMembers(listId: string, members: readonly ListM
 }
 
 /**
- * Löscht eine Liste samt Items und Mitgliedern wirklich.
+ * Löscht eine Liste samt Items, Mitgliedern und Verlauf wirklich.
  *
  * Der harte Weg ist hier richtig, obwohl sonst weich gelöscht wird: Diese
  * Funktion läuft, wenn der Server meldet, dass man nicht mehr Mitglied der
  * Liste ist. Ein Tombstone würde beim nächsten Push als Löschwunsch
  * hochgeladen und damit die Liste für alle verbliebenen Mitglieder
  * löschen — für Daten, die einem gar nicht mehr gehören.
+ *
+ * Der Verlauf fällt mit, aus demselben Grund wie die Mitglieder: Er enthält
+ * Einträge ANDERER Mitglieder einer Liste, die dieses Konto nicht mehr sieht
+ * — verwaiste Fremddaten haben hier nichts mehr verloren (Androids
+ * Gegenstück ist `HistoryDao.deleteOrphanedEntries`).
  */
 export async function hardDeleteList(listId: string): Promise<void> {
   const db = await getDb()
-  const tx = db.transaction(['lists', 'list_items', 'list_members'], 'readwrite')
+  const tx = db.transaction(['lists', 'list_items', 'list_members', 'history_entries'], 'readwrite')
   const items = tx.objectStore('list_items')
   const members = tx.objectStore('list_members')
+  const history = tx.objectStore('history_entries')
 
-  const [itemKeys, memberKeys] = await Promise.all([
+  const [itemKeys, memberKeys, historyKeys] = await Promise.all([
     items.index('by-listId').getAllKeys(listId),
     members.index('by-listId').getAllKeys(listId),
+    history.index('by-parentId').getAllKeys(listId),
   ])
 
   await Promise.all([
     ...itemKeys.map(key => items.delete(key)),
     ...memberKeys.map(key => members.delete(key)),
+    ...historyKeys.map(key => history.delete(key)),
     tx.objectStore('lists').delete(listId),
   ])
 
@@ -405,6 +543,30 @@ export async function getItemsForList(listId: string): Promise<ListItemRow[]> {
   return rows
     .filter(row => row.deletedAt === null && !row.removed)
     .sort(compareByManualOrder)
+}
+
+/**
+ * Eine einzelne Item-Zeile UNGEFILTERT — auch entfernte und gelöschte.
+ *
+ * Für das Rückgängig im Toast: Das muss die frische Zeile lesen (nicht den
+ * eingefrorenen Klick-Snapshot), und die ist in diesem Moment per Definition
+ * `removed` bzw. tombstoned — die gefilterten Ansichts-Getter finden sie nicht.
+ */
+export async function getItemRow(itemId: string): Promise<ListItemRow | undefined> {
+  const db = await getDb()
+  return db.get('list_items', itemId)
+}
+
+/** Rohzeile einer Zutat — Begründung siehe `getItemRow`. */
+export async function getIngredientRow(ingredientId: string): Promise<RecipeIngredientRow | undefined> {
+  const db = await getDb()
+  return db.get('recipe_ingredients', ingredientId)
+}
+
+/** Rohzeile eines Schritts — Begründung siehe `getItemRow`. */
+export async function getStepRow(stepId: string): Promise<RecipeStepRow | undefined> {
+  const db = await getDb()
+  return db.get('recipe_steps', stepId)
 }
 
 export async function getRecipe(recipeId: string): Promise<RecipeRow | undefined> {
@@ -464,6 +626,76 @@ export async function getMembersForList(listId: string): Promise<ListMemberRow[]
   return db.getAllFromIndex('list_members', 'by-listId', listId)
 }
 
+/**
+ * Der Verlauf einer Liste oder eines Rezepts für die Anzeige: nur
+ * Löschungen, neueste zuerst, höchstens 50 — dieselbe Auswahl wie Androids
+ * HistorySheet (Filter auf actionType "deleted").
+ *
+ * Der Filter bleibt, obwohl es bisher nur Löschungen gibt: Ein künftiger
+ * Server könnte weitere Aktionsarten liefern, und die dürfen hier nicht
+ * ungefragt als "wiederherstellbar" erscheinen.
+ */
+export async function getHistoryForParent(parentId: string): Promise<HistoryEntryRow[]> {
+  const db = await getDb()
+  const rows = await db.getAllFromIndex('history_entries', 'by-parentId', parentId)
+  return rows
+    .filter(row => row.actionType === 'deleted')
+    .sort(compareHistoryNewestFirst)
+    .slice(0, HISTORY_MAX_PER_PARENT)
+}
+
+/* ------------------------------------------------------------------ *
+ * Gesehen-Wasserzeichen — rein lokal, nie gesynct
+ * ------------------------------------------------------------------ */
+
+/**
+ * Merkt, dass die Liste jetzt gesehen wurde.
+ *
+ * Setzt bewusst WEDER `updatedAt` NOCH `dirty` noch einen Feld-Zeitstempel —
+ * Hinschauen ist keine Bearbeitung. Deshalb direktes `put` statt `upsertList`:
+ * Der Upsert würde die Zeile schmutzig machen und einen Push auslösen, für
+ * eine Information, die den Server gar nichts angeht. Dasselbe Muster wie
+ * `markListSeen` im ShlisteDao der Android-App.
+ */
+export async function markListSeen(listId: string): Promise<void> {
+  const db = await getDb()
+
+  // Lesen und Schreiben in EINER Transaktion: Läuft parallel ein Pull, darf
+  // dieses Zurückschreiben dessen frische Zeile nicht mit der alten Kopie
+  // überdecken — es soll ausschliesslich `seenAt` setzen.
+  const tx = db.transaction('lists', 'readwrite')
+  const store = tx.objectStore('lists')
+  const row = await store.get(listId)
+  if (row !== undefined) {
+    await store.put({ ...row, seenAt: nowIso() })
+  }
+
+  await tx.done
+}
+
+/**
+ * Zählt die Einträge dieser Liste, die jemand anderes geändert hat, seit sie
+ * zuletzt geöffnet war — die Zahl auf der Karte der Übersicht.
+ *
+ * Entfernte (`removed`) und gelöschte Zeilen bleiben aussen vor: Ein Hinweis
+ * auf etwas, das es nicht mehr gibt, führt nur in eine leere Ansicht
+ * (dieselbe Regel wie `getUnseenForeignChanges` im ShlisteDao).
+ */
+export async function countUnseenForeignChanges(listId: string, ownUserId: string | null): Promise<number> {
+  const db = await getDb()
+  const [list, rows] = await Promise.all([
+    db.get('lists', listId),
+    db.getAllFromIndex('list_items', 'by-listId', listId),
+  ])
+  if (list === undefined || list.deletedAt !== null) return 0
+
+  const seenAt = list.seenAt ?? null
+  return rows
+    .filter(row => row.deletedAt === null && !row.removed)
+    .filter(row => isUnseenForeignChange(row, ownUserId, seenAt))
+    .length
+}
+
 /* ------------------------------------------------------------------ *
  * Sync: was muss hoch?
  * ------------------------------------------------------------------ */
@@ -501,6 +733,11 @@ export async function getDirtyBadges(): Promise<BadgeRow[]> {
 export async function getDirtyChatMessages(): Promise<RecipeChatMessageRow[]> {
   const db = await getDb()
   return db.getAllFromIndex('recipe_chat_messages', 'by-dirty', DIRTY)
+}
+
+export async function getDirtyHistoryEntries(): Promise<HistoryEntryRow[]> {
+  const db = await getDb()
+  return db.getAllFromIndex('history_entries', 'by-dirty', DIRTY)
 }
 
 /**
@@ -622,9 +859,10 @@ export async function clearDirtyOnDeleted(): Promise<number> {
   const cleared = await Promise.all(DIRTY_STORES.map(async (name) => {
     const store = tx.objectStore(name)
     const rows = await store.index('by-dirty').getAll(DIRTY)
-    // `in` statt eines Zugriffs: Chat-Nachrichten sind anfügend und kennen
-    // gar kein `deletedAt`. Sie fallen damit von selbst heraus, ohne dass die
-    // Liste der Stores hier ein zweites Mal gepflegt werden muss.
+    // `in` statt eines Zugriffs: Chat-Nachrichten und Historien-Einträge sind
+    // anfügend und kennen gar kein `deletedAt`. Sie fallen damit von selbst
+    // heraus, ohne dass die Liste der Stores hier ein zweites Mal gepflegt
+    // werden muss.
     const deleted = rows.filter(row => 'deletedAt' in row && row.deletedAt !== null)
     await Promise.all(deleted.map(row => store.put({ ...row, dirty: CLEAN })))
     return deleted.length
@@ -808,8 +1046,25 @@ export async function readListRow(id: string): Promise<ListRow | undefined> {
   return (await getDb()).get('lists', id)
 }
 
+/**
+ * ABWEICHUNG VOM MUSTER DER ÜBRIGEN `put*Row`: bewahrt das lokale
+ * Gesehen-Wasserzeichen. Der Pull baut seine Zeile vollständig aus der
+ * Serverantwort (`applyList` in `app/sync/engine/pull.ts`) und kennt `seenAt`
+ * nicht — ohne diese Zeile würde jeder Abgleich die Liste wieder als "nie
+ * gesehen" markieren und die Übersicht mit falschen Hinweisen fluten.
+ */
 export async function putListRow(row: ListRow): Promise<void> {
-  await (await getDb()).put('lists', row)
+  const db = await getDb()
+
+  // Lesen und Schreiben in EINER Transaktion, damit ein gleichzeitiges
+  // `markListSeen` nicht zwischen die beiden Schritte fallen und sein
+  // frisches Wasserzeichen verlieren kann.
+  const tx = db.transaction('lists', 'readwrite')
+  const store = tx.objectStore('lists')
+  const previous = await store.get(row.id)
+  await store.put({ ...row, seenAt: row.seenAt ?? previous?.seenAt ?? null })
+
+  await tx.done
 }
 
 export async function readItemRow(id: string): Promise<ListItemRow | undefined> {

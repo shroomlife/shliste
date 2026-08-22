@@ -15,14 +15,6 @@ export function useNetworkStatus() {
   // Komponente neu entstehen.
   const isOnline = useState<boolean>('network-online', () => true)
 
-  /**
-   * Meldet das Ergebnis eines echten Netzaufrufs zurück. Damit korrigiert
-   * sich die Anzeige auch dann, wenn der Browser fälschlich "online" meldet.
-   */
-  function reportResult(succeeded: boolean): void {
-    isOnline.value = succeeded
-  }
-
   onMounted(() => {
     isOnline.value = navigator.onLine
 
@@ -44,6 +36,5 @@ export function useNetworkStatus() {
 
   return {
     isOnline: readonly(isOnline),
-    reportResult,
   }
 }

@@ -12,7 +12,7 @@
  */
 import { apiFetch } from '../../utils/apiFetch'
 import { isRecord } from '../../utils/guards'
-import { readSessionToken } from '../../utils/session'
+import { getFreshSessionToken } from '../../utils/sessionRefresh'
 
 interface RealtimeTicket {
   ticket: string
@@ -20,8 +20,8 @@ interface RealtimeTicket {
 }
 
 export default defineEventHandler(async (event): Promise<RealtimeTicket> => {
-  const sessionToken = readSessionToken(event)
-  if (sessionToken === undefined) {
+  const sessionToken = await getFreshSessionToken(event)
+  if (sessionToken === null) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized', message: 'Nicht angemeldet.' })
   }
 

@@ -357,7 +357,10 @@ body {
 @layer base {
   * {
     scrollbar-width: thin;
-    scrollbar-color: color-mix(in srgb, var(--md-on-surface-variant) 35%, transparent) transparent;
+    /* Markenfarbe statt Grau: Der Balken ist Teil der Oberfläche, nicht des
+     * Browsers. 45 % Lasur hält ihn präsent, aber unter den Inhalten; im
+     * Dark-Mode wandert --md-primary automatisch auf das helle Rosa mit. */
+    scrollbar-color: color-mix(in srgb, var(--md-primary) 45%, transparent) transparent;
   }
 
   ::-webkit-scrollbar {
@@ -371,10 +374,10 @@ body {
 
   ::-webkit-scrollbar-thumb {
     border-radius: 9999px;
-    background-color: color-mix(in srgb, var(--md-on-surface-variant) 35%, transparent);
+    background-color: color-mix(in srgb, var(--md-primary) 45%, transparent);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: color-mix(in srgb, var(--md-on-surface-variant) 55%, transparent);
+    background-color: color-mix(in srgb, var(--md-primary) 70%, transparent);
   }
 }

@@ -12,9 +12,10 @@
  * `push.ts` bekommt nur den Push-Port, `pull.ts` nur den Pull-Port. Wer
  * weniger sehen darf, kann weniger kaputt machen.
  */
-import type { IsoUtc, ListMember } from '../../../shared/types/domain'
+import type { HistoryEntry, IsoUtc, ListMember } from '../../../shared/types/domain'
 import type {
   BadgeRow,
+  HistoryEntryRow,
   ListItemRow,
   ListRow,
   RecipeChatMessageRow,
@@ -57,6 +58,7 @@ export interface DirtyRows {
   steps: RecipeStepRow[]
   chatMessages: RecipeChatMessageRow[]
   badges: BadgeRow[]
+  historyEntries: HistoryEntryRow[]
 }
 
 export interface PushStore {
@@ -74,6 +76,17 @@ export interface PullStore {
   rows: RowStores
   /** Ersetzt die Mitglieder einer Liste durch den Stand des Servers. */
   replaceMembers: (listId: string, members: readonly ListMember[]) => Promise<void>
+  /**
+   * Übernimmt einen gepullten Historien-Eintrag — nur, wenn seine Id lokal
+   * unbekannt ist. Einträge sind append-only: Ein vorhandener (auch ein noch
+   * ungepushter eigener) bleibt unangetastet, ein Merge findet nicht statt.
+   */
+  putPulledHistoryEntry: (entry: HistoryEntry) => Promise<void>
+  /**
+   * Behält je Parent die 50 neuesten Historien-Einträge — der Spiegel des
+   * Server-Trims, damit beide Seiten dieselbe Menge halten.
+   */
+  trimHistoryForParent: (parentId: string) => Promise<void>
   /** Das Wasserzeichen des letzten vollständigen Pulls. */
   readCursor: () => Promise<IsoUtc | null>
   writeCursor: (value: IsoUtc) => Promise<void>

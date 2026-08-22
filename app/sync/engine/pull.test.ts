@@ -12,7 +12,7 @@
  *    verlassen.
  */
 import { describe, expect, test } from 'bun:test'
-import type { IsoUtc, ListMember } from '../../../shared/types/domain'
+import type { HistoryEntry, IsoUtc, ListMember } from '../../../shared/types/domain'
 import type {
   BadgeRow,
   ListItemRow,
@@ -60,6 +60,10 @@ interface FakePullStore extends PullStore, ListRemovalStore {
   itemWrites: () => number
   /** Welche Listen endgültig entfernt wurden, in der Reihenfolge der Aufrufe. */
   removed: string[]
+  /** Aufzeichnung statt No-op: was der Pull an Historie übernommen hat. */
+  pulledHistory: HistoryEntry[]
+  /** Für welche Parents nach dem Pull getrimmt wurde. */
+  trimmedHistoryParents: string[]
 }
 
 function fakePullStore(options: {
@@ -91,6 +95,16 @@ function fakePullStore(options: {
     chatMessages: chatStore.all,
     itemWrites: () => itemStore.writes,
     removed: [],
+    pulledHistory: [],
+    trimmedHistoryParents: [],
+    putPulledHistoryEntry: (entry) => {
+      store.pulledHistory.push(entry)
+      return Promise.resolve()
+    },
+    trimHistoryForParent: (parentId) => {
+      store.trimmedHistoryParents.push(parentId)
+      return Promise.resolve()
+    },
     replaceMembers: (listId, members) => {
       store.members.set(listId, members)
       return Promise.resolve()
@@ -350,6 +364,29 @@ describe('runPull — Cursor', () => {
  * ------------------------------------------------------------------ */
 
 describe('runPull — Anwenden', () => {
+  test('gepullte Historie wird übernommen und ihr Parent getrimmt', async () => {
+    const store = fakePullStore()
+
+    await runPull(store, () => Promise.resolve(pullBody({
+      historyEntries: [{
+        id: 'h1',
+        parentId: 'l1',
+        parentType: 'list',
+        actionType: 'deleted',
+        entityType: 'list_item',
+        entityId: 'i1',
+        description: 'Milch gelöscht',
+        snapshotJson: '{"uuid":"i1","name":"Milch"}',
+        createdBy: 'peer-uuid',
+        createdAt: OLD,
+      }],
+    })))
+
+    expect(store.pulledHistory.map(entry => entry.id)).toEqual(['h1'])
+    expect(store.pulledHistory[0]?.createdBy).toBe('peer-uuid')
+    expect(store.trimmedHistoryParents).toEqual(['l1'])
+  })
+
   test('eine unbekannte Zeile kommt sauber herein', async () => {
     const store = fakePullStore()
 

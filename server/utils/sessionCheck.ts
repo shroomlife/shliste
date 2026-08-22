@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
-import { apiFetch } from './apiFetch'
+import { apiFetch, isSessionExpiredError } from './apiFetch'
+import { readJwtExpiry } from './sessionRefresh'
 
 /**
  * Prüft, ob ein Session-JWT bei der API tatsächlich noch gilt.
@@ -12,10 +13,22 @@ import { apiFetch } from './apiFetch'
  *
  * Verifizieren kann das JWT nur die API (nur sie kennt das Secret), deshalb
  * fragt diese Funktion GET /sync/session — eine Route, die nichts tut ausser
- * den userAuth-Guard zu durchlaufen. Positive Antworten werden kurz
- * gemerkt, damit nicht jeder AI-Aufruf einen zweiten Roundtrip kostet;
- * negative bewusst nicht, denn ein frisch eingeloggter Nutzer soll nicht
- * minutenlang auf ein gemerktes "ungültig" laufen.
+ * den userAuth-Guard zu durchlaufen.
+ *
+ * DREIWERTIG, nicht boolesch: Nur ein echtes 401 der API ist ein Urteil über
+ * die Session (`invalid`). Netzfehler, 5xx und 429 sagen über die Session
+ * NICHTS aus (`unknown`) — der Aufrufer soll dem Nutzer dann „Dienst gerade
+ * nicht erreichbar" sagen statt fälschlich „Sitzung abgelaufen". Genau diese
+ * Verwechslung hat vorher Nutzer scheinbar ausgeloggt, obwohl nur die API
+ * kurz weg war.
+ */
+export type SessionCheckResult = 'valid' | 'invalid' | 'unknown'
+
+/**
+ * Positive Antworten werden kurz gemerkt, damit nicht jeder AI-Aufruf einen
+ * zweiten Roundtrip kostet; negative bewusst nicht, denn ein frisch
+ * eingeloggter Nutzer soll nicht minutenlang auf ein gemerktes „ungültig"
+ * laufen.
  */
 const VALID_TTL_MS = 5 * 60_000
 
@@ -28,24 +41,29 @@ function pruneExpired(now: number): void {
   }
 }
 
-export async function isSessionValid(sessionToken: string, clientIp?: string): Promise<boolean> {
+export async function checkSession(sessionToken: string, clientIp?: string): Promise<SessionCheckResult> {
   const key = createHash('sha256').update(sessionToken).digest('hex')
   const now = Date.now()
 
   const cachedUntil = validUntilByTokenHash.get(key)
-  if (cachedUntil !== undefined && cachedUntil > now) return true
+  if (cachedUntil !== undefined && cachedUntil > now) return 'valid'
 
   try {
     await apiFetch('/sync/session', { sessionToken, clientIp })
   }
-  catch {
-    // 401 heisst abgelaufen; jeder andere Fehler (API nicht erreichbar, 429)
-    // heisst ebenfalls: jetzt keinen kostenpflichtigen Aufruf signieren.
-    // Fail closed — der nachfolgende AI-Aufruf würde ohnehin scheitern.
-    return false
+  catch (error) {
+    return isSessionExpiredError(error) ? 'invalid' : 'unknown'
   }
 
   if (validUntilByTokenHash.size > 5000) pruneExpired(now)
-  validUntilByTokenHash.set(key, now + VALID_TTL_MS)
-  return true
+
+  // Der Positiv-Cache endet spätestens mit dem `exp` des JWT: Ein Token, das
+  // in 30 Sekunden abläuft, darf nicht fünf Minuten lang als gültig gelten —
+  // sonst signierte diese Schicht Aufrufe, die die API längst ablehnen würde.
+  // (`exp` unsigniert zu lesen ist hier unbedenklich, siehe readJwtExpiry.)
+  const exp = readJwtExpiry(sessionToken)
+  const cacheUntil = exp === null ? now + VALID_TTL_MS : Math.min(now + VALID_TTL_MS, exp * 1000)
+  if (cacheUntil > now) validUntilByTokenHash.set(key, cacheUntil)
+
+  return 'valid'
 }

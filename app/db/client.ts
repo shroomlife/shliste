@@ -16,6 +16,14 @@ function open(): Promise<IDBPDatabase<ShlisteDb>> {
       createSchema(db)
     },
 
+    blocked() {
+      // Umgekehrter Fall zu blocking(): Ein anderer, älterer Tab hält die
+      // Datenbank und blockiert UNSEREN Versionswechsel. Dessen blocking()
+      // schliesst gleich von selbst — hier nur sichtbar machen, warum das
+      // Öffnen gerade wartet. Die openDB-Promise löst auf, sobald es frei ist.
+      console.warn('[db] Warte auf einen anderen Tab, der die Datenbank noch mit alter Version offen hält.')
+    },
+
     blocking() {
       // Ein anderer Tab will auf eine neuere Version migrieren und wird von
       // dieser offenen Verbindung blockiert. Wir schliessen sofort, sonst

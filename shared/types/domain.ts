@@ -108,6 +108,45 @@ export interface RecipeChatMessage {
   createdBy: string | null
 }
 
+/** Wozu ein Historien-Eintrag gehört: Liste oder Rezept. */
+export type HistoryParentType = 'list' | 'recipe'
+
+/**
+ * Was der Eintrag festhält. Bisher nur Löschungen — der Verlauf zeigt
+ * ausschliesslich, was sich wiederherstellen lässt.
+ */
+export type HistoryActionType = 'deleted'
+
+/** Welche Art Zeile gelöscht wurde. */
+export type HistoryEntityType = 'list_item' | 'recipe_ingredient' | 'recipe_step'
+
+/**
+ * Ein Eintrag der Lösch-Historie — das Gegenstück zu Androids HistorySheet.
+ *
+ * Append-only wie RecipeChatMessage, deshalb ohne updatedAt/deletedAt/
+ * fieldTimestamps: Ein Eintrag wird geschrieben und nie geändert. `createdBy`
+ * ist die Server-User-UUID des Verursachers und kommt ausschliesslich per
+ * Pull — lokal erzeugte Einträge tragen `null` ("von mir"), der Server
+ * stempelt den Wert beim Push selbst.
+ *
+ * `snapshotJson` ist die gelöschte Zeile als JSON. ACHTUNG INTEROP: Beide
+ * Clients schreiben ihre EIGENE Objektform hinein (Android `uuid`/`order`,
+ * PWA `id`/`orderIndex`). Gelesen wird deshalb nur über den toleranten
+ * Parser `parseHistorySnapshot` in `app/history/snapshot.ts`.
+ */
+export interface HistoryEntry {
+  id: string
+  parentId: string
+  parentType: HistoryParentType
+  actionType: HistoryActionType
+  entityType: HistoryEntityType
+  entityId: string
+  description: string
+  snapshotJson: string
+  createdBy: string | null
+  createdAt: IsoUtc
+}
+
 export type MemberRole = 'owner' | 'member'
 export type MemberStatus = 'accepted' | 'pending'
 

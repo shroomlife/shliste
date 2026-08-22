@@ -28,6 +28,7 @@ import {
   countDirty,
   getDirtyBadges,
   getDirtyChatMessages,
+  getDirtyHistoryEntries,
   getDirtyIngredients,
   getDirtyItems,
   getDirtyLists,
@@ -45,9 +46,11 @@ import {
   isDirtyRecipeOrChildren,
   countDirtyItemsForList,
   clearDirtyFlags,
+  putPulledHistoryEntry,
   replaceListMembers,
   setHasMigrated,
   setLastSyncedAt,
+  trimHistoryForParent,
   type DirtyStoreName,
 } from '../../db/repositories'
 import type {
@@ -128,7 +131,7 @@ const chatMessages: EntityStore<RecipeChatMessageRow> = {
 const rows: RowStores = { lists, items, recipes, ingredients, steps, badges, chatMessages }
 
 async function readDirty(): Promise<DirtyRows> {
-  // Parallel: Es sind sieben unabhängige Lesevorgänge auf verschiedenen
+  // Parallel: Es sind acht unabhängige Lesevorgänge auf verschiedenen
   // Stores. Ein gemeinsamer Snapshot ist nicht nötig — der Push kappt über
   // `pushSnapshot` ohnehin alles ab, was währenddessen entsteht.
   const [
@@ -139,6 +142,7 @@ async function readDirty(): Promise<DirtyRows> {
     dirtySteps,
     dirtyChatMessages,
     dirtyBadges,
+    dirtyHistoryEntries,
   ] = await Promise.all([
     getDirtyLists(),
     getDirtyItems(),
@@ -147,6 +151,7 @@ async function readDirty(): Promise<DirtyRows> {
     getDirtySteps(),
     getDirtyChatMessages(),
     getDirtyBadges(),
+    getDirtyHistoryEntries(),
   ])
 
   return {
@@ -157,6 +162,7 @@ async function readDirty(): Promise<DirtyRows> {
     steps: dirtySteps,
     chatMessages: dirtyChatMessages,
     badges: dirtyBadges,
+    historyEntries: dirtyHistoryEntries,
   }
 }
 
@@ -192,6 +198,8 @@ export const localStore: SyncStore & RealtimeStore & ConflictStore = {
     clearDirtyFlags(store, ids, snapshot),
   replaceMembers: (listId: string, members: readonly ListMember[]) =>
     replaceListMembers(listId, members),
+  putPulledHistoryEntry,
+  trimHistoryForParent,
   readCursor: getLastSyncedAt,
   writeCursor: setLastSyncedAt,
   readHasMigrated: getHasMigrated,

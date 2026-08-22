@@ -9,6 +9,13 @@ import type { UserProfile } from '#shared/types/domain'
  * und nichts sperrt eine Bedienung — die Anmeldung ist eine Zugabe, keine
  * Voraussetzung.
  *
+ * ANGEMELDET UND PROFIL SIND ZWEI GETRENNTE AUSSAGEN (Audit W2): Ob eine
+ * Session besteht, entscheidet das Session-Cookie beim Server; das Profil ist
+ * nur die Anzeige dazu. Ein unlesbares Profil-Cookie liefert `authenticated:
+ * true` mit `profile: null` — die Oberfläche zeigt dann den
+ * Platzhalter-Avatar, meldet aber NIEMANDEN ab. Wäre `isSignedIn` an das
+ * Profil gekoppelt, würde ein blosses Anzeigeproblem den Abgleich stoppen.
+ *
  * Bewusst `$fetch` statt `useFetch`: Anmelden und Abmelden passieren in
  * Ereignisbehandlern und sind Aktionen, keine Daten, die eine Ansicht zum
  * Rendern braucht. `useFetch` würde dafür einen Ladezyklus samt Cache-Schlüssel
@@ -20,10 +27,13 @@ import type { UserProfile } from '#shared/types/domain'
  *
  * Das Session-JWT selbst taucht hier nirgends auf. Es steht in einem
  * httpOnly-Cookie und ist für JavaScript unerreichbar; diese Schicht kennt nur
- * das Anzeigeprofil.
+ * das Anzeigeprofil. Dasselbe gilt für das Refresh-Token: Der stille Refresh
+ * läuft komplett in der BFF (server/utils/sessionRefresh.ts), dieser Code
+ * merkt davon nichts.
  */
 export function useAuth() {
   const profile = useState<UserProfile | null>('auth-profile', () => null)
+  const authenticated = useState<boolean>('auth-authenticated', () => false)
   const isLoading = useState<boolean>('auth-loading', () => false)
 
   /**
@@ -39,7 +49,7 @@ export function useAuth() {
     () => ({ googleClientId: '', apiBase: 'https://api.shliste.app' }),
   )
 
-  const isSignedIn = computed<boolean>(() => profile.value !== null)
+  const isSignedIn = computed<boolean>(() => authenticated.value)
 
   /**
    * Fragt beim eigenen Server nach, ob eine Sitzung besteht.
@@ -54,15 +64,16 @@ export function useAuth() {
     isLoading.value = true
     try {
       const session = await $fetch('/api/auth/me')
+      authenticated.value = session.authenticated
       profile.value = session.profile
       clientConfig.value = session.config
     }
     catch (error) {
       // Ein gescheiterter Aufruf ist kein Beweis für "abgemeldet": Der Endpunkt
-      // meldet den abgemeldeten Zustand ausdrücklich mit `profile: null`. Kommt
-      // gar keine Antwort, war das Netz oder der Server das Problem, und das
-      // bereits bekannte Profil bleibt die bessere Auskunft als ein erfundenes
-      // "nicht angemeldet".
+      // meldet den abgemeldeten Zustand ausdrücklich mit `authenticated: false`.
+      // Kommt gar keine Antwort, war das Netz oder der Server das Problem, und
+      // der bereits bekannte Zustand bleibt die bessere Auskunft als ein
+      // erfundenes "nicht angemeldet".
       console.warn('[useAuth] Sitzung konnte nicht geprüft werden:', error)
     }
     finally {
@@ -86,6 +97,7 @@ export function useAuth() {
         body: { idToken },
       })
       profile.value = signedIn
+      authenticated.value = true
       return signedIn
     }
     finally {
@@ -96,11 +108,12 @@ export function useAuth() {
   /**
    * Beendet die Sitzung.
    *
-   * Das lokale Profil wird erst nach der Bestätigung des Servers geleert. Die
+   * Der lokale Zustand wird erst nach der Bestätigung des Servers geleert. Die
    * Wahrheit über den Anmeldezustand steht im httpOnly-Cookie, nicht in diesem
    * Zustand: Würde die Oberfläche schon vor der Antwort auf "abgemeldet"
    * springen und der Aufruf scheitern, sprünge sie beim nächsten
-   * `loadSession()` wieder zurück.
+   * `loadSession()` wieder zurück. Die BFF widerruft dabei auch das
+   * Refresh-Token bei der API (echter Widerruf, nicht nur Cookie-Löschen).
    *
    * Die lokalen Daten bleiben unangetastet. Abmelden heisst "kein Abgleich
    * mehr", nicht "Listen weg".
@@ -110,6 +123,7 @@ export function useAuth() {
     try {
       await $fetch('/api/auth/logout', { method: 'POST' })
       profile.value = null
+      authenticated.value = false
 
       // Der Service-Worker-Cache der Rezeptbilder überlebt das Cookie —
       // auf einem geteilten Gerät sollen die Bilder mit der Sitzung gehen.

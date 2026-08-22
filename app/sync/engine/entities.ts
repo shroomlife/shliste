@@ -13,6 +13,7 @@
  */
 import type {
   Badge,
+  HistoryEntry,
   List,
   ListItem,
   ListMember,
@@ -211,6 +212,51 @@ export function parseChatMessage(value: unknown): RecipeChatMessage | null {
     content: readStringOr(value, 'content', ''),
     createdAt,
     createdBy: readNullableString(value, 'createdBy'),
+  }
+}
+
+/**
+ * Ein Eintrag der Lösch-Historie — append-only wie die Chat-Nachricht.
+ *
+ * Unbekannte Werte in den drei Typfeldern werden verworfen statt geraten,
+ * dieselbe Regel wie bei der Chat-Rolle: Der Domänentyp zählt seine Literale
+ * auf, und ein erfundener vierter Entitätstyp liefe bei der
+ * Wiederherstellung in jedem `switch` ins Leere. Verwerfen ist folgenlos —
+ * die Anzeige filtert ohnehin auf `deleted`, und was der Client nicht
+ * wiederherstellen kann, soll er auch nicht anbieten.
+ *
+ * `snapshotJson` bleibt hier ein roher String: Seine Form gehört dem
+ * toleranten `parseHistorySnapshot` (`app/history/snapshot.ts`), denn beide
+ * Clients schreiben ihre eigene Objektform hinein.
+ */
+export function parseHistoryEntry(value: unknown): HistoryEntry | null {
+  if (!isRecord(value)) return null
+
+  const id = readString(value, 'id')
+  const parentId = readString(value, 'parentId')
+  const entityId = readString(value, 'entityId')
+  const createdAt = readIso(value, 'createdAt')
+  const parentType = readString(value, 'parentType')
+  const actionType = readString(value, 'actionType')
+  const entityType = readString(value, 'entityType')
+
+  if (id === null || id === '' || parentId === null || parentId === '') return null
+  if (entityId === null || entityId === '' || createdAt === null) return null
+  if (parentType !== 'list' && parentType !== 'recipe') return null
+  if (actionType !== 'deleted') return null
+  if (entityType !== 'list_item' && entityType !== 'recipe_ingredient' && entityType !== 'recipe_step') return null
+
+  return {
+    id,
+    parentId,
+    parentType,
+    actionType,
+    entityType,
+    entityId,
+    description: readStringOr(value, 'description', ''),
+    snapshotJson: readStringOr(value, 'snapshotJson', ''),
+    createdBy: readNullableString(value, 'createdBy'),
+    createdAt,
   }
 }
 

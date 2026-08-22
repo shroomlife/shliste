@@ -13,6 +13,7 @@
 import type { DBSchema, IDBPDatabase } from 'idb'
 import type {
   Badge,
+  HistoryEntry,
   IsoUtc,
   List,
   ListItem,
@@ -24,7 +25,13 @@ import type {
 } from '../../shared/types/domain'
 
 export const DB_NAME = 'shliste'
-export const DB_VERSION = 1
+
+/**
+ * Version 2: neuer Store `history_entries` (synchronisierte Lösch-Historie,
+ * Gegenstück zu Androids `history_entries`-Tabelle). Version 1 war der
+ * Erststand mit den acht Stores plus `sync_meta`.
+ */
+export const DB_VERSION = 2
 
 /**
  * 1 = diese Zeile wurde lokal geändert und muss gepusht werden.
@@ -43,13 +50,35 @@ export const CLEAN: DirtyFlag = 0
 /** Domänenzeile plus das lokale Push-Flag. */
 export type Dirty<T> = T & { dirty: DirtyFlag }
 
-export type ListRow = Dirty<List>
+/**
+ * Rein lokale Felder der Listenzeile — sie verlassen dieses Gerät nie.
+ *
+ * `seenAt` ist das Gesehen-Wasserzeichen: wann diese Liste zuletzt geöffnet
+ * war. Daraus zählt die Übersicht die ungesehenen Fremdänderungen — dasselbe
+ * Muster wie `lastSeenAt` in der Android-App (ShlisteDao.getUnseenForeignChanges).
+ *
+ * NIE im Push: Die Nutzlast zählt ihre Felder explizit auf (`toPushList` in
+ * `app/sync/engine/push.ts`), ein lokales Feld kann also nicht hineinrutschen.
+ * NIE vom Pull überschrieben: `putListRow` bewahrt das Wasserzeichen der
+ * bestehenden Zeile (Begründung dort).
+ *
+ * Optional auf Typ-Ebene, denn IndexedDB ist schemalos: Zeilen aus der Zeit
+ * vor diesem Feld tragen es nicht, und ein Versions-Bump wäre dafür falsch —
+ * es gibt keinen Index und nichts zu migrieren. `undefined` bedeutet dasselbe
+ * wie `null`: noch nie gesehen.
+ */
+export interface ListLocalFields {
+  seenAt?: IsoUtc | null
+}
+
+export type ListRow = Dirty<List> & ListLocalFields
 export type ListItemRow = Dirty<ListItem>
 export type RecipeRow = Dirty<Recipe>
 export type RecipeIngredientRow = Dirty<RecipeIngredient>
 export type RecipeStepRow = Dirty<RecipeStep>
 export type RecipeChatMessageRow = Dirty<RecipeChatMessage>
 export type BadgeRow = Dirty<Badge>
+export type HistoryEntryRow = Dirty<HistoryEntry>
 
 /**
  * Mitgliedschaften trägt bewusst kein `dirty`: der Client ändert sie nie
@@ -131,6 +160,15 @@ export interface ShlisteDb extends DBSchema {
     indexes: { 'by-recipeId': string, 'by-dirty': DirtyFlag }
   }
   /**
+   * Die Lösch-Historie. `by-parentId` trägt die Verlaufsansicht und den
+   * Trim je Liste bzw. Rezept, `by-dirty` den Push — wie überall sonst.
+   */
+  history_entries: {
+    key: string
+    value: HistoryEntryRow
+    indexes: { 'by-parentId': string, 'by-dirty': DirtyFlag }
+  }
+  /**
    * Zusammengesetzter Schlüssel: eine Mitgliedschaft ist genau ein Paar aus
    * Liste und Nutzer. Ein eigenes ID-Feld gäbe es dafür weder im Contract
    * noch bräuchte man es.
@@ -151,39 +189,69 @@ export interface ShlisteDb extends DBSchema {
  * Legt Stores und Indizes an. Läuft ausschliesslich in der
  * `upgradeneeded`-Transaktion von `openDB`.
  *
- * Version 1 hat noch keine Migrationen: Es gibt keine ältere IndexedDB im
- * Feld. Die Übernahme der alten localStorage-Daten ist kein Schema-Upgrade,
+ * IDEMPOTENT über `objectStoreNames`: Jeder Store entsteht nur, wenn er
+ * fehlt. So trägt dieselbe Funktion die Neuanlage (alte Version 0) und jedes
+ * Upgrade (etwa 1 → 2), ohne Bestandsdaten anzufassen — ein vorhandener
+ * Store wird nie neu erzeugt und damit nie geleert. Auf einer Version-1-
+ * Datenbank legt der Lauf ausschliesslich `history_entries` an.
+ *
+ * Die Übernahme der alten localStorage-Daten ist kein Schema-Upgrade,
  * sondern ein einmaliger Datenimport (siehe `hasMigrated` in `sync_meta`).
  */
 export function createSchema(db: IDBPDatabase<ShlisteDb>): void {
-  const lists = db.createObjectStore('lists', { keyPath: 'id' })
-  lists.createIndex('by-dirty', 'dirty')
+  if (!db.objectStoreNames.contains('lists')) {
+    const lists = db.createObjectStore('lists', { keyPath: 'id' })
+    lists.createIndex('by-dirty', 'dirty')
+  }
 
-  const listItems = db.createObjectStore('list_items', { keyPath: 'id' })
-  listItems.createIndex('by-listId', 'listId')
-  listItems.createIndex('by-dirty', 'dirty')
+  if (!db.objectStoreNames.contains('list_items')) {
+    const listItems = db.createObjectStore('list_items', { keyPath: 'id' })
+    listItems.createIndex('by-listId', 'listId')
+    listItems.createIndex('by-dirty', 'dirty')
+  }
 
-  const recipes = db.createObjectStore('recipes', { keyPath: 'id' })
-  recipes.createIndex('by-dirty', 'dirty')
+  if (!db.objectStoreNames.contains('recipes')) {
+    const recipes = db.createObjectStore('recipes', { keyPath: 'id' })
+    recipes.createIndex('by-dirty', 'dirty')
+  }
 
-  const ingredients = db.createObjectStore('recipe_ingredients', { keyPath: 'id' })
-  ingredients.createIndex('by-recipeId', 'recipeId')
-  ingredients.createIndex('by-dirty', 'dirty')
+  if (!db.objectStoreNames.contains('recipe_ingredients')) {
+    const ingredients = db.createObjectStore('recipe_ingredients', { keyPath: 'id' })
+    ingredients.createIndex('by-recipeId', 'recipeId')
+    ingredients.createIndex('by-dirty', 'dirty')
+  }
 
-  const steps = db.createObjectStore('recipe_steps', { keyPath: 'id' })
-  steps.createIndex('by-recipeId', 'recipeId')
-  steps.createIndex('by-dirty', 'dirty')
+  if (!db.objectStoreNames.contains('recipe_steps')) {
+    const steps = db.createObjectStore('recipe_steps', { keyPath: 'id' })
+    steps.createIndex('by-recipeId', 'recipeId')
+    steps.createIndex('by-dirty', 'dirty')
+  }
 
-  const chatMessages = db.createObjectStore('recipe_chat_messages', { keyPath: 'id' })
-  chatMessages.createIndex('by-recipeId', 'recipeId')
-  chatMessages.createIndex('by-dirty', 'dirty')
+  if (!db.objectStoreNames.contains('recipe_chat_messages')) {
+    const chatMessages = db.createObjectStore('recipe_chat_messages', { keyPath: 'id' })
+    chatMessages.createIndex('by-recipeId', 'recipeId')
+    chatMessages.createIndex('by-dirty', 'dirty')
+  }
 
-  const badges = db.createObjectStore('badges', { keyPath: 'id' })
-  badges.createIndex('by-recipeId', 'recipeId')
-  badges.createIndex('by-dirty', 'dirty')
+  if (!db.objectStoreNames.contains('badges')) {
+    const badges = db.createObjectStore('badges', { keyPath: 'id' })
+    badges.createIndex('by-recipeId', 'recipeId')
+    badges.createIndex('by-dirty', 'dirty')
+  }
 
-  const members = db.createObjectStore('list_members', { keyPath: ['listId', 'userId'] })
-  members.createIndex('by-listId', 'listId')
+  // Version 2: die synchronisierte Lösch-Historie.
+  if (!db.objectStoreNames.contains('history_entries')) {
+    const history = db.createObjectStore('history_entries', { keyPath: 'id' })
+    history.createIndex('by-parentId', 'parentId')
+    history.createIndex('by-dirty', 'dirty')
+  }
 
-  db.createObjectStore('sync_meta')
+  if (!db.objectStoreNames.contains('list_members')) {
+    const members = db.createObjectStore('list_members', { keyPath: ['listId', 'userId'] })
+    members.createIndex('by-listId', 'listId')
+  }
+
+  if (!db.objectStoreNames.contains('sync_meta')) {
+    db.createObjectStore('sync_meta')
+  }
 }

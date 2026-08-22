@@ -11,11 +11,14 @@
  * Der Gesprächsverlauf (`recipe_chat_messages`) bleibt aussen vor: Er hat
  * seine eigene Schicht (`useRecipeChat`) mit eigenem, append-only Schreibweg.
  */
-import type { RecipeIngredient, RecipeStep } from '../../shared/types/domain'
+import type { IsoUtc, RecipeIngredient, RecipeStep } from '../../shared/types/domain'
 import {
+  appendHistoryEntry,
   getBadgeForRecipe,
+  getIngredientRow,
   getIngredientsForRecipe,
   getRecipe,
+  getStepRow,
   getStepsForRecipe,
   upsertBadge,
   upsertIngredient,
@@ -25,6 +28,7 @@ import {
 } from '../db/repositories'
 import type { RecipeIngredientRow, RecipeRow, RecipeStepRow } from '../db/schema'
 import { nowIso } from '../db/timestamps'
+import { ingredientSnapshotJson, stepSnapshotJson } from '../history/snapshot'
 import { nextSortKey, planMoveTo, type OrderedRow } from '../sync/merge/reorder'
 
 /* ------------------------------------------------------------------ *
@@ -101,7 +105,6 @@ function toStepDraft(row: RecipeStep): Draft<RecipeStep> {
 let badgeAwardChain: Promise<void> = Promise.resolve()
 
 export function useRecipeDetail() {
-  const toast = useToast()
   const recipe = useState<RecipeRow | null>('recipe-detail', () => null)
   const ingredients = useState<RecipeIngredientRow[]>('recipe-detail-ingredients', () => [])
   const steps = useState<RecipeStepRow[]>('recipe-detail-steps', () => [])
@@ -109,6 +112,30 @@ export function useRecipeDetail() {
 
   /** Welches Rezept zuletzt angefordert wurde — siehe `useListDetail`. */
   const requestedRecipeId = useState<string | null>('recipe-detail-id', () => null)
+
+  /**
+   * Die frisch verdiente Auszeichnung — das Signal an die Detailseite, die
+   * Zeremonie zu zeigen (`BadgeEarnedSheet`). Bewusst KEIN Toast: Ein fertig
+   * gekochtes Rezept ist der grösste Moment dieser App und verdient mehr als
+   * eine Randnotiz, die nach vier Sekunden verschwindet.
+   *
+   * Absichtlich nicht readonly herausgegeben: Die Seite setzt es beim
+   * Schliessen des Sheets auf `null` zurück — sonst stünde die Zeremonie beim
+   * nächsten Öffnen des Rezepts wieder da.
+   */
+  const lastAwardedBadge = useState<{ recipeName: string, earnedAt: IsoUtc } | null>(
+    'badge-earned',
+    () => null,
+  )
+
+  /**
+   * Zähler für die kurze Feier OHNE Sheet: Das Rezept trägt schon eine
+   * Auszeichnung und wurde erneut fertig gekocht. Jede Erhöhung startet drei
+   * Sekunden Konfetti (siehe `BadgeEarnedSheet`, `celebrateTick`) — ein
+   * Zähler statt eines booleschen Werts, damit zwei schnelle Feiern nicht in
+   * einer einzigen verschwinden.
+   */
+  const celebrateTick = useState<number>('badge-celebrate-tick', () => 0)
 
   const progress = computed<number>(() => stepProgress(steps.value))
 
@@ -229,24 +256,27 @@ export function useRecipeDetail() {
     if (row === null) return
 
     const existing = await getBadgeForRecipe(row.id)
-    if (existing !== undefined) return
+    if (existing !== undefined) {
+      // Schon ausgezeichnet (auch eine zurückgesetzte zählt — der Server
+      // erzwingt eine pro Rezept und Konto): keine zweite Zeremonie, aber
+      // der Moment bleibt einer — kurze Feier ohne Sheet, wie
+      // `RecipeCelebration` in der Android-App.
+      celebrateTick.value += 1
+      return
+    }
 
+    const earnedAt = nowIso()
     await upsertBadge({
       id: crypto.randomUUID(),
       recipeId: row.id,
       recipeName: row.name,
       recipeImagePath: row.imagePath,
       recipeColor: row.color,
-      earnedAt: nowIso(),
+      earnedAt,
       deletedAt: null,
     })
 
-    toast.add({
-      title: 'Badge verdient!',
-      description: `Du hast „${row.name}" fertig gekocht.`,
-      icon: 'i-lucide-award',
-      color: 'primary',
-    })
+    lastAwardedBadge.value = { recipeName: row.name, earnedAt }
   }
 
   /**
@@ -256,14 +286,75 @@ export function useRecipeDetail() {
    * Löschabsicht, die beim nächsten Push hinausgeht. Würde die Zeile hier
    * verschwinden, wüsste der Server nie davon und brächte sie beim nächsten
    * Pull zurück.
+   *
+   * VOR dem Grabstein kommt die Löschung in den Verlauf — die Zeile existiert
+   * dann noch und der Snapshot trägt ihren letzten Stand. Wortlaut wie
+   * `removeIngredientFromRecipe` in Androids RecipeStore. Das Rückgängig im
+   * Toast (`restoreIngredient`) schreibt KEINEN Eintrag: Es hebt die Löschung
+   * auf, statt eine neue Tat festzuhalten.
    */
   async function removeIngredient(ingredient: RecipeIngredient): Promise<void> {
+    await appendHistoryEntry({
+      id: crypto.randomUUID(),
+      parentId: ingredient.recipeId,
+      parentType: 'recipe',
+      actionType: 'deleted',
+      entityType: 'recipe_ingredient',
+      entityId: ingredient.id,
+      description: `${ingredient.name} gelöscht`,
+      snapshotJson: ingredientSnapshotJson(ingredient),
+      createdBy: null,
+      createdAt: nowIso(),
+    })
     await upsertIngredient({ ...toIngredientDraft(ingredient), deletedAt: nowIso() })
     await reload()
   }
 
+  /** Löscht einen Schritt — Verlauf und Grabstein wie bei der Zutat. */
   async function removeStep(step: RecipeStep): Promise<void> {
+    await appendHistoryEntry({
+      id: crypto.randomUUID(),
+      parentId: step.recipeId,
+      parentType: 'recipe',
+      actionType: 'deleted',
+      entityType: 'recipe_step',
+      entityId: step.id,
+      // Wortgleich mit Androids RecipeStore.removeStep: Schritte haben keinen
+      // Namen, der in eine Zeile passt — die Beschreibung steht im Snapshot.
+      description: 'Schritt gelöscht',
+      snapshotJson: stepSnapshotJson(step),
+      createdBy: null,
+      createdAt: nowIso(),
+    })
     await upsertStep({ ...toStepDraft(step), deletedAt: nowIso() })
+    await reload()
+  }
+
+  /**
+   * Macht das Löschen einer Zutat rückgängig — der Griff hinter dem
+   * "Rückgängig" im Toast, wie `restoreIngredient` im RecipeStore der
+   * Android-App.
+   *
+   * Ein gewöhnliches Feld-Update über den Draft-Weg: `deletedAt` geht zurück
+   * auf `null` und bekommt dabei einen frischen Feld-Zeitstempel. Genau
+   * deshalb setzt sich das Zurückholen auch auf den anderen Geräten durch —
+   * es ist jünger als die Löschung, die es aufhebt.
+   */
+  async function restoreIngredient(ingredient: RecipeIngredient): Promise<void> {
+    // Frische Rohzeile statt Klick-Snapshot — sonst überschriebe der sechs
+    // Sekunden alte Stand jede zwischenzeitliche Änderung mit frischen
+    // Stempeln (Begründung wie in setStepExplanation und restoreItem).
+    const fresh = await getIngredientRow(ingredient.id)
+    const source = fresh ?? ingredient
+    await upsertIngredient({ ...toIngredientDraft(source), deletedAt: null })
+    await reload()
+  }
+
+  /** Macht das Löschen eines Schritts rückgängig — siehe `restoreIngredient`. */
+  async function restoreStep(step: RecipeStep): Promise<void> {
+    const fresh = await getStepRow(step.id)
+    const source = fresh ?? step
+    await upsertStep({ ...toStepDraft(source), deletedAt: null })
     await reload()
   }
 
@@ -437,6 +528,10 @@ export function useRecipeDetail() {
     toggleStep,
     removeIngredient,
     removeStep,
+    restoreIngredient,
+    restoreStep,
+    lastAwardedBadge,
+    celebrateTick: readonly(celebrateTick),
     moveIngredientTo,
     moveStepTo,
     updateIngredient,

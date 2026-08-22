@@ -8,7 +8,7 @@
  * angemeldeten Konto gehört, prüft die API selbst und antwortet sonst 403.
  */
 import { apiFetchRaw } from '../../utils/apiFetch'
-import { readSessionToken } from '../../utils/session'
+import { getFreshSessionToken } from '../../utils/sessionRefresh'
 
 /** Ein UUID-Segment, wie die API es vergibt: kleingeschriebenes Hex. */
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
@@ -29,8 +29,8 @@ export default defineEventHandler(async (event): Promise<Uint8Array> => {
 
   // Ohne Session gar nicht erst signieren — wie beim Sync-Proxy: ein
   // Unangemeldeter soll diesen Server nicht als Signaturquelle benutzen können.
-  const sessionToken = readSessionToken(event)
-  if (sessionToken === undefined) {
+  const sessionToken = await getFreshSessionToken(event)
+  if (sessionToken === null) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized', message: 'Nicht angemeldet.' })
   }
 

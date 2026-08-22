@@ -18,8 +18,8 @@
  * in die Signatur ein (siehe apiSignature.ts).
  */
 import type { ApiMethod } from '../../utils/apiFetch'
-import { apiFetch } from '../../utils/apiFetch'
-import { readSessionToken } from '../../utils/session'
+import { apiFetch, isSessionExpiredError } from '../../utils/apiFetch'
+import { getFreshSessionToken } from '../../utils/sessionRefresh'
 
 /**
  * Feste Paare aus Methode und Pfad (Pfad relativ zu `/sync`).
@@ -71,9 +71,11 @@ export default defineEventHandler(async (event): Promise<unknown> => {
   }
 
   // Ohne Session gar nicht erst signieren. Die API würde ohnehin 401 antworten,
-  // aber ein Unangemeldeter soll diesen Server nicht als Signaturquelle benutzen können.
-  const sessionToken = readSessionToken(event)
-  if (sessionToken === undefined) {
+  // aber ein Unangemeldeter soll diesen Server nicht als Signaturquelle benutzen
+  // können. `getFreshSessionToken` erneuert dabei ein (fast) abgelaufenes JWT
+  // still über das Refresh-Cookie (siehe sessionRefresh.ts).
+  const sessionToken = await getFreshSessionToken(event)
+  if (sessionToken === null) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized', message: 'Nicht angemeldet.' })
   }
 
@@ -82,13 +84,30 @@ export default defineEventHandler(async (event): Promise<unknown> => {
   // wurde, sonst lehnt die API mit 403 ab.
   const rawBody = method === 'POST' ? await readRawBody(event, 'utf8') : undefined
 
-  return await apiFetch(`/sync${path}${queryString(event.path)}`, {
-    method,
-    rawBody,
-    sessionToken,
-    // Besucher-IP für faire Rate-Limits pro Person statt pro BFF (s. apiFetch).
-    clientIp: resolveVisitorIp(event),
-  })
+  const upstreamPath = `/sync${path}${queryString(event.path)}`
+  // Besucher-IP für faire Rate-Limits pro Person statt pro BFF (s. apiFetch).
+  const clientIp = resolveVisitorIp(event)
+
+  try {
+    return await apiFetch(upstreamPath, { method, rawBody, sessionToken, clientIp })
+  }
+  catch (error) {
+    // 401 trotz frischem Token: Die Session wurde serverseitig entwertet
+    // (Widerruf, rotiertes JWT_SECRET) — genau EIN erzwungener Refresh und
+    // genau EIN Wiederholungsversuch. Die Wiederholung ist sicher: Der 401
+    // kommt aus dem Auth-Guard der API, VOR jeder Verarbeitung — auch ein
+    // /sync/push hat also nichts geschrieben. Die Refresh-Disziplin (kein
+    // blindes Retry, Single-Flight) steckt in sessionRefresh.ts.
+    if (!isSessionExpiredError(error)) throw error
+
+    const retryToken = await getFreshSessionToken(event, { force: true })
+    // Nur mit einem NEUEN Token lohnt die Wiederholung: Dasselbe Token würde
+    // denselben 401 ernten, und ohne Token (Refresh endgültig abgelehnt oder
+    // Legacy ohne Refresh-Cookie) ist der 401 die richtige Antwort.
+    if (retryToken === null || retryToken === sessionToken) throw error
+
+    return await apiFetch(upstreamPath, { method, rawBody, sessionToken: retryToken, clientIp })
+  }
 })
 
 /** Der Query-String der eingehenden Anfrage, inklusive '?', sonst ''. */

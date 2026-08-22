@@ -18,6 +18,8 @@ export interface RecipeWithCounts {
   recipe: RecipeRow
   ingredientCount: number
   stepCount: number
+  /** Abgehakte Schritte — die Karte zeigt daraus „2/5 Schritte“ und den Balken. */
+  checkedStepCount: number
 }
 
 /**
@@ -46,7 +48,12 @@ export function useRecipes() {
           getIngredientsForRecipe(recipe.id),
           getStepsForRecipe(recipe.id),
         ])
-        return { recipe, ingredientCount: ingredients.length, stepCount: steps.length }
+        return {
+          recipe,
+          ingredientCount: ingredients.length,
+          stepCount: steps.length,
+          checkedStepCount: steps.filter(step => step.isChecked).length,
+        }
       }))
     }
     finally {

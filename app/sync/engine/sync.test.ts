@@ -41,7 +41,7 @@ function memoryEntityStore<TRow extends { id: string }>(): EntityStore<TRow> {
 }
 
 function emptyDirty(): DirtyRows {
-  return { lists: [], items: [], recipes: [], ingredients: [], steps: [], chatMessages: [], badges: [] }
+  return { lists: [], items: [], recipes: [], ingredients: [], steps: [], chatMessages: [], badges: [], historyEntries: [] }
 }
 
 function dirtyList(id: string): ListRow {
@@ -99,6 +99,8 @@ function fakeSyncStore(options: {
     removed: [],
     readDirty: () => Promise.resolve({ ...emptyDirty(), ...options.dirty }),
     clearDirty: () => Promise.resolve(),
+    putPulledHistoryEntry: () => Promise.resolve(),
+    trimHistoryForParent: () => Promise.resolve(),
     replaceMembers: (_listId: string, _members: readonly ListMember[]) => Promise.resolve(),
     readCursor: () => Promise.resolve(store.cursor),
     writeCursor: (value) => {

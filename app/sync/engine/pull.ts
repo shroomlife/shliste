@@ -25,6 +25,7 @@
 import type {
   Badge,
   FieldTimestamps,
+  HistoryEntry,
   IsoUtc,
   List,
   ListItem,
@@ -41,6 +42,7 @@ import { mergePulledEntity } from '../merge/field-lww'
 import {
   parseBadge,
   parseChatMessage,
+  parseHistoryEntry,
   parseIngredient,
   parseList,
   parseListItem,
@@ -81,6 +83,12 @@ export interface PullResponse {
   lists: PulledList[]
   recipes: PulledRecipe[]
   badges: Badge[]
+  /**
+   * Die Lösch-Historie, flach über alle sichtbaren Listen und eigenen
+   * Rezepte — in geteilten Listen auch die Einträge ANDERER Mitglieder.
+   * Der Server trimmt auf 50 je Parent.
+   */
+  historyEntries: HistoryEntry[]
   pendingInvites: PendingInvite[]
   /**
    * Listen, auf die dieses Konto keinen Zugriff mehr hat: entfernt worden,
@@ -104,6 +112,9 @@ export function parsePullResponse(value: unknown): PullResponse {
     lists: parseAll(readArray(record, 'lists'), parsePulledList),
     recipes: parseAll(readArray(record, 'recipes'), parsePulledRecipe),
     badges: parseAll(readArray(record, 'badges'), parseBadge),
+    // Fehlt das Feld, gibt es keine Historie — so verhielt sich der Server,
+    // bevor es sie gab (dieselbe Rollout-Begründung wie bei revokedListIds).
+    historyEntries: parseAll(readArray(record, 'historyEntries'), parseHistoryEntry),
     pendingInvites: parseAll(readArray(record, 'pendingInvites'), parsePendingInvite),
     // Fehlt das Feld, ist nichts entzogen worden — so verhielt sich der
     // Server, bevor es das Feld gab. Ein älterer Server darf hier nicht in
@@ -473,6 +484,8 @@ export interface PulledRows {
   items?: readonly ListItem[]
   recipes?: readonly PulledRecipe[]
   badges?: readonly Badge[]
+  /** Die Lösch-Historie. Nur der volle Pull liefert sie, ein Delta nie. */
+  historyEntries?: readonly HistoryEntry[]
 }
 
 /**
@@ -518,6 +531,19 @@ export async function applyPulledRows(store: PullStore, rows: PulledRows): Promi
 
   for (const badge of rows.badges ?? []) {
     await applyBadge(store.rows, badge)
+  }
+
+  // Historie: append-only, deshalb kein Merge — eingefügt wird nur, was
+  // lokal fehlt (siehe putPulledHistoryEntry). Danach wird jeder berührte
+  // Parent auf 50 gekappt, der Spiegel des Server-Trims: Ohne ihn wüchse
+  // die lokale Menge über das hinaus, was der Server je wieder liefert.
+  const touchedHistoryParents = new Set<string>()
+  for (const entry of rows.historyEntries ?? []) {
+    await store.putPulledHistoryEntry(entry)
+    touchedHistoryParents.add(entry.parentId)
+  }
+  for (const parentId of touchedHistoryParents) {
+    await store.trimHistoryForParent(parentId)
   }
 }
 

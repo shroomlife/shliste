@@ -16,14 +16,14 @@
 import { createHash, createHmac } from 'node:crypto'
 import type { FetchResponse } from 'ofetch'
 import { buildSignatureMessage } from '../../utils/apiSignature'
-import { readSessionToken } from '../../utils/session'
+import { getFreshSessionToken } from '../../utils/sessionRefresh'
 
 export default defineEventHandler(async (event): Promise<unknown> => {
   // Ohne Session gar nicht erst signieren — die API würde ohnehin 401
   // antworten, aber ein Unangemeldeter soll diesen Server nicht als
   // Signaturquelle benutzen können (Begründung im Sync-Proxy).
-  const sessionToken = readSessionToken(event)
-  if (sessionToken === undefined) {
+  const sessionToken = await getFreshSessionToken(event)
+  if (sessionToken === null) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized', message: 'Nicht angemeldet.' })
   }
 

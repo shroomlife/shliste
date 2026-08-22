@@ -8,6 +8,7 @@
  */
 import { getListsForView, getRecipesForView } from '../../db/repositories'
 import { requestJson, SYNC_ENDPOINTS } from '../../sync/engine/transport'
+import { formatRelativeTime } from '../../utils/relativeTime'
 
 definePageMeta({ layout: 'app' })
 
@@ -98,21 +99,8 @@ function formatDate(iso: string): string {
   return Number.isNaN(parsed.getTime()) ? '' : dateFormat.format(parsed)
 }
 
-/** Dieselbe Sprache wie Androids SyncScreen: gerade eben, vor N Min., … */
-function formatRelativeTime(iso: string | null): string {
-  if (iso === null) return 'nie'
-  const parsed = new Date(iso)
-  if (Number.isNaN(parsed.getTime())) return 'nie'
-
-  const minutes = Math.floor((Date.now() - parsed.getTime()) / 60_000)
-  if (minutes < 1) return 'gerade eben'
-  if (minutes < 60) return `vor ${minutes} Min.`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `vor ${hours} Std.`
-  const days = Math.floor(hours / 24)
-  if (days < 7) return `vor ${days} Tagen`
-  return dateFormat.format(parsed)
-}
+// Die relative Zeit ("gerade eben, vor N Min., …") kommt aus
+// `utils/relativeTime.ts` — geteilt mit dem Verlauf (HistorySheet).
 
 const syncHeadline = computed(() => {
   switch (display.value) {
@@ -148,8 +136,30 @@ async function syncNow(): Promise<void> {
   await loadServerStatus()
 }
 
+/**
+ * Googles "merk dir dieses Konto" zurücknehmen, ohne die Bibliothek zu laden:
+ * War sie in dieser Sitzung nie im Einsatz, gibt es auch nichts zu vergessen.
+ * Lag vorher im Avatar-Menü des AuthButton; seit der Profil-Knopf im Layout
+ * das Menü ersetzt, ist diese Seite der einzige Abmeldeweg.
+ */
+function disableGoogleAutoSelect(): void {
+  const google: unknown = Reflect.get(globalThis, 'google')
+  if (typeof google !== 'object' || google === null || !('accounts' in google)) return
+  const accounts = google.accounts
+  if (typeof accounts !== 'object' || accounts === null || !('id' in accounts)) return
+  const id = accounts.id
+  if (typeof id !== 'object' || id === null || !('disableAutoSelect' in id)) return
+  const disable = id.disableAutoSelect
+  if (typeof disable === 'function') disable.call(id)
+}
+
 async function handleSignOut(): Promise<void> {
   await signOut()
+
+  // Ohne diesen Aufruf meldet Google beim nächsten Öffnen sofort dasselbe
+  // Konto wieder an — die Abmeldung wäre für den Nutzer wirkungslos.
+  disableGoogleAutoSelect()
+
   await navigateTo('/')
 }
 
@@ -181,17 +191,17 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
           >
           <div
             v-else
-            class="flex size-14 shrink-0 items-center justify-center rounded-full text-xl font-bold"
+            class="flex size-14 shrink-0 items-center justify-center rounded-full text-[1.375rem] font-bold"
             style="background-color: var(--md-primary-container); color: var(--md-on-primary-container)"
           >
             {{ profile ? initialOf(profile.displayName ?? profile.email) : '?' }}
           </div>
           <div class="min-w-0 grow">
-            <p class="truncate text-lg font-bold">
+            <p class="truncate text-[1.25rem] font-bold">
               {{ profile?.displayName ?? (isSignedIn ? profile?.email : 'Nicht angemeldet') }}
             </p>
             <p
-              class="truncate text-sm"
+              class="truncate text-[1rem]"
               style="color: var(--md-on-surface-variant)"
             >
               {{ isSignedIn ? profile?.email : 'Melde dich an, um zu synchronisieren' }}
@@ -211,7 +221,7 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
 
       <!-- Badges -->
       <section class="px-5 pt-6">
-        <h2 class="flex items-center gap-2 text-xl font-bold">
+        <h2 class="flex items-center gap-2 text-[1.375rem] font-bold">
           <UIcon
             name="i-lucide-award"
             class="size-5"
@@ -220,14 +230,14 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
           Meine Badges
           <span
             v-if="badges.length > 0"
-            class="text-base font-normal"
+            class="text-[1rem] font-normal"
             style="color: var(--md-on-surface-variant)"
           >({{ badges.length }})</span>
         </h2>
 
         <p
           v-if="badges.length === 0"
-          class="pt-3 text-sm"
+          class="pt-3 text-[1rem]"
           style="color: var(--md-on-surface-variant)"
         >
           Noch keine Badges — koche ein Rezept fertig!
@@ -259,17 +269,17 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
                 >
                 <div
                   v-else
-                  class="flex h-20 w-full items-center justify-center text-2xl font-bold text-white"
+                  class="flex h-20 w-full items-center justify-center text-[1.5rem] font-bold text-white"
                   :style="{ backgroundColor: badge.recipeColor }"
                 >
                   {{ initialOf(badge.recipeName) }}
                 </div>
                 <div class="px-2 py-1.5 text-center">
-                  <p class="truncate text-sm font-medium">
+                  <p class="truncate text-[1rem] font-bold">
                     {{ badge.recipeName }}
                   </p>
                   <p
-                    class="text-xs"
+                    class="text-[0.9375rem]"
                     style="color: var(--md-on-surface-variant)"
                   >
                     {{ formatDate(badge.earnedAt) }}
@@ -283,7 +293,7 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
 
       <!-- Einladungen -->
       <section class="px-5 pt-8">
-        <h2 class="flex items-center gap-2 text-xl font-bold">
+        <h2 class="flex items-center gap-2 text-[1.375rem] font-bold">
           <UIcon
             name="i-lucide-users"
             class="size-5"
@@ -299,7 +309,7 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
           />
           <p
             v-else
-            class="text-sm"
+            class="text-[1rem]"
             style="color: var(--md-on-surface-variant)"
           >
             Keine offenen Einladungen. Sobald dich jemand zu einer Liste einlädt, findest du sie hier.
@@ -309,7 +319,7 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
 
       <!-- Synchronisation -->
       <section class="px-5 pt-8">
-        <h2 class="flex items-center gap-2 text-xl font-bold">
+        <h2 class="flex items-center gap-2 text-[1.375rem] font-bold">
           <UIcon
             name="i-lucide-refresh-cw"
             class="size-5"
@@ -339,14 +349,14 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
               {{ syncHeadline.label }}
             </p>
             <p
-              class="text-sm"
+              class="text-[1rem]"
               style="color: var(--md-on-surface-variant)"
             >
               Letzter Sync: {{ formatRelativeTime(snapshot.lastSyncedAt) }}
             </p>
             <p
               v-if="snapshot.notSyncedCount > 0"
-              class="text-sm"
+              class="text-[1rem]"
               style="color: var(--md-sync-warning)"
             >
               {{ snapshot.notSyncedCount }} Einträge konnten nicht übernommen werden. Sie bleiben auf diesem Gerät erhalten und werden erneut versucht.
@@ -355,7 +365,7 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
 
           <!-- Daten: lokal / Server -->
           <h3
-            class="pb-1 text-sm font-bold tracking-wide uppercase"
+            class="pb-1 text-[1rem] font-bold tracking-wide uppercase"
             style="color: var(--md-on-surface-variant)"
           >
             Daten
@@ -364,19 +374,19 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
             class="divide-y"
             style="border-color: var(--md-outline-variant)"
           >
-            <div class="flex items-center justify-between py-1.5 text-sm">
+            <div class="flex items-center justify-between py-1.5 text-[1rem]">
               <dt>Listen</dt>
               <dd class="tabular-nums">
                 {{ localCounts?.lists ?? '–' }} / {{ serverStatus?.lists ?? '–' }}
               </dd>
             </div>
-            <div class="flex items-center justify-between py-1.5 text-sm">
+            <div class="flex items-center justify-between py-1.5 text-[1rem]">
               <dt>Rezepte</dt>
               <dd class="tabular-nums">
                 {{ localCounts?.recipes ?? '–' }} / {{ serverStatus?.recipes ?? '–' }}
               </dd>
             </div>
-            <div class="flex items-center justify-between py-1.5 text-sm">
+            <div class="flex items-center justify-between py-1.5 text-[1rem]">
               <dt>Badges</dt>
               <dd class="tabular-nums">
                 {{ badges.length }} / {{ serverStatus?.badges ?? '–' }}
@@ -384,7 +394,7 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
             </div>
             <div
               v-if="snapshot.pendingCount > 0"
-              class="flex items-center justify-between py-1.5 text-sm"
+              class="flex items-center justify-between py-1.5 text-[1rem]"
             >
               <dt>Wartet auf Übertragung</dt>
               <dd
@@ -398,7 +408,7 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
 
           <!-- Verbindung -->
           <h3
-            class="pt-4 pb-1 text-sm font-bold tracking-wide uppercase"
+            class="pt-4 pb-1 text-[1rem] font-bold tracking-wide uppercase"
             style="color: var(--md-on-surface-variant)"
           >
             Verbindung
@@ -407,7 +417,7 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
             class="divide-y"
             style="border-color: var(--md-outline-variant)"
           >
-            <div class="flex items-center justify-between py-1.5 text-sm">
+            <div class="flex items-center justify-between py-1.5 text-[1rem]">
               <dt class="flex items-center gap-2">
                 <span
                   class="size-2 rounded-full"
@@ -419,7 +429,7 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
                 {{ realtimeRow.label }}
               </dd>
             </div>
-            <div class="flex items-center justify-between py-1.5 text-sm">
+            <div class="flex items-center justify-between py-1.5 text-[1rem]">
               <dt class="flex items-center gap-2">
                 <span
                   class="size-2 rounded-full"

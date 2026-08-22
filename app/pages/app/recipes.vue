@@ -16,11 +16,19 @@ useHead({ title: 'Rezepte ~ shliste' })
 
 const route = useRoute()
 const { entries, reload, createRecipe } = useRecipes()
+const { badges, reload: reloadBadges } = useBadges()
 const { dataVersion, scheduleSync } = useSync()
 const { isSignedIn } = useAuth()
 const toast = useToast()
 
 const isDetailOpen = computed(() => typeof route.params.id === 'string')
+
+/**
+ * Rezepte mit Auszeichnung — dieselbe Ableitung wie `badgeRecipeIds` in
+ * Androids recipes/Overview.kt: ein Blick in die gespeicherten Badges,
+ * keine zweite Wahrheit am Rezept.
+ */
+const badgeRecipeIds = computed(() => new Set(badges.value.map(badge => badge.recipeId)))
 
 const isDialogOpen = ref(false)
 const newRecipeName = ref('')
@@ -114,11 +122,13 @@ function onAiRecipeCreated(result: GeneratedRecipe): void {
 
 onMounted(() => {
   void reload()
+  void reloadBadges()
 })
 
 // Wie bei den Listen: Der Abgleich meldet, die Ansicht liest neu.
 watch(dataVersion, () => {
   void reload()
+  void reloadBadges()
 })
 
 function openDialog(): void {
@@ -197,7 +207,7 @@ async function submitDialog(): Promise<void> {
 
       <div
         v-if="entries.length"
-        class="flex flex-col gap-2 px-4 pb-4"
+        class="flex flex-col gap-4 px-3 pb-4"
       >
         <RecipeCard
           v-for="entry in entries"
@@ -205,6 +215,8 @@ async function submitDialog(): Promise<void> {
           :recipe="entry.recipe"
           :ingredient-count="entry.ingredientCount"
           :step-count="entry.stepCount"
+          :checked-step-count="entry.checkedStepCount"
+          :has-badge="badgeRecipeIds.has(entry.recipe.id)"
           :active="entry.recipe.id === route.params.id"
         />
       </div>
@@ -227,11 +239,19 @@ async function submitDialog(): Promise<void> {
         >
           Lege ein Rezept an und hol seine Zutaten später mit einem Tippen auf die Einkaufsliste.
         </p>
+        <UButton
+          icon="i-lucide-plus"
+          size="xl"
+          class="mt-1 min-h-12 rounded-full font-bold"
+          @click="openDialog"
+        >
+          Erstes Rezept anlegen
+        </UButton>
       </div>
 
       <!-- Mobil: der schwebende Knopf öffnet die Auswahl aus Neu + AI-Wegen -->
       <AppFab
-        label="Neues Rezept"
+        label="Rezept"
         @click="openChooser"
       />
     </section>

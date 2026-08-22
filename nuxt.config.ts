@@ -25,7 +25,10 @@ export default defineNuxtConfig({
       meta: [
         // viewport-fit=cover: Ohne dieses Attribut liefert env(safe-area-inset-*)
         // auf iOS immer 0 — die fixe Bottom-Nav braucht den echten Wert.
-        { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
+        // interactive-widget=resizes-content: Die Bildschirmtastatur verkleinert
+        // den Inhalt, statt ihn zu ueberdecken — Eingabeleiste und Listenende
+        // bleiben damit ueber der Tastatur sichtbar (Chrome 108+, sonst wirkungslos).
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content' },
         { name: 'description', content: 'Erstelle und verwalte muehelos deine Einkaufslisten mit shliste. Pack Produkte ein, hake sie ab und behalte immer den Ueberblick beim Shoppen!' },
         // Entspricht --color-secondary aus dem Android-Farbschema (SecondaryColor)
         { name: 'theme-color', content: '#FDECF5' },

@@ -1,5 +1,5 @@
 import type { ListRow } from '../db/schema'
-import { getItemsForList, getListsForView, getMembersForList, upsertList } from '../db/repositories'
+import { getItemsForList, getListsForView, getMembersForList, isUnseenForeignChange, upsertList } from '../db/repositories'
 import { randomListColor } from '../utils/color'
 
 /**
@@ -23,7 +23,28 @@ export interface ListWithCounts {
    * `otherAcceptedMemberCount` in der Android-App.
    */
   isShared: boolean
+  /**
+   * Wie viele Einträge jemand anderes geändert hat, seit die Liste zuletzt
+   * offen war — gezählt gegen das lokale Gesehen-Wasserzeichen `seenAt`
+   * (siehe `isUnseenForeignChange` in `db/repositories.ts`). Beim Öffnen der
+   * Liste fällt die Zahl auf null.
+   */
+  unseenCount: number
+  /**
+   * Hat gerade eben ein anderes Gerät diese Liste angefasst? Kommt aus
+   * `useRecentlyChanged` und erlischt nach zwei Sekunden von selbst — der
+   * kurze Aufleucht-Moment der Übersicht.
+   */
+  isRecentlyChanged: boolean
 }
+
+/**
+ * Was `reload()` je Liste ablegt. `isRecentlyChanged` fehlt bewusst: Das
+ * Aufleuchten erlischt nach zwei Sekunden von selbst, ein beim Laden
+ * eingefrorener Wert würde also stehen bleiben, bis zufällig jemand neu lädt.
+ * Es wird deshalb erst beim Lesen angereichert (siehe `entries` unten).
+ */
+type StoredListEntry = Omit<ListWithCounts, 'isRecentlyChanged'>
 
 /**
  * Listenübersicht aus der lokalen Datenbank.
@@ -38,9 +59,20 @@ export interface ListWithCounts {
  */
 export function useLists() {
   const { profile } = useAuth()
+  const { isRecent } = useRecentlyChanged()
 
-  const entries = useState<ListWithCounts[]>('lists', () => [])
+  const stored = useState<StoredListEntry[]>('lists', () => [])
   const isLoading = useState<boolean>('lists-loading', () => false)
+
+  /**
+   * Die Einträge der Übersicht. Ein `computed` statt des rohen Zustands, damit
+   * `isRecentlyChanged` lebt: Es hängt am Zeitgeber von `useRecentlyChanged`
+   * und muss von selbst wieder erlöschen — ohne dass die Übersicht dafür die
+   * Datenbank neu liest.
+   */
+  const entries = computed<ListWithCounts[]>(() =>
+    stored.value.map(entry => ({ ...entry, isRecentlyChanged: isRecent.value(entry.list.id) })),
+  )
 
   async function reload(): Promise<void> {
     // IndexedDB gibt es nur im Browser. Auf dem Server bleibt die Liste leer,
@@ -58,7 +90,7 @@ export function useLists() {
       // Die Zähler parallel holen: bei wenigen Listen ist das eine Runde
       // statt einer Kette, und IndexedDB verarbeitet die Lesevorgänge ohnehin
       // nebenläufig.
-      entries.value = await Promise.all(
+      stored.value = await Promise.all(
         lists.map(async (list) => {
           const [items, members] = await Promise.all([
             getItemsForList(list.id),
@@ -71,6 +103,13 @@ export function useLists() {
             isShared: members.some(
               member => member.status === 'accepted' && member.userId !== currentUserId,
             ),
+            // Über die ohnehin gelesenen Items gezählt statt über einen
+            // zweiten Datenbankgang (`countUnseenForeignChanges` liest
+            // dieselben Zeilen noch einmal — für Aufrufer, die die Items
+            // nicht schon in der Hand haben).
+            unseenCount: items.filter(item =>
+              isUnseenForeignChange(item, currentUserId, list.seenAt ?? null),
+            ).length,
           }
         }),
       )
@@ -103,7 +142,7 @@ export function useLists() {
   }
 
   return {
-    entries: readonly(entries),
+    entries,
     isLoading: readonly(isLoading),
     reload,
     createList,

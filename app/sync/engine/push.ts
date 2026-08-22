@@ -18,6 +18,7 @@
 import type {
   Badge,
   FieldTimestamps,
+  HistoryEntry,
   IsoUtc,
   List,
   ListItem,
@@ -144,6 +145,23 @@ export interface PushBadge {
   fieldTimestamps: FieldTimestamps | null
 }
 
+/**
+ * `createdBy` fehlt mit Absicht: Der Server stempelt den Verursacher beim
+ * Push selbst (Contract) — ein mitgeschickter Wert würde ohnehin
+ * überschrieben, ihn gar nicht erst zu senden ist die ehrlichere Aussage.
+ */
+export interface PushHistoryEntry {
+  id: string
+  parentId: string
+  parentType: string
+  actionType: string
+  entityType: string
+  entityId: string
+  description: string
+  snapshotJson: string
+  createdAt: IsoUtc
+}
+
 export interface PushPayload {
   lists: PushList[]
   listItems: PushListItem[]
@@ -152,6 +170,7 @@ export interface PushPayload {
   recipeSteps: PushRecipeStep[]
   recipeChatMessages: PushRecipeChatMessage[]
   badges: PushBadge[]
+  historyEntries: PushHistoryEntry[]
 }
 
 /**
@@ -167,6 +186,7 @@ export const PUSH_BLOCK_LIMITS = {
   recipeSteps: 5000,
   recipeChatMessages: 5000,
   badges: 500,
+  historyEntries: 500,
 } as const
 
 export function emptyPayload(): PushPayload {
@@ -178,6 +198,7 @@ export function emptyPayload(): PushPayload {
     recipeSteps: [],
     recipeChatMessages: [],
     badges: [],
+    historyEntries: [],
   }
 }
 
@@ -189,6 +210,7 @@ export function countRows(payload: PushPayload): number {
     + payload.recipeSteps.length
     + payload.recipeChatMessages.length
     + payload.badges.length
+    + payload.historyEntries.length
 }
 
 export function isEmptyPayload(payload: PushPayload): boolean {
@@ -226,6 +248,7 @@ export function buildPushPayload(dirty: DirtyRows): PushPayload {
     recipeSteps: dirty.steps.map(row => toPushStep(sanitize('recipeStep', row))),
     recipeChatMessages: dirty.chatMessages.map(row => toPushChatMessage(sanitize('recipeChatMessage', row))),
     badges: dirty.badges.map(row => toPushBadge(sanitize('badge', row))),
+    historyEntries: dirty.historyEntries.map(row => toPushHistoryEntry(sanitize('historyEntry', row))),
   }
 }
 
@@ -379,6 +402,25 @@ function toPushBadge(row: Badge): PushBadge {
   }
 }
 
+/**
+ * `createdAt` geht UNVERÄNDERT hinaus: Er stammt aus `nowIso()` bzw. dem
+ * normalisierten Pull und entspricht damit bereits dem ISO-Muster der API.
+ * `createdBy` bleibt zu Hause — der Server stempelt den Verursacher selbst.
+ */
+function toPushHistoryEntry(row: HistoryEntry): PushHistoryEntry {
+  return {
+    id: row.id,
+    parentId: row.parentId,
+    parentType: row.parentType,
+    actionType: row.actionType,
+    entityType: row.entityType,
+    entityId: row.entityId,
+    description: row.description,
+    snapshotJson: row.snapshotJson,
+    createdAt: row.createdAt,
+  }
+}
+
 /* ------------------------------------------------------------------ *
  * Blockbildung
  * ------------------------------------------------------------------ */
@@ -392,6 +434,7 @@ export function fitsInOneBlock(payload: PushPayload): boolean {
     && payload.recipeSteps.length <= PUSH_BLOCK_LIMITS.recipeSteps
     && payload.recipeChatMessages.length <= PUSH_BLOCK_LIMITS.recipeChatMessages
     && payload.badges.length <= PUSH_BLOCK_LIMITS.badges
+    && payload.historyEntries.length <= PUSH_BLOCK_LIMITS.historyEntries
 }
 
 /** Meldung über eine Auffälligkeit beim Schneiden. */
@@ -442,6 +485,10 @@ export function splitIntoBlocks(payload: PushPayload, onNotice: NoticeSink = () 
   const stepsByRecipe = groupBy(payload.recipeSteps, row => row.recipeId)
   const messagesByRecipe = groupBy(payload.recipeChatMessages, row => row.recipeId)
   const badgesByRecipe = groupBy(payload.badges, row => row.recipeId)
+  // Historie hängt über `parentId` an einer Liste ODER einem Rezept. Die Ids
+  // sind UUIDs und damit über beide Arten eindeutig — eine gemeinsame Gruppe
+  // genügt, `parentType` muss hier nicht unterscheiden.
+  const historyByParent = groupBy(payload.historyEntries, row => row.parentId)
 
   const listIds = new Set(payload.lists.map(row => row.id))
   const recipeIds = new Set(payload.recipes.map(row => row.id))
@@ -450,15 +497,17 @@ export function splitIntoBlocks(payload: PushPayload, onNotice: NoticeSink = () 
 
   for (const list of payload.lists) {
     const items = itemsByList.get(list.id) ?? []
+    const history = historyByParent.get(list.id) ?? []
     if (items.length > PUSH_BLOCK_LIMITS.listItems) {
       onNotice(
         `Liste ${list.id} hat ${items.length} Items (Blockgrenze ${PUSH_BLOCK_LIMITS.listItems}) `
         + '— die Items laufen in Folgeblöcke',
       )
     }
-    packer.closeIfGroupDoesNotFit({ lists: 1, listItems: items.length })
+    packer.closeIfGroupDoesNotFit({ lists: 1, listItems: items.length, historyEntries: history.length })
     packer.addLists([list])
     packer.addListItems(items)
+    packer.addHistoryEntries(history)
   }
   packer.addListItems(payload.listItems.filter(item => !listIds.has(item.listId)))
 
@@ -467,6 +516,7 @@ export function splitIntoBlocks(payload: PushPayload, onNotice: NoticeSink = () 
     const steps = stepsByRecipe.get(recipe.id) ?? []
     const messages = messagesByRecipe.get(recipe.id) ?? []
     const badges = badgesByRecipe.get(recipe.id) ?? []
+    const history = historyByParent.get(recipe.id) ?? []
 
     if (ingredients.length > PUSH_BLOCK_LIMITS.recipeIngredients
       || steps.length > PUSH_BLOCK_LIMITS.recipeSteps
@@ -481,18 +531,23 @@ export function splitIntoBlocks(payload: PushPayload, onNotice: NoticeSink = () 
       recipeSteps: steps.length,
       recipeChatMessages: messages.length,
       badges: badges.length,
+      historyEntries: history.length,
     })
     packer.addRecipes([recipe])
     packer.addIngredients(ingredients)
     packer.addSteps(steps)
     packer.addMessages(messages)
     packer.addBadges(badges)
+    packer.addHistoryEntries(history)
   }
 
   packer.addIngredients(payload.recipeIngredients.filter(row => !recipeIds.has(row.recipeId)))
   packer.addSteps(payload.recipeSteps.filter(row => !recipeIds.has(row.recipeId)))
   packer.addMessages(payload.recipeChatMessages.filter(row => !recipeIds.has(row.recipeId)))
   packer.addBadges(payload.badges.filter(row => !recipeIds.has(row.recipeId)))
+  packer.addHistoryEntries(payload.historyEntries.filter(
+    row => !listIds.has(row.parentId) && !recipeIds.has(row.parentId),
+  ))
 
   return packer.result()
 }
@@ -571,6 +626,9 @@ function createPacker() {
     addBadges: (values: readonly PushBadge[]): void =>
       fill(values, PUSH_BLOCK_LIMITS.badges, block => block.badges),
 
+    addHistoryEntries: (values: readonly PushHistoryEntry[]): void =>
+      fill(values, PUSH_BLOCK_LIMITS.historyEntries, block => block.historyEntries),
+
     /**
      * Schliesst den aktuellen Block, wenn die ganze Gruppe (Elternteil plus
      * Kinder) nicht mehr hineinpasst. Passt sie auch in einen leeren Block
@@ -585,6 +643,7 @@ function createPacker() {
         && bucket.recipeSteps.length + (sizes.recipeSteps ?? 0) <= PUSH_BLOCK_LIMITS.recipeSteps
         && bucket.recipeChatMessages.length + (sizes.recipeChatMessages ?? 0) <= PUSH_BLOCK_LIMITS.recipeChatMessages
         && bucket.badges.length + (sizes.badges ?? 0) <= PUSH_BLOCK_LIMITS.badges
+        && bucket.historyEntries.length + (sizes.historyEntries ?? 0) <= PUSH_BLOCK_LIMITS.historyEntries
 
       if (!fits) close()
     },
@@ -609,6 +668,7 @@ export interface SkippedIds {
   recipeSteps: string[]
   recipeChatMessages: string[]
   badges: string[]
+  historyEntries: string[]
 }
 
 export function emptySkipped(): SkippedIds {
@@ -620,6 +680,7 @@ export function emptySkipped(): SkippedIds {
     recipeSteps: [],
     recipeChatMessages: [],
     badges: [],
+    historyEntries: [],
   }
 }
 
@@ -702,6 +763,8 @@ function parseSkippedIds(value: unknown): SkippedIds {
     recipeSteps: ids('recipeSteps'),
     recipeChatMessages: ids('recipeChatMessages'),
     badges: ids('badges'),
+    // Fehlt das Feld (älterer Server), gilt "nichts verworfen" — wie überall.
+    historyEntries: ids('historyEntries'),
   }
 }
 
@@ -844,6 +907,7 @@ function addSkipped(target: SkippedIds, addition: SkippedIds): void {
   target.recipeSteps.push(...addition.recipeSteps)
   target.recipeChatMessages.push(...addition.recipeChatMessages)
   target.badges.push(...addition.badges)
+  target.historyEntries.push(...addition.historyEntries)
 }
 
 /**
@@ -866,6 +930,11 @@ async function clearPushedFlags(
   await store.clearDirty('recipe_steps', keptIds(dirty.steps, skipped.recipeSteps), pushSnapshot)
   await store.clearDirty('recipe_chat_messages', keptIds(dirty.chatMessages, skipped.recipeChatMessages), pushSnapshot)
   await store.clearDirty('badges', keptIds(dirty.badges, skipped.badges), pushSnapshot)
+  // Eine bereits bekannte eigene Id überspringt der Server STILL (append-only
+  // Re-Push) — sie steht dann nicht in skippedIds, und genau deshalb darf ihr
+  // Dirty-Flag hier fallen. Nur echte Verweigerungen (kein Zugriff, fremde
+  // Zeile) bleiben schmutzig.
+  await store.clearDirty('history_entries', keptIds(dirty.historyEntries, skipped.historyEntries), pushSnapshot)
 }
 
 export function keptIds(rows: readonly { id: string }[], skipped: readonly string[]): string[] {

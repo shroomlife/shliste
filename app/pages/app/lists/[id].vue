@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { ListItem } from '#shared/types/domain'
-import { getMembersForList, upsertItem, upsertList } from '~/db/repositories'
-import type { ListMemberRow } from '~/db/schema'
+import { getMembersForList, markListSeen, readItemRow, upsertItem, upsertList } from '~/db/repositories'
+import type { HistoryEntryRow, ListMemberRow } from '~/db/schema'
 import type { AiEditApplyPayload } from '~/ai/diff'
 import { joinSuggestionCache } from '~/ai/suggestions'
+import { parseHistorySnapshot } from '~/history/snapshot'
 
 /**
  * Detailansicht einer Liste — der Bildschirm, auf dem in dieser App die meiste
@@ -27,6 +28,7 @@ const { reload: reloadOverview } = useLists()
 const { dataVersion, scheduleSync } = useSync()
 const { profile, isSignedIn } = useAuth()
 const { isRecent } = useRecentlyChanged()
+const haptics = useHaptics()
 const toast = useToast()
 
 /**
@@ -126,6 +128,17 @@ const menuItems = computed(() => [[
       isRenameOpen.value = true
     },
   },
+  // Nicht bei geheimen Listen: Der Verlauf nennt Namen gelöschter Einträge
+  // und würde damit genau den Inhalt zeigen, den die Sperre schützt.
+  ...(isLocked.value
+    ? []
+    : [{
+        label: 'Verlauf',
+        icon: 'i-lucide-history',
+        onSelect: () => {
+          isHistoryOpen.value = true
+        },
+      }]),
   {
     label: deleteLabel.value,
     icon: 'i-lucide-trash-2',
@@ -172,6 +185,7 @@ const {
   reload: reloadDetail,
   toggleItem: setItemChecked,
   addItem: createItem,
+  updateItem,
   removeItem,
   restoreItem,
   moveItemTo,
@@ -180,6 +194,28 @@ const {
 } = useListDetail()
 
 const newItemName = ref('')
+
+/**
+ * Menge für den nächsten Eintrag — die Kachel neben dem Eingabefeld.
+ * Nach dem Anlegen fällt sie auf 1 zurück, wie in Androids ListBottomBar.
+ */
+const newItemQuantity = ref(QUANTITY_MIN)
+const isQuantityPickerOpen = ref(false)
+
+// Als computed statt Konstanten-Vergleich im Template: Auto-Importe stehen
+// dem Template-Typecheck (vue-tsc) nicht zur Verfügung.
+const canDecreaseNewQuantity = computed(() => newItemQuantity.value > QUANTITY_MIN)
+const canIncreaseNewQuantity = computed(() => newItemQuantity.value < QUANTITY_MAX)
+
+function setNewItemQuantity(value: number): void {
+  newItemQuantity.value = clampQuantity(value)
+}
+
+/** Ziffern-Tap: Wert setzen und das Popover schliessen — ein Griff, fertig. */
+function pickNewItemQuantity(value: number): void {
+  setNewItemQuantity(value)
+  isQuantityPickerOpen.value = false
+}
 
 const progress = computed(() => {
   const total = items.value.length
@@ -228,20 +264,231 @@ async function loadList(): Promise<void> {
   members.value = await getMembersForList(listId.value)
 }
 
+/**
+ * Gesehen-Wasserzeichen. Beim Betreten UND beim Verlassen gesetzt — wie in
+ * der Android-App (Detail.kt):
+ *
+ * Beim Betreten, damit der Hinweis auf der Übersicht sofort verschwindet und
+ * nicht erst beim nächsten Abgleich. Beim Verlassen, damit alles, was WÄHREND
+ * des Lesens hereingekommen ist, nicht hinterher wieder als ungesehen gilt —
+ * man hatte die Liste ja offen vor sich.
+ */
+async function markSeen(id: string): Promise<void> {
+  await markListSeen(id)
+  // Die Übersicht zählt gegen das Wasserzeichen. Ohne Neuladen stünde ihr
+  // Hinweis noch da, obwohl die Liste längst offen ist.
+  await reloadOverview()
+}
+
+/**
+ * Welche Liste diese Ansicht zuletzt offen hatte. Nicht `listId.value` beim
+ * Verlassen lesen: Beim Unmount ist die Route schon gewechselt und der
+ * Parameter zeigt ins Leere — markiert würde dann die falsche (oder keine).
+ */
+let visitedListId: string | null = null
+
 // watch mit immediate statt onMounted: so lädt die Ansicht auch neu, wenn auf
 // dem Desktop im Index eine andere Liste gewählt wird, ohne dass die
 // Komponente neu erzeugt wird.
-watch(listId, () => {
+watch(listId, (currentId, previousId) => {
+  // Der Wechsel im Desktop-Nebeneinander ist ein Verlassen der alten Liste.
+  if (previousId !== undefined && previousId !== currentId) {
+    run(markSeen(previousId))
+  }
+  visitedListId = currentId
+
   run(loadList())
+  run(markSeen(currentId))
 }, { immediate: true })
+
+onBeforeUnmount(() => {
+  if (visitedListId !== null) run(markSeen(visitedListId))
+})
 
 // Hat der Abgleich etwas geschrieben, können es Einträge dieser Liste sein.
 watch(dataVersion, () => {
   run(loadList())
 })
 
+/* ------------------------------------------------------------------ *
+ * "N neue Einträge unten" — Fremdergänzungen ohne Auto-Scroll.
+ *
+ * Vorbild Detail.kt der Android-App: Ergänzt jemand anderes Einträge,
+ * während man weiter oben in der Liste steht, springt die Ansicht NICHT.
+ * Stattdessen zählt ein tippbarer Hinweis am unteren Rand. Nur der eigene
+ * Neuzugang rollt sanft ins Bild — den hat man schliesslich selbst getippt.
+ * ------------------------------------------------------------------ */
+
+const scrollContainer = useTemplateRef<HTMLElement>('scrollContainer')
+const openEndSentinel = useTemplateRef<HTMLElement>('openEndSentinel')
+
+const pendingRemoteAdditions = ref(0)
+/**
+ * "Unten" heisst: das ENDE DER OFFENEN GRUPPE ist im Bild — denn genau dort
+ * landet ein fremd ergänzter (unabgehakter) Eintrag. Das absolute Seitenende
+ * läge hinter Erledigt-Block und AI-Griffen und damit weit am Landeplatz
+ * vorbei; wer dort steht, sähe den Neuzugang gerade NICHT.
+ */
+const isAtBottom = ref(true)
+
+const remoteAdditionsLabel = computed(() =>
+  pendingRemoteAdditions.value === 1
+    ? '1 neuer Eintrag unten'
+    : `${pendingRemoteAdditions.value} neue Einträge unten`,
+)
+
+/** Ids des letzten verarbeiteten Stands — `null` heisst "noch kein Stand". */
+let knownItemIds: Set<string> | null = null
+
+/** Ein Undo setzt den Eintrag an seine alte Stelle zurück — kein Neuzugang. */
+let suppressNextAdditionCheck = false
+
+/**
+ * Fremd hinzugefügt oder selbst?
+ *
+ * `modifiedBy` ist das belastbarere Signal: lokal angelegte Einträge tragen
+ * entweder noch gar keinen Wert (optimistisches Anlegen) oder die eigene
+ * User-UUID. `isRecent` kommt zusätzlich dazu, deckt aber nur den SSE-Pfad ab
+ * und kann einen Wimpernschlag hinter dem Datenstand liegen — dieselbe
+ * Kombination wie `isRemoteAddition` in Detail.kt.
+ */
+function isRemoteAddition(item: ListItem): boolean {
+  const ownUserId = profile.value?.userId ?? null
+  const byOther = item.modifiedBy !== null && ownUserId !== null && item.modifiedBy !== ownUserId
+  return byOther || isRecent.value(item.id)
+}
+
+watch(items, (currentItems) => {
+  // Der Leer-Zwischenstand beim Listenwechsel ist kein Stand: `load()` leert
+  // erst und füllt dann — ohne diese Sperre gälte anschliessend die komplette
+  // Liste als Neuzugang.
+  if (list.value === null || list.value.id !== listId.value) {
+    knownItemIds = null
+    pendingRemoteAdditions.value = 0
+    return
+  }
+
+  const currentIds = new Set(currentItems.map(item => item.id))
+  const previousIds = knownItemIds
+  knownItemIds = currentIds
+
+  // Erster vollständiger Stand dieser Liste: nur merken.
+  if (previousIds === null) return
+
+  if (suppressNextAdditionCheck) {
+    suppressNextAdditionCheck = false
+    return
+  }
+
+  const added = currentItems.filter(item => !previousIds.has(item.id))
+  if (added.length === 0) return
+
+  const remoteCount = added.filter(item => isRemoteAddition(item)).length
+  if (remoteCount === 0) return
+
+  // Wer unten steht, sieht den Zuwachs ohnehin — kein Hinweis nötig.
+  if (!isAtBottom.value) pendingRemoteAdditions.value += remoteCount
+})
+
+/**
+ * Meldet, ob das Sentinel am Ende der offenen Gruppe sichtbar ist. `root` ist
+ * der Scroll-Container selbst: Die Frage lautet "sieht der Nutzer den
+ * Landeplatz in DIESEM Container", nicht "ist er irgendwo im Viewport".
+ */
+let bottomObserver: IntersectionObserver | null = null
+
+watch([scrollContainer, openEndSentinel], ([container, sentinel]) => {
+  bottomObserver?.disconnect()
+  bottomObserver = null
+
+  if (container === null || sentinel === null) return
+
+  bottomObserver = new IntersectionObserver(([entry]) => {
+    const atBottom = entry?.isIntersecting ?? false
+    isAtBottom.value = atBottom
+    // Unten angekommen heisst: gesehen. Der Hinweis verschwindet von selbst.
+    if (atBottom) pendingRemoteAdditions.value = 0
+  }, { root: container })
+
+  bottomObserver.observe(sentinel)
+})
+
+onBeforeUnmount(() => {
+  bottomObserver?.disconnect()
+  bottomObserver = null
+})
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+/**
+ * Der Griff hinter dem Hinweis: zum Landeplatz springen und den Zähler leeren.
+ *
+ * Ziel ist die LETZTE OFFENE Zeile — nicht `scrollHeight`: Das absolute Ende
+ * liegt hinter Erledigt-Block und AI-Griffen, der Sprung dorthin schösse am
+ * fremden Neuzugang vorbei.
+ */
+function jumpToListEnd(): void {
+  pendingRemoteAdditions.value = 0
+
+  const lastOpenRow = openList.value?.lastElementChild
+  if (lastOpenRow instanceof HTMLElement) {
+    lastOpenRow.scrollIntoView({
+      block: 'end',
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+    })
+    return
+  }
+
+  const container = scrollContainer.value
+  if (container === null) return
+  container.scrollTo({
+    top: container.scrollHeight,
+    behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+  })
+}
+
+/** Rollt die Zeile eines eigenen Neuzugangs ins Bild, sobald sie im DOM ist. */
+async function scrollToItem(itemId: string): Promise<void> {
+  await nextTick()
+  const rowElement = scrollContainer.value?.querySelector(`[data-item-id="${itemId}"]`)
+  rowElement?.scrollIntoView({
+    block: 'nearest',
+    behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+  })
+}
+
 function toggleItem(item: ListItem): void {
+  // Haptik SYNCHRON im Click-Handler, vor jedem await — ein Summen, das der
+  // Handbewegung hinterherläuft, fühlt sich kaputter an als gar keines.
+  if (item.checked) haptics.toggleOff()
+  else haptics.confirm()
+
   mutate(setItemChecked(item))
+}
+
+/* ------------------------------------------------------------------ *
+ * Eintrag bearbeiten — Stift oder Long-Press auf der Zeile öffnen das
+ * Blatt, gespeichert wird über `updateItem` im Composable.
+ * ------------------------------------------------------------------ */
+
+const isEditItemOpen = ref(false)
+
+/** Der Eintrag, den das Bearbeiten-Blatt gerade zeigt. */
+const editingItem = ref<ListItem | null>(null)
+
+function onEditItem(item: ListItem): void {
+  editingItem.value = item
+  isEditItemOpen.value = true
+}
+
+function onEditItemSave(changes: { name: string, quantity: number }): void {
+  const target = editingItem.value
+  if (target === null) return
+  // Das Blatt liefert seinen ganzen Stand; was davon wirklich anders ist,
+  // entscheidet `updateItem` am frisch nachgeschlagenen Eintrag.
+  mutate(updateItem(target, changes))
 }
 
 /**
@@ -267,21 +514,88 @@ function onRemoveItem(item: ListItem): void {
       color: 'neutral',
       variant: 'outline',
       onClick: () => {
+        // Das Undo setzt den Eintrag an seine alte Stelle zurück — dorthin zu
+        // springen oder ihn als Neuzugang zu zählen wäre falsch.
+        suppressNextAdditionCheck = true
         mutate(restoreItem(item))
       },
     }],
   })
 }
 
+/* ------------------------------------------------------------------ *
+ * Verlauf — Gelöschtes ansehen und wiederherstellen, wie Androids
+ * HistorySheet in Detail.kt.
+ * ------------------------------------------------------------------ */
+
+const isHistoryOpen = ref(false)
+
+function onHistoryRestore(entry: HistoryEntryRow): void {
+  // Zu wie in Android: Nach dem Griff zum Wiederherstellen zeigt die Liste
+  // selbst das Ergebnis — das Blatt hat seinen Dienst getan.
+  isHistoryOpen.value = false
+  mutate(restoreFromHistory(entry))
+}
+
+/**
+ * Stellt einen Eintrag aus dem Verlauf wieder her.
+ *
+ * ZWEI WEGE, EIN VORRANG: Existiert die Original-Zeile noch (rausgeworfen
+ * per `removed` oder mit Grabstein), wird SIE reaktiviert — mit ihrer Id,
+ * ihrer Position und ihrer Historie, derselbe Weg wie das Rückgängig im
+ * Toast. Erst wenn sie wirklich weg ist, entsteht aus dem Snapshot eine neue
+ * Zeile mit NEUER Id am Listenende. Der Snapshot kann dabei von Android
+ * stammen (`uuid`/`order`) — deshalb läuft er durch `parseHistorySnapshot`.
+ */
+async function restoreFromHistory(entry: HistoryEntryRow): Promise<void> {
+  if (entry.entityType !== 'list_item') return
+
+  const existing = await readItemRow(entry.entityId)
+  if (existing !== undefined && existing.listId === listId.value) {
+    // Die Rückkehr an die alte Stelle ist kein Neuzugang — nicht zählen.
+    suppressNextAdditionCheck = true
+    await upsertItem({ ...toItemDraft(existing), removed: false, deletedAt: null })
+    await reloadDetail()
+    toast.add({ title: `${existing.name} wiederhergestellt`, icon: 'i-lucide-undo-2' })
+    return
+  }
+
+  const snapshot = parseHistorySnapshot(entry.entityType, entry.snapshotJson)
+  if (snapshot === null || snapshot.entityType !== 'list_item') {
+    toast.add({
+      title: 'Wiederherstellen nicht möglich',
+      description: 'Der gespeicherte Eintrag lässt sich nicht mehr lesen.',
+      icon: 'i-lucide-triangle-alert',
+      color: 'error',
+    })
+    return
+  }
+
+  const row = await createItem(snapshot.name, snapshot.quantity)
+  if (row !== null) {
+    toast.add({ title: `${row.name} wiederhergestellt`, icon: 'i-lucide-undo-2' })
+  }
+}
+
 function addItem(): void {
   const name = newItemName.value.trim()
   if (name.length === 0) return
 
+  const quantity = newItemQuantity.value
+
   // Sofort leeren statt erst nach dem Schreiben: Der nächste Artikel soll ohne
   // Wartezeit tippbar sein, und ein zweites Enter darf nicht denselben Eintrag
-  // ein zweites Mal anlegen.
+  // ein zweites Mal anlegen. Die Menge fällt dabei auf 1 zurück — sie galt
+  // für DIESEN Eintrag, nicht für alle folgenden (ListBottomBar.kt).
   newItemName.value = ''
-  mutate(createItem(name))
+  newItemQuantity.value = QUANTITY_MIN
+  mutate(createItem(name, quantity).then(async (row) => {
+    // Nur der EIGENE Neuzugang rollt ins Bild — fremde bekommen den
+    // Hinweis-Chip. Wer oben abhakt, während jemand anderes unten ergänzt,
+    // soll die Ansicht nicht verlieren (Detail.kt macht es genauso).
+    if (row !== null) await scrollToItem(row.id)
+    return row
+  }))
 }
 
 /* ------------------------------------------------------------------ *
@@ -434,9 +748,13 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
         </h1>
 
         <!-- Teilen setzt ein Konto voraus: Eine Einladung braucht jemanden,
-             der sie ausspricht, und einen Server, der sie zustellt. -->
+             der sie ausspricht, und einen Server, der sie zustellt.
+
+             Geheime Listen bleiben auf den eigenen Geräten — der Server lehnt
+             ihr Teilen ohnehin ab (400 secret_list). Wie in Android wird der
+             Einstieg deshalb gar nicht erst angeboten. -->
         <UButton
-          v-if="isSignedIn"
+          v-if="isSignedIn && !isLocked"
           icon="i-lucide-users"
           color="neutral"
           variant="ghost"
@@ -498,6 +816,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
     <!-- Einträge -->
     <div
       v-else
+      ref="scrollContainer"
       class="flex min-h-0 grow flex-col gap-0.5 overflow-y-auto px-3 py-2 lg:px-5"
     >
       <template v-if="items.length">
@@ -511,14 +830,25 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
           <ListItemRow
             v-for="item in openItems"
             :key="item.id"
+            :data-item-id="item.id"
             :item="item"
             :sortable="isSortMode"
             :just-changed="isRecent(item.id)"
             :changed-by="modifierName(item.modifiedBy)"
             @toggle="toggleItem(item)"
             @remove="onRemoveItem(item)"
+            @edit="onEditItem(item)"
           />
         </div>
+
+        <!-- Sentinel am Ende der OFFENEN Gruppe: sichtbar heisst "der Nutzer
+             sieht den Landeplatz fremder Neuzugänge". Der IntersectionObserver
+             darauf steuert Hinweis-Chip und Auto-Reset. -->
+        <div
+          ref="openEndSentinel"
+          class="h-px shrink-0"
+          aria-hidden="true"
+        />
 
         <div
           v-if="doneItems.length"
@@ -541,12 +871,14 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
           <ListItemRow
             v-for="item in doneItems"
             :key="item.id"
+            :data-item-id="item.id"
             :item="item"
             :sortable="isSortMode"
             :just-changed="isRecent(item.id)"
             :changed-by="modifierName(item.modifiedBy)"
             @toggle="toggleItem(item)"
             @remove="onRemoveItem(item)"
+            @edit="onEditItem(item)"
           />
         </div>
       </template>
@@ -648,6 +980,30 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
           </p>
         </template>
       </div>
+
+      <!-- "N neue Einträge unten": klebt am unteren Rand des Scroll-Bereichs,
+           also direkt über der Eingabeleiste. Die Live-Region ist der immer
+           vorhandene Rahmen — nur so wird der eingefügte Hinweis auch
+           angesagt, statt stumm zu erscheinen. -->
+      <div
+        role="status"
+        class="pointer-events-none sticky bottom-0 z-10 flex justify-center"
+      >
+        <button
+          v-if="pendingRemoteAdditions > 0"
+          type="button"
+          class="pointer-events-auto mb-2 flex items-center gap-1.5 rounded-full px-4 py-2 text-[0.9375rem] font-bold shadow-md"
+          style="background: var(--md-primary-container); color: var(--md-on-primary-container)"
+          :aria-label="`${remoteAdditionsLabel}. Zum Ende der Liste springen.`"
+          @click="jumpToListEnd"
+        >
+          {{ remoteAdditionsLabel }}
+          <UIcon
+            name="i-lucide-chevron-down"
+            class="size-4"
+          />
+        </button>
+      </div>
     </div>
 
     <AppSheet
@@ -659,6 +1015,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
         v-model="renameValue"
         size="xl"
         autofocus
+        enterkeyhint="done"
         :ui="{ root: 'w-full' }"
         @keyup.enter="submitRename"
       />
@@ -713,9 +1070,26 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
     </AppSheet>
 
     <ListMembersSheet
+      v-if="!isLocked"
       v-model:open="isMembersOpen"
       :list-id="listId"
       :is-owner="isOwner"
+    />
+
+    <ListItemEditSheet
+      v-model:open="isEditItemOpen"
+      :item="editingItem"
+      @save="onEditItemSave"
+    />
+
+    <!-- Fremde Einträge geteilter Listen zeigen den Mitgliedsnamen — dieselbe
+         Auflösung wie "bearbeitet von" an den Zeilen. -->
+    <HistorySheet
+      v-if="!isLocked"
+      v-model:open="isHistoryOpen"
+      :parent-id="listId"
+      :resolve-creator-name="modifierName"
+      @restore="onHistoryRestore"
     />
 
     <AiEditListSheet
@@ -769,9 +1143,86 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
         icon="i-lucide-plus"
         size="xl"
         class="grow"
+        enterkeyhint="done"
         :ui="{ root: 'w-full' }"
         @keyup.enter="addItem"
       />
+
+      <!-- Mengenkachel für den nächsten Eintrag — dieselbe Optik wie die
+           Kachel in der Zeile. Der Tap öffnet die Mengensteuerung als
+           kleines Popover über der Leiste; ein Ziffern-Tap wählt und
+           schliesst in einem Griff. -->
+      <UPopover
+        v-model:open="isQuantityPickerOpen"
+        :content="{ side: 'top', align: 'end', sideOffset: 8 }"
+      >
+        <button
+          type="button"
+          class="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-sm px-2 text-[1.25rem] font-bold"
+          style="background: var(--md-secondary); color: var(--md-on-secondary)"
+          :aria-label="`Menge für den neuen Eintrag: ${newItemQuantity}. Ändern`"
+        >
+          {{ newItemQuantity }}&times;
+        </button>
+
+        <template #content>
+          <div class="flex w-64 flex-col gap-2.5 p-3">
+            <div class="flex items-center justify-between gap-3">
+              <button
+                type="button"
+                class="flex size-11 shrink-0 items-center justify-center rounded-sm transition-colors disabled:opacity-40"
+                style="background: var(--md-surface-high)"
+                :disabled="!canDecreaseNewQuantity"
+                aria-label="Menge verringern"
+                @click="setNewItemQuantity(newItemQuantity - 1)"
+              >
+                <UIcon
+                  name="i-lucide-minus"
+                  class="size-5"
+                />
+              </button>
+
+              <span
+                class="min-w-16 text-center text-[1.375rem] font-bold"
+                style="color: var(--md-primary)"
+                aria-live="polite"
+              >{{ newItemQuantity }}&times;</span>
+
+              <button
+                type="button"
+                class="flex size-11 shrink-0 items-center justify-center rounded-sm transition-colors disabled:opacity-40"
+                style="background: var(--md-surface-high)"
+                :disabled="!canIncreaseNewQuantity"
+                aria-label="Menge erhöhen"
+                @click="setNewItemQuantity(newItemQuantity + 1)"
+              >
+                <UIcon
+                  name="i-lucide-plus"
+                  class="size-5"
+                />
+              </button>
+            </div>
+
+            <div class="flex gap-1">
+              <button
+                v-for="digit in 9"
+                :key="digit"
+                type="button"
+                class="flex h-10 min-w-0 grow items-center justify-center rounded-sm text-[1.0625rem] font-bold transition-colors"
+                :style="digit === newItemQuantity
+                  ? 'background: var(--md-secondary); color: var(--md-on-secondary)'
+                  : 'background: var(--md-surface-low); color: var(--md-on-surface-variant)'"
+                :aria-label="`Menge ${digit}`"
+                :aria-pressed="digit === newItemQuantity"
+                @click="pickNewItemQuantity(digit)"
+              >
+                {{ digit }}
+              </button>
+            </div>
+          </div>
+        </template>
+      </UPopover>
+
       <!-- Direkter Griff zu den AI-Vorschlägen; braucht Einträge und ein Konto -->
       <UButton
         icon="i-lucide-sparkles"
