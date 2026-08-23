@@ -17,6 +17,19 @@
  * Verdopplung bis 60 Sekunden, dazu 25 Prozent Streuung nach oben wie unten,
  * damit nach einem Serverneustart nicht alle Geräte im Gleichtakt anklopfen.
  *
+ * WARUM ES EINEN TOTMANN-SCHALTER BRAUCHT: Eine Verbindung stirbt nicht immer
+ * mit einem Fehler. Nach einem Wechsel von WLAN auf Mobilfunk, nach dem
+ * Aufwachen aus dem Ruhezustand oder nach einem NAT-Timeout bleibt der Socket
+ * halb offen: `EventSource` meldet weiter „geöffnet“, empfängt aber nie wieder
+ * etwas und löst auch kein `error` aus. Ohne eigene Frist wäre die Seite in
+ * diesem Zustand taub, ohne es zu merken.
+ *
+ * Der Server sendet dafür alle 15 Sekunden einen Herzschlag — an DIESE Route
+ * ausdrücklich als benanntes Ereignis. Als Kommentarzeile wäre er unsichtbar:
+ * Die Spezifikation von Server-Sent Events schreibt vor, dass Kommentare die
+ * Verbindung offen halten, aber NICHT an JavaScript durchgereicht werden.
+ * Gegenstück: `api.shliste.app/src/lib/sse-frames.ts`.
+ *
  * Diese Datei kennt weder Vue noch Nuxt. Sie ist absichtlich nur Zustand plus
  * Rückrufe, damit sie ohne Netz und ohne Komponente geprüft werden kann.
  */
@@ -42,6 +55,31 @@ export const BACKOFF_JITTER_RATIO = 0.25
  * Aufrufer auf Abfrage im Minutentakt umstellen sollte.
  */
 export const DEGRADED_AFTER_FAILURES = 3
+
+/**
+ * Takt der Herzschläge des Servers.
+ *
+ * Gegenstück: `HEARTBEAT_INTERVAL_MS` in `api.shliste.app/src/lib/sse-frames.ts`.
+ * Der Wert steht hier nur zur Erklärung der Frist darunter; verändert wird er
+ * auf der Serverseite.
+ */
+export const HEARTBEAT_INTERVAL_MS = 15_000
+
+/**
+ * Nach so langer Stille gilt die Verbindung als tot und wird neu aufgebaut.
+ *
+ * Vier ausgefallene Herzschläge, und die Zahl ist mit Bedacht nicht drei: Der
+ * Server SCHWEIGT SELBST bis zu drei Takte lang absichtlich. Staut sich der
+ * Puffer einer Verbindung, schiebt er den Herzschlag nicht nach und schliesst
+ * sie erst nach dem dritten solchen Takt (`SSE_MAX_STALLED_HEARTBEATS` in
+ * `event-bus.ts`). Mit derselben Frist liefen beide Seiten in ein
+ * Kopf-an-Kopf-Rennen, und wer zuerst zuschlägt, entschiede der Zufall.
+ *
+ * Nach oben ist die Grenze das Gegenteil: Je länger die Frist, desto länger
+ * bleibt die Seite stumm, obwohl auf einem anderen Gerät längst etwas
+ * passiert ist.
+ */
+export const LIVENESS_TIMEOUT_MS = HEARTBEAT_INTERVAL_MS * 4
 
 export type RealtimeStatus = 'idle' | 'connecting' | 'open' | 'reconnecting'
 
@@ -163,6 +201,7 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
 
   let source: EventSource | null = null
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+  let livenessTimer: ReturnType<typeof setTimeout> | null = null
   let backoffMs = INITIAL_BACKOFF_MS
   let consecutiveFailures = 0
   let status: RealtimeStatus = 'idle'
@@ -192,6 +231,24 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
    */
   let hasBeenOpen = false
 
+  /**
+   * Hat die AKTUELLE Verbindung schon einen Rahmen geliefert?
+   *
+   * EIN VERBINDUNGSAUFBAU IST KEIN BEWEIS. `onopen` feuert, sobald die
+   * Kopfzeilen da sind — ein puffernder Proxy oder ein Captive Portal kann sie
+   * durchreichen und den Rumpf danach zurückhalten. Würden Wartezeit und
+   * Fehlerzähler schon dort zurückgesetzt, entstünde eine Schleife, die sich
+   * nie steigert: aufbauen, eine Minute schweigen, Frist, sofort wieder
+   * aufbauen — und bei jedem Durchgang ein vollständiger Abgleich.
+   *
+   * Der erste Rahmen taugt hier als Beweis, weil der Browser Kommentarzeilen
+   * gar nicht sieht: Was hier ankommt, ist ein Herzschlag oder ein echtes
+   * Ereignis, also etwas, das der Server NACH dem Aufbau geschickt hat.
+   * (Android braucht dafür eine Zeitschranke, weil es den Rohstrom liest und
+   * die Begrüssungszeile mitzählen würde — SyncEventSource.kt.)
+   */
+  let proven = false
+
   function setStatus(next: RealtimeStatus): void {
     if (status === next) return
     status = next
@@ -204,13 +261,60 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
     reconnectTimer = null
   }
 
+  function clearLivenessTimer(): void {
+    if (livenessTimer === null) return
+    clearTimeout(livenessTimer)
+    livenessTimer = null
+  }
+
+  /**
+   * „Es kam gerade etwas an.“ Setzt die Frist des Totmann-Schalters zurück.
+   *
+   * Jeder Rahmen zählt, Herzschlag wie echtes Ereignis: Beweiskräftig ist
+   * nicht der Inhalt, sondern dass überhaupt noch Bytes ankommen.
+   */
+  function noteAlive(): void {
+    clearLivenessTimer()
+    if (!wanted || source === null) return
+    livenessTimer = setTimeout(handleStale, LIVENESS_TIMEOUT_MS)
+  }
+
+  /**
+   * Die Frist ist abgelaufen: Die Leitung ist verstummt.
+   *
+   * Behandelt wie jeder andere Ausfall, einschliesslich Fehlerzähler. Eine
+   * Verbindung, die keine Herzschläge mehr liefert, ist nicht weniger kaputt
+   * als eine, die mit einem Fehler abbricht — sie sagt es nur nicht.
+   */
+  function handleStale(): void {
+    livenessTimer = null
+    handleFailure()
+  }
+
+  /**
+   * Ein Rahmen ist eingetroffen, Herzschlag oder echtes Ereignis.
+   *
+   * Er beweist zweierlei: Die Leitung lebt (Frist neu), und der Strom fliesst
+   * wirklich — erst damit dürfen Wartezeit und Fehlerzähler zurück.
+   */
+  function handleFrame(): void {
+    if (!proven) {
+      proven = true
+      backoffMs = INITIAL_BACKOFF_MS
+      consecutiveFailures = 0
+    }
+    noteAlive()
+  }
+
   function closeSource(): void {
+    clearLivenessTimer()
     if (source === null) return
     // Erst die Rückrufe lösen, dann schliessen: ein bereits eingereihtes
     // Ereignis würde sonst noch zugestellt und den Zustand weiterdrehen.
     source.onopen = null
     source.onmessage = null
     source.onerror = null
+    source.removeEventListener('heartbeat', handleFrame)
     source.close()
     source = null
   }
@@ -229,8 +333,11 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
   }
 
   function handleMessage(event: MessageEvent<string>): void {
-    // Kommentarzeilen (`: connected`, `: heartbeat`) reicht der Browser gar
-    // nicht durch. Hier landen ausschliesslich echte Ereignisse.
+    handleFrame()
+
+    // Kommentarzeilen (`: connected`) reicht der Browser gar nicht durch, und
+    // der Herzschlag hat einen eigenen Namen. Hier landen ausschliesslich
+    // echte Ereignisse.
     const id = event.lastEventId
     if (id.length > 0) {
       if (!isNewerEventId(id, lastEventId)) return
@@ -241,9 +348,12 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
   }
 
   function handleOpen(): void {
-    backoffMs = INITIAL_BACKOFF_MS
-    consecutiveFailures = 0
     setStatus('open')
+    // Wartezeit und Fehlerzähler bleiben BEWUSST stehen, bis der erste Rahmen
+    // da ist — siehe `proven`.
+    proven = false
+    // Ab hier läuft die Frist: Der erste Herzschlag kommt nach 15 Sekunden.
+    noteAlive()
 
     if (hasBeenOpen) {
       // Nach einer Unterbrechung liefert der Server ab dem Cursor nach, aber
@@ -316,6 +426,11 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
     source = next
     next.onopen = handleOpen
     next.onmessage = handleMessage
+    // Der Herzschlag trägt keine Nutzdaten, er ist nur das Lebenszeichen — und
+    // er braucht einen eigenen Zuhörer, weil er `onmessage` ausdrücklich NICHT
+    // erreicht: Dort gälte er als unbekanntes Ereignis und löste alle 15
+    // Sekunden einen vollständigen Abgleich aus.
+    next.addEventListener('heartbeat', handleFrame)
     next.onerror = () => {
       // Ab hier würde `EventSource` von selbst mit derselben, inzwischen
       // wertlosen Adresse weiterprobieren. Genau das unterbindet das
