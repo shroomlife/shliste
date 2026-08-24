@@ -139,7 +139,7 @@ function reportFailure(title: string, error: unknown): void {
           class="text-center text-[0.9375rem]"
           style="color: var(--md-on-surface-variant)"
         >
-          Ohne Konto bleibt die App vollständig nutzbar — deine Listen liegen dann nur auf diesem Gerät.
+          Ohne Konto bleibt die App vollständig nutzbar. Deine Listen liegen dann nur auf diesem Gerät.
         </p>
       </div>
     </AppSheet>

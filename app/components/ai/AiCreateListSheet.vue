@@ -42,17 +42,17 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 const SHEET_TEXTS: Record<AiCreateMode, { title: string, description: string, phrases: readonly string[] }> = {
   voice: {
     title: 'Liste per Sprache',
-    description: 'Sag, was auf die Liste soll — die AI schreibt mit.',
+    description: 'Sag, was auf die Liste soll. Die AI schreibt mit.',
     phrases: VOICE_TO_LIST_PHRASES,
   },
   photo: {
     title: 'Liste per Foto',
-    description: 'Fotografiere einen Einkaufszettel — die AI liest ihn aus.',
+    description: 'Fotografiere einen Einkaufszettel. Die AI liest ihn aus.',
     phrases: IMAGE_TO_LIST_PHRASES,
   },
   url: {
     title: 'Liste per Link',
-    description: 'Füge einen Link ein — die AI holt die Liste heraus.',
+    description: 'Füge einen Link ein. Die AI holt die Liste heraus.',
     phrases: URL_TO_LIST_PHRASES,
   },
 }
@@ -129,7 +129,7 @@ function onFileSelected(event: Event): void {
     return
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    errorMessage.value = 'Das Bild ist zu gross — es darf höchstens 10 MB haben.'
+    errorMessage.value = 'Das Bild ist zu gross. Höchstens 10 MB sind möglich.'
     return
   }
 

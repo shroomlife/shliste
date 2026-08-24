@@ -15,8 +15,8 @@ const { isSignedIn } = useAuth()
 
 const message = computed(() =>
   isSignedIn.value
-    ? 'Offline — Änderungen werden später synchronisiert'
-    : 'Offline — deine Listen funktionieren weiter',
+    ? 'Offline. Änderungen gehen raus, sobald du wieder Netz hast'
+    : 'Offline. Deine Listen funktionieren weiter',
 )
 </script>
 

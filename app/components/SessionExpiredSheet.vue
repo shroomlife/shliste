@@ -101,7 +101,7 @@ watch(isSignedIn, (signedIn) => {
         class="text-center text-[0.9375rem]"
         style="color: var(--md-on-surface-variant)"
       >
-        Du kannst auch später weitermachen — bis dahin arbeitest du lokal auf diesem Gerät.
+        Du kannst auch später weitermachen. Bis dahin arbeitest du lokal auf diesem Gerät.
       </p>
     </div>
   </AppSheet>

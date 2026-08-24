@@ -240,7 +240,7 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
           class="pt-3 text-[1rem]"
           style="color: var(--md-on-surface-variant)"
         >
-          Noch keine Badges — koche ein Rezept fertig!
+          Noch keine Badges. Koch ein Rezept zu Ende!
         </p>
 
         <ul
