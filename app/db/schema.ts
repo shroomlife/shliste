@@ -113,6 +113,17 @@ export interface SyncMetaMap {
   lastSyncedAt: IsoUtc
   lastSignedInUserId: string
   lastEventId: string
+  /**
+   * Serverprüfsumme, gegen die zuletzt ein voller Abgleich lief.
+   *
+   * MUSS die Sitzung überleben: Eine Sperre im Arbeitsspeicher gäbe nach jedem
+   * Neuladen der Seite einen weiteren vollen Abruf frei — auf unverändertem
+   * Serverstand, mit unverändertem Ergebnis. Genau dieser Fehler ist auf
+   * Android aufgetreten.
+   */
+  lastSelfHealHash: string
+  /** Zeitpunkt des letzten Versuchs, in Millisekunden seit Epoch. */
+  lastSelfHealAt: number
 }
 
 export type SyncMetaKey = keyof SyncMetaMap

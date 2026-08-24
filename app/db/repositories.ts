@@ -774,6 +774,34 @@ export async function getDirtyHistoryEntries(): Promise<HistoryEntryRow[]> {
  * Summe einen in sich stimmigen Stand zeigt und nicht Zeilen doppelt oder
  * gar nicht erfasst, die währenddessen geschrieben werden.
  */
+/**
+ * Nur die Speicher, die auch in die Prüfsumme eingehen.
+ *
+ * Verlauf und Rezept-Chat stehen bewusst NICHT darin: Sie werden nicht gehasht,
+ * eine offene Zeile dort erklärt also keine Abweichung und darf die Beurteilung
+ * des Bestands nicht blockieren.
+ */
+const CONTENT_STORES = [
+  'lists',
+  'list_items',
+  'recipes',
+  'recipe_ingredients',
+  'recipe_steps',
+  'badges',
+] as const satisfies readonly DirtyStoreName[]
+
+/** Noch nicht hochgeladene Zeilen in genau den gehashten Bereichen. */
+export async function countDirtyContent(): Promise<number> {
+  const db = await getDb()
+  const tx = db.transaction(CONTENT_STORES, 'readonly')
+  const counts = await Promise.all(
+    CONTENT_STORES.map(name => tx.objectStore(name).index('by-dirty').count(DIRTY)),
+  )
+  await tx.done
+
+  return counts.reduce((sum, count) => sum + count, 0)
+}
+
 export async function countDirty(): Promise<number> {
   const db = await getDb()
   const tx = db.transaction(DIRTY_STORES, 'readonly')
@@ -956,6 +984,10 @@ function isBoolean(value: unknown): value is boolean {
   return typeof value === 'boolean'
 }
 
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value)
+}
+
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0
 }
@@ -1029,7 +1061,16 @@ export async function getLastSyncedAt(): Promise<IsoUtc | null> {
   return readMeta('lastSyncedAt', isIsoUtc)
 }
 
-export async function setLastSyncedAt(value: IsoUtc): Promise<void> {
+/**
+ * `null` setzt den Cursor zurück: Der nächste Abruf holt dann ALLES.
+ *
+ * Das ist die ehrliche Ausdrucksweise für „dem inkrementellen Stand ist nicht
+ * mehr zu trauen". Gefahrlos, weil ein voller Abruf in dieser App nichts
+ * verwirft, sondern zusammenführt — Zeilen mit offenen Änderungen bleiben
+ * unangetastet. Scheitert der Lauf, bleibt der Cursor leer und der nächste
+ * Versuch holt erneut alles; auch das ist folgenlos.
+ */
+export async function setLastSyncedAt(value: IsoUtc | null): Promise<void> {
   await writeMeta('lastSyncedAt', value)
 }
 
@@ -1049,6 +1090,27 @@ export async function getLastEventId(): Promise<string | null> {
 
 export async function setLastEventId(value: string | null): Promise<void> {
   await writeMeta('lastEventId', value)
+}
+
+/** Serverprüfsumme und Zeitpunkt des letzten vollen Abgleichs. */
+export async function getSelfHealMarker(): Promise<{ hash: string | null, at: number }> {
+  const [hash, at] = await Promise.all([
+    readMeta('lastSelfHealHash', isNonEmptyString),
+    readMeta('lastSelfHealAt', isFiniteNumber),
+  ])
+  return { hash, at: at ?? 0 }
+}
+
+/**
+ * Hält fest, dass gegen genau diesen Serverstand abgeglichen wurde.
+ *
+ * Wird auch dann geschrieben, wenn der Abgleich die Abweichung NICHT auflöst —
+ * gerade dann: Ein zweiter Versuch gegen denselben Stand brächte dasselbe
+ * Ergebnis und kostete einen vollständigen Abruf.
+ */
+export async function setSelfHealMarker(hash: string, at: number): Promise<void> {
+  await writeMeta('lastSelfHealHash', hash)
+  await writeMeta('lastSelfHealAt', at)
 }
 
 // ---------------------------------------------------------------------------

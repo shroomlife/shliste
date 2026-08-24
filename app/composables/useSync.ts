@@ -24,7 +24,16 @@ import {
   type SyncStatusDisplay,
 } from '../sync/engine/state'
 import { localStore } from '../sync/engine/store'
-import { syncEngine, type ConflictStrategy } from '../sync/engine/sync'
+import { evaluateIntegrity } from '../sync/engine/integrity'
+import { parseServerStatus, syncEngine, type ConflictStrategy } from '../sync/engine/sync'
+import { computeContentHashes, divergentAreas } from '../sync/merge/content-hash'
+import {
+  countDirtyContent,
+  getAllForContentHash,
+  getSelfHealMarker,
+  setLastSyncedAt,
+  setSelfHealMarker,
+} from '~/db/repositories'
 import { requestJson, SYNC_ENDPOINTS } from '../sync/engine/transport'
 import type { RealtimeStatus } from '../sync/realtime/connection'
 import type { RealtimeEvent } from '../sync/realtime/events'
@@ -249,6 +258,83 @@ export function useSyncRunner(): void {
     isSessionExpiredOpen.value = true
   })
 
+  /**
+   * Einmal je Seitensitzung den eigenen Bestand gegen den Server halten.
+   *
+   * WARUM ÜBERHAUPT: Ein inkrementeller Abruf fragt nach Änderungen seit einem
+   * Zeitpunkt. Eine ältere schiefe Zeile kommt darin nie wieder vor — nur ein
+   * voller Abruf erreicht sie. Ohne diese Prüfung bliebe so etwas im Browser
+   * unbemerkt, während die Android-App es findet: eine Asymmetrie, die genau
+   * dann auffällt, wenn man sie am wenigsten gebrauchen kann.
+   *
+   * WARUM NUR EINMAL: Eine Abweichung ist ein bleibender Zustand, kein
+   * flüchtiger. Einmal danach zu sehen genügt, um sie zu finden. Nach jedem
+   * Abgleich zu prüfen köstete jedes Mal eine zusätzliche Anfrage, ohne mehr
+   * zu erfahren.
+   *
+   * Fehler bleiben hier folgenlos: Die Prüfung ist eine Zugabe, kein
+   * Bestandteil des Abgleichs.
+   */
+  let integrityChecked = false
+
+  async function checkIntegrityOnce(): Promise<void> {
+    if (import.meta.server || integrityChecked || !isSignedIn.value) return
+    integrityChecked = true
+
+    const [status, lokal, offene, marker] = await Promise.all([
+      requestJson(SYNC_ENDPOINTS.status).then(parseServerStatus),
+      getAllForContentHash().then(computeContentHashes),
+      countDirtyContent(),
+      getSelfHealMarker(),
+    ])
+
+    const urteil = evaluateIntegrity({
+      serverHash: status.contentHashV2,
+      localHash: lokal.v2,
+      pendingChanges: offene,
+      lastHealedHash: marker.hash,
+      lastHealedAt: marker.at,
+      now: Date.now(),
+    })
+
+    // „In Ordnung" und „nicht beurteilbar" sind beide kein Anlass. Und eine
+    // Abweichung, die noch nicht hochgeladene Zeilen erklären, ist der
+    // Normalzustand — das erledigt der nächste Upload von selbst.
+    if (urteil.kind !== 'heal' && urteil.kind !== 'already-tried') return
+
+    const bereiche = divergentAreas(status.contentHashParts, lokal.parts)
+    const benannt = bereiche.length > 0 ? bereiche.join(', ') : 'unbekannt'
+
+    if (urteil.kind === 'already-tried') {
+      console.warn(`[Sync] Abweichung besteht fort (${urteil.reason}) — Bereich(e): ${benannt}`)
+      return
+    }
+
+    console.warn(`[Sync] Inhalts-Abweichung → voller Serverabgleich. Bereich(e): ${benannt}`)
+
+    // Cursor zurücksetzen heisst: der nächste Abruf holt alles. Das ist hier
+    // NICHT destruktiv — ein voller Abruf verwirft nichts, sondern führt
+    // zusammen, und Zeilen mit offenen Änderungen bleiben unangetastet.
+    await setLastSyncedAt(null)
+    const ergebnis = await syncEngine.sync()
+    if (!ergebnis.ran) {
+      // Es lief bereits etwas — der Versuch ist dann nicht verbraucht.
+      integrityChecked = false
+      return
+    }
+    if (status.contentHashV2 !== null) {
+      await setSelfHealMarker(status.contentHashV2, Date.now())
+    }
+    dataVersion.value += 1
+  }
+
+  /** Nie den Abgleich aufhalten und nie die Oberfläche stören. */
+  function checkIntegritySoon(): void {
+    void checkIntegrityOnce().catch((error: unknown) => {
+      console.warn('[Sync] Integritätsprüfung nicht möglich:', error)
+    })
+  }
+
   const fetchDelta = (query: string): Promise<unknown> =>
     requestJson(`${SYNC_ENDPOINTS.delta}?${query}`)
 
@@ -395,6 +481,16 @@ export function useSyncRunner(): void {
       syncNow()
       startReconcilePolling()
     }
+  })
+
+  /**
+   * Erst prüfen, wenn ein Abgleich durch ist.
+   *
+   * Vorher wäre jede Abweichung nur der noch nicht gelaufene Abgleich selbst —
+   * ein Befund, der sich Sekunden später von allein erledigt.
+   */
+  watch(() => snapshot.value.phase, (phase, previous) => {
+    if (previous === 'syncing' && phase === 'idle') checkIntegritySoon()
   })
 
   // Anmelden löst den ersten Abgleich aus, Abmelden beendet beide Zeitgeber.
