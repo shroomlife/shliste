@@ -786,6 +786,22 @@ function onImageGenerated(imageRef: string): void {
               :ui="{ root: 'w-full' }"
               @keyup.enter="submitIngredient"
             />
+
+            <!-- DER WEG IN DEN EINKAUF, MOBILE FASSUNG. Er sass zuerst nur im
+                 Panel-Fuss der Werkbank, und der beginnt erst ab 1280px zu
+                 existieren — auf jedem Handy war die Funktion damit unsichtbar.
+                 Ausgerechnet dort wird sie am ehesten gebraucht: Man steht vor
+                 dem Rezept und will einkaufen gehen. -->
+            <UButton
+              v-if="!isSortMode && ingredients.length > 0"
+              block
+              size="lg"
+              variant="soft"
+              icon="i-lucide-list-plus"
+              class="mt-1 xl:hidden"
+              :label="ingredients.length === 1 ? '1 Zutat zur Liste' : `${ingredients.length} Zutaten zur Liste`"
+              @click="isToListOpen = true"
+            />
           </section>
 
           <!-- Die AI-Griffe der Werkbank: dieselben Sheets wie auf Mobil,

@@ -28,6 +28,14 @@ const ausgewaehlt = ref<Set<string>>(new Set())
 const neueListe = ref('')
 const laeuft = ref(false)
 
+/**
+ * Geheime Listen stehen hier NICHT zur Wahl — die Begründung und die Tests
+ * dazu stehen in `utils/listTargets.ts`.
+ */
+const zielListen = computed(() =>
+  entries.value.filter(eintrag => selectableAsTarget([eintrag.list]).length > 0),
+)
+
 const alleGewaehlt = computed(() => ausgewaehlt.value.size === ingredients.length)
 const auswahl = computed(() => ingredients.filter(zutat => ausgewaehlt.value.has(zutat.id)))
 
@@ -78,6 +86,14 @@ async function uebernehmen(listId: string, listName: string): Promise<void> {
       auswahl.value.map(zutat => ({ name: zutat.name, quantity: zutat.quantity })),
     )
     open.value = false
+
+    // Null angelegte Einträge mit einem grünen Haken zu melden wäre eine
+    // falsche Auskunft — auch wenn der Fall nur bei Zutaten ohne Namen eintritt.
+    if (anzahl === 0) {
+      toast.add({ title: 'Nichts hinzugefügt', icon: 'i-lucide-info' })
+      return
+    }
+
     toast.add({
       title: anzahl === 1 ? `1 Zutat zu ${listName}` : `${anzahl} Zutaten zu ${listName}`,
       icon: 'i-lucide-check',
@@ -174,11 +190,11 @@ async function inNeueListe(): Promise<void> {
       >{{ auswahl.length === 1 ? '1 Zutat' : `${auswahl.length} Zutaten` }} ausgewählt</span>
 
       <ul
-        v-if="entries.length"
+        v-if="zielListen.length"
         class="flex max-h-[40vh] flex-col gap-1 overflow-y-auto"
       >
         <li
-          v-for="eintrag in entries"
+          v-for="eintrag in zielListen"
           :key="eintrag.list.id"
         >
           <button
