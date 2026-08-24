@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useMediaQuery } from '@vueuse/core'
 import type { IsoUtc, RecipeIngredient, RecipeStep } from '#shared/types/domain'
 import { toSyncImagePath } from '~/ai/images'
 import { attachRecipeImageById } from '~/ai/persist'
@@ -364,11 +365,43 @@ async function confirmDelete(): Promise<void> {
  * AI Features — Chat, Bearbeitung, Schritt-Erklärung, Bild.
  * ------------------------------------------------------------------ */
 
+/**
+ * Ab hier trägt die Seite den Chat als eigene Spalte statt als Blatt.
+ *
+ * Die Zahl ist gerechnet, nicht gegriffen: Rail 5.25rem plus Rezeptliste
+ * 21.5rem plus Werkbank 24.75rem plus Chat 24.75rem sind 76.25rem, die die
+ * Zubereitung nie bekommt. Bei 115rem bleiben ihr also rund 38.75rem — unter
+ * dieser Grenze würde die Lesespalte schmaler als der Chat daneben, und damit
+ * wäre der Chat kein Gewinn mehr, sondern ein Dieb.
+ *
+ * In Media Queries zählt `rem` immer die ANFÄNGLICHE Schriftgrösse des
+ * Browsers, nicht die skalierte aus `:root`. Wer seinen Browser grösser
+ * eingestellt hat, bekommt die dritte Spalte also entsprechend später — genau
+ * richtig, denn bei ihm ist auch alles andere breiter.
+ */
+const hasChatColumn = useMediaQuery('(min-width: 115rem)')
+
 /** Aufklapp-Zustand der Sektion am Rezeptende; startet zu wie in Android. */
 const isAiSectionOpen = ref(false)
 const isAiChatOpen = ref(false)
 const isAiEditOpen = ref(false)
 const isImageGenOpen = ref(false)
+
+/**
+ * Steht der Chat gerade als dritte Spalte? Diese eine Antwort steuert alles
+ * daran: die Spaltenaufteilung des Rasters, den Griff in der Werkbank und ob
+ * es das Blatt überhaupt gibt. Zwei getrennte Bedingungen wären hier ein
+ * offener Fehler — eine dritte Rasterspur ohne Inhalt ist ein Loch.
+ */
+const isChatColumnVisible = computed(() =>
+  hasChatColumn.value && isSignedIn.value && !isSortMode.value && recipe.value !== null,
+)
+
+// Übernimmt die Spalte, ist ein zusätzlich offenes Blatt sinnlos — und beim
+// Zurückschrumpfen des Fensters spränge es sonst unvermittelt wieder auf.
+watch(isChatColumnVisible, (visible) => {
+  if (visible) isAiChatOpen.value = false
+})
 
 /**
  * Die Zeilen in der Form, die Diff und Anfrage brauchen. Die Reihenfolge ist
@@ -684,16 +717,30 @@ function onImageGenerated(imageRef: string): void {
          Die 48rem der Arbeitsspalte sind eine Lesebreite, keine Layoutzahl:
          Bei 1.375rem Zain ergaben die früheren 56.25rem rund 90 Zeichen pro
          Zeile, deutlich über dem, was sich ruhig lesen lässt. -->
-    <div class="flex min-h-0 w-full grow flex-col gap-6 overflow-y-auto px-3 py-4 xl:grid xl:grid-cols-[24.75rem_minmax(0,1fr)] xl:items-stretch xl:gap-0 xl:overflow-hidden xl:p-0">
+    <div
+      class="flex min-h-0 w-full grow flex-col gap-6 overflow-y-auto px-3 py-4 xl:grid xl:items-stretch xl:gap-0 xl:overflow-hidden xl:p-0"
+      :class="isChatColumnVisible
+        ? 'xl:grid-cols-[24.75rem_minmax(0,1fr)_24.75rem]'
+        : 'xl:grid-cols-[24.75rem_minmax(0,1fr)]'"
+    >
       <div
         class="contents xl:flex xl:h-full xl:min-h-0 xl:min-w-0 xl:flex-col xl:border-r xl:bg-[var(--md-surface-low)]"
         style="border-color: var(--md-outline-variant)"
       >
-        <div class="contents xl:flex xl:min-h-0 xl:grow xl:flex-col xl:gap-4 xl:overflow-y-auto xl:p-5">
-          <!-- Der Platz fürs Bild steht IMMER, auch wenn keins da ist. Vorher
-               verschwand er ersatzlos, und ein Rezept ohne Bild sah nicht aus
-               wie "hier könnte eins sein", sondern wie ein Fehler im Layout. -->
-          <div class="hidden h-[14.75rem] w-full shrink-0 xl:block">
+        <!-- Der Platz fürs Bild steht IMMER, auch wenn keins da ist. Vorher
+             verschwand er ersatzlos, und ein Rezept ohne Bild sah nicht aus
+             wie "hier könnte eins sein", sondern wie ein Fehler im Layout.
+
+             Und er steht FEST: Das Bild liegt ausserhalb des scrollenden
+             Rumpfs, damit es beim Blättern durch eine lange Zutatenliste
+             bleibt, statt nach drei Zeilen wegzurutschen. Ausserhalb statt
+             `sticky`, weil klebender Inhalt in einem Scrollbereich sonst
+             Rundungen und Hintergrund von Hand nachbauen muss, um das
+             darunter Durchlaufende zu verdecken. -->
+        <div class="hidden shrink-0 xl:block xl:px-5 xl:pt-5">
+          <!-- Die Höhe sitzt innen, nicht am gepolsterten Rahmen: Bei
+               border-box würde die Polsterung sonst vom Bild abgezogen. -->
+          <div class="h-[14.75rem] w-full">
             <img
               v-if="recipeImageUrl !== null && !isImageBroken"
               :src="recipeImageUrl"
@@ -715,7 +762,9 @@ function onImageGenerated(imageRef: string): void {
               <span class="text-[1rem]">Bild erzeugen</span>
             </button>
           </div>
+        </div>
 
+        <div class="contents xl:flex xl:min-h-0 xl:grow xl:flex-col xl:gap-4 xl:overflow-y-auto xl:px-5 xl:pt-4 xl:pb-5">
           <!-- Zutaten -->
           <section class="flex flex-col gap-2">
             <div class="flex items-baseline justify-between">
@@ -810,7 +859,10 @@ function onImageGenerated(imageRef: string): void {
             v-if="isSignedIn && !isSortMode"
             class="hidden xl:flex xl:flex-col xl:gap-2 xl:pt-1"
           >
+            <!-- Steht der Chat als Spalte daneben, wäre ein Griff dorthin nur
+                 ein Knopf, der auf etwas zeigt, das man schon sieht. -->
             <button
+              v-if="!isChatColumnVisible"
               type="button"
               class="state-layer flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left"
               style="background: var(--md-surface-container)"
@@ -891,9 +943,13 @@ function onImageGenerated(imageRef: string): void {
            dieselbe Fläche, nur ohne Text darauf. -->
       <div class="contents xl:flex xl:h-full xl:min-h-0 xl:w-full xl:min-w-0 xl:flex-col">
         <!-- Fortschritt steht auf dem Desktop fest über der Arbeitsspalte. -->
+        <!-- Feste Kopfhöhe, damit die Trennlinie hier und die der Chat-Spalte
+             auf EINER Linie liegen. Mit blosser Polsterung entscheidet sonst
+             der Inhalt über die Höhe, und direkt neben einem senkrechten
+             Trenner fällt ein Versatz von zwanzig Pixeln sofort auf. -->
         <div
           v-if="steps.length"
-          class="hidden shrink-0 items-center gap-3.5 border-b px-7 py-3 xl:flex"
+          class="hidden h-13 shrink-0 items-center gap-3.5 border-b px-7 xl:flex"
           style="background: var(--md-surface); border-color: var(--md-outline-variant)"
         >
           <span
@@ -1135,12 +1191,53 @@ function onImageGenerated(imageRef: string): void {
           />
         </div>
       </div>
+
+      <!-- DIE DRITTE SPALTE: der Chat, sobald das Fenster ihn wirklich trägt.
+           Als Blatt verdeckte er beim Kochen genau das, wonach man fragt —
+           nebeneinander bleiben Frage und Rezept gleichzeitig lesbar.
+
+           Bewusst kein `hidden`/`xl:block`, sondern ein echtes `v-if`: Der
+           Chat hält seinen Verlauf je Instanz. Stünden Spalte und Blatt
+           gleichzeitig im Baum, gäbe es zwei Verläufe, und in welchen man
+           tippt, entschiede der Zufall. -->
+      <aside
+        v-if="isChatColumnVisible && recipe"
+        class="flex h-full min-h-0 flex-col border-l"
+        style="border-color: var(--md-outline-variant); background: var(--md-surface-low)"
+      >
+        <!-- Einzeilig und gleich hoch wie der Fortschrittskopf nebenan. Der
+             Untertitel von früher ist weg: Er sagte dasselbe wie der leere
+             Verlauf einen Zentimeter darunter. -->
+        <div
+          class="flex h-13 shrink-0 items-center gap-3 border-b px-5"
+          style="border-color: var(--md-outline-variant)"
+        >
+          <UIcon
+            name="i-lucide-sparkles"
+            class="size-5 shrink-0"
+            style="color: var(--md-primary)"
+          />
+          <span class="text-[1.125rem] font-bold">Rezept-Chat</span>
+        </div>
+
+        <!-- Ohne eigene Polsterung: Die bringt das Panel selbst mit, weil
+             seine Trennlinie unten von Rand zu Rand laufen muss. -->
+        <div class="flex min-h-0 grow flex-col">
+          <AiRecipeChatPanel
+            :recipe-id="recipe.id"
+            :recipe="chatRecipe"
+            :active="true"
+            variant="column"
+          />
+        </div>
+      </aside>
     </div>
 
     <AiUpsellSheet v-model:open="isAiUpsellOpen" />
 
+    <!-- Der Chat als Blatt gibt es nur, solange er keine eigene Spalte hat. -->
     <AiRecipeChatSheet
-      v-if="recipe"
+      v-if="recipe && !isChatColumnVisible"
       v-model:open="isAiChatOpen"
       :recipe-id="recipe.id"
       :recipe="chatRecipe"
