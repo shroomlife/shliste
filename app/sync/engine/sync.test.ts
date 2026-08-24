@@ -575,6 +575,33 @@ describe('parseServerStatus', () => {
     expect(status.contentHash).toBe('abc')
   })
 
+  test('liest die Inhalts-Prüfsumme und ihre sechs Teile', () => {
+    // Die Feldnamen sind der Vertrag mit dem Server. Ein Tippfehler hier würde
+    // NICHT auffallen: Die Prüfung fände dann still `null` vor und meldete
+    // "nicht beurteilbar" statt einer Abweichung — also genau die Blindheit,
+    // gegen die sie gebaut wurde. Gegenstück: `contentHashV2` und
+    // `contentHashParts` in `api.shliste.app/src/routes/sync/status.ts`.
+    const status = parseServerStatus({
+      ...FILLED_SERVER,
+      contentHashParts: {
+        lists: 'h1', listItems: 'h2', recipes: 'h3',
+        recipeIngredients: 'h4', recipeSteps: 'h5', badges: 'h6',
+      },
+    })
+
+    expect(status.contentHashV2).toBe('abc-v2')
+    expect(status.contentHashParts).toEqual({
+      lists: 'h1', listItems: 'h2', recipes: 'h3',
+      recipeIngredients: 'h4', recipeSteps: 'h5', badges: 'h6',
+    })
+  })
+
+  test('fehlende Teil-Hashes ergeben null, nicht sechs leere Strings', () => {
+    // Der Unterschied zählt: `null` heisst "der Server hat nichts gesagt" und
+    // führt zu "unbekannt". Sechs leere Strings hiessen "alles weicht ab".
+    expect(parseServerStatus(FILLED_SERVER).contentHashParts).toBeNull()
+  })
+
   test('ohne isEmpty entscheiden die Zähler', () => {
     expect(parseServerStatus({ lists: 0, recipes: 0 }).isEmpty).toBe(true)
     expect(parseServerStatus({ lists: 1, recipes: 0 }).isEmpty).toBe(false)
