@@ -700,6 +700,33 @@ export async function countUnseenForeignChanges(listId: string, ownUserId: strin
  * Sync: was muss hoch?
  * ------------------------------------------------------------------ */
 
+/**
+ * Alle Zeilen, aus denen sich der Fingerabdruck des Bestands ergibt.
+ *
+ * Bewusst UNGEFILTERT: Welche Zeilen zählen, ist Teil der Formel und steht
+ * deshalb in `computeContentHashes` — an einer Stelle, zusammen mit der
+ * Begründung und den Tests gegen die echte Datenbank des Servers.
+ */
+export async function getAllForContentHash(): Promise<{
+  lists: ListRow[]
+  items: ListItemRow[]
+  recipes: RecipeRow[]
+  ingredients: RecipeIngredientRow[]
+  steps: RecipeStepRow[]
+  badges: BadgeRow[]
+}> {
+  const db = await getDb()
+  const [lists, items, recipes, ingredients, steps, badges] = await Promise.all([
+    db.getAll('lists'),
+    db.getAll('list_items'),
+    db.getAll('recipes'),
+    db.getAll('recipe_ingredients'),
+    db.getAll('recipe_steps'),
+    db.getAll('badges'),
+  ])
+  return { lists, items, recipes, ingredients, steps, badges }
+}
+
 export async function getDirtyLists(): Promise<ListRow[]> {
   const db = await getDb()
   return db.getAllFromIndex('lists', 'by-dirty', DIRTY)

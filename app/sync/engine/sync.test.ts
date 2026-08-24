@@ -135,7 +135,7 @@ function fakeSyncStore(options: {
 
 const SESSION = { authenticated: true, verified: true, profile: { userId: 'u1' } }
 const EMPTY_SERVER = { lists: 0, recipes: 0, isEmpty: true, contentHash: null, lastOverwriteAt: null }
-const FILLED_SERVER = { lists: 4, recipes: 2, isEmpty: false, contentHash: 'abc', lastOverwriteAt: null }
+const FILLED_SERVER = { lists: 4, recipes: 2, isEmpty: false, contentHash: 'abc', contentHashV2: 'abc-v2', lastOverwriteAt: null }
 const PUSH_OK = { conflicts: {}, skippedIds: {}, serverTime: SERVER_TIME }
 const MIGRATE_OK = { migrated: { lists: 1, recipes: 0 }, skippedIds: {}, serverTime: SERVER_TIME }
 const PULL_OK = { lists: [], recipes: [], badges: [], pendingInvites: [], serverTime: SERVER_TIME, truncated: false }
@@ -331,7 +331,15 @@ describe('createSyncEngine — erster Abgleich', () => {
       store,
       state,
       request,
-      computeLocalContentHash: () => Promise.resolve('abc'),
+      // V2, nicht V1: Die ältere Fassung hängt Zeilen-Zeitstempel an und
+      // weicht unter feldgenauem Merge zu Recht ab.
+      computeLocalContentHashes: () => Promise.resolve({
+        v2: 'abc-v2',
+        parts: {
+          lists: '', listItems: '', recipes: '',
+          recipeIngredients: '', recipeSteps: '', badges: '',
+        },
+      }),
     }).sync()
 
     expect(state.get().conflict).toBeNull()

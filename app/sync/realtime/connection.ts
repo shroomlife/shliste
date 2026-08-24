@@ -81,6 +81,20 @@ export const HEARTBEAT_INTERVAL_MS = 15_000
  */
 export const LIVENESS_TIMEOUT_MS = HEARTBEAT_INTERVAL_MS * 4
 
+/**
+ * Wie lange der Server sich selbst erlaubt zu schweigen.
+ *
+ * Kein Wert, den diese Seite setzt — eine Zusage der Gegenstelle, hier
+ * festgehalten, damit ein Test das Verhältnis zur Frist darüber nachprüfen
+ * kann. Quelle: `SSE_MAX_STALLED_HEARTBEATS` mal `HEARTBEAT_INTERVAL_MS` in
+ * `api.shliste.app/src/routes/sync/event-bus.ts`.
+ *
+ * Android hält dieselbe Zusage in `SyncEventSource.SERVER_STALL_BUDGET_MS` und
+ * prüft sie ebenfalls. Wer die Zahl auf dem Server ändert, muss beide Clients
+ * mitziehen — und erfährt es hier, weil ein Test umfällt.
+ */
+export const SERVER_STALL_BUDGET_MS = HEARTBEAT_INTERVAL_MS * 3
+
 export type RealtimeStatus = 'idle' | 'connecting' | 'open' | 'reconnecting'
 
 export interface RealtimeConnectionOptions {

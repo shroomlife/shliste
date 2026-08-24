@@ -10,13 +10,48 @@ import { describe, expect, test } from 'bun:test'
 import {
   BACKOFF_JITTER_RATIO,
   buildStreamUrl,
+  HEARTBEAT_INTERVAL_MS,
   INITIAL_BACKOFF_MS,
   isNewerEventId,
+  LIVENESS_TIMEOUT_MS,
   MAX_BACKOFF_MS,
+  SERVER_STALL_BUDGET_MS,
   backoffDelayMs,
   nextBackoffMs,
   parseStreamId,
 } from './connection'
+
+/**
+ * Das Zeitbudget zwischen Browser und Server.
+ *
+ * WARUM DAS EIN TEST IST UND KEIN KOMMENTAR: Die Frist stand zuerst auf
+ * demselben Wert wie das Budget, das sich der Server selbst nimmt. Das fällt
+ * nur auf, wenn jemand beide Seiten nebeneinanderlegt — hier tut es eine
+ * Zusicherung, die bei jedem Lauf schreit. Android prüft dasselbe in
+ * `SseTimingContractTest`; ohne dieses Gegenstück driftete die PWA still.
+ */
+describe('Zeitbudget gegen den Server', () => {
+  test('die Frist liegt über dem Stillschweigen des Servers', () => {
+    // Staut sich der Puffer einer Verbindung, schiebt der Server den Herzschlag
+    // NICHT nach und schliesst erst nach dem dritten solchen Takt. Steht die
+    // Frist hier auf demselben Wert, entscheidet der Zufall, wer zuerst
+    // zuschlägt — und ein geordnetes Ende käme als Fehler an.
+    expect(LIVENESS_TIMEOUT_MS).toBeGreaterThan(SERVER_STALL_BUDGET_MS)
+  })
+
+  test('die Frist überspringt mindestens zwei Herzschläge', () => {
+    // Ein einzelner Takt kann durch eine Lastspitze oder einen gedrosselten
+    // Zeitgeber verrutschen. Ein grundloser Neuaufbau kostet ein Ticket, eine
+    // Verbindung und einen vollständigen Abgleich.
+    expect(LIVENESS_TIMEOUT_MS).toBeGreaterThanOrEqual(HEARTBEAT_INTERVAL_MS * 3)
+  })
+
+  test('der Takt bleibt unter dem üblichen Proxy-Timeout', () => {
+    // Sonst schlösse der Reverse Proxy die Verbindung zwischen zwei
+    // Herzschlägen und jeder Client hänge in der Reconnect-Schleife.
+    expect(HEARTBEAT_INTERVAL_MS).toBeLessThan(30_000)
+  })
+})
 
 describe('parseStreamId', () => {
   test('zerlegt eine gültige Id', () => {

@@ -25,6 +25,9 @@ import type { IsoUtc } from '../../../shared/types/domain'
 import { describeSyncError, toSyncError, type SyncError } from './errors'
 import { isRecord, readBooleanOr, readIso, readNumberOr, readString } from './json'
 import type { ConflictStore, SyncStore } from './ports'
+import type { ContentHashes, ContentHashParts } from '../merge/content-hash'
+import { computeContentHashes } from '../merge/content-hash'
+import { getAllForContentHash } from '~/db/repositories'
 import { runPull, type PullOutcome } from './pull'
 import { runMigrate, runPush, type NoticeSink, type PushOutcome, type PushPayload } from './push'
 import { localStore } from './store'
@@ -50,7 +53,37 @@ export interface ServerStatus {
   isEmpty: boolean
   /** `null`, wenn der Server keinen geliefert hat. Dann ist kein Vergleich möglich. */
   contentHash: string | null
+  /**
+   * Die Prüfsumme über den reinen INHALT, ohne Zeilen-Zeitstempel.
+   *
+   * Die ältere Fassung `contentHash` hängt an jede Zeile ihren
+   * Änderungszeitstempel. Unter feldgenauem Last-Write-Wins laufen diese
+   * Zeitstempel zwischen Geräten zu Recht auseinander, ohne dass der Inhalt
+   * abweicht — sie meldet deshalb Abweichungen, die keine sind. Auf Android
+   * ist daran einmal eine Endlosschleife entstanden.
+   */
+  contentHashV2: string | null
+  /** Je eine Teil-Summe pro Bereich — benennt, WO es auseinanderläuft. */
+  contentHashParts: ContentHashParts | null
   lastOverwriteAt: IsoUtc | null
+}
+
+/** Liest die sechs Teil-Summen, oder null wenn der Server sie nicht liefert. */
+function readContentHashParts(record: Record<string, unknown>): ContentHashParts | null {
+  const raw = record['contentHashParts']
+  if (!isRecord(raw)) return null
+  const lesen = (key: string): string => {
+    const value = raw[key]
+    return typeof value === 'string' ? value : ''
+  }
+  return {
+    lists: lesen('lists'),
+    listItems: lesen('listItems'),
+    recipes: lesen('recipes'),
+    recipeIngredients: lesen('recipeIngredients'),
+    recipeSteps: lesen('recipeSteps'),
+    badges: lesen('badges'),
+  }
 }
 
 export function parseServerStatus(value: unknown): ServerStatus {
@@ -65,6 +98,8 @@ export function parseServerStatus(value: unknown): ServerStatus {
     // Ersatz, falls das Feld fehlt.
     isEmpty: readBooleanOr(record, 'isEmpty', lists === 0 && recipes === 0),
     contentHash: readString(record, 'contentHash'),
+    contentHashV2: readString(record, 'contentHashV2'),
+    contentHashParts: readContentHashParts(record),
     lastOverwriteAt: readIso(record, 'lastOverwriteAt'),
   }
 }
@@ -103,17 +138,17 @@ export interface SyncEngineDeps {
   /** Der Weg zur BFF. Im Test durch eine Attrappe ersetzbar. */
   request?: SyncRequest
   /**
-   * Der Prüfwert über die lokalen Daten, vergleichbar mit `contentHash` aus
+   * Der Fingerabdruck der lokalen Daten, vergleichbar mit `contentHashV2` aus
    * `GET /sync/status`.
    *
-   * NOCH NICHT VORHANDEN: Der Server bildet ihn als MD5, und MD5 gibt es in
-   * `crypto.subtle` nicht — eine eigene Implementierung wäre nötig. Solange
-   * die Funktion fehlt, kann "beide Seiten haben Daten" nicht automatisch
-   * aufgelöst werden; es bleibt der Vergleich der zuletzt angemeldeten
-   * Kennung und im Zweifel die Rückfrage beim Nutzer. Das ist die sichere
-   * Richtung: lieber einmal fragen als fremde Daten zusammenwerfen.
+   * Lange nicht vorhanden, weil der Server MD5 rechnet und `crypto.subtle`
+   * genau das nicht kennt. Seit `app/sync/merge/md5.ts` gibt es die
+   * Implementierung, geprüft gegen RFC 1321 UND gegen die echte
+   * Postgres-Instanz. Bleibt die Funktion weg, fällt der Ablauf auf das alte
+   * Verhalten zurück: im Zweifel den Nutzer fragen statt fremde Daten
+   * zusammenzuwerfen.
    */
-  computeLocalContentHash?: () => Promise<string | null>
+  computeLocalContentHashes?: () => Promise<ContentHashes | null>
   onNotice?: NoticeSink
 }
 
@@ -161,7 +196,7 @@ interface FirstSyncDecision {
 }
 
 export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
-  const { store, state, request = requestJson, computeLocalContentHash, onNotice } = deps
+  const { store, state, request = requestJson, computeLocalContentHashes, onNotice } = deps
 
   let running = false
 
@@ -201,9 +236,9 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
    * ohnehin zu diesem Konto. In allen anderen Fällen entscheidet der Nutzer.
    */
   const mayMergeWithoutAsking = async (status: ServerStatus, session: SessionState): Promise<boolean> => {
-    if (status.contentHash !== null && computeLocalContentHash !== undefined) {
-      const localHash = await computeLocalContentHash()
-      if (localHash !== null && localHash === status.contentHash) return true
+    if (status.contentHashV2 !== null && computeLocalContentHashes !== undefined) {
+      const lokal = await computeLocalContentHashes()
+      if (lokal !== null && lokal.v2 === status.contentHashV2) return true
     }
 
     const lastSignedInUserId = await store.readLastSignedInUserId()
@@ -422,4 +457,25 @@ async function countPendingQuietly(store: SyncStore): Promise<number> {
  * Ein Abgleich betrifft das ganze Gerät, deshalb genau eine Instanz — zwei
  * hätten je einen eigenen Mutex und liefen sich gegenseitig in die Quere.
  */
-export const syncEngine: SyncEngine = createSyncEngine({ store: localStore, state: syncState })
+/**
+ * Der Fingerabdruck des lokalen Bestands.
+ *
+ * Wird nur beim allerersten Abgleich gebraucht — und dort entscheidet er
+ * darüber, ob der Nutzer eine Rückfrage sieht oder nicht: Sind beide Seiten
+ * nachweislich identisch, gibt es nichts zu entscheiden.
+ */
+async function computeLocalContentHashes(): Promise<ContentHashes | null> {
+  try {
+    return computeContentHashes(await getAllForContentHash())
+  }
+  catch {
+    // Ohne Fingerabdruck bleibt der sichere Weg: im Zweifel fragen.
+    return null
+  }
+}
+
+export const syncEngine: SyncEngine = createSyncEngine({
+  store: localStore,
+  state: syncState,
+  computeLocalContentHashes,
+})
