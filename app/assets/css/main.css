@@ -210,6 +210,40 @@ body {
 }
 
 /*
+ * PROPORTION AUF SEHR GROSSEN SCHIRMEN
+ *
+ * Das Problem: Auf einem 4K-Monitor blieb die gesamte Oberfläche so gross wie
+ * auf einem Laptop — die Icon-Leiste 84 Pixel schmal, die Schrift verloren in
+ * der Fläche. Nicht ein einzelnes Element war zu klein, sondern alle zusammen
+ * standen in keinem Verhältnis mehr zum Bildschirm.
+ *
+ * Deshalb genau EIN Hebel statt Dutzender Breakpoint-Regeln: Diese Oberfläche
+ * ist durchgehend in rem gebaut — Schrift, Abstände (Tailwinds --spacing bleibt
+ * auf 0.25rem), Radien, auch die Breite der Leiste (w-21 = 5.25rem). Wächst die
+ * Wurzelgrösse, wächst alles gemeinsam und im selben Verhältnis. Was in Pixeln
+ * steht, bleibt bewusst stehen: eine Trennlinie soll ein Haar bleiben.
+ *
+ * Erst ab 1920px, damit üblichere Desktops unberührt bleiben, und stufenlos
+ * statt sprunghaft. Bei genau 1920px ergibt die Formel exakt 1rem — der
+ * Übergang ist damit unsichtbar. Gedeckelt bei 1.5rem, sonst wüchse die
+ * Oberfläche auf sehr breiten Schirmen ins Alberne.
+ *
+ * ZUM NACHSTELLEN: Nur die 1.5rem am Ende der clamp-Formel anfassen. Kleiner
+ * heisst zurückhaltender, grösser heisst mehr. Alles andere folgt von selbst.
+ *
+ * ZWEI FEINHEITEN, die sonst später jemanden kosten: `rem` bezieht sich auf dem
+ * Wurzelelement auf die ANFÄNGLICHE Schriftgrösse (16px), nicht auf die eigene —
+ * die Formel ist also nicht zirkulär. Und in einer Media Query meint `rem`
+ * ebenfalls immer 16px, unabhängig davon, was hier drinnen gesetzt wird; die
+ * Bedingung schaltet sich also nicht selbst ab, sobald sie greift.
+ */
+@media (min-width: 120rem) {
+  :root {
+    font-size: clamp(1rem, 0.4rem + 0.5vw, 1.5rem);
+  }
+}
+
+/*
  * Listenfarben sind echtes Zufalls-RGB (r+g+b zwischen 100 und 700) und werden
  * als 20-Prozent-Lasur eingesetzt, nie voll gesaettigt — genau deshalb wirken
  * auch stumpfe Zufallswerte ruhig. Entspricht ColorUtils.colorWith20Opacity.

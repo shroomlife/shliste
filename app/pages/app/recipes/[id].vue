@@ -657,7 +657,7 @@ function onImageGenerated(imageRef: string): void {
          stehende Werkbank (Bild, Zutaten, AI-Griffe), rechts die Schritte als
          Arbeitsspalte. `contents` lässt die Wrapper auf Mobil verschwinden —
          dort bleibt der bisherige einspaltige Fluss unverändert. -->
-    <div class="flex min-h-0 grow flex-col gap-6 overflow-y-auto px-3 py-4 lg:grid lg:grid-cols-[396px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:p-0">
+    <div class="flex min-h-0 grow flex-col gap-6 overflow-y-auto px-3 py-4 lg:grid lg:grid-cols-[24.75rem_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:p-0">
       <div
         class="contents lg:block lg:min-w-0 lg:border-r lg:bg-[var(--md-surface-low)]"
         style="border-color: var(--md-outline-variant)"
@@ -667,7 +667,7 @@ function onImageGenerated(imageRef: string): void {
             v-if="recipeImageUrl !== null && !isImageBroken"
             :src="recipeImageUrl"
             alt=""
-            class="hidden h-[236px] w-full rounded-xl object-cover lg:block"
+            class="hidden h-[14.75rem] w-full rounded-xl object-cover lg:block"
             @error="isImageBroken = true"
           >
 
@@ -815,7 +815,7 @@ function onImageGenerated(imageRef: string): void {
           />
         </div>
 
-        <div class="contents lg:flex lg:max-w-[900px] lg:flex-col lg:gap-6 lg:p-7 lg:pt-5">
+        <div class="contents lg:mx-auto lg:flex lg:max-w-[56.25rem] lg:flex-col lg:gap-6 lg:p-7 lg:pt-5">
           <!-- Schritte -->
           <section class="flex flex-col gap-1">
             <h2
