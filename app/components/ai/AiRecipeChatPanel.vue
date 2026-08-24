@@ -277,10 +277,22 @@ function retry(): void {
          Eingabezeile der Zubereitung und der Werkbank daneben — drei Spalten,
          derselbe Bauplan. Die Bedienelemente sind dort eine Nummer kleiner:
          `xl` ist die Grösse für den Daumen im Blatt, am Schreibtisch würde sie
-         die schmale Spalte auffressen. -->
+         die schmale Spalte auffressen.
+
+         DIE 7.5rem DER SPALTE SIND GELIEHEN, nicht neu erfunden: Genau so hoch
+         sind die Füsse der Zutaten- und der Zubereitungsspalte (siehe die
+         Rechnung in `pages/app/recipes/[id].vue`). Alle drei Trennlinien
+         liegen damit auf EINER Waagerechten. Vorher war dieser Fuss 4.5rem
+         hoch und seine Linie sass drei Zentimeter tiefer als die daneben.
+
+         Gefüllt wird die Höhe nicht mit Luft, sondern mit einem mehrzeiligen
+         Feld: Eine Frage ans Rezept ist selten vier Wörter lang, und ein Fuss
+         mit 3rem Leerraum über einer einzelnen Zeile sähe aus wie ein Fehler.
+         Im Blatt bleibt es die einzeilige Variante — dort tippt ein Daumen,
+         und der Platz gehört dem Verlauf. -->
     <div
-      class="flex shrink-0 items-center gap-2"
-      :class="variant === 'column' && 'border-t px-4 py-4'"
+      class="flex shrink-0 gap-2"
+      :class="variant === 'column' ? 'h-30 items-end border-t px-4 py-4' : 'items-center'"
       :style="variant === 'column' ? 'border-color: var(--md-outline-variant)' : ''"
     >
       <UButton
@@ -293,10 +305,26 @@ function retry(): void {
         :aria-label="recorder.isRecording.value ? 'Aufnahme beenden und senden' : 'Frage einsprechen'"
         @click="toggleRecording"
       />
-      <UInput
+      <!-- Enter schickt ab, Umschalt+Enter bricht um — dieselbe Abmachung wie
+           im Schritt-Feld nebenan. `keydown.enter.exact.prevent` statt
+           `keyup.enter`: ohne `exact` löste auch Umschalt+Enter aus, ohne
+           `prevent` stünde der Umbruch schon im Feld. -->
+      <UTextarea
+        v-if="variant === 'column'"
         v-model="input"
         :placeholder="placeholder"
-        :size="variant === 'column' ? 'lg' : 'xl'"
+        size="lg"
+        :rows="2"
+        enterkeyhint="send"
+        :disabled="chat.isSending.value || recorder.isRecording.value"
+        :ui="{ root: 'h-full w-full grow', base: 'h-full resize-none' }"
+        @keydown.enter.exact.prevent="submit"
+      />
+      <UInput
+        v-else
+        v-model="input"
+        :placeholder="placeholder"
+        size="xl"
         :disabled="chat.isSending.value || recorder.isRecording.value"
         :ui="{ root: 'w-full grow' }"
         @keyup.enter="submit"

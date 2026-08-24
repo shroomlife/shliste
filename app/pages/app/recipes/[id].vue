@@ -1215,9 +1215,30 @@ function onImageGenerated(imageRef: string): void {
             size="lg"
             :rows="2"
             enterkeyhint="done"
-            :ui="{ root: 'h-full w-full', base: 'h-full resize-none' }"
+            :ui="{ root: 'h-full w-full', base: 'h-full resize-none', trailing: 'items-end' }"
             @keydown.enter.exact.prevent="submitStep"
-          />
+          >
+            <!-- Der Knopf im Feld: Enter allein ist eine unsichtbare Funktion,
+                 und in einem MEHRZEILIGEN Feld erwartet man von Enter ohnehin
+                 eher einen Umbruch als das Abschicken. Also gibt es beides.
+
+                 `items-end` dreht den Beistellplatz von Nuxt UI nach unten —
+                 voreingestellt klebt er oben, was neben zwei Zeilen Text
+                 seltsam schwebt. Die Grösse `sm` ist nicht geschätzt: Nuxt UI
+                 räumt bei `trailing` in Grösse `lg` genau `pe-10` frei, und
+                 0.75rem Abstand plus ein 1.75rem breiter `sm`-Knopf ergeben
+                 exakt diese 2.5rem. Ein grösserer Knopf liefe unter den Text. -->
+            <template #trailing>
+              <UButton
+                icon="i-lucide-plus"
+                size="sm"
+                class="rounded-lg"
+                :disabled="newStep.trim().length === 0"
+                aria-label="Schritt hinzufügen"
+                @click="submitStep"
+              />
+            </template>
+          </UTextarea>
         </div>
       </div>
 

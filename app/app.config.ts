@@ -56,8 +56,17 @@ export default defineAppConfig({
          * das sonst über die Polsterung — mit einer festen Höhe stimmt die
          * Breite dann nicht mehr mit. `aspect-square` bindet sie an die Höhe,
          * egal welche Grösse.
+         *
+         * `justify-center` gehört zwingend dazu: Die Grundklassen von Nuxt UI
+         * sind `inline-flex items-center` OHNE waagerechte Zentrierung — beim
+         * Normalfall unnötig, weil die Breite dort aus Polsterung plus Symbol
+         * entsteht und gar kein Platz übrig bleibt. Sobald `aspect-square` die
+         * Breite an die Höhe bindet, ist sie breiter als ihr Inhalt, und der
+         * Überschuss landet ohne diese Klasse komplett rechts. Beim `lg`-Knopf
+         * sind das 2.5rem Kasten gegen 2.25rem Inhalt: das Symbol sitzt 2px zu
+         * weit links.
          */
-        square: { true: 'aspect-square' },
+        square: { true: 'aspect-square justify-center' },
       },
     },
     select: {
