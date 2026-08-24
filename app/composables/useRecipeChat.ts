@@ -45,8 +45,25 @@ export function useRecipeChat() {
 
   const canRetry = computed<boolean>(() => failed.value !== null)
 
+  /**
+   * Wird der Verlauf gerade geholt? Nur beim ERSTEN Lesen wahr.
+   *
+   * Der Abgleich liest denselben Verlauf später noch einmal, wenn ein anderes
+   * Gerät etwas geschrieben hat. Würde die Ansicht dabei wieder auf Platzhalter
+   * springen, flackerte ein fertig dastehender Verlauf ohne Not.
+   */
+  const isLoading = ref(false)
+  let hasLoadedOnce = false
+
   async function load(recipeId: string): Promise<void> {
-    messages.value = await getChatMessagesForRecipe(recipeId)
+    if (!hasLoadedOnce) isLoading.value = true
+    try {
+      messages.value = await getChatMessagesForRecipe(recipeId)
+    }
+    finally {
+      hasLoadedOnce = true
+      isLoading.value = false
+    }
   }
 
   /** Der persistierte Verlauf in der Anfrage-Form, auf das API-Limit gekürzt. */
@@ -194,6 +211,7 @@ export function useRecipeChat() {
 
   return {
     messages: readonly(messages),
+    isLoading: readonly(isLoading),
     isSending: readonly(isSending),
     errorMessage: readonly(errorMessage),
     canRetry,

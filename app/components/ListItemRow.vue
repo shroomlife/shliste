@@ -83,7 +83,7 @@ const emit = defineEmits<{ toggle: [], remove: [], edit: [] }>()
     >{{ item.name }}</span>
     <span
       v-if="item.quantity > 1"
-      class="mr-2 flex h-7 min-w-9 shrink-0 items-center justify-center rounded-lg px-2 text-[1.0625rem] font-bold"
+      class="optical-center mr-2 flex h-7 min-w-9 shrink-0 items-center justify-center rounded-lg px-2 text-[1.0625rem] font-bold"
       style="background: var(--md-surface-high)"
     >{{ item.quantity }}&times;</span>
   </div>

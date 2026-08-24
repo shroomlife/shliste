@@ -12,10 +12,11 @@
  * als rein clientseitige Bubble mit "Erneut versuchen".
  *
  * Der Verlauf kommt aus `recipe_chat_messages` (append-only, wird gesynct) und
- * lebt in `useRecipeChat` — hier wird nur gerendert. Assistant-Antworten
- * erscheinen als schlichter Text: Ein Markdown-Parser wäre eine neue
- * Abhängigkeit, und `white-space: pre-wrap` erhält die nummerierten Listen der
- * AI gut genug.
+ * lebt in `useRecipeChat` — hier wird nur gerendert. Antworten der AI laufen
+ * durch `AiMarkdownText`: denselben kleinen Markdown-Umfang, den auch Android
+ * kennt. Hier stand einmal, ein Parser wäre eine unnötige Abhängigkeit und
+ * `pre-wrap` reiche — das war falsch. Das Modell schreibt **fett** und
+ * Aufzählungen, und die standen als nackte Sternchen mitten im Satz.
  *
  * Kein "Verlauf löschen": Der Verlauf ist im Sync append-only, ein lokales
  * Hard-Delete käme beim nächsten Pull zurück.
@@ -39,6 +40,21 @@ const { recipeId, recipe, active, variant = 'sheet' } = defineProps<{
    */
   variant?: 'sheet' | 'column'
 }>()
+
+/**
+ * Die Platzhalter beim Laden des Verlaufs. Feste Formen, kein Zufall: Ein
+ * Skelett, das bei jedem Rendern anders aussieht, flackert und liest sich als
+ * Fehler. Die ungleichen Breiten sind Absicht — gleich lange Balken sehen aus
+ * wie eine Tabelle, nicht wie ein Gespräch.
+ */
+const SKELETON_BUBBLES = [
+  { id: 'a', mine: true, width: 'w-[55%]', lines: ['w-full'] },
+  { id: 'b', mine: false, width: 'w-[80%]', lines: ['w-full', 'w-[92%]', 'w-[60%]'] },
+  { id: 'c', mine: true, width: 'w-[40%]', lines: ['w-full'] },
+] as const
+
+/** Der Platzhalter für die Antwort, auf die gerade gewartet wird. */
+const ANSWER_SKELETON_LINES = ['w-full', 'w-[88%]', 'w-[64%]'] as const
 
 const chat = useRecipeChat()
 const recorder = useAudioRecorder()
@@ -123,8 +139,37 @@ function retry(): void {
       class="flex flex-col gap-2 overflow-y-auto"
       :class="variant === 'column' ? 'min-h-0 grow px-4 pt-4' : 'max-h-[50vh] min-h-40'"
     >
+      <!-- Beim ersten Öffnen wird der Verlauf aus IndexedDB geholt. Statt
+           „Stelle eine Frage" zu zeigen und einen Sekundenbruchteil später
+           doch einen vollen Verlauf, stehen hier Platzhalter in der Form der
+           echten Blasen — abwechselnd links und rechts, weil ein Verlauf
+           genau so aussieht. -->
+      <template v-if="chat.isLoading.value">
+        <div
+          v-for="platzhalter in SKELETON_BUBBLES"
+          :key="platzhalter.id"
+          class="flex"
+          :class="platzhalter.mine ? 'justify-end' : 'justify-start'"
+        >
+          <div
+            class="flex flex-col gap-2 rounded-xl px-3.5 py-3"
+            :class="platzhalter.width"
+            :style="platzhalter.mine
+              ? 'background: var(--md-primary-container)'
+              : 'background: var(--md-surface-variant)'"
+          >
+            <USkeleton
+              v-for="zeile in platzhalter.lines"
+              :key="zeile"
+              class="h-3 rounded-full"
+              :class="zeile"
+            />
+          </div>
+        </div>
+      </template>
+
       <p
-        v-if="chat.messages.value.length === 0 && !chat.isSending.value"
+        v-else-if="chat.messages.value.length === 0 && !chat.isSending.value"
         class="py-10 text-center text-[0.9375rem]"
         style="color: var(--md-on-surface-variant)"
       >
@@ -137,15 +182,23 @@ function retry(): void {
         class="flex"
         :class="message.role === 'user' ? 'justify-end' : 'justify-start'"
       >
-        <!-- v-text statt Interpolation: pre-wrap würde die Einrückung
-             des Templates sonst als sichtbaren Leerraum rendern. -->
+        <!-- Eigene Nachrichten sind roher Text: Wer tippt, meint Sternchen als
+             Sternchen. Antworten der AI gehen durch den kleinen
+             Markdown-Umfang, den auch Android kennt (siehe AiMarkdownText) —
+             vorher standen die Sternchen sichtbar mitten im Satz. -->
         <div
+          v-if="message.role === 'user'"
           class="max-w-[85%] rounded-xl px-3.5 py-2.5 text-[0.9375rem] whitespace-pre-wrap"
-          :style="message.role === 'user'
-            ? 'background: var(--md-primary-container); color: var(--md-on-primary-container)'
-            : 'background: var(--md-surface-variant); color: var(--md-on-surface)'"
+          style="background: var(--md-primary-container); color: var(--md-on-primary-container)"
           v-text="message.content"
         />
+        <div
+          v-else
+          class="max-w-[85%] rounded-xl px-3.5 py-2.5"
+          style="background: var(--md-surface-variant); color: var(--md-on-surface)"
+        >
+          <AiMarkdownText :text="message.content" />
+        </div>
       </div>
 
       <!-- Fehler: rein clientseitig, nie im Verlauf gespeichert -->
@@ -173,19 +226,27 @@ function retry(): void {
         </div>
       </div>
 
-      <!-- Warten auf die Antwort -->
+      <!-- Warten auf die Antwort. Vorher drehte sich hier ein Kringel in einer
+           winzigen Blase — der sagte "es passiert etwas", aber nicht "hier
+           entsteht gleich Text". Der Platzhalter hat die Form der Antwort, die
+           kommt, und der Sprung beim Eintreffen fällt entsprechend kleiner
+           aus. Bei abgeschalteter Bewegung steht er still statt zu pulsen. -->
       <div
         v-if="chat.isSending.value"
         class="flex justify-start"
       >
         <div
-          class="rounded-xl px-3.5 py-2.5"
+          class="flex w-[85%] flex-col gap-2 rounded-xl px-3.5 py-3"
           style="background: var(--md-surface-variant)"
+          role="status"
+          aria-label="Antwort wird geschrieben"
         >
-          <UIcon
-            name="i-lucide-loader-circle"
-            class="size-5 animate-spin"
-            style="color: var(--md-primary)"
+          <USkeleton
+            v-for="(zeile, index) in ANSWER_SKELETON_LINES"
+            :key="zeile"
+            class="h-3 rounded-full"
+            :class="zeile"
+            :style="{ animationDelay: `${index * 140}ms` }"
           />
         </div>
       </div>

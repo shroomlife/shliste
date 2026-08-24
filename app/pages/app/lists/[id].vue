@@ -1155,6 +1155,9 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
       class="flex shrink-0 items-center gap-2.5 border-t px-3 py-3.5 lg:px-5"
       style="border-color: var(--md-outline-variant)"
     >
+      <!-- Feld, Mengenkachel und AI-Knopf sind gleich hoch, ohne dass hier
+           eine Höhe steht: `xl` ist app-weit auf `--size-control-xl` gesetzt
+           (app.config.ts), und die Kachel unten greift dasselbe Token ab. -->
       <UInput
         v-model="newItemName"
         placeholder="Artikel hinzufügen"
@@ -1176,7 +1179,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
       >
         <button
           type="button"
-          class="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-sm px-2 text-[1.25rem] font-bold"
+          class="optical-center flex size-[var(--md-control-xl)] shrink-0 items-center justify-center rounded-sm px-1 text-[1.25rem] font-bold"
           style="background: var(--md-secondary); color: var(--md-on-secondary)"
           :aria-label="`Menge für den neuen Eintrag: ${newItemQuantity}. Ändern`"
         >
@@ -1184,7 +1187,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
         </button>
 
         <template #content>
-          <div class="flex w-64 flex-col gap-2.5 p-3">
+          <div class="flex w-fit flex-col gap-2.5 p-3">
             <div class="flex items-center justify-between gap-3">
               <button
                 type="button"
@@ -1221,12 +1224,16 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
               </button>
             </div>
 
-            <div class="flex gap-1">
+            <!-- Als Zahlenfeld 3x3 statt einer Reihe aus neun: Quadratische
+                 Felder in einer Reihe sind zusammen 24.5rem breit und werden
+                 auf einem Handy schlicht abgeschnitten. Ein Ziffernblock ist
+                 ausserdem die vertrautere Form. -->
+            <div class="grid grid-cols-3 justify-items-center gap-2">
               <button
                 v-for="digit in 9"
                 :key="digit"
                 type="button"
-                class="flex h-10 min-w-0 grow items-center justify-center rounded-sm text-[1.0625rem] font-bold transition-colors"
+                class="optical-center flex size-10 shrink-0 items-center justify-center rounded-sm text-[1.0625rem] font-bold transition-colors"
                 :style="digit === newItemQuantity
                   ? 'background: var(--md-secondary); color: var(--md-on-secondary)'
                   : 'background: var(--md-surface-low); color: var(--md-on-surface-variant)'"

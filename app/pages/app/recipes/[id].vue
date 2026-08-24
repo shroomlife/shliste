@@ -706,22 +706,34 @@ function onImageGenerated(imageRef: string): void {
          setzt voraus, dass links und rechts dasselbe liegt — hier liegt links
          die Rezeptliste und rechts der Bildschirmrand. Jedes `mx-auto` in
          dieser Kaskade erzeugt deshalb ein LOCH zwischen zwei Panels statt
-         eines Randes. Die Werkbank dockt jetzt hart an die Rezeptliste an
-         (beide tragen dieselbe Tönung und lesen sich dadurch als eine Zone),
-         überzählige Breite bleibt als ein Rand rechts stehen.
+         eines Randes. Die Werkbank dockt hart an die Rezeptliste an — beide
+         tragen dieselbe Tönung und lesen sich dadurch als eine Zone.
 
          UND ERST AB xl, NICHT ab lg: Bei 1024px bleiben nach Rail (84) plus
          Rezeptliste (344) plus Werkbank (396) genau 200px für die Zubereitung
          übrig. Das war kein 4K-Problem, das traf jeden schmalen Laptop.
 
-         Die 48rem der Arbeitsspalte sind eine Lesebreite, keine Layoutzahl:
-         Bei 1.375rem Zain ergaben die früheren 56.25rem rund 90 Zeichen pro
-         Zeile, deutlich über dem, was sich ruhig lesen lässt. -->
+         WER DIE ÜBERZÄHLIGE BREITE BEKOMMT, ist die eigentliche Frage dieses
+         Rasters, und die erste Antwort war falsch. Die Arbeitsspalte hatte
+         `1fr` und damit alles, ihr Inhalt war aber auf die Lesebreite von
+         48rem gedeckelt — solange sie die letzte Spalte war, lief der Rest in
+         den Seitenrand aus und fiel nicht auf. Mit dem Chat rechts daneben
+         wurde daraus genau das LOCH ZWISCHEN ZWEI PANELS, das drei Absätze
+         weiter oben schon als Fehler steht.
+
+         Jetzt trägt der Deckel die SPUR und nicht mehr der Inhalt darin, und
+         die überzählige Breite geht an die Panels aussen. Die haben etwas
+         davon: mehr Zutaten pro Blick, breitere Chat-Blasen. Die Zubereitung
+         behält ihre Lesebreite, egal wie gross der Schirm ist.
+
+         Die 48rem sind eine Lesebreite, keine Layoutzahl: Bei 1.375rem Zain
+         ergaben die früheren 56.25rem rund 90 Zeichen pro Zeile, deutlich über
+         dem, was sich ruhig lesen lässt. -->
     <div
       class="flex min-h-0 w-full grow flex-col gap-6 overflow-y-auto px-3 py-4 xl:grid xl:items-stretch xl:gap-0 xl:overflow-hidden xl:p-0"
       :class="isChatColumnVisible
-        ? 'xl:grid-cols-[24.75rem_minmax(0,1fr)_24.75rem]'
-        : 'xl:grid-cols-[24.75rem_minmax(0,1fr)]'"
+        ? 'xl:grid-cols-[minmax(24.75rem,1fr)_minmax(0,48rem)_minmax(24.75rem,1fr)]'
+        : 'xl:grid-cols-[minmax(24.75rem,1fr)_minmax(0,48rem)]'"
     >
       <div
         class="contents xl:flex xl:h-full xl:min-h-0 xl:min-w-0 xl:flex-col xl:border-r xl:bg-[var(--md-surface-low)]"
@@ -806,7 +818,7 @@ function onImageGenerated(imageRef: string): void {
                 <span class="min-w-0 grow truncate text-[1.25rem]">{{ ingredient.name }}</span>
                 <span
                   v-if="ingredient.quantity > 1"
-                  class="flex h-7 min-w-9 shrink-0 items-center justify-center rounded-lg px-2 text-[1.0625rem] font-bold"
+                  class="optical-center flex h-7 min-w-9 shrink-0 items-center justify-center rounded-lg px-2 text-[1.0625rem] font-bold"
                   style="background: var(--md-surface-high)"
                 >{{ ingredient.quantity }}&times;</span>
                 <UButton
@@ -907,9 +919,16 @@ function onImageGenerated(imageRef: string): void {
              Weg in den Einkauf war vorher ein kleiner Geisterknopf im
              Sektionskopf — also am ANFANG einer Liste, die man erst lesen
              will, und optisch kaum vorhanden. Hier ist er das, was er ist:
-             der Abschluss dieser Spalte, mit der Zahl im Text. -->
+             der Abschluss dieser Spalte, mit der Zahl im Text.
+
+             DIE 7.5rem SIND GERECHNET, nicht gegriffen: zwei Bedienelemente
+             à `--size-control-lg` (2.5rem, siehe app.config.ts), 0.5rem
+             Abstand dazwischen, 1rem Polsterung oben wie unten. Sie steht
+             hier fest, damit sie nicht mitwandert, wenn im Sortiermodus das
+             Eingabefeld verschwindet — und weil die Zubereitung daneben auf
+             dieselbe Höhe geht. -->
         <div
-          class="hidden xl:flex xl:shrink-0 xl:flex-col xl:gap-2 xl:border-t xl:p-4"
+          class="hidden xl:flex xl:h-30 xl:shrink-0 xl:flex-col xl:justify-end xl:gap-2 xl:border-t xl:p-4"
           style="border-color: var(--md-outline-variant)"
         >
           <UInput
@@ -936,11 +955,9 @@ function onImageGenerated(imageRef: string): void {
       <!-- Die Arbeitsspalte ist ebenfalls ein Panel: Kopf mit Fortschritt,
            scrollender Rumpf, fester Fuss mit dem Eingabefeld.
 
-           DAS PANEL füllt die volle Restbreite, die 48rem deckeln nur den
-           INHALT darin. Der Unterschied ist der ganze Punkt: Deckelt man das
-           Panel, liegt rechts daneben Seitenhintergrund und das liest sich als
-           Loch. Deckelt man den Inhalt, liegt dort die Arbeitsfläche selbst —
-           dieselbe Fläche, nur ohne Text darauf. -->
+           Die Lesebreite steckt in der RASTERSPUR (siehe oben), nicht mehr
+           hier im Inhalt. Ein Deckel im Inhalt liess das Panel weiter wachsen
+           und legte den Überschuss als leere Fläche daneben. -->
       <div class="contents xl:flex xl:h-full xl:min-h-0 xl:w-full xl:min-w-0 xl:flex-col">
         <!-- Fortschritt steht auf dem Desktop fest über der Arbeitsspalte. -->
         <!-- Feste Kopfhöhe, damit die Trennlinie hier und die der Chat-Spalte
@@ -963,7 +980,7 @@ function onImageGenerated(imageRef: string): void {
           />
         </div>
 
-        <div class="contents xl:flex xl:min-h-0 xl:w-full xl:max-w-[48rem] xl:grow xl:flex-col xl:gap-6 xl:overflow-y-auto xl:p-7 xl:pt-5">
+        <div class="contents xl:flex xl:min-h-0 xl:w-full xl:grow xl:flex-col xl:gap-6 xl:overflow-y-auto xl:p-7 xl:pt-5">
           <!-- Schritte -->
           <section class="flex flex-col gap-1">
             <h2
@@ -998,7 +1015,7 @@ function onImageGenerated(imageRef: string): void {
                   />
                 </span>
                 <span
-                  class="flex size-7 shrink-0 items-center justify-center rounded-full text-[1rem] font-bold"
+                  class="optical-center flex size-7 shrink-0 items-center justify-center rounded-full text-[1rem] font-bold"
                   style="background: var(--md-surface-high); color: var(--md-on-surface-variant)"
                 >{{ index + 1 }}</span>
                 <span class="min-w-0 grow text-[1.25rem] xl:text-[1.375rem]">{{ step.description }}</span>
@@ -1031,7 +1048,7 @@ function onImageGenerated(imageRef: string): void {
                 @click="onToggleStep(step)"
               >
                 <span
-                  class="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-[1rem] font-bold transition-colors"
+                  class="optical-center mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-[1rem] font-bold transition-colors"
                   :style="step.isChecked
                     ? 'background: var(--md-check-content); color: white'
                     : 'background: var(--md-surface-high); color: var(--md-on-surface-variant)'"
@@ -1174,20 +1191,32 @@ function onImageGenerated(imageRef: string): void {
 
         <!-- Panel-Fuss der Arbeitsspalte, Gegenstück zur Werkbank: Das
              Eingabefeld steht fest unten statt am Ende einer Liste, die man
-             erst hinunterscrollen muss. Genau so macht es auch eine Liste. -->
+             erst hinunterscrollen muss. Genau so macht es auch eine Liste.
+
+             MEHRZEILIG UND GLEICH HOCH WIE DIE WERKBANK-LEISTE (7.5rem, siehe
+             die Rechnung dort). Beides zusammen, nicht nacheinander: Ein
+             Schritt ist ein Satz und keine Vokabel, ein einzeiliges Feld
+             schiebt beim Tippen den Anfang aus dem Blick. Und die Trennlinien
+             der beiden Spalten liegen so auf einer Höhe statt um eine
+             Bedienelementhöhe versetzt.
+
+             Enter schickt ab, Umschalt+Enter macht einen Zeilenumbruch — die
+             Gewohnheit aus jedem Chatfenster. `keydown.enter.exact.prevent`
+             statt `keyup.enter`: Ohne `exact` löste auch Umschalt+Enter aus,
+             ohne `prevent` stünde der Umbruch schon im Feld. -->
         <div
           v-if="!isSortMode"
-          class="hidden xl:block xl:shrink-0 xl:border-t xl:px-7 xl:py-4"
+          class="hidden xl:flex xl:h-30 xl:shrink-0 xl:border-t xl:px-7 xl:py-4"
           style="border-color: var(--md-outline-variant)"
         >
-          <UInput
+          <UTextarea
             v-model="newStep"
             placeholder="Schritt hinzufügen"
-            icon="i-lucide-plus"
             size="lg"
+            :rows="2"
             enterkeyhint="done"
-            :ui="{ root: 'w-full' }"
-            @keyup.enter="submitStep"
+            :ui="{ root: 'h-full w-full', base: 'h-full resize-none' }"
+            @keydown.enter.exact.prevent="submitStep"
           />
         </div>
       </div>

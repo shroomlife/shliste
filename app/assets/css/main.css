@@ -36,6 +36,29 @@
   --text-display-large: 2rem;     /* 32 */
   --text-headline-large: 2.25rem; /* 36 */
 
+  /* --- Höhe der Bedienelemente -----------------------------------------
+   * EINE Zahl je Grösse, für Eingabefelder, Knöpfe und die von Hand gebauten
+   * Kacheln gleichermassen.
+   *
+   * Nuxt UI leitet die Höhe seiner Bedienelemente sonst aus Polsterung und
+   * Zeilenhöhe ab (`lg` = 2.25rem, `xl` = 2.5rem). Das ist an sich stimmig,
+   * passt aber zu keiner runden Zahl — und sobald daneben etwas Eigenes steht,
+   * das eine echte Höhe gesetzt bekommt, stimmen die drei Pixel nicht mehr.
+   * Genau so sah die Eingabeleiste einer Liste aus: Feld 41, Mengenkachel 44,
+   * AI-Knopf 41.
+   *
+   * `xl` liegt bewusst auf 2.75rem: 44 Pixel sind das Mindestmass der
+   * iOS-Richtlinien für ein Tippziel, und `xl` trägt genau die Leisten, die man
+   * im Laden mit dem Daumen bedient. `lg` bleibt eine Stufe darunter.
+   *
+   * Als schlichte Variablen und nicht über einen Tailwind-Namensraum: Ein
+   * `--size-*`-Eintrag erzeugt hier KEINE `h-*`-Klasse — nachgemessen, die
+   * Kachel fiel damit auf Inhaltshöhe zusammen. `h-[var(...)]` gilt immer und
+   * passt zu den übrigen `--md-*`-Tokens dieser Datei.
+   */
+  --md-control-lg: 2.5rem;  /* 40 */
+  --md-control-xl: 2.75rem; /* 44 */
+
   /* --- Radien ----------------------------------------------------------
    * Android hat keine Shapes.kt; die Werte stehen inline. Dominant sind
    * 8 und 12, groessere Flaechen nutzen 16/20/24.
@@ -319,6 +342,35 @@ body {
  * Die Werte sind die von M3: 8 Prozent beim Zeigen, 12 beim Drücken. Hier
  * etwas zurückgenommen, weil die Flaechen dieser App ohnehin hell sind.
  */
+/*
+ * Optische Mitte statt Kastenmitte — für Kacheln und Plaketten, in denen nur
+ * Ziffern oder Grossbuchstaben stehen.
+ *
+ * DAS FEHLERBILD: Die Mengenkachel "1x" sass sichtbar zu hoch in ihrem
+ * Quadrat, obwohl `items-center justify-center` daran stand. Zentriert wird
+ * dabei nämlich die ZEILENBOX, und die reicht bis zur Unterlänge der Schrift —
+ * auch wenn gar kein Buchstabe mit Unterlänge darin vorkommt.
+ *
+ * GEMESSEN, nicht geschätzt (Canvas-Metriken von Zain, bold):
+ *   Oberlänge  1.073em
+ *   Unterlänge 0.585em
+ *   Versalhöhe 0.732em
+ * Die Zeilenbox liegt damit (1.073 - 0.585) / 2 = 0.244em über der Grundlinie
+ * zentriert, die sichtbare Tinte aber 0.732 / 2 = 0.366em. Der Unterschied von
+ * 0.122em ist genau der Betrag, um den die Ziffern zu hoch sitzen.
+ *
+ * Eine Polsterung oben von 0.244em verschiebt den zentrierten Inhalt um die
+ * Hälfte davon nach unten — also um die gesuchten 0.122em. Das setzt eine
+ * FESTE HÖHE voraus; bei allen Kacheln, die das benutzen, ist sie gesetzt.
+ *
+ * `text-box-trim: trim-both` wäre der modernere Weg und käme ohne Rechnung
+ * aus. Firefox kennt es noch nicht, und ein Zentrieren, das nur in zwei von
+ * drei Browsern stimmt, ist keins.
+ */
+@utility optical-center {
+  padding-top: 0.244em;
+}
+
 @utility state-layer {
   position: relative;
 
