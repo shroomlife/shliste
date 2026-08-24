@@ -76,7 +76,7 @@ function metaLine(entry: HistoryEntryRow): string {
       >
         <UIcon
           name="i-lucide-trash-2"
-          class="size-4.5 shrink-0"
+          class="size-5 shrink-0"
           style="color: var(--md-delete-content)"
         />
 

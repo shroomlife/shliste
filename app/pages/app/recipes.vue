@@ -41,6 +41,9 @@ const isSaving = ref(false)
 /** Mobil: Der FAB öffnet erst diese Auswahl (Neu + die drei AI-Wege). */
 const isChooserOpen = ref(false)
 
+/** Das Angebot statt der Absage — siehe AiUpsellSheet. */
+const isAiUpsellOpen = ref(false)
+
 const aiMode = ref<AiCreateMode>('voice')
 const isAiCreateOpen = ref(false)
 
@@ -56,14 +59,13 @@ function chooseManualCreate(): void {
 function startAiCreate(mode: AiCreateMode): void {
   isChooserOpen.value = false
 
-  // Die BFF signiert AI-Aufrufe nur für Angemeldete — ehrlicher Hinweis
+  // Die BFF signiert AI-Aufrufe nur für Angemeldete — ehrliches Angebot
   // statt eines Fehlers nach fünf Sekunden Wartezeit.
   if (!isSignedIn.value) {
-    toast.add({
-      title: 'Anmeldung erforderlich',
-      description: 'Melde dich an, um die AI-Funktionen zu nutzen.',
-      icon: 'i-lucide-lock',
-    })
+    // Kein Toast: Wer gerade auf eine AI-Funktion getippt hat, hat sein
+    // Interesse gezeigt. Das ist der Moment für ein Angebot, nicht für eine
+    // Absage, die nach vier Sekunden von selbst verschwindet.
+    isAiUpsellOpen.value = true
     return
   }
 
@@ -343,6 +345,8 @@ async function submitDialog(): Promise<void> {
         </UButton>
       </div>
     </AppSheet>
+
+    <AiUpsellSheet v-model:open="isAiUpsellOpen" />
 
     <AiRecipeCreateSheet
       v-model:open="isAiCreateOpen"

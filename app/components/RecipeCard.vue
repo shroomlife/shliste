@@ -98,7 +98,7 @@ watch(imageUrl, () => {
       aria-hidden="true"
     />
 
-    <span class="relative min-w-0 truncate text-[2.25rem] leading-9 font-bold">{{ recipe.name }}</span>
+    <span class="relative min-w-0 truncate text-[1.375rem] leading-7 font-bold">{{ recipe.name }}</span>
 
     <div class="relative flex items-center gap-1.5">
       <!-- Gold wie Androids badgeGold (0xFFDAA520) — bewusst kein Token: die

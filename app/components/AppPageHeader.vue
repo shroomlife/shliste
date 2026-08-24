@@ -18,7 +18,7 @@ const emit = defineEmits<{ action: [] }>()
 
 <template>
   <header class="flex items-center justify-between gap-3 px-5 pt-5 pb-3">
-    <h1 class="text-[1.875rem] leading-8 font-bold">
+    <h1 class="text-[1.625rem] leading-8 font-bold">
       {{ title }}
     </h1>
     <UButton

@@ -1,5 +1,7 @@
 import type { ListRow } from '../db/schema'
-import { getItemsForList, getListsForView, getMembersForList, isUnseenForeignChange, upsertList } from '../db/repositories'
+import { getItemsForList, getListsForView, getMembersForList, isUnseenForeignChange, upsertItem, upsertList } from '../db/repositories'
+import { clampQuantity, nextOrderIndex } from './useListDetail'
+import { nextSortKey } from '../sync/merge/reorder'
 import { randomListColor } from '../utils/color'
 
 /**
@@ -141,10 +143,58 @@ export function useLists() {
     return row
   }
 
+  /**
+   * Hängt mehrere Einträge an eine BELIEBIGE Liste — der Weg vom Rezept in den
+   * Einkauf.
+   *
+   * Das Gegenstück in `useListDetail` kann das nicht: Es arbeitet immer auf der
+   * gerade geöffneten Liste, und hier ist das Ziel eine andere.
+   *
+   * Ordnungswert und Sortierschlüssel werden je Eintrag WEITERGEZÄHLT statt
+   * einmal berechnet: Würden alle aus demselben Ausgangsbestand abgeleitet,
+   * bekämen fünf Zutaten denselben Platz und stünden anschliessend in
+   * beliebiger Reihenfolge da.
+   *
+   * @returns wie viele Einträge tatsächlich entstanden sind.
+   */
+  async function addItemsToList(
+    listId: string,
+    eintraege: readonly { name: string, quantity: number }[],
+  ): Promise<number> {
+    const bestand = [...await getItemsForList(listId)]
+    let angelegt = 0
+
+    for (const eintrag of eintraege) {
+      const name = eintrag.name.trim()
+      if (name.length === 0) continue
+
+      const row = await upsertItem({
+        id: crypto.randomUUID(),
+        listId,
+        name,
+        quantity: clampQuantity(eintrag.quantity),
+        checked: false,
+        removed: false,
+        orderIndex: nextOrderIndex(bestand),
+        sortKey: nextSortKey(bestand),
+        createdBy: null,
+        modifiedBy: null,
+        deletedAt: null,
+      })
+
+      bestand.push(row)
+      angelegt += 1
+    }
+
+    if (angelegt > 0) await reload()
+    return angelegt
+  }
+
   return {
     entries,
     isLoading: readonly(isLoading),
     reload,
     createList,
+    addItemsToList,
   }
 }

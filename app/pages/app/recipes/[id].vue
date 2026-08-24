@@ -54,6 +54,12 @@ const { isSignedIn } = useAuth()
 const haptics = useHaptics()
 const toast = useToast()
 
+/** Der Weg vom Rezept in den Einkauf — siehe RecipeToListSheet. */
+const isToListOpen = ref(false)
+
+/** Das Angebot statt der Absage — siehe AiUpsellSheet. */
+const isAiUpsellOpen = ref(false)
+
 /**
  * Serverbild des Rezepts. Nur `sync:`-Referenzen sind für die PWA auflösbar;
  * lokale Android-Pfade ergeben null — dann wird gar keine Bildfläche gerendert
@@ -480,14 +486,13 @@ function onExplained(explanation: string): void {
 const imageGenTarget = ref<{ recipeId: string, recipeText: string } | null>(null)
 
 function startImageGeneration(): void {
-  // Die BFF signiert AI-Aufrufe nur für Angemeldete — ehrlicher Hinweis
+  // Die BFF signiert AI-Aufrufe nur für Angemeldete — ehrliches Angebot
   // statt eines Fehlers nach fünf Sekunden Wartezeit.
   if (!isSignedIn.value) {
-    toast.add({
-      title: 'Anmeldung erforderlich',
-      description: 'Melde dich an, um die AI-Funktionen zu nutzen.',
-      icon: 'i-lucide-lock',
-    })
+    // Kein Toast: Wer gerade auf eine AI-Funktion getippt hat, hat sein
+    // Interesse gezeigt. Das ist der Moment für ein Angebot, nicht für eine
+    // Absage, die nach vier Sekunden von selbst verschwindet.
+    isAiUpsellOpen.value = true
     return
   }
   const target = recipe.value
@@ -518,14 +523,14 @@ function onImageGenerated(imageRef: string): void {
          Titel auf, Bild und Verlauf gehören dort der linken Werkbank. Auf
          Mobil bleibt alles wie gehabt: Bild im Kopf, Farbverlauf darüber. -->
     <header
-      class="relative flex shrink-0 flex-col gap-2.5 px-5 py-5 lg:border-b lg:px-7"
+      class="relative flex shrink-0 flex-col gap-2.5 px-5 py-5 xl:border-b xl:px-7"
       :style="{ '--list-color': recipe?.color ?? 'var(--md-primary)', 'borderColor': 'var(--md-outline-variant)' }"
     >
       <img
         v-if="recipeImageUrl !== null && !isImageBroken"
         :src="recipeImageUrl"
         alt=""
-        class="aspect-[2/1] w-full rounded-xl object-cover lg:hidden"
+        class="aspect-[2/1] w-full rounded-xl object-cover xl:hidden"
         @error="isImageBroken = true"
       >
 
@@ -536,7 +541,7 @@ function onImageGenerated(imageRef: string): void {
         list-tint-Utility, nur als Verlauf statt als Fläche.
       -->
       <div
-        class="pointer-events-none absolute inset-0 lg:hidden"
+        class="pointer-events-none absolute inset-0 xl:hidden"
         style="background: linear-gradient(to bottom, color-mix(in srgb, var(--list-color, var(--md-primary)) 20%, transparent), transparent)"
         aria-hidden="true"
       />
@@ -544,7 +549,7 @@ function onImageGenerated(imageRef: string): void {
       <div class="relative flex items-start gap-3">
         <NuxtLink
           to="/app/recipes"
-          class="mt-1 shrink-0 lg:hidden"
+          class="mt-1 shrink-0 xl:hidden"
           aria-label="Zurück zur Übersicht"
         >
           <UIcon
@@ -553,7 +558,7 @@ function onImageGenerated(imageRef: string): void {
           />
         </NuxtLink>
 
-        <h1 class="min-w-0 grow text-[2.25rem] leading-9 font-extrabold">
+        <h1 class="title-page min-w-0 grow font-extrabold">
           {{ recipe?.name ?? 'Rezept' }}
         </h1>
 
@@ -570,7 +575,7 @@ function onImageGenerated(imageRef: string): void {
 
       <!-- Der Akzentstrich ist die Rezeptfarbe des Desktop-Kopfs. -->
       <div
-        class="hidden h-1 w-16 rounded-full lg:block"
+        class="hidden h-1 w-16 rounded-full xl:block"
         style="background: color-mix(in srgb, var(--list-color) 75%, transparent)"
         aria-hidden="true"
       />
@@ -578,7 +583,7 @@ function onImageGenerated(imageRef: string): void {
       <!-- Auf dem Desktop steht der Fortschritt fest über den Schritten. -->
       <div
         v-if="steps.length"
-        class="relative flex items-center gap-3.5 lg:hidden"
+        class="relative flex items-center gap-3.5 xl:hidden"
       >
         <span
           class="text-[1rem]"
@@ -653,47 +658,79 @@ function onImageGenerated(imageRef: string): void {
       </template>
     </AppSheet>
 
+    <RecipeToListSheet
+      v-model:open="isToListOpen"
+      :ingredients="ingredients"
+    />
+
     <!-- Ein Scrollbereich, auf dem Desktop als Cockpit-Raster: links die
          stehende Werkbank (Bild, Zutaten, AI-Griffe), rechts die Schritte als
          Arbeitsspalte. `contents` lässt die Wrapper auf Mobil verschwinden —
-         dort bleibt der bisherige einspaltige Fluss unverändert. -->
-    <div class="flex min-h-0 grow flex-col gap-6 overflow-y-auto px-3 py-4 lg:grid lg:grid-cols-[24.75rem_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:p-0">
+         dort bleibt der bisherige einspaltige Fluss unverändert.
+
+         GAR NICHT ZENTRIEREN. Zwei Anläufe waren falsch: erst schwebte die
+         Schrittspalte allein in der Mitte, dann das ganze Paar. Zentrieren
+         setzt voraus, dass links und rechts dasselbe liegt — hier liegt links
+         die Rezeptliste und rechts der Bildschirmrand. Jedes `mx-auto` in
+         dieser Kaskade erzeugt deshalb ein LOCH zwischen zwei Panels statt
+         eines Randes. Die Werkbank dockt jetzt hart an die Rezeptliste an
+         (beide tragen dieselbe Tönung und lesen sich dadurch als eine Zone),
+         überzählige Breite bleibt als ein Rand rechts stehen.
+
+         UND ERST AB xl, NICHT ab lg: Bei 1024px bleiben nach Rail (84) plus
+         Rezeptliste (344) plus Werkbank (396) genau 200px für die Zubereitung
+         übrig. Das war kein 4K-Problem, das traf jeden schmalen Laptop.
+
+         Die 48rem der Arbeitsspalte sind eine Lesebreite, keine Layoutzahl:
+         Bei 1.375rem Zain ergaben die früheren 56.25rem rund 90 Zeichen pro
+         Zeile, deutlich über dem, was sich ruhig lesen lässt. -->
+    <div class="flex min-h-0 w-full grow flex-col gap-6 overflow-y-auto px-3 py-4 xl:grid xl:grid-cols-[24.75rem_minmax(0,1fr)] xl:items-stretch xl:gap-0 xl:overflow-hidden xl:p-0">
       <div
-        class="contents lg:block lg:min-w-0 lg:border-r lg:bg-[var(--md-surface-low)]"
+        class="contents xl:flex xl:h-full xl:min-h-0 xl:min-w-0 xl:flex-col xl:border-r xl:bg-[var(--md-surface-low)]"
         style="border-color: var(--md-outline-variant)"
       >
-        <div class="contents lg:sticky lg:top-0 lg:flex lg:flex-col lg:gap-4 lg:p-5">
-          <img
-            v-if="recipeImageUrl !== null && !isImageBroken"
-            :src="recipeImageUrl"
-            alt=""
-            class="hidden h-[14.75rem] w-full rounded-xl object-cover lg:block"
-            @error="isImageBroken = true"
-          >
+        <div class="contents xl:flex xl:min-h-0 xl:grow xl:flex-col xl:gap-4 xl:overflow-y-auto xl:p-5">
+          <!-- Der Platz fürs Bild steht IMMER, auch wenn keins da ist. Vorher
+               verschwand er ersatzlos, und ein Rezept ohne Bild sah nicht aus
+               wie "hier könnte eins sein", sondern wie ein Fehler im Layout. -->
+          <div class="hidden h-[14.75rem] w-full shrink-0 xl:block">
+            <img
+              v-if="recipeImageUrl !== null && !isImageBroken"
+              :src="recipeImageUrl"
+              alt=""
+              class="size-full rounded-xl object-cover"
+              @error="isImageBroken = true"
+            >
+            <button
+              v-else
+              type="button"
+              class="state-layer flex size-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed"
+              style="border-color: var(--md-outline-variant); color: var(--md-on-surface-variant)"
+              @click="startImageGeneration"
+            >
+              <UIcon
+                name="i-lucide-image-plus"
+                class="size-8"
+              />
+              <span class="text-[1rem]">Bild erzeugen</span>
+            </button>
+          </div>
 
           <!-- Zutaten -->
-          <section class="flex flex-col gap-1">
+          <section class="flex flex-col gap-2">
             <div class="flex items-baseline justify-between">
               <h2
-                class="px-2 text-[1.25rem] font-bold"
+                class="px-2 text-[1.125rem] font-extrabold"
                 style="color: var(--md-on-surface-variant)"
               >
                 Zutaten
               </h2>
               <span
                 v-if="ingredients.length > 0"
-                class="hidden px-2 text-[0.9375rem] lg:inline"
+                class="px-2 text-[0.9375rem]"
                 style="color: var(--md-on-surface-variant)"
               >{{ ingredients.length }}</span>
             </div>
-
-            <p
-              v-if="ingredients.length === 0"
-              class="px-2 text-[1rem]"
-              style="color: var(--md-on-surface-variant)"
-            >
-              Noch keine Zutaten.
-            </p>
 
             <div
               ref="ingredientList"
@@ -736,13 +773,15 @@ function onImageGenerated(imageRef: string): void {
               </div>
             </div>
 
+            <!-- Auf Mobil bleibt das Feld im Fluss; auf dem Desktop steht es
+                 unten im Panel-Fuss, wie die Eingabezeile einer Liste. -->
             <UInput
               v-if="!isSortMode"
               v-model="newIngredient"
               placeholder="Zutat hinzufügen"
               icon="i-lucide-plus"
               size="lg"
-              class="mt-1"
+              class="mt-1 xl:hidden"
               enterkeyhint="done"
               :ui="{ root: 'w-full' }"
               @keyup.enter="submitIngredient"
@@ -753,7 +792,7 @@ function onImageGenerated(imageRef: string): void {
                dort öffnet sie die aufklappbare Sektion am Seitenende. -->
           <div
             v-if="isSignedIn && !isSortMode"
-            class="hidden lg:flex lg:flex-col lg:gap-2 lg:pt-1"
+            class="hidden xl:flex xl:flex-col xl:gap-2 xl:pt-1"
           >
             <button
               type="button"
@@ -795,13 +834,50 @@ function onImageGenerated(imageRef: string): void {
             </button>
           </div>
         </div>
+
+        <!-- Panel-Fuss: steht fest, egal wie lang die Zutatenliste wird. Der
+             Weg in den Einkauf war vorher ein kleiner Geisterknopf im
+             Sektionskopf — also am ANFANG einer Liste, die man erst lesen
+             will, und optisch kaum vorhanden. Hier ist er das, was er ist:
+             der Abschluss dieser Spalte, mit der Zahl im Text. -->
+        <div
+          class="hidden xl:flex xl:shrink-0 xl:flex-col xl:gap-2 xl:border-t xl:p-4"
+          style="border-color: var(--md-outline-variant)"
+        >
+          <UInput
+            v-if="!isSortMode"
+            v-model="newIngredient"
+            placeholder="Zutat hinzufügen"
+            icon="i-lucide-plus"
+            size="lg"
+            enterkeyhint="done"
+            :ui="{ root: 'w-full' }"
+            @keyup.enter="submitIngredient"
+          />
+          <UButton
+            v-if="ingredients.length > 0"
+            block
+            size="lg"
+            icon="i-lucide-list-plus"
+            :label="ingredients.length === 1 ? '1 Zutat zur Liste' : `${ingredients.length} Zutaten zur Liste`"
+            @click="isToListOpen = true"
+          />
+        </div>
       </div>
 
-      <div class="contents lg:flex lg:min-w-0 lg:flex-col">
+      <!-- Die Arbeitsspalte ist ebenfalls ein Panel: Kopf mit Fortschritt,
+           scrollender Rumpf, fester Fuss mit dem Eingabefeld.
+
+           DAS PANEL füllt die volle Restbreite, die 48rem deckeln nur den
+           INHALT darin. Der Unterschied ist der ganze Punkt: Deckelt man das
+           Panel, liegt rechts daneben Seitenhintergrund und das liest sich als
+           Loch. Deckelt man den Inhalt, liegt dort die Arbeitsfläche selbst —
+           dieselbe Fläche, nur ohne Text darauf. -->
+      <div class="contents xl:flex xl:h-full xl:min-h-0 xl:w-full xl:min-w-0 xl:flex-col">
         <!-- Fortschritt steht auf dem Desktop fest über der Arbeitsspalte. -->
         <div
           v-if="steps.length"
-          class="sticky top-0 z-10 hidden items-center gap-3.5 border-b px-7 py-3 lg:flex"
+          class="hidden shrink-0 items-center gap-3.5 border-b px-7 py-3 xl:flex"
           style="background: var(--md-surface); border-color: var(--md-outline-variant)"
         >
           <span
@@ -815,23 +891,15 @@ function onImageGenerated(imageRef: string): void {
           />
         </div>
 
-        <div class="contents lg:mx-auto lg:flex lg:max-w-[56.25rem] lg:flex-col lg:gap-6 lg:p-7 lg:pt-5">
+        <div class="contents xl:flex xl:min-h-0 xl:w-full xl:max-w-[48rem] xl:grow xl:flex-col xl:gap-6 xl:overflow-y-auto xl:p-7 xl:pt-5">
           <!-- Schritte -->
           <section class="flex flex-col gap-1">
             <h2
-              class="px-2 text-[1.25rem] font-bold"
+              class="px-2 text-[1.125rem] font-extrabold"
               style="color: var(--md-on-surface-variant)"
             >
               Zubereitung
             </h2>
-
-            <p
-              v-if="steps.length === 0"
-              class="px-2 text-[1rem]"
-              style="color: var(--md-on-surface-variant)"
-            >
-              Noch keine Schritte.
-            </p>
 
             <div
               ref="stepList"
@@ -861,7 +929,7 @@ function onImageGenerated(imageRef: string): void {
                   class="flex size-7 shrink-0 items-center justify-center rounded-full text-[1rem] font-bold"
                   style="background: var(--md-surface-high); color: var(--md-on-surface-variant)"
                 >{{ index + 1 }}</span>
-                <span class="min-w-0 grow text-[1.25rem] lg:text-[1.375rem]">{{ step.description }}</span>
+                <span class="min-w-0 grow text-[1.25rem] xl:text-[1.375rem]">{{ step.description }}</span>
                 <UButton
                   icon="i-lucide-x"
                   color="neutral"
@@ -885,8 +953,8 @@ function onImageGenerated(imageRef: string): void {
             >
               <button
                 type="button"
-                class="state-layer flex min-h-14 w-full min-w-0 grow items-start gap-3.5 rounded-lg px-2 py-2 text-left transition-colors"
-                :class="[step.isChecked && 'opacity-65', step.id === currentStepId && 'lg:bg-[var(--md-surface-container)]']"
+                class="state-layer flex w-full min-w-0 grow items-start gap-3.5 rounded-lg px-2 py-3 text-left transition-colors"
+                :class="[step.isChecked && 'opacity-65', step.id === currentStepId && 'xl:bg-[var(--md-surface-container)]']"
                 :aria-pressed="step.isChecked"
                 @click="onToggleStep(step)"
               >
@@ -904,7 +972,7 @@ function onImageGenerated(imageRef: string): void {
                   <template v-else>{{ index + 1 }}</template>
                 </span>
                 <span
-                  class="min-w-0 grow text-[1.25rem] lg:text-[1.375rem]"
+                  class="min-w-0 grow text-[1.25rem] xl:text-[1.375rem]"
                   :class="step.isChecked && 'line-through'"
                   style="text-wrap: pretty"
                 >{{ step.description }}</span>
@@ -918,7 +986,7 @@ function onImageGenerated(imageRef: string): void {
                 color="neutral"
                 variant="ghost"
                 size="sm"
-                class="mt-2.5 shrink-0 rounded-full transition-opacity"
+                class="mt-2 shrink-0 rounded-full transition-opacity"
                 :class="step.aiExplanation === null && 'opacity-40 group-hover:opacity-100 focus-visible:opacity-100'"
                 :style="step.aiExplanation !== null ? 'color: var(--md-primary)' : ''"
                 :aria-label="`Schritt ${index + 1} erklären`"
@@ -932,7 +1000,7 @@ function onImageGenerated(imageRef: string): void {
               placeholder="Schritt hinzufügen"
               icon="i-lucide-plus"
               size="lg"
-              class="mt-1"
+              class="mt-1 xl:hidden"
               enterkeyhint="done"
               :ui="{ root: 'w-full' }"
               @keyup.enter="submitStep"
@@ -944,7 +1012,7 @@ function onImageGenerated(imageRef: string): void {
            in der linken Werkbank. -->
           <div
             v-if="!isSortMode"
-            class="mt-2 flex shrink-0 flex-col gap-2 px-1 pb-2 lg:hidden"
+            class="mt-2 flex shrink-0 flex-col gap-2 px-1 pb-2 xl:hidden"
           >
             <button
               type="button"
@@ -1008,18 +1076,52 @@ function onImageGenerated(imageRef: string): void {
                 </button>
               </template>
 
-              <p
+              <button
                 v-else
-                class="rounded-xl border px-4 py-3 text-[0.9375rem]"
-                style="border-color: var(--md-outline-variant); color: var(--md-on-surface-variant)"
+                type="button"
+                class="state-layer flex w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left"
+                style="border-color: var(--md-outline-variant)"
+                @click="isAiUpsellOpen = true"
               >
-                Melde dich an, um die AI-Funktionen zu nutzen.
-              </p>
+                <UIcon
+                  name="i-lucide-sparkles"
+                  class="size-5 shrink-0"
+                  style="color: var(--md-primary)"
+                />
+                <span class="flex min-w-0 flex-col">
+                  <span class="text-[1.125rem] font-bold">AI-Funktionen entdecken</span>
+                  <span
+                    class="text-[0.9375rem]"
+                    style="color: var(--md-on-surface-variant)"
+                  >Was ein Konto freischaltet</span>
+                </span>
+              </button>
             </template>
           </div>
         </div>
+
+        <!-- Panel-Fuss der Arbeitsspalte, Gegenstück zur Werkbank: Das
+             Eingabefeld steht fest unten statt am Ende einer Liste, die man
+             erst hinunterscrollen muss. Genau so macht es auch eine Liste. -->
+        <div
+          v-if="!isSortMode"
+          class="hidden xl:block xl:shrink-0 xl:border-t xl:px-7 xl:py-4"
+          style="border-color: var(--md-outline-variant)"
+        >
+          <UInput
+            v-model="newStep"
+            placeholder="Schritt hinzufügen"
+            icon="i-lucide-plus"
+            size="lg"
+            enterkeyhint="done"
+            :ui="{ root: 'w-full' }"
+            @keyup.enter="submitStep"
+          />
+        </div>
       </div>
     </div>
+
+    <AiUpsellSheet v-model:open="isAiUpsellOpen" />
 
     <AiRecipeChatSheet
       v-if="recipe"
@@ -1076,7 +1178,7 @@ function onImageGenerated(imageRef: string): void {
          Falle. -->
     <div
       v-if="isSortMode"
-      class="flex shrink-0 items-center justify-between gap-3 border-t px-3 py-3.5 lg:px-5"
+      class="flex shrink-0 items-center justify-between gap-3 border-t px-3 py-3.5 xl:px-5"
       style="border-color: var(--md-outline-variant)"
     >
       <span

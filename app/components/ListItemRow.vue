@@ -11,17 +11,25 @@ import type { ListItem } from '#shared/types/domain'
  * Deckkraft statt durchgestrichen, die Mengenkachel wechselt auf den
  * gedämpften Ton.
  *
- * Die Bedienlogik bleibt die der PWA: Ein Tipp auf den Namensbereich hakt ab
- * oder wieder auf, Erledigtes wandert in den eigenen Block. Die Aktionsflächen
- * sind zusätzliche, sichtbare Griffe — und eigene Knöpfe NEBEN dem
- * Namensknopf, nie darin: verschachtelte Bedienelemente sind ungültiges HTML
- * und für Tastatur wie Screenreader kaputt.
+ * DIE BEDIENLOGIK IST DIE DER ANDROID-APP: Ein Tipp auf den Namensbereich
+ * öffnet das Bearbeiten-Blatt, abgehakt wird ausschliesslich über die
+ * Aktionsflächen rechts. Vorher hakte der Tipp ab und Bearbeiten lag auf
+ * einem Long-Press — also genau umgekehrt zur App, was auf beiden Geräten
+ * dieselbe Bewegung zu zwei verschiedenen Ergebnissen führen liess. Die
+ * grüne Fläche ist gross, sichtbar und trifft sich sicher; der Name ist es
+ * nicht, und ein versehentliches Abhaken beim Zielen kostete mehr als ein
+ * versehentlich geöffnetes Blatt.
  *
- * Bearbeiten öffnet sich über den Stift oder einen Long-Press auf den
- * Namensbereich (500 ms, bricht bei mehr als 8 px Bewegung ab — dieselben
- * Schwellen wie ein Plattform-Long-Press). Der Stift ist die sichtbare,
- * WCAG-taugliche Alternative: Eine Geste, die man nicht sehen kann, ist
- * keine Bedienung.
+ * KEIN STIFT. Es gab einmal einen zusätzlichen Knopf zum Bearbeiten, der bei
+ * Hover erschien. Er war doppelt gemoppelt (die Zeile selbst öffnet ja das
+ * Blatt) und fühlte sich kaputt an: Wer die Zeile überfährt, sieht ihn
+ * auftauchen, aber er leuchtet nicht mit — zwei Flächen, die sich einen
+ * Hover teilen sollten und es nicht taten. Rechts stehen jetzt nur noch die
+ * Aktionen, die etwas TUN: abhaken, rückgängig, entfernen.
+ *
+ * Diese Aktionsflächen sind eigene Knöpfe NEBEN dem Namensknopf, nie darin:
+ * verschachtelte Bedienelemente sind ungültiges HTML und für Tastatur wie
+ * Screenreader kaputt.
  *
  * `justChanged` löst den einen orchestrierten Bewegungsmoment der App aus:
  * eine Zeile, die gerade ein anderes Gerät geändert hat, leuchtet kurz auf
@@ -47,71 +55,6 @@ const { item, justChanged = false, changedBy = null, sortable = false } = define
 }>()
 
 const emit = defineEmits<{ toggle: [], remove: [], edit: [] }>()
-
-const haptics = useHaptics()
-
-/** Nach so viel Halten gilt der Druck als Long-Press (Plattform-Konvention). */
-const LONG_PRESS_MS = 500
-
-/** Mehr Bewegung als das ist ein Wischen oder Scrollen, kein Halten. */
-const MOVE_TOLERANCE_PX = 8
-
-let longPressTimer: ReturnType<typeof setTimeout> | null = null
-let pressStart: { x: number, y: number } | null = null
-
-/**
- * Nach einem ausgelösten Long-Press feuert der Browser beim Loslassen noch
- * ein Click-Ereignis — das ist nur das Ende derselben Geste und darf nicht
- * zusätzlich abhaken.
- */
-let longPressFired = false
-
-function onNamePointerDown(event: PointerEvent): void {
-  // Nur der primäre Zeiger mit der Haupttaste: Die rechte Maustaste und ein
-  // zweiter Finger sollen kein Bearbeiten öffnen.
-  if (!event.isPrimary || event.button !== 0) return
-
-  pressStart = { x: event.clientX, y: event.clientY }
-  longPressFired = false
-  longPressTimer = setTimeout(() => {
-    longPressTimer = null
-    longPressFired = true
-    // Haptik SYNCHRON im Moment des Auslösens — wie beim Abhaken auf der
-    // Seite: ein Summen, das der Geste hinterherläuft, fühlt sich kaputt an.
-    haptics.longPress()
-    emit('edit')
-  }, LONG_PRESS_MS)
-}
-
-function onNamePointerMove(event: PointerEvent): void {
-  if (longPressTimer === null || pressStart === null) return
-
-  const distance = Math.hypot(event.clientX - pressStart.x, event.clientY - pressStart.y)
-  if (distance > MOVE_TOLERANCE_PX) cancelLongPress()
-}
-
-function cancelLongPress(): void {
-  if (longPressTimer !== null) {
-    clearTimeout(longPressTimer)
-    longPressTimer = null
-  }
-  pressStart = null
-}
-
-function onNameClick(event: MouseEvent): void {
-  if (longPressFired) {
-    longPressFired = false
-    // Verschluckt wird nur der Klick derselben Geste. Eine Tastatur-
-    // Aktivierung (detail === 0) ist nie das Ende eines Long-Press — sie
-    // darf auch dann abhaken, wenn zuvor eine Geste ohne Klick endete.
-    if (event.detail !== 0) return
-  }
-  emit('toggle')
-}
-
-// Ein laufender Timer darf die Komponente nicht überleben — sonst feuert er
-// ins Leere einer bereits entfernten Zeile.
-onBeforeUnmount(cancelLongPress)
 </script>
 
 <template>
@@ -167,14 +110,8 @@ onBeforeUnmount(cancelLongPress)
     <button
       type="button"
       class="state-layer flex min-h-14 min-w-0 grow items-center rounded-sm px-3.5 py-2 text-left"
-      :aria-pressed="item.checked"
-      @click="onNameClick"
-      @pointerdown="onNamePointerDown"
-      @pointermove="onNamePointerMove"
-      @pointerup="cancelLongPress"
-      @pointerleave="cancelLongPress"
-      @pointercancel="cancelLongPress"
-      @contextmenu.prevent
+      :aria-label="`${item.name} bearbeiten`"
+      @click="emit('edit')"
     >
       <span class="flex min-w-0 grow flex-col">
         <span
@@ -189,25 +126,8 @@ onBeforeUnmount(cancelLongPress)
       </span>
     </button>
 
-    <!-- Der Stift: sichtbarer Einstieg ins Bearbeiten, gleichwertig zum
-         Long-Press. Auf grossen Schirmen erst bei Hover oder Fokus, auf
-         schmalen immer — dort gibt es kein Hover, und eine unsichtbare
-         Bedienung ist keine. -->
-    <button
-      type="button"
-      class="flex size-9 shrink-0 items-center justify-center self-center rounded-sm opacity-100 transition-opacity lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100"
-      style="color: var(--md-on-surface-variant)"
-      :aria-label="`${item.name} bearbeiten`"
-      @click="emit('edit')"
-    >
-      <UIcon
-        name="i-lucide-pencil"
-        class="size-4"
-      />
-    </button>
-
     <!-- Offene Zeile: die grüne Abhak-Fläche (SemanticColors.itemCheckSurface).
-         Zusätzlich zum Zeilen-Tap — der grosse, immer sichtbare Griff. -->
+         DER einzige Weg zum Abhaken — gross, sichtbar, sicher zu treffen. -->
     <button
       v-if="!item.checked"
       type="button"

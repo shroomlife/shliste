@@ -31,6 +31,9 @@ const { isRecent } = useRecentlyChanged()
 const haptics = useHaptics()
 const toast = useToast()
 
+/** Das Angebot statt der Absage — siehe AiUpsellSheet. */
+const isAiUpsellOpen = ref(false)
+
 /**
  * Die Mitglieder dieser Liste aus der lokalen Datenbank.
  *
@@ -743,7 +746,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
           />
         </NuxtLink>
 
-        <h1 class="min-w-0 grow text-[2.25rem] leading-9 font-extrabold">
+        <h1 class="title-page min-w-0 grow font-extrabold">
           {{ list?.name ?? 'Liste' }}
         </h1>
 
@@ -808,7 +811,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
       >
         Geheime Listen öffnet bisher nur die Android-App, dort geschützt per
         Fingerabdruck oder Gesichtserkennung. Im Browser bleibt sie zu, solange
-        es hier keinen ebenbürtigen Schutz gibt — ein schwächerer wäre
+        es hier keinen ebenbürtigen Schutz gibt. Ein schwächerer wäre
         schlechter als keiner.
       </p>
     </div>
@@ -825,7 +828,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
              nicht die Position. -->
         <div
           ref="openList"
-          class="flex flex-col gap-0.5"
+          class="flex flex-col gap-2"
         >
           <ListItemRow
             v-for="item in openItems"
@@ -866,7 +869,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
 
         <div
           ref="doneList"
-          class="flex flex-col gap-0.5"
+          class="flex flex-col gap-2"
         >
           <ListItemRow
             v-for="item in doneItems"
@@ -971,13 +974,26 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
             </button>
           </template>
 
-          <p
+          <button
             v-else
-            class="rounded-xl border px-4 py-3 text-[0.9375rem]"
-            style="border-color: var(--md-outline-variant); color: var(--md-on-surface-variant)"
+            type="button"
+            class="state-layer flex w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left"
+            style="border-color: var(--md-outline-variant)"
+            @click="isAiUpsellOpen = true"
           >
-            Melde dich an, um die AI-Funktionen zu nutzen.
-          </p>
+            <UIcon
+              name="i-lucide-sparkles"
+              class="size-5 shrink-0"
+              style="color: var(--md-primary)"
+            />
+            <span class="flex min-w-0 flex-col">
+              <span class="text-[1.125rem] font-bold">AI-Funktionen entdecken</span>
+              <span
+                class="text-[0.9375rem]"
+                style="color: var(--md-on-surface-variant)"
+              >Was ein Konto freischaltet</span>
+            </span>
+          </button>
         </template>
       </div>
 
@@ -1084,6 +1100,8 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
 
     <!-- Fremde Einträge geteilter Listen zeigen den Mitgliedsnamen — dieselbe
          Auflösung wie "bearbeitet von" an den Zeilen. -->
+    <AiUpsellSheet v-model:open="isAiUpsellOpen" />
+
     <HistorySheet
       v-if="!isLocked"
       v-model:open="isHistoryOpen"

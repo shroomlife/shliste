@@ -80,7 +80,7 @@ const unseenLabel = computed(() =>
     }"
   >
     <div class="flex items-center gap-3">
-      <span class="min-w-0 grow truncate text-[2.25rem] leading-9 font-bold">{{ list.name }}</span>
+      <span class="min-w-0 grow truncate text-[1.375rem] leading-7 font-bold">{{ list.name }}</span>
       <!-- Geteilt und geheim sind dieselbe Art von Aussage: "mit dieser Liste
            stimmt etwas Besonderes". Deshalb stehen sie am selben Platz RECHTS
            des Namens, in derselben Grösse und derselben Tönung — wie in
@@ -92,7 +92,7 @@ const unseenLabel = computed(() =>
       <UIcon
         v-if="isShared"
         name="i-lucide-users"
-        class="size-9 shrink-0"
+        class="size-6 shrink-0"
         style="color: var(--md-primary)"
         role="img"
         aria-label="Geteilte Liste"
@@ -100,7 +100,7 @@ const unseenLabel = computed(() =>
       <UIcon
         v-if="list.secret"
         name="i-lucide-lock"
-        class="size-9 shrink-0"
+        class="size-6 shrink-0"
         style="color: var(--md-primary)"
         role="img"
         aria-label="Geheime Liste"

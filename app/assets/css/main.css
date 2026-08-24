@@ -239,9 +239,41 @@ body {
  */
 @media (min-width: 120rem) {
   :root {
-    font-size: clamp(1rem, 0.4rem + 0.5vw, 1.5rem);
+    /*
+     * PROZENT, NICHT REM — und das ist kein Schreibstil, sondern der
+     * Unterschied zwischen Skalieren und Überschreiben: `1rem` meint auf dem
+     * Wurzelelement immer 16px und hätte die Schriftgrösse, die jemand in
+     * seinem Browser eingestellt hat, stillschweigend weggeworfen. Prozent
+     * bezieht sich dagegen auf genau diese Einstellung. Wer 20px bevorzugt,
+     * bekommt hier 20px als Ausgangspunkt und dieselbe Vergrösserung obendrauf.
+     *
+     * Bei 1920px ergibt die Formel exakt 100% — der Übergang bleibt unsichtbar.
+     */
+    font-size: clamp(100%, calc(40% + 0.5vw), 150%);
   }
 }
+
+/*
+ * SEITENTITEL WACHSEN LANGSAMER ALS DER REST
+ *
+ * Die Typo-Skala stammt 1:1 aus der Android-App und ist für ein Handy
+ * abgestimmt: Dort steht eine 36px-Überschrift auf 400px Breite und stimmt.
+ * Wächst nun alles gemeinsam, wird daraus auf einem 4K-Schirm eine
+ * 54px-Überschrift — und die wirkt nicht gross, sondern laut. Auf breiten
+ * Flächen soll eine Skala flacher werden, nicht mitwachsen.
+ *
+ * Deshalb eine Obergrenze in Pixeln: Bis dahin wächst der Titel mit allem
+ * anderen mit, danach hört er auf. Pixel sind hier ausnahmsweise richtig, weil
+ * genau die Unabhängigkeit vom skalierten Wurzelwert gebraucht wird — und weil
+ * die Grenze nur DECKELT, also nie kleiner macht, als ohne sie herauskäme.
+ *
+ * ZUM NACHSTELLEN: nur die 40px anfassen.
+ */
+@utility title-page {
+  font-size: min(var(--text-headline-large), 40px);
+  line-height: 1.05;
+}
+
 
 /*
  * Listenfarben sind echtes Zufalls-RGB (r+g+b zwischen 100 und 700) und werden
@@ -307,6 +339,26 @@ body {
 
   &:active::after {
     opacity: 0.1;
+  }
+
+  /*
+   * Tastaturfokus war bisher UNSICHTBAR. Es gab Hover und Active, aber nichts
+   * für `:focus-visible` — wer sich mit der Tabulatortaste durch die App
+   * bewegt, sah schlicht nicht, wo er steht. Das ist kein Feinschliff, sondern
+   * WCAG 2.4.7, und in Deutschland seit dem 28.06.2025 (BFSG) haftungsrelevant.
+   *
+   * Bewusst ein Ring und nicht nur die Tönung: Eine leicht dunklere Fläche ist
+   * bei 6 Prozent Deckkraft kein erkennbarer Fokus, und `:focus-visible` zeigt
+   * sich ohnehin nur bei Tastaturbedienung — die Maus bekommt davon nichts zu
+   * sehen.
+   */
+  &:focus-visible {
+    outline: 2px solid var(--md-primary);
+    outline-offset: 2px;
+  }
+
+  &:focus-visible::after {
+    opacity: 0.06;
   }
 }
 

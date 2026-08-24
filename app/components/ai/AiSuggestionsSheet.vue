@@ -139,7 +139,7 @@ watch(open, (isOpen) => {
       >
         <UIcon
           name="i-lucide-loader-circle"
-          class="size-7 animate-spin"
+          class="size-9 animate-spin"
           style="color: var(--md-primary)"
         />
         <p
