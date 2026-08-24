@@ -8,6 +8,15 @@ import type { Recipe } from '#shared/types/domain'
  * Bedienung sind Listen und Rezepte dasselbe Muster, und was gleich
  * funktioniert, soll auch gleich aussehen.
  *
+ * DIESE KARTE TRUG DIE LASUR ZWEIMAL: einmal flach als `list-tint`-Fläche und
+ * darüber noch einmal als Verlauf. Zwei Lagen à 20 Prozent ergeben oben rund
+ * 36 Prozent, also fast das Doppelte einer Listenkarte, und weil die flache
+ * Lasur bis zur Unterkante durchlief, lief der Verlauf auch nicht mehr in die
+ * Kartenfläche aus. Geblieben ist der Verlauf; die Grundfläche ist jetzt
+ * `--md-surface` wie bei `ListCard`. Nebenwirkung mit Ansage: Der Auslauf des
+ * Fotos endet in `--md-surface` und traf damit vorher gar nicht die Farbe der
+ * eigenen Karte.
+ *
  * Liegt ein Serverbild vor, wird es wie in der Android-App (RecipeCard.kt)
  * als Hintergrund über die volle Karte gelegt: object-cover, 25 % Deckkraft,
  * darüber der Auslauf-Verlauf nach unten in die Kartenfläche (RecipeCard.kt
@@ -61,10 +70,10 @@ watch(imageUrl, () => {
 <template>
   <NuxtLink
     :to="`/app/recipes/${recipe.id}`"
-    class="state-layer list-tint relative flex flex-col gap-1.5 overflow-hidden rounded-lg p-4 transition-shadow"
+    class="state-layer relative flex flex-col gap-1.5 overflow-hidden rounded-lg p-4"
     :style="{
       '--list-color': recipe.color,
-      ...(active ? { boxShadow: `inset 0 0 0 2px ${recipe.color}` } : {}),
+      'backgroundColor': 'var(--md-surface)',
     }"
   >
     <img
@@ -95,6 +104,27 @@ watch(imageUrl, () => {
     <span
       class="pointer-events-none absolute inset-0"
       style="background: linear-gradient(to bottom, color-mix(in srgb, var(--list-color, var(--md-primary)) 20%, transparent), transparent)"
+      aria-hidden="true"
+    />
+
+    <!--
+      DER AUSWAHLRAHMEN ALS EIGENE LAGE, ganz oben — nicht als `inset`-Schatten
+      am Element selbst.
+
+      DAS FEHLERBILD: Ein inset-Schatten wird VOR den Kindern gemalt. Der
+      Auslauf-Verlauf des Bildes darüber ist unten deckend (`--md-surface`) und
+      hat den Rahmen an der Unterkante und in den unteren Ecken schlicht
+      übermalt — oben blieb er sichtbar, unten löste er sich auf.
+
+      Bei `ListCard` fällt das nicht auf, obwohl dort dieselbe Zeile steht: Der
+      Verlauf ist dort die `background-image` des Elements selbst, und die liegt
+      UNTER dem inset-Schatten. Der Unterschied ist nicht die Farbe, sondern wer
+      den Verlauf trägt.
+    -->
+    <span
+      v-if="active"
+      class="pointer-events-none absolute inset-0 rounded-lg"
+      :style="{ boxShadow: `inset 0 0 0 2px ${recipe.color}` }"
       aria-hidden="true"
     />
 
