@@ -208,8 +208,15 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
   const sendMigrate = (payload: PushPayload): Promise<unknown> =>
     request(SYNC_ENDPOINTS.migrate, { method: 'POST', body: payload })
 
-  const fetchPull = (since: IsoUtc | null): Promise<unknown> =>
-    request(since === null ? SYNC_ENDPOINTS.pull : `${SYNC_ENDPOINTS.pull}?since=${encodeURIComponent(since)}`)
+  const fetchPull = (since: IsoUtc | null, pageToken?: string): Promise<unknown> => {
+    const params = new URLSearchParams()
+    if (since !== null) params.set('since', since)
+    // Setzt eine gekappte Antwort fort. Ohne ihn beginnt der Server von vorn —
+    // und genau das war der Stillstand, den die Blätterung aufhebt.
+    if (pageToken !== undefined) params.set('pageToken', pageToken)
+    const query = params.toString()
+    return request(query === '' ? SYNC_ENDPOINTS.pull : `${SYNC_ENDPOINTS.pull}?${query}`)
+  }
 
   /**
    * Pusht und schluckt dabei jeden Fehler.

@@ -110,6 +110,13 @@ export interface PullResponse {
    * Stand und deckt damit jede Lücke auf, egal woher sie kommt.
    */
   changeSeq: number | null
+  /**
+   * Es gibt weitere Seiten. Der nächste Abruf schickt diesen Wert zurück.
+   *
+   * `null` heisst "fertig". Ein Server ohne dieses Feld verhält sich wie
+   * bisher: `truncated` allein, und dann bleibt der Cursor stehen.
+   */
+  nextPageToken: string | null
   changes: PullChanges | null
 }
 
@@ -134,6 +141,7 @@ export function parsePullResponse(value: unknown): PullResponse {
     // Server, bevor es das Feld gab.
     truncated: readBooleanOr(record, 'truncated', false),
     changeSeq: readNumber(record, 'changeSeq'),
+    nextPageToken: readNonEmptyString(record['nextPageToken']),
     changes: parseChanges(record['changes']),
   }
 }
@@ -176,6 +184,11 @@ export function parsePulledRecipe(value: unknown): PulledRecipe | null {
  * Ein leerer String träfe keine Zeile und wäre bestenfalls wirkungslos; ein
  * anderer Typ ist ein Vertragsbruch, den eine Löschung nicht ausbaden soll.
  */
+/** Ein nicht-leerer String, sonst `null`. */
+function readNonEmptyString(value: unknown): string | null {
+  return typeof value === 'string' && value.length > 0 ? value : null
+}
+
 function readListId(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null
 }
@@ -570,16 +583,33 @@ export async function applyPulledRows(store: PullStore, rows: PulledRows): Promi
   }
 }
 
-/** Holt die Antwort des Servers. `since === null` heisst voller Pull. */
-export type PullFetcher = (since: IsoUtc | null) => Promise<unknown>
+/**
+ * Holt die Antwort des Servers. `since === null` heisst voller Pull.
+ *
+ * `pageToken` setzt eine gekappte Antwort fort (siehe `lib/pull-page.ts` der
+ * API). Ohne ihn beginnt der Server von vorn.
+ */
+export type PullFetcher = (since: IsoUtc | null, pageToken?: string) => Promise<unknown>
+
+/**
+ * Wie viele Seiten ein einzelner Pull höchstens holt.
+ *
+ * Reine Schranke gegen einen Server, der immer weiter Seiten meldet — ohne sie
+ * hinge die App in einer Endlosschleife statt einen unvollständigen Stand zu
+ * melden. Bei 5000 Zeilen je Seite sind das 250.000 Zeilen in einem Lauf; wer
+ * das erreicht, hat ein anderes Problem als eine fehlende Seite.
+ */
+export const MAX_PULL_PAGES = 50
 
 export interface PullOutcome {
   /** Das Wasserzeichen, mit dem gefragt wurde. */
   since: IsoUtc | null
   serverTime: IsoUtc | null
   truncated: boolean
-  /** Wurde das Wasserzeichen vorgerückt? Bei `truncated` niemals. */
+  /** Wurde das Wasserzeichen vorgerückt? Bei einer unvollständigen Antwort niemals. */
   cursorAdvanced: boolean
+  /** Wie viele Seiten dieser Lauf geholt hat. Normalfall: 1. */
+  pages: number
   lists: number
   recipes: number
   badges: number
@@ -600,32 +630,72 @@ export async function runPull(
   fetchPull: PullFetcher,
 ): Promise<PullOutcome> {
   const since = await store.readCursor()
-  const response = parsePullResponse(await fetchPull(since))
 
-  await applyPulledRows(store, response)
+  /*
+   * ÜBER DIE SEITEN LAUFEN, NICHT NUR DIE ERSTE HOLEN.
+   *
+   * Erreicht eine Abfrage die Obergrenze des Servers, meldet er `truncated` und
+   * liefert ein Fortsetzungstoken. Ohne diese Schleife bliebe es beim alten
+   * Verhalten: Cursor steht, nächster Pull holt dieselbe erste Seite, und das
+   * Konto sieht nie wieder etwas Neues — ein sicherer Stillstand, den nichts
+   * als Fehler meldet.
+   *
+   * Der Cursor rückt erst NACH der letzten Seite vor. Bricht es dazwischen ab,
+   * bleibt er stehen und der nächste Lauf beginnt von vorn; der Merge ist
+   * idempotent, das kostet nur Arbeit.
+   */
+  let pageToken: string | undefined
+  let seiten = 0
+  let letzte: PullResponse | null = null
+  let lists = 0
+  let recipes = 0
+  let badges = 0
+  let revokedLists = 0
+  const pendingInvites: PendingInvite[] = []
 
-  // Nach dem Anwenden und nicht davor: Nennt eine Antwort dieselbe Liste
-  // wider Erwarten in beiden Mengen, gewinnt der Entzug. Das ist die sichere
-  // Richtung — eine fälschlich entfernte Liste holt der nächste volle Pull
-  // zurück, eine fälschlich behaltene bliebe für immer stehen.
-  //
-  // DER HARTE WEG, ohne `deletedAt`: Ein Grabstein ginge beim nächsten Push
-  // als Löschabsicht hinaus und zerstörte die Liste für die übrigen
-  // Mitglieder, obwohl nur dieses Konto sie nicht mehr sieht (siehe
-  // `hardDeleteList` in `app/db/repositories.ts`).
-  //
-  // Auch bei `truncated` ausgeführt: Eine gekappte Antwort ist unvollständig,
-  // aber was sie sagt, stimmt. Nur das Wasserzeichen bleibt dann stehen.
-  for (const listId of response.revokedListIds) {
-    await store.removeList(listId)
-  }
+  do {
+    const response = parsePullResponse(await fetchPull(since, pageToken))
+    letzte = response
+    seiten += 1
+
+    await applyPulledRows(store, response)
+
+    // Nach dem Anwenden und nicht davor: Nennt eine Antwort dieselbe Liste
+    // wider Erwarten in beiden Mengen, gewinnt der Entzug. Das ist die sichere
+    // Richtung — eine fälschlich entfernte Liste holt der nächste volle Pull
+    // zurück, eine fälschlich behaltene bliebe für immer stehen.
+    //
+    // DER HARTE WEG, ohne `deletedAt`: Ein Grabstein ginge beim nächsten Push
+    // als Löschabsicht hinaus und zerstörte die Liste für die übrigen
+    // Mitglieder, obwohl nur dieses Konto sie nicht mehr sieht (siehe
+    // `hardDeleteList` in `app/db/repositories.ts`).
+    //
+    // Auch bei `truncated` ausgeführt: Eine gekappte Antwort ist unvollständig,
+    // aber was sie sagt, stimmt. Nur das Wasserzeichen bleibt dann stehen.
+    for (const listId of response.revokedListIds) {
+      await store.removeList(listId)
+    }
+
+    lists += response.lists.length
+    recipes += response.recipes.length
+    badges += response.badges.length
+    revokedLists += response.revokedListIds.length
+    // Die letzte Seite gewinnt nicht: Offene Einladungen kommen nur auf der
+    // Seite, auf der sie noch offen waren, und eine spätere leere Menge würde
+    // sie sonst wieder verschlucken.
+    pendingInvites.push(...response.pendingInvites)
+
+    pageToken = response.nextPageToken ?? undefined
+  } while (pageToken !== undefined && seiten < MAX_PULL_PAGES)
+
+  const unvollstaendig = pageToken !== undefined || letzte.truncated
 
   // Erst schreiben, dann vorrücken: Ein Abbruch mitten im Anwenden lässt das
   // Wasserzeichen stehen, und der nächste Pull holt dieselbe Menge erneut.
   // Das ist genau die Eigenschaft, die den Merge idempotent machen muss.
   let cursorAdvanced = false
-  if (!response.truncated && response.serverTime !== null) {
-    await store.writeCursor(response.serverTime)
+  if (!unvollstaendig && letzte.serverTime !== null) {
+    await store.writeCursor(letzte.serverTime)
     cursorAdvanced = true
   }
 
@@ -633,27 +703,28 @@ export async function runPull(
    * Die Änderungsnummer wird zusammen mit dem Wasserzeichen fortgeschrieben —
    * und nur dann.
    *
-   * Bei `truncated` ist die Antwort unvollständig. Die Nummer trotzdem zu
-   * übernehmen hiesse: "Ich bin auf diesem Stand", obwohl es nicht stimmt. Der
-   * nächste Herzschlag sähe dann keine Lücke mehr und die fehlenden Zeilen
-   * kämen erst beim planmässigen Abgleich — genau die stille Verzögerung, die
-   * die Nummer abschaffen soll.
+   * Ist die Antwort unvollständig, hiesse die Nummer trotzdem zu übernehmen:
+   * "Ich bin auf diesem Stand", obwohl es nicht stimmt. Der nächste Herzschlag
+   * sähe dann keine Lücke mehr und die fehlenden Zeilen kämen erst beim
+   * planmässigen Abgleich — genau die stille Verzögerung, die die Nummer
+   * abschaffen soll.
    */
-  if (cursorAdvanced && response.changeSeq !== null) {
-    await store.writeChangeSeq(response.changeSeq)
+  if (cursorAdvanced && letzte.changeSeq !== null) {
+    await store.writeChangeSeq(letzte.changeSeq)
   }
 
   return {
     since,
-    serverTime: response.serverTime,
-    truncated: response.truncated,
-    changeSeq: response.changeSeq,
+    serverTime: letzte.serverTime,
+    truncated: unvollstaendig,
+    changeSeq: letzte.changeSeq,
     cursorAdvanced,
-    lists: response.lists.length,
-    recipes: response.recipes.length,
-    badges: response.badges.length,
-    revokedLists: response.revokedListIds.length,
-    pendingInvites: response.pendingInvites,
-    changes: response.changes,
+    pages: seiten,
+    lists,
+    recipes,
+    badges,
+    revokedLists,
+    pendingInvites,
+    changes: letzte.changes,
   }
 }

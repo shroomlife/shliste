@@ -24,7 +24,7 @@ import type {
 } from '../../db/schema'
 import { CLEAN, DIRTY } from '../../db/schema'
 import type { EntityStore, RowMerge, ListRemovalStore, PullStore, RowStores } from './ports'
-import { parsePullResponse, runPull } from './pull'
+import { parsePullResponse, runPull, MAX_PULL_PAGES } from './pull'
 
 const OLD: IsoUtc = '2026-01-15T10:00:00.000Z'
 const NEW: IsoUtc = '2026-02-20T10:00:00.000Z'
@@ -584,5 +584,102 @@ describe('runPull — entzogene Listen', () => {
     expect(store.lists.has('l1')).toBe(false)
     expect(outcome.cursorAdvanced).toBe(false)
     expect(store.cursor).toBe(OLD)
+  })
+})
+
+/* ------------------------------------------------------------------ *
+ * Blätterung
+ * ------------------------------------------------------------------ */
+
+describe('Blätterung einer gekappten Antwort', () => {
+  test('holt so lange weiter, bis der Server kein Token mehr schickt', async () => {
+    /*
+     * DER FALL: Erreicht eine Abfrage die Obergrenze des Servers, meldet er
+     * `truncated` und ein Fortsetzungstoken. Holte der Client nur die erste
+     * Seite, bliebe der Cursor stehen, der nächste Pull brächte dieselbe Seite
+     * und das Konto sähe nie wieder etwas Neues. Ein sicherer Stillstand, den
+     * nichts als Fehler meldet.
+     */
+    const store = fakePullStore({ cursor: OLD })
+    const gefragt: (string | undefined)[] = []
+
+    const outcome = await runPull(store, (_since, pageToken) => {
+      gefragt.push(pageToken)
+      return Promise.resolve(
+        gefragt.length < 3
+          ? pullBody({ truncated: true, nextPageToken: `seite-${gefragt.length}` })
+          : pullBody(),
+      )
+    })
+
+    expect(gefragt).toEqual([undefined, 'seite-1', 'seite-2'])
+    expect(outcome.pages).toBe(3)
+    // Erst nach der LETZTEN Seite vorrücken.
+    expect(outcome.cursorAdvanced).toBe(true)
+    expect(store.cursor).toBe(SERVER_TIME)
+  })
+
+  test('rückt nicht vor, solange noch eine Seite offen ist', async () => {
+    const store = fakePullStore({ cursor: OLD })
+
+    const outcome = await runPull(store, (_since, pageToken) =>
+      Promise.resolve(
+        pageToken === undefined
+          ? pullBody({ truncated: true, nextPageToken: 'seite-1' })
+          : pullBody({ truncated: true, nextPageToken: 'seite-2' }),
+      ),
+    )
+
+    expect(outcome.truncated).toBe(true)
+    expect(outcome.cursorAdvanced).toBe(false)
+    expect(store.cursor).toBe(OLD)
+  })
+
+  test('bricht nach der Obergrenze ab und meldet die Antwort als unvollständig', async () => {
+    // Schranke gegen einen Server, der immer weiter Seiten meldet. Ohne sie
+    // hinge die App in einer Endlosschleife, statt einen unvollständigen Stand
+    // zu melden — und der ist wenigstens reparierbar.
+    const store = fakePullStore({ cursor: OLD })
+    let abrufe = 0
+
+    const outcome = await runPull(store, () => {
+      abrufe += 1
+      return Promise.resolve(pullBody({ truncated: true, nextPageToken: 'immer-weiter' }))
+    })
+
+    expect(abrufe).toBe(MAX_PULL_PAGES)
+    expect(outcome.truncated).toBe(true)
+    expect(store.cursor).toBe(OLD)
+  })
+
+  test('zählt über die Seiten hinweg zusammen', async () => {
+    // Sonst meldete der Lauf die Zahlen der letzten Seite als die des ganzen
+    // Laufs — und die Anzeige "3 Listen aktualisiert" wäre schlicht falsch.
+    const store = fakePullStore({ cursor: OLD })
+    let abrufe = 0
+
+    const outcome = await runPull(store, () => {
+      abrufe += 1
+      return Promise.resolve(
+        abrufe === 1
+          ? pullBody({
+              lists: [serverList()],
+              truncated: true,
+              nextPageToken: 'seite-1',
+            })
+          : pullBody({ lists: [serverList({ id: 'l2' })] }),
+      )
+    })
+
+    expect(outcome.lists).toBe(2)
+  })
+
+  test('ohne Token bleibt alles wie bisher — genau eine Seite', async () => {
+    // Ein Server ohne dieses Feld verhält sich wie vor der Blätterung.
+    const store = fakePullStore({ cursor: OLD })
+    const outcome = await runPull(store, () => Promise.resolve(pullBody()))
+
+    expect(outcome.pages).toBe(1)
+    expect(outcome.cursorAdvanced).toBe(true)
   })
 })
