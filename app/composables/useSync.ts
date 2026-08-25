@@ -25,7 +25,7 @@ import {
 } from '../sync/engine/state'
 import { localStore } from '../sync/engine/store'
 import { evaluateIntegrity } from '../sync/engine/integrity'
-import { parseServerStatus, syncEngine, type ConflictStrategy } from '../sync/engine/sync'
+import { parseServerStatus, syncEngine, type ConflictStrategy, type SyncRunOptions } from '../sync/engine/sync'
 import { computeContentHashes, divergentAreas } from '../sync/merge/content-hash'
 import {
   countDirtyContent,
@@ -99,6 +99,14 @@ export const RECONCILE_INTERVAL_MS = 15 * 60_000
  * Anfragen ist damit ausgeschlossen.
  */
 let mutationTimer: ReturnType<typeof setTimeout> | null = null
+/**
+ * Die zuletzt aus einem Herzschlag verarbeitete Änderungsnummer.
+ *
+ * Nur für die Dämpfung in `handleServerChangeSeq` — bewusst im Arbeitsspeicher
+ * und neben dem Zeitgeber darüber: Nach einem Neuladen darf es ruhig wieder
+ * einen Versuch geben.
+ */
+let zuletztGemeldeteSeq: number | null = null
 
 /**
  * Sichtbarkeit des Blatts „Deine Anmeldung ist abgelaufen"
@@ -144,8 +152,13 @@ export interface UseSync {
    * `idle`, solange der Runner (noch) nicht läuft — etwa ohne Anmeldung.
    */
   realtime: ComputedRef<RealtimeStatusView>
-  /** Sofort abgleichen. Ohne Konto folgenlos. */
-  requestSync: () => Promise<void>
+  /**
+   * Sofort abgleichen. Ohne Konto folgenlos.
+   *
+   * `userInitiated: true` für den Knopf: Der Lauf stellt sich dann an, statt
+   * aufzugeben, wenn gerade ein anderer Tab abgleicht.
+   */
+  requestSync: (options?: SyncRunOptions) => Promise<void>
   /** Nach einer lokalen Änderung: abgleichen, aber gesammelt. */
   scheduleSync: () => void
   /**
@@ -174,13 +187,22 @@ export function useSync(): UseSync {
   }))
   const { isSignedIn } = useAuth()
 
-  async function requestSync(): Promise<void> {
+  async function requestSync(options: SyncRunOptions = {}): Promise<void> {
     if (import.meta.server || !isSignedIn.value) return
 
-    const outcome = await syncEngine.sync()
-    // `ran: false` heisst, dass bereits ein Lauf unterwegs war. Dessen
-    // Ergebnis kommt über das Abonnement, hier ist nichts zu tun.
-    if (outcome.ran) dataVersion.value += 1
+    await syncEngine.sync(options)
+
+    /*
+     * DIE ANSICHTEN LESEN IN BEIDEN FÄLLEN NEU.
+     *
+     * `ran: false` hiess früher nur "in diesem Tab läuft schon einer", und
+     * dessen Ergebnis kam über das Abonnement. Seit der Tab-Sperre heisst es
+     * auch: "ein ANDERER Tab arbeitet gerade" — und dessen Abonnement erreicht
+     * uns nicht, es gibt keinen BroadcastChannel. Ohne dieses Signal blieben
+     * die Ansichten auf einem Stand stehen, den die Datenbank längst nicht mehr
+     * hat.
+     */
+    dataVersion.value += 1
   }
 
   function scheduleSync(): void {
@@ -336,13 +358,20 @@ export function useSyncRunner(): void {
      * verhinderte zwar die dauerhafte Sperre, öffnete aber die Endlosschleife.
      * Dieselbe Trennung gilt in Androids IntegrityPolicy, wo beide Sperren seit
      * jeher so dokumentiert sind.
+     *
+     * EIN NICHT GELAUFENER VERSUCH ZÄHLT ABER NICHT. Hält ein anderer Tab die
+     * Sperre, hat hier nichts stattgefunden — die Marke stehenzulassen bremste
+     * die Selbstheilung dann zwölf Stunden lang wegen eines Laufs, den es nie
+     * gab. Deshalb wird der vorherige Wert wiederhergestellt.
      */
     await setSelfHealAttempt(Date.now())
 
     const ergebnis = await syncEngine.sync()
     if (!ergebnis.ran) {
       // Es lief bereits etwas — hier oder in einem anderen Tab. Dann gehört der
-      // Lauf nicht uns, und die Prüfung wird wieder freigegeben.
+      // Lauf nicht uns: Die Prüfung wird wieder freigegeben und der Versuch
+      // zurückgenommen.
+      await setSelfHealAttempt(marker.at === 0 ? null : marker.at)
       integrityChecked = false
       return
     }
@@ -469,9 +498,30 @@ export function useSyncRunner(): void {
   async function handleServerChangeSeq(seq: number): Promise<void> {
     if (!isSignedIn.value) return
 
-    const eigener = await getLastChangeSeq()
-    if (eigener === null || seq <= eigener) return
+    /*
+     * DÄMPFUNG: Dieselbe Zahl löst höchstens einen Lauf aus.
+     *
+     * Der Lauf schreibt seinen Stand nur fort, wenn er den Cursor vorrücken
+     * durfte — bei einer gekappten Antwort, an der Seitengrenze und bei jedem
+     * Fehler bleibt die gespeicherte Zahl also stehen. Ohne diese Bremse fiele
+     * die App danach in einen vollen Abgleich alle 15 Sekunden, statt wie
+     * vorher alle 15 Minuten.
+     */
+    if (seq === zuletztGemeldeteSeq) return
 
+    const eigener = await getLastChangeSeq()
+    if (eigener === null || seq === eigener) return
+
+    /*
+     * Kleiner als der eigene Stand ist KEIN Grund zum Nichtstun.
+     *
+     * Der Zähler wächst je Nutzer monoton — ausser der Server wurde aus einer
+     * Sicherung wiederhergestellt. Dann hält dieses Gerät eine Zahl, die es
+     * nicht mehr gibt, und der Vergleich meldete für genau so viele Änderungen
+     * keine Lücke, wie zurückgedreht wurden. Ein Abgleich schreibt den Stand
+     * unbedingt neu und bringt beide Seiten wieder zusammen.
+     */
+    zuletztGemeldeteSeq = seq
     await requestSync()
   }
 

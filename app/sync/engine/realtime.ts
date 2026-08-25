@@ -21,6 +21,7 @@ import type { RealtimeEvent } from '../realtime/events'
 import type { DeltaFetcher, DeltaTarget } from './delta'
 import { runDelta } from './delta'
 import type { RealtimeStore } from './ports'
+import { runAsLeader, type LockManagerLike } from './leader'
 
 /* ------------------------------------------------------------------ *
  * Der Plan
@@ -129,6 +130,11 @@ export interface RealtimeSyncDeps {
   store: RealtimeStore
   fetchDelta: DeltaFetcher
   /**
+   * Die Web-Locks-API. Nur für den Test einsetzbar; im Betrieb nimmt
+   * `runAsLeader` die des Browsers.
+   */
+  locks?: LockManagerLike
+  /**
    * Der vollständige Lauf (pushen, dann ziehen). Bewusst als Rückruf statt
    * als Import der Engine: So bleibt diese Datei ohne Zyklus zur Engine
    * prüfbar, und die Engine behält ihren Mutex für sich.
@@ -149,7 +155,7 @@ export interface RealtimeSync {
 }
 
 export function createRealtimeSync(deps: RealtimeSyncDeps): RealtimeSync {
-  const { store, fetchDelta, runFullSync, onApplied } = deps
+  const { store, fetchDelta, runFullSync, onApplied, locks } = deps
 
   /** Liegt an dem, was das Delta holen würde, lokal etwas Ungesendetes? */
   const hasLocalChanges = async (target: DeltaTarget): Promise<boolean> =>
@@ -157,10 +163,19 @@ export function createRealtimeSync(deps: RealtimeSyncDeps): RealtimeSync {
       ? await store.isRecipeDirty(target.recipeId)
       : await store.isListDirty(target.listId)
 
-  const handleEvents = async (events: readonly RealtimeEvent[]): Promise<void> => {
-    if (events.length === 0) return
-
-    const plan = planRealtimeActions(events)
+  /**
+   * Der schreibende Teil — läuft ausschliesslich unter der Tab-Sperre.
+   *
+   * Gibt zurück, ob etwas geschrieben wurde und ob danach noch ein voller Lauf
+   * fällig ist. Der volle Lauf selbst passiert AUSSERHALB: Er geht über
+   * `syncEngine.sync()`, das sich dieselbe Sperre selbst holt — und Web Locks
+   * sind nicht wiedereintrittsfähig, ein Aufruf von hier drinnen bekäme sie
+   * nie und liefe stillschweigend nicht.
+   */
+  const applyUnderLock = async (
+    plan: RealtimePlan,
+    events: readonly RealtimeEvent[],
+  ): Promise<{ changed: boolean, needsFull: boolean }> => {
     let changed = false
 
     // Zuerst und unabhängig von allem anderen: Was diesem Konto entzogen
@@ -188,13 +203,7 @@ export function createRealtimeSync(deps: RealtimeSyncDeps): RealtimeSync {
       }
     }
 
-    if (full) {
-      await runFullSync()
-      // Der Lauf meldet selbst, was er getan hat; hier zählt nur, dass die
-      // Ansichten danach neu lesen müssen.
-      onApplied?.()
-      return
-    }
+    if (full) return { changed, needsFull: true }
 
     for (const target of targets) {
       const outcome = await runDelta(store, fetchDelta, target)
@@ -215,15 +224,42 @@ export function createRealtimeSync(deps: RealtimeSyncDeps): RealtimeSync {
      * schreibt seine Nummer selbst (siehe runPull), und zwar die, die zu SEINER
      * Antwort gehört. Hier gilt die höchste aus den verarbeiteten Ereignissen.
      */
+    // Nur vorwärts, und Vergleich samt Schreiben in einem Zug: Die Zustellung
+    // ist nicht geordnet, ein überholtes Ereignis darf den Stand nicht
+    // zurückdrehen — und zwischen einem getrennten Lesen und Schreiben läge
+    // ein Fenster, in das ein gleichzeitiger Abgleich schreiben kann.
     const hoechste = highestSeq(events)
-    if (hoechste !== null) {
-      const bisher = await store.readChangeSeq()
-      // Nur vorwärts: Die Zustellung ist nicht geordnet, und ein überholtes
-      // Ereignis darf den Stand nicht zurückdrehen.
-      if (bisher === null || hoechste > bisher) await store.writeChangeSeq(hoechste)
-    }
+    if (hoechste !== null) await store.advanceChangeSeq(hoechste)
 
-    if (changed) onApplied?.()
+    return { changed, needsFull: false }
+  }
+
+  const handleEvents = async (events: readonly RealtimeEvent[]): Promise<void> => {
+    if (events.length === 0) return
+
+    const plan = planRealtimeActions(events)
+
+    /*
+     * UNTER DERSELBEN SPERRE WIE DER ABGLEICH.
+     *
+     * Ohne sie schrieb dieser Weg an drei Fronten gegen denselben Bestand: neben
+     * einem laufenden Pull im eigenen Tab, neben einem Abgleich in einem
+     * fremden Tab, und neben sich selbst — das Sammelfenster ist 300 ms und
+     * wartet nicht auf das vorige Bündel.
+     *
+     * IST SIE BELEGT, PASSIERT NICHTS — UND DAS IST HIER DIE GANZE LÖSUNG.
+     * Die Änderungsnummer wird dann nämlich auch nicht fortgeschrieben. Der
+     * nächste Herzschlag meldet eine höhere Zahl als die gespeicherte, und der
+     * Client holt binnen 15 Sekunden von selbst nach. Genau dafür gibt es sie.
+     * Android löst dieselbe Kollision mit `syncMutex.tryLock()`.
+     */
+    const ergebnis = await runAsLeader(() => applyUnderLock(plan, events), { locks })
+    if (!ergebnis.ran) return
+
+    if (ergebnis.value.needsFull) await runFullSync()
+    // Ein voller Lauf meldet selbst, was er getan hat; hier zählt nur, dass die
+    // Ansichten danach neu lesen müssen.
+    if (ergebnis.value.changed || ergebnis.value.needsFull) onApplied?.()
   }
 
   return { handleEvents }

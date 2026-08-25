@@ -130,8 +130,8 @@ function fakePullStore(options: {
     },
     readCursor: () => Promise.resolve(store.cursor),
     // Änderungsnummer: für diese Tests belanglos, aber Teil des Ports.
-    readChangeSeq: () => Promise.resolve(null),
     writeChangeSeq: () => Promise.resolve(),
+    advanceChangeSeq: () => Promise.resolve(),
     writeCursor: (value) => {
       store.cursor = value
       return Promise.resolve()

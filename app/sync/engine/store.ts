@@ -25,6 +25,7 @@ import type {
   RecipeStepRow,
 } from '../../db/schema'
 import {
+  advanceLastChangeSeq,
   countDirty,
   getDirtyBadges,
   getDirtyChatMessages,
@@ -36,7 +37,6 @@ import {
   getDirtySteps,
   getHasMigrated,
   getLastSignedInUserId,
-  getLastChangeSeq,
   getLastSyncedAt,
   getListsForView,
   getRecipesForView,
@@ -176,8 +176,8 @@ export const localStore: SyncStore & RealtimeStore & ConflictStore = {
   trimHistoryForParent,
   readCursor: getLastSyncedAt,
   writeCursor: setLastSyncedAt,
-  readChangeSeq: getLastChangeSeq,
   writeChangeSeq: setLastChangeSeq,
+  advanceChangeSeq: advanceLastChangeSeq,
   readHasMigrated: getHasMigrated,
   writeHasMigrated: setHasMigrated,
   readLastSignedInUserId: getLastSignedInUserId,

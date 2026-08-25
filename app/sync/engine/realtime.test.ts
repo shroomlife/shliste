@@ -18,6 +18,7 @@
 import { describe, expect, test } from 'bun:test'
 import type { RealtimeEvent } from '../realtime/events'
 import type { DeltaTarget } from './delta'
+import type { LockManagerLike } from './leader'
 import type { EntityStore, PullStore, RealtimeStore, RowStores } from './ports'
 import { createRealtimeSync, planRealtimeActions } from './realtime'
 
@@ -84,10 +85,14 @@ function recorder(options: {
     replaceMembers: () => Promise.resolve(),
     readCursor: () => Promise.resolve(null),
     writeCursor: () => Promise.resolve(),
-    // Änderungsnummer: für diese Tests belanglos, aber Teil des Ports.
-    readChangeSeq: () => Promise.resolve(self.changeSeq),
     writeChangeSeq: (value) => {
       self.changeSeq = value
+      return Promise.resolve()
+    },
+    // Bildet nach, was `advanceLastChangeSeq` in der Datenbank tut: nur
+    // vorwärts, Vergleich und Schreiben in einem Zug.
+    advanceChangeSeq: (value) => {
+      if (self.changeSeq === null || value > self.changeSeq) self.changeSeq = value
       return Promise.resolve()
     },
   }
@@ -127,13 +132,17 @@ function recorder(options: {
   return self
 }
 
-function syncFor(deps: Recorder) {
-  return createRealtimeSync({
-    store: deps.store,
-    fetchDelta: deps.fetchDelta,
-    runFullSync: deps.runFullSync,
-    onApplied: deps.onApplied,
-  })
+function deps(r: Recorder) {
+  return {
+    store: r.store,
+    fetchDelta: r.fetchDelta,
+    runFullSync: r.runFullSync,
+    onApplied: r.onApplied,
+  }
+}
+
+function syncFor(r: Recorder) {
+  return createRealtimeSync(deps(r))
 }
 
 /** Eine Antwort, die tatsächlich eine Zeile enthält. */
@@ -426,6 +435,36 @@ describe('Änderungsnummer nach einem Delta', () => {
     ])
 
     expect(r.changeSeq).toBe(5)
+  })
+
+  test('hält ein anderer Tab die Sperre, wird NICHTS geschrieben und NICHTS quittiert', async () => {
+    /*
+     * Der Weg schrieb bisher an drei Fronten gegen denselben Bestand: neben
+     * einem laufenden Pull im eigenen Tab, neben einem Abgleich in einem
+     * fremden Tab, und neben sich selbst.
+     *
+     * Wichtig ist die zweite Hälfte: Die Änderungsnummer bleibt stehen. Nur
+     * deshalb meldet der nächste Herzschlag eine Lücke und der Client holt
+     * binnen 15 Sekunden von selbst nach — sonst wäre das Auslassen ein
+     * stiller Verlust statt einer Verzögerung.
+     */
+    const r = recorder({ changeSeq: 4 })
+    const belegt: LockManagerLike = {
+      request: async (_name, _options, callback) => {
+        await callback(null)
+      },
+    }
+    const realtime = createRealtimeSync({ ...deps(r), locks: belegt })
+
+    await realtime.handleEvents([
+      { type: 'list_removed', listId: 'l1', seq: 9 },
+      { type: 'item_changed', listId: 'l2', itemIds: ['i1'], listUpdatedAt: null, seq: 9 },
+    ])
+
+    expect(r.removed).toEqual([])
+    expect(r.queries).toEqual([])
+    expect(r.changeSeq).toBe(4)
+    expect(r.applied).toBe(0)
   })
 
   test('bei einem vollen Lauf schreibt DIESER seine Nummer, nicht das Ereignis', async () => {

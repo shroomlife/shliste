@@ -132,7 +132,9 @@ const serverRow = computed(() => {
 const isSyncing = computed(() => display.value === 'syncing')
 
 async function syncNow(): Promise<void> {
-  await requestSync()
+  // Ausdrücklich vom Nutzer: Läuft in einem anderen Tab gerade ein Abgleich,
+  // stellt sich dieser Lauf an, statt still nichts zu tun.
+  await requestSync({ userInitiated: true })
   await loadServerStatus()
 }
 

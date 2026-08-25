@@ -283,7 +283,7 @@ export async function upsertList(input: Draft<List>): Promise<ListRow> {
   // Lesen und Schreiben in EINER Transaktion: `seenAt` wird aus der
   // gelesenen Zeile bewahrt — ein `markListSeen` zwischen einem freien
   // get und put ginge sonst still verloren (dieselbe Begründung, aus der
-  // markListSeen und putListRow transaktional gebaut sind).
+  // markListSeen und mutateRow transaktional gebaut sind).
   const tx = db.transaction('lists', 'readwrite')
   const previous = await tx.store.get(input.id)
   const changed = changedFields(previous, input)
@@ -952,6 +952,15 @@ export async function wipeSyncedData(): Promise<void> {
   // Der Rest von sync_meta bleibt: `lastSignedInUserId` gehört zum Konto und
   // nicht zu den Daten, und `hasMigrated` setzt der Aufrufer gleich neu.
   await tx.objectStore('sync_meta').delete('lastSyncedAt')
+  /*
+   * Die Änderungsnummer fällt mit weg, und zwar aus demselben Grund wie das
+   * Wasserzeichen: Sie ist eine Aussage über einen Bestand, den es hier gerade
+   * nicht mehr gibt. Stehengelassen behauptete sie "ich bin auf Stand N",
+   * während lokal nichts liegt — und der Herzschlag sähe bis N keine Lücke.
+   * Zählt zudem je Nutzer: Nach einem Kontowechsel wäre es die Zahl eines
+   * fremden Kontos.
+   */
+  await tx.objectStore('sync_meta').delete('lastChangeSeq')
 
   await tx.done
 }
@@ -1120,7 +1129,7 @@ export async function getSelfHealMarker(): Promise<{ hash: string | null, at: nu
  * Trennung wie in Androids IntegrityPolicy, wo beide Sperren seit jeher so
  * dokumentiert sind.
  */
-export async function setSelfHealAttempt(at: number): Promise<void> {
+export async function setSelfHealAttempt(at: number | null): Promise<void> {
   await writeMeta('lastSelfHealAt', at)
 }
 
@@ -1152,6 +1161,39 @@ export async function getLastChangeSeq(): Promise<number | null> {
 
 export async function setLastChangeSeq(seq: number): Promise<void> {
   await writeMeta('lastChangeSeq', seq)
+}
+
+/**
+ * Schreibt die Änderungsnummer NUR VORWÄRTS — Lesen und Schreiben in EINER
+ * Transaktion.
+ *
+ * FÜR DEN ECHTZEIT-WEG, NICHT FÜR DEN PULL. Ein Ereignis trägt einen Zuwachs
+ * auf den bisherigen Stand, und die Zustellung ist nicht geordnet: Ein
+ * überholtes Ereignis darf den Stand nicht zurückdrehen. Der Pull dagegen
+ * kennt den Wert, der zu SEINER Antwort gehört, und setzt ihn deshalb über
+ * `setLastChangeSeq` — auch nach unten. Das ist keine Nachlässigkeit, sondern
+ * der einzige Weg zurück, wenn dieses Gerät auf ein anderes Konto wechselt:
+ * die Nummer zählt je Nutzer, ein fremder Höchststand bliebe sonst für immer
+ * stehen und der Herzschlag sähe nie wieder eine Lücke.
+ *
+ * Warum die Transaktion: Vergleichen und Schreiben lagen vorher im Aufrufer,
+ * mit einem `await` dazwischen. Ein gleichzeitig laufender Abgleich konnte in
+ * dieses Fenster schreiben, und der Vergleich entschied dann gegen einen
+ * bereits überholten Stand.
+ */
+export async function advanceLastChangeSeq(seq: number): Promise<void> {
+  const db = await getDb()
+  const tx = db.transaction('sync_meta', 'readwrite')
+  const store = tx.objectStore('sync_meta')
+
+  // Nur IndexedDB-Operationen im Rumpf: Die Transaktion committet, sobald die
+  // Microtask-Queue leerläuft — ein `await` auf irgendetwas anderes würde sie
+  // schliessen, bevor das `put` sie erreicht.
+  const raw: unknown = await store.get('lastChangeSeq')
+  const bisher = isFiniteNumber(raw) ? raw : null
+  if (bisher === null || seq > bisher) await store.put(seq, 'lastChangeSeq')
+
+  await tx.done
 }
 
 // ---------------------------------------------------------------------------
@@ -1205,8 +1247,9 @@ export type RowStoreName
  * `dirty`-Flag. Die Eingabe ist damit nicht nur weg, sie wird auch nie
  * hochgeladen. Nichts davon erzeugt einen Fehler.
  *
- * `putListRow` oben löst genau dieses Problem seit jeher für `seenAt`. Hier ist
- * dasselbe Muster verallgemeinert, statt es ein zweites Mal zu erfinden.
+ * `upsertList` oben löst genau dieses Problem im Kleinen für `seenAt`: lesen
+ * und schreiben in einer Transaktion. Hier ist dasselbe Muster
+ * verallgemeinert, statt es ein zweites Mal zu erfinden.
  *
  * DIE REGEL, AN DER DAS SONST SCHEITERT
  *

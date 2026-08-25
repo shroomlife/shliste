@@ -109,14 +109,23 @@ export interface PullStore {
   readCursor: () => Promise<IsoUtc | null>
   writeCursor: (value: IsoUtc) => Promise<void>
   /**
-   * Die Änderungsnummer, bis zu der dieses Gerät auf dem Stand ist.
+   * Setzt die Änderungsnummer, bis zu der dieses Gerät auf dem Stand ist.
    *
-   * `null` heisst "noch nie gesehen" und nicht `0`: Nach einer frischen
-   * Installation soll der erste Herzschlag keinen Abgleich auslösen, nur weil
-   * das Konto schon bei einer Zahl über null steht.
+   * Für den PULL: Er kennt den Wert, der zu seiner Antwort gehört, und setzt
+   * ihn auch dann, wenn er kleiner ist als der bisherige — nach einem
+   * Kontowechsel ist genau das der richtige Weg, denn die Nummer zählt je
+   * Nutzer.
    */
-  readChangeSeq: () => Promise<number | null>
   writeChangeSeq: (value: number) => Promise<void>
+  /**
+   * Schreibt die Änderungsnummer nur vorwärts, atomar.
+   *
+   * Für den ECHTZEIT-WEG: Ein Ereignis trägt einen Zuwachs auf den bisherigen
+   * Stand, und die Zustellung ist nicht geordnet. Vergleich und Schreiben
+   * müssen deshalb in einem Zug passieren, sonst entscheidet der Vergleich
+   * gegen einen Stand, den ein gleichzeitiger Abgleich längst überholt hat.
+   */
+  advanceChangeSeq: (value: number) => Promise<void>
 }
 
 /**

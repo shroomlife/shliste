@@ -40,6 +40,21 @@ describe('coalesceKeyFor', () => {
 })
 
 describe('mergeEvents', () => {
+  test('die Nummer überlebt auch, wenn ein Ereignis das andere verdrängt', () => {
+    /*
+     * `list_changed` schlägt `item_changed` — aber die Nummer des verdrängten
+     * Ereignisses darf dabei nicht verlorengehen. Sonst quittiert der Aufrufer
+     * nach dem Delta einen zu niedrigen Stand, der nächste Herzschlag zeigt
+     * eine Lücke, die längst geschlossen ist, und es folgt ein überflüssiger
+     * voller Abgleich — bei jedem einzelnen Bündel.
+     */
+    const item: RealtimeEvent = { type: 'item_changed', listId: LIST_A, itemIds: ['i1'], listUpdatedAt: null, seq: 9 }
+    const liste: RealtimeEvent = { type: 'list_changed', listId: LIST_A, seq: 4 }
+
+    expect(mergeEvents(item, liste)).toEqual({ type: 'list_changed', listId: LIST_A, seq: 9 })
+    expect(mergeEvents(liste, item)).toEqual({ type: 'list_changed', listId: LIST_A, seq: 9 })
+  })
+
   test('list_changed schlägt item_changed in beide Richtungen', () => {
     const listChanged: RealtimeEvent = { type: 'list_changed', listId: LIST_A, seq: null }
 
@@ -57,7 +72,9 @@ describe('mergeEvents', () => {
     const older: RealtimeEvent = { type: 'recipe_changed', recipeId: RECIPE, seq: null }
     const newer: RealtimeEvent = { type: 'recipe_changed', recipeId: RECIPE, seq: null }
 
-    expect(mergeEvents(older, newer)).toBe(newer)
+    // Gleichheit, nicht Identität: Das Ergebnis trägt die vereinigte Nummer und
+    // ist deshalb eine neue Zeile, kein durchgereichtes Ereignis.
+    expect(mergeEvents(older, newer)).toEqual(newer)
   })
 })
 

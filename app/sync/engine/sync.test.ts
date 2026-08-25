@@ -105,8 +105,8 @@ function fakeSyncStore(options: {
     replaceMembers: (_listId: string, _members: readonly ListMember[]) => Promise.resolve(),
     readCursor: () => Promise.resolve(store.cursor),
     // Änderungsnummer: für diese Tests belanglos, aber Teil des Ports.
-    readChangeSeq: () => Promise.resolve(null),
     writeChangeSeq: () => Promise.resolve(),
+    advanceChangeSeq: () => Promise.resolve(),
     writeCursor: (value) => {
       store.cursor = value
       return Promise.resolve()

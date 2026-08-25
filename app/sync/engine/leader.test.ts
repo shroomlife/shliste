@@ -26,7 +26,7 @@ function fakeLocks(): LockManagerLike & { belegt: boolean, angefragt: string[] }
     angefragt: [] as string[],
     async request(
       name: string,
-      _options: { mode: 'exclusive', ifAvailable: true },
+      _options: { mode: 'exclusive', ifAvailable?: true },
       callback: (lock: unknown | null) => Promise<void>,
     ): Promise<void> {
       manager.angefragt.push(name)
@@ -49,7 +49,7 @@ function fakeLocks(): LockManagerLike & { belegt: boolean, angefragt: string[] }
 describe('runAsLeader', () => {
   test('führt die Arbeit aus, wenn die Sperre frei ist', async () => {
     const locks = fakeLocks()
-    const ergebnis = await runAsLeader(() => Promise.resolve('fertig'), locks)
+    const ergebnis = await runAsLeader(() => Promise.resolve('fertig'), { locks })
 
     expect(ergebnis).toEqual({ ran: true, value: 'fertig' })
     expect(locks.angefragt).toEqual([SYNC_LOCK_NAME])
@@ -66,7 +66,7 @@ describe('runAsLeader', () => {
     const ergebnis = await runAsLeader(() => {
       gelaufen = true
       return Promise.resolve('fertig')
-    }, locks)
+    }, { locks })
 
     expect(gelaufen).toBe(false)
     expect(ergebnis).toEqual({ ran: false })
@@ -83,7 +83,7 @@ describe('runAsLeader', () => {
     locks.belegt = true
 
     const start = Date.now()
-    await runAsLeader(() => Promise.resolve(null), locks)
+    await runAsLeader(() => Promise.resolve(null), { locks })
 
     expect(Date.now() - start).toBeLessThan(50)
   })
@@ -95,12 +95,12 @@ describe('runAsLeader', () => {
     const locks = fakeLocks()
 
     await expect(
-      runAsLeader(() => Promise.reject(new Error('Netz weg')), locks),
+      runAsLeader(() => Promise.reject(new Error('Netz weg')), { locks }),
     ).rejects.toThrow('Netz weg')
 
     expect(locks.belegt).toBe(false)
 
-    const danach = await runAsLeader(() => Promise.resolve('geht wieder'), locks)
+    const danach = await runAsLeader(() => Promise.resolve('geht wieder'), { locks })
     expect(danach).toEqual({ ran: true, value: 'geht wieder' })
   })
 
@@ -108,7 +108,7 @@ describe('runAsLeader', () => {
     // Ein Browser ohne diese Fähigkeit soll nicht schlechter dastehen als vor
     // dem Umbau, sondern nur nicht besser. Ein Abbruch wäre eine
     // Verschlechterung für den, der ohnehin schon weniger hat.
-    const ergebnis = await runAsLeader(() => Promise.resolve('trotzdem'), undefined)
+    const ergebnis = await runAsLeader(() => Promise.resolve('trotzdem'), { locks: undefined })
     expect(ergebnis).toEqual({ ran: true, value: 'trotzdem' })
   })
 
@@ -123,7 +123,28 @@ describe('runAsLeader', () => {
       },
     }
 
-    await runAsLeader(() => Promise.resolve(null), locks)
+    await runAsLeader(() => Promise.resolve(null), { locks })
     expect(optionen).toEqual({ mode: 'exclusive', ifAvailable: true })
+  })
+
+  test('eine ausdrückliche Handlung stellt sich an statt zu verpuffen', async () => {
+    /*
+     * Der Unterschied ist genau das fehlende `ifAvailable`. Ein Tastendruck
+     * ist eine Warteschlange von eins: Ihn fallenzulassen, weil ein anderer Tab
+     * gerade arbeitet, sieht für den Nutzer aus wie eine kaputte App — der
+     * Knopf tut sichtbar nichts.
+     */
+    let optionen: unknown = null
+    const locks: LockManagerLike = {
+      request: async (_name, options, callback) => {
+        optionen = options
+        await callback({})
+      },
+    }
+
+    const ergebnis = await runAsLeader(() => Promise.resolve('dran'), { locks, mode: 'waitForTurn' })
+
+    expect(optionen).toEqual({ mode: 'exclusive' })
+    expect(ergebnis).toEqual({ ran: true, value: 'dran' })
   })
 })

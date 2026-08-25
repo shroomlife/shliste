@@ -157,6 +157,19 @@ export type SyncOutcome
   = | { ran: false, reason: 'busy' }
     | { ran: true, snapshot: SyncSnapshot }
 
+/** Wie ein Lauf angestossen wurde. */
+export interface SyncRunOptions {
+  /**
+   * Geht der Lauf auf eine ausdrückliche Handlung des Nutzers zurück?
+   *
+   * Dann stellt er sich an der Tab-Sperre AN, statt aufzugeben. Ein
+   * Tastendruck, der verpufft, weil ein anderer Tab gerade arbeitet, sieht aus
+   * wie eine kaputte App. Zeitgeber und Ereignisse kommen dagegen von selbst
+   * wieder und sollen sich nicht aufstauen.
+   */
+  userInitiated?: boolean
+}
+
 /**
  * Wie ein Konflikt aufgelöst wird, wenn beide Seiten Daten haben.
  *
@@ -172,7 +185,7 @@ export type SyncOutcome
 export type ConflictStrategy = 'merge' | 'pushLocal' | 'pullServer'
 
 export interface SyncEngine {
-  sync: () => Promise<SyncOutcome>
+  sync: (options?: SyncRunOptions) => Promise<SyncOutcome>
   /**
    * Löst einen gemeldeten Konflikt auf und gleicht anschliessend ab.
    *
@@ -350,7 +363,7 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
     })
   }
 
-  const sync = async (): Promise<SyncOutcome> => {
+  const sync = async (options: SyncRunOptions = {}): Promise<SyncOutcome> => {
     // Die Prüfung und das Setzen liegen im selben synchronen Abschnitt — ohne
     // ein `await` dazwischen kann kein zweiter Aufruf hineinrutschen.
     if (running) return { ran: false, reason: 'busy' }
@@ -363,9 +376,10 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
      * zusammenführen und schreiben. Die Sperre in ./leader.ts zieht die Grenze
      * über alle Tabs hinweg.
      *
-     * Ist sie belegt, kehrt der Aufruf sofort zurück, statt sich anzustellen.
-     * Für den Aufrufer sieht das aus wie ein laufender Abgleich, und genau das
-     * ist es ja auch — nur eben in einem anderen Tab.
+     * Ist sie belegt, kehrt der Aufruf sofort zurück — ausser der Lauf geht auf
+     * eine ausdrückliche Handlung des Nutzers zurück, dann stellt er sich an.
+     * Ein Tastendruck, der still verpufft, weil ein anderer Tab arbeitet, sieht
+     * aus wie eine kaputte App.
      */
     try {
       const ergebnis = await runAsLeader(async () => {
@@ -383,9 +397,26 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
             pendingCount: await countPendingQuietly(store),
           })
         }
-      })
+      }, { mode: options.userInitiated === true ? 'waitForTurn' : 'skipIfBusy' })
 
       if (!ergebnis.ran) return { ran: false, reason: 'busy' }
+    }
+    catch (cause) {
+      /*
+       * Die Sperre selbst kann werfen — `navigator.locks` ist in manchen
+       * eingebetteten Kontexten gesperrt und wirft dann statt zu antworten.
+       * Der `catch` im Rumpf greift dafür nicht: Der liegt INNERHALB des
+       * Rückrufs, der in diesem Fall nie läuft. Ohne diesen hier verliesse der
+       * Fehler die Engine unbemerkt, der Zustand bliebe auf dem alten Wert
+       * stehen und der Aufrufer bekäme eine unbehandelte Ablehnung.
+       */
+      const error = toSyncError(cause)
+      state.set({
+        phase: phaseFromError(error),
+        message: describeSyncError(error),
+        retryAfterMs: error.retryAfterMs,
+        pendingCount: await countPendingQuietly(store),
+      })
     }
     finally {
       running = false
@@ -397,9 +428,16 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
   /**
    * Führt die gewählte Auflösung aus und gleicht danach ab.
    *
-   * Der Mutex gilt hier genauso wie beim gewöhnlichen Lauf: Eine Auflösung
-   * während eines laufenden Abgleichs würde auf einem Bestand arbeiten, der
-   * sich gerade unter ihr verändert.
+   * UNTER DERSELBEN SPERRE WIE DER GEWÖHNLICHE LAUF, und das ist hier kein
+   * Beiwerk: `pullServer` ruft `wipeLocalData()`. Liefe in einem anderen Tab
+   * gleichzeitig ein Abgleich, träfe das Löschen mitten in dessen
+   * Zusammenführen — teils gelöscht, teils frisch geschrieben, und der fremde
+   * Lauf rückte danach seinen Cursor über den Schaden hinweg vor. Der Mutex
+   * `running` deckt das nicht ab, er ist eine Variable genau eines Tabs.
+   *
+   * Und sie stellt sich AN statt aufzugeben: Die Auflösung ist die Antwort auf
+   * eine Frage, die dem Nutzer gestellt wurde. Sie darf nicht verpuffen, nur
+   * weil gerade woanders gearbeitet wird.
    */
   const resolveConflict = async (strategy: ConflictStrategy): Promise<SyncOutcome> => {
     if (running) return { ran: false, reason: 'busy' }
@@ -407,6 +445,33 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
 
     state.set({ phase: 'syncing', message: null, retryAfterMs: null, conflict: null })
 
+    try {
+      const ergebnis = await runAsLeader(
+        () => resolveConflictUnterSperre(strategy),
+        { mode: 'waitForTurn' },
+      )
+      if (!ergebnis.ran) return { ran: false, reason: 'busy' }
+    }
+    catch (cause) {
+      // Dasselbe wie oben: Wirft die Sperre selbst, liegt das ausserhalb des
+      // Rückrufs und damit ausserhalb seines eigenen `catch`.
+      const error = toSyncError(cause)
+      state.set({
+        phase: phaseFromError(error),
+        message: describeSyncError(error),
+        retryAfterMs: error.retryAfterMs,
+        pendingCount: await countPendingQuietly(store),
+      })
+    }
+    finally {
+      running = false
+    }
+
+    return { ran: true, snapshot: state.get() }
+  }
+
+  /** Der eigentliche Ablauf — läuft ausschliesslich unter der Sperre. */
+  const resolveConflictUnterSperre = async (strategy: ConflictStrategy): Promise<void> => {
     try {
       // Der Marker wird in jedem der drei Wege gesetzt: Die Frage ist
       // beantwortet und darf beim nächsten Start nicht erneut gestellt werden.
@@ -425,7 +490,7 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
         const migrated = await runMigrate(store, sendMigrate, onNotice)
         await store.writeHasMigrated(true)
         await finish(null, migrated.skippedCount, null)
-        return { ran: true, snapshot: state.get() }
+        return
       }
 
       const pull = await runPull(store, fetchPull)
@@ -440,11 +505,6 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
         pendingCount: await countPendingQuietly(store),
       })
     }
-    finally {
-      running = false
-    }
-
-    return { ran: true, snapshot: state.get() }
   }
 
   return { sync, resolveConflict, isRunning: () => running }

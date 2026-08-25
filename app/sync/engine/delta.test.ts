@@ -85,8 +85,8 @@ function fakeStore(options: { items?: ListItemRow[], lists?: ListRow[] } = {}): 
     },
     readCursor: () => Promise.resolve(null),
     // Änderungsnummer: für diese Tests belanglos, aber Teil des Ports.
-    readChangeSeq: () => Promise.resolve(null),
     writeChangeSeq: () => Promise.resolve(),
+    advanceChangeSeq: () => Promise.resolve(),
     writeCursor: () => {
       store.cursorWrites += 1
       return Promise.resolve()

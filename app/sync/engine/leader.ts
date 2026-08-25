@@ -21,12 +21,17 @@
  * Zeitgeber, der es erneuert, und eine Regel, ab wann eine fremde Sperre als
  * verwaist gilt. Das ist genau die Sorte Maschinerie, die dann selbst ausfällt.
  *
- * WAS PASSIERT, WENN DIE SPERRE BELEGT IST
+ * WAS PASSIERT, WENN DIE SPERRE BELEGT IST — ZWEI ANTWORTEN
  *
- * Nichts. `ifAvailable` heisst: Läuft der Abgleich schon woanders, kehrt dieser
- * Aufruf sofort zurück, statt sich anzustellen. Anstehen wäre hier falsch — die
- * Auslöser sind Zeitgeber und Ereignisse, und eine Warteschlange davon würde
- * sich beim Freiwerden auf einmal entladen.
+ * Für Zeitgeber und Ereignisse: nichts. `ifAvailable` heisst, der Aufruf kehrt
+ * sofort zurück, statt sich anzustellen. Eine Warteschlange aus Zeitgebern
+ * entlüde sich beim Freiwerden auf einmal und führe denselben Lauf mehrfach.
+ *
+ * Für eine ausdrückliche Handlung des Nutzers: anstellen. Wer auf "Jetzt
+ * abgleichen" drückt oder einen Konflikt entscheidet, hat genau einen Wunsch
+ * geäussert — den still fallenzulassen, weil ein anderer Tab gerade arbeitet,
+ * sieht aus wie eine kaputte App. Ein Tastendruck ist eine Warteschlange von
+ * eins, und der Knopf ist so lange in seinem Ladezustand.
  */
 
 /** Name der Sperre. Ein fester Wert, damit ihn alle Tabs teilen. */
@@ -42,9 +47,25 @@ export const SYNC_LOCK_NAME = 'shliste-sync'
 export interface LockManagerLike {
   request: (
     name: string,
-    options: { mode: 'exclusive', ifAvailable: true },
+    options: { mode: 'exclusive', ifAvailable?: true },
     callback: (lock: unknown | null) => Promise<void>,
   ) => Promise<void>
+}
+
+/**
+ * Was tun, wenn ein anderer Tab die Sperre hält?
+ *
+ * `skipIfBusy` — sofort zurückkehren. Für alles, was von selbst wiederkommt:
+ * Zeitgeber, Echtzeit-Ereignisse, Herzschlag.
+ * `waitForTurn` — anstellen und danach laufen. Für ausdrückliche Handlungen
+ * des Nutzers, die sonst wirkungslos verpuffen würden.
+ */
+export type LeaderMode = 'skipIfBusy' | 'waitForTurn'
+
+export interface LeaderOptions {
+  mode?: LeaderMode
+  /** Einsetzbar für den Test; sonst die Web-Locks-API des Browsers. */
+  locks?: LockManagerLike
 }
 
 /** Ergebnis eines Versuchs, unter der Sperre zu laufen. */
@@ -62,16 +83,24 @@ export type LeaderOutcome<T>
  */
 export async function runAsLeader<T>(
   arbeit: () => Promise<T>,
-  locks: LockManagerLike | undefined = globalThis.navigator?.locks as LockManagerLike | undefined,
+  options: LeaderOptions = {},
 ): Promise<LeaderOutcome<T>> {
+  const locks = options.locks ?? (globalThis.navigator?.locks as LockManagerLike | undefined)
+
   if (locks === undefined) {
     return { ran: true, value: await arbeit() }
   }
 
   let ergebnis: LeaderOutcome<T> = { ran: false }
+  // Ohne `ifAvailable` stellt sich die Anfrage an — das ist die ganze
+  // Unterscheidung, die Web Locks dafür brauchen.
+  const anfrage = options.mode === 'waitForTurn'
+    ? { mode: 'exclusive' as const }
+    : { mode: 'exclusive' as const, ifAvailable: true as const }
 
-  await locks.request(SYNC_LOCK_NAME, { mode: 'exclusive', ifAvailable: true }, async (lock) => {
+  await locks.request(SYNC_LOCK_NAME, anfrage, async (lock) => {
     // `null` heisst: Die Sperre ist belegt, ein anderer Tab arbeitet gerade.
+    // Beim Anstellen kann das nicht vorkommen, die Prüfung kostet aber nichts.
     if (lock === null) return
     ergebnis = { ran: true, value: await arbeit() }
   })

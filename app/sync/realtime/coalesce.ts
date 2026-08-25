@@ -72,8 +72,19 @@ function unionIds(first: readonly string[], second: readonly string[]): string[]
  * ersten Ereignisses.
  */
 export function mergeEvents(existing: RealtimeEvent, incoming: RealtimeEvent): RealtimeEvent {
-  if (existing.type === 'list_changed' && incoming.type === 'item_changed') return existing
-  if (existing.type === 'item_changed' && incoming.type === 'list_changed') return incoming
+  /*
+   * DIE NUMMER ÜBERLEBT DAS ZUSAMMENFASSEN IMMER — auch wenn ein Ereignis das
+   * andere verdrängt.
+   *
+   * Sie ist der Stand, den der Aufrufer nach dem Delta quittiert. Bliebe beim
+   * Kreuzen zweier Typen die kleinere stehen, zeigte der nächste Herzschlag
+   * eine Lücke, die längst geschlossen ist — und löste bei jedem Bündel einen
+   * überflüssigen vollen Abgleich aus.
+   */
+  const seq = hoechste(existing.seq, incoming.seq)
+
+  if (existing.type === 'list_changed' && incoming.type === 'item_changed') return { ...existing, seq }
+  if (existing.type === 'item_changed' && incoming.type === 'list_changed') return { ...incoming, seq }
 
   if (existing.type === 'item_changed' && incoming.type === 'item_changed') {
     const merged: ItemChangedEvent = {
@@ -90,22 +101,14 @@ export function mergeEvents(existing: RealtimeEvent, incoming: RealtimeEvent): R
        * danach still falsch.
        */
       listUpdatedAt: incoming.listUpdatedAt ?? existing.listUpdatedAt,
-      /*
-       * Die HÖCHSTE Nummer gewinnt, nicht die jüngere.
-       *
-       * Sie ist der Stand, den der Aufrufer nach dem Delta quittiert. Würde
-       * hier die kleinere stehen, zeigte der nächste Herzschlag eine Lücke, die
-       * längst geschlossen ist — und löste einen überflüssigen vollen Abgleich
-       * aus, bei jedem einzelnen Bündel.
-       */
-      seq: hoechste(existing.seq, incoming.seq),
+      seq,
     }
     return merged
   }
 
   // Für alle übrigen Paare gilt: gleicher Schlüssel, gleicher Ereignistyp,
   // gleiche Aussage. Das jüngere ist das aktuellere.
-  return incoming
+  return { ...incoming, seq }
 }
 
 /**
