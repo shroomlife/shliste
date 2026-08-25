@@ -156,12 +156,22 @@ export default defineNuxtConfig({
    * verspricht, nicht tragbar ist. Workbox erzeugt das Manifest beim Build
    * aus den echten Ausgabedateien.
    *
-   * `prompt` statt `autoUpdate`: Ein Selbstneuladen mitten im Einkauf wäre
-   * genau die Überraschung, die eine App nicht liefern soll. Die neue Fassung
-   * wird angeboten, angenommen wird sie per Klick (siehe PwaPrompt.vue).
+   * `autoUpdate` statt `prompt` (Entscheidung vom 25.08.2026): Neue
+   * Fassungen rollen ohne Nachfrage aus — skipWaiting und clientsClaim
+   * setzt das Plugin damit selbst, und beim Übernehmen der neuen Fassung
+   * lädt die Seite automatisch neu. Das Neuladen ist verkraftbar, weil alle
+   * Daten in IndexedDB liegen: Ungesendete Änderungen bleiben schmutzig und
+   * gehen beim nächsten Abgleich hinaus. periodicSyncForUpdates sorgt dafür,
+   * dass auch eine dauerhaft offene, nie neu geladene Instanz (installierte
+   * App) die neue Fassung binnen einer Stunde bekommt.
    */
   pwa: {
-    registerType: 'prompt',
+    registerType: 'autoUpdate',
+
+    client: {
+      // Sekunden — stündlicher Blick auf den Server, ob es eine neue Fassung gibt.
+      periodicSyncForUpdates: 3600,
+    },
 
     manifest: {
       name: 'shliste ~ Deine smarte Einkaufsliste',
