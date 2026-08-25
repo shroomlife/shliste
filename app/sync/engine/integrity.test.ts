@@ -97,3 +97,30 @@ describe('Gleichlauf mit Android', () => {
     expect(MIN_HEAL_INTERVAL_MS).toBe(12 * 60 * 60 * 1000)
   })
 })
+
+describe('Die beiden Sperren bedeuten Verschiedenes', () => {
+  /*
+   * `lastHealedAt` zählt VERSUCHE, `lastHealedHash` nur ERFOLGE. Vorher wurde
+   * beides gemeinsam geschrieben (dann sperrte ein Fehlschlag den Serverstand
+   * für immer) oder bei einem Fehlschlag gar nichts (dann lief ein dauerhaft
+   * scheiternder Abgleich bei jedem Anlass erneut). Dieselbe Trennung gilt in
+   * Androids IntegrityPolicy — die Fixtures beider Seiten müssen dieselbe
+   * Antwort geben.
+   */
+
+  test('ein gescheiterter Versuch bremst, sperrt aber nicht dauerhaft', () => {
+    // Nur die Zeit ist vermerkt, nicht die Prüfsumme: kurz danach gebremst …
+    expect(urteil({ lastHealedHash: null, lastHealedAt: JETZT - 1_000 }).kind)
+      .toBe('already-tried')
+
+    // … nach Ablauf der Schranke aber wieder erlaubt. Die Abweichung ist ja
+    // unrepariert, und ein gesetzter Prüfsummen-Vermerk sperrte sie für immer.
+    expect(urteil({ lastHealedHash: null, lastHealedAt: JETZT - MIN_HEAL_INTERVAL_MS - 1 }))
+      .toEqual({ kind: 'heal' })
+  })
+
+  test('ein erfolgreicher Versuch sperrt genau diesen Serverstand dauerhaft', () => {
+    expect(urteil({ lastHealedHash: SERVER_A, lastHealedAt: JETZT - MIN_HEAL_INTERVAL_MS - 1 }).kind)
+      .toBe('already-tried')
+  })
+})

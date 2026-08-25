@@ -33,7 +33,8 @@ import {
   getLastChangeSeq,
   getSelfHealMarker,
   setLastSyncedAt,
-  setSelfHealMarker,
+  setSelfHealAttempt,
+  setSelfHealSuccess,
 } from '~/db/repositories'
 import { requestJson, SYNC_ENDPOINTS } from '../sync/engine/transport'
 import type { RealtimeStatus } from '../sync/realtime/connection'
@@ -317,39 +318,48 @@ export function useSyncRunner(): void {
     // NICHT destruktiv — ein voller Abruf verwirft nichts, sondern führt
     // zusammen, und Zeilen mit offenen Änderungen bleiben unangetastet.
     await setLastSyncedAt(null)
+
+    /*
+     * DEN VERSUCH ZUERST VERMERKEN, DAS ERGEBNIS DANACH.
+     *
+     * Die beiden Marken bedeuten Verschiedenes, und genau das löst zwei
+     * Fehler auf, die sich sonst gegenseitig ausschliessen:
+     *
+     * - Der Zeitstempel zählt VERSUCHE. Er steht vor dem Lauf, damit ein
+     *   dauerhaft scheiternder Abgleich nicht bei jedem Anlass erneut einen
+     *   vollständigen Abruf auslöst — die Zeitschranke bremst ihn.
+     * - Die Prüfsumme zählt ERFOLGE. Sie sperrt genau diesen Serverstand
+     *   dauerhaft; ein Fehlschlag darf sie deshalb nicht setzen, sonst bliebe
+     *   die Abweichung für immer unrepariert und niemand sähe einen Fehler.
+     *
+     * Vorher wurde bei einem Fehlschlag KEINE von beiden gesetzt. Das
+     * verhinderte zwar die dauerhafte Sperre, öffnete aber die Endlosschleife.
+     * Dieselbe Trennung gilt in Androids IntegrityPolicy, wo beide Sperren seit
+     * jeher so dokumentiert sind.
+     */
+    await setSelfHealAttempt(Date.now())
+
     const ergebnis = await syncEngine.sync()
     if (!ergebnis.ran) {
-      // Es lief bereits etwas — hier oder in einem anderen Tab. Der Versuch ist
-      // dann nicht verbraucht.
+      // Es lief bereits etwas — hier oder in einem anderen Tab. Dann gehört der
+      // Lauf nicht uns, und die Prüfung wird wieder freigegeben.
       integrityChecked = false
       return
     }
 
     /*
-     * DIE SPERRE NUR NACH EINEM ECHTEN ERFOLG SETZEN.
-     *
      * `ran: true` heisst nur "dieser Lauf gehörte mir", nicht "er hat
      * geklappt": Ein Fehler im Zyklus wird gefangen und landet als Phase im
-     * Zustand, der Rückgabewert bleibt derselbe. Ohne diese Unterscheidung
-     * würde ein Abgleich, der am Netz gescheitert ist, die Selbstheilung für
-     * genau diesen Serverstand DAUERHAFT sperren — und zwar still: Die
-     * Abweichung bliebe bestehen, jeder weitere Versuch liefe in
-     * `already-tried`, und niemand sähe einen Fehler.
-     *
-     * Der Marker ist eine Zusage ("gegen diesen Stand wurde abgeglichen"), und
-     * die darf nur geben, wer sie auch eingelöst hat. Bei einem Fehlschlag wird
-     * stattdessen die Prüfung wieder freigegeben, damit der nächste Anlass es
-     * erneut versucht.
+     * Zustand, der Rückgabewert bleibt derselbe.
      */
     const phase = ergebnis.snapshot.phase
     if (phase === 'error' || phase === 'offline' || phase === 'authRequired') {
-      console.warn(`[Sync] Selbstheilung nicht abgeschlossen (${phase}) — der Versuch bleibt offen.`)
-      integrityChecked = false
+      console.warn(`[Sync] Selbstheilung nicht abgeschlossen (${phase}) — die Zeitschranke bremst den nächsten Versuch.`)
       return
     }
 
     if (status.contentHashV2 !== null) {
-      await setSelfHealMarker(status.contentHashV2, Date.now())
+      await setSelfHealSuccess(status.contentHashV2, Date.now())
     }
     dataVersion.value += 1
   }

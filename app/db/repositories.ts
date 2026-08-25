@@ -1103,13 +1103,38 @@ export async function getSelfHealMarker(): Promise<{ hash: string | null, at: nu
 }
 
 /**
- * Hält fest, dass gegen genau diesen Serverstand abgeglichen wurde.
+ * Hält fest, dass ein Heilungsversuch BEGONNEN hat.
  *
- * Wird auch dann geschrieben, wenn der Abgleich die Abweichung NICHT auflöst —
- * gerade dann: Ein zweiter Versuch gegen denselben Stand brächte dasselbe
- * Ergebnis und kostete einen vollständigen Abruf.
+ * VOR dem Lauf aufrufen, nicht danach. Zwei Fehler hängen daran:
+ *
+ * 1. WIEDEREINTRITT. Der Lauf meldet selbst einen neuen Zustand, und die
+ *    Integritätsprüfung hängt daran. Stünde der Vermerk erst danach, sähe die
+ *    nächste Prüfung den unberührten Stand und startete einen zweiten
+ *    vollständigen Abruf.
+ * 2. ENDLOSSCHLEIFE BEI DAUERHAFTEM FEHLSCHLAG. Wird bei einem Fehler gar
+ *    nichts vermerkt, greift auch die Zeitschranke nie, und jeder Anlass löst
+ *    erneut einen vollständigen Abruf aus.
+ *
+ * Der Zeitstempel zählt deshalb VERSUCHE, unabhängig vom Ausgang. Die
+ * Prüfsumme daneben zählt nur Erfolge (siehe `setSelfHealSuccess`) — dieselbe
+ * Trennung wie in Androids IntegrityPolicy, wo beide Sperren seit jeher so
+ * dokumentiert sind.
  */
-export async function setSelfHealMarker(hash: string, at: number): Promise<void> {
+export async function setSelfHealAttempt(at: number): Promise<void> {
+  await writeMeta('lastSelfHealAt', at)
+}
+
+/**
+ * Hält fest, dass gegen genau diesen Serverstand ERFOLGREICH abgeglichen wurde.
+ *
+ * Diese Marke ist dauerhaft: Solange der Server denselben Stand meldet, wird
+ * nicht erneut geheilt — ein zweiter Versuch brächte dasselbe Ergebnis und
+ * kostete einen vollständigen Abruf.
+ *
+ * Genau deshalb darf ein Fehlschlag sie NICHT setzen: Er sperrte diesen
+ * Serverstand sonst für immer, ohne dass irgendwo ein Fehler sichtbar wäre.
+ */
+export async function setSelfHealSuccess(hash: string, at: number): Promise<void> {
   await writeMeta('lastSelfHealHash', hash)
   await writeMeta('lastSelfHealAt', at)
 }
