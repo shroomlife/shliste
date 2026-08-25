@@ -64,7 +64,7 @@ export function planRealtimeActions(events: Iterable<RealtimeEvent>): RealtimePl
         break
 
       case 'list_changed':
-        // Ueberschreibt ein bereits geplantes `items`-Delta derselben Liste:
+        // Überschreibt ein bereits geplantes `items`-Delta derselben Liste:
         // Die Liste zieht ihre Positionen ohnehin mit, der engere Abruf wäre
         // eine zweite Runde ohne Mehrwert.
         deltas.set(`list:${event.listId}`, { kind: 'list', listId: event.listId })
@@ -83,6 +83,18 @@ export function planRealtimeActions(events: Iterable<RealtimeEvent>): RealtimePl
           kind: 'items',
           listId: event.listId,
           itemIds: Array.from(new Set([...previous, ...event.itemIds])),
+          /*
+           * Der jüngere Sortierzeitpunkt gewinnt, und ein fehlender darf einen
+           * vorhandenen nicht verdrängen — dieselbe Regel wie beim Bündeln der
+           * Ereignisse (`mergeEvents` in ../realtime/coalesce.ts).
+           *
+           * Genau dieser Wert macht das begleitende `list_changed` entbehrlich:
+           * Ohne ihn gewinnt es im Coalescing, und der Listen-Delta liefert die
+           * Liste MIT ALLEN Items — 312 statt einem bei der grössten Liste in
+           * Produktion.
+           */
+          listUpdatedAt: event.listUpdatedAt
+            ?? (planned?.kind === 'items' ? planned.listUpdatedAt : null),
         })
         break
       }

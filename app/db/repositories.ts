@@ -49,6 +49,7 @@ import {
   type RecipeIngredientRow,
   type RecipeRow,
   type RecipeStepRow,
+  type ShlisteDb,
   type SyncMetaKey,
   type SyncMetaMap,
 } from './schema'
@@ -1113,6 +1114,21 @@ export async function setSelfHealMarker(hash: string, at: number): Promise<void>
   await writeMeta('lastSelfHealAt', at)
 }
 
+/**
+ * Bis zu welcher Änderungsnummer des Servers dieses Gerät auf dem Stand ist.
+ *
+ * `null` heisst "noch nie gesehen" und NICHT `0`: Der erste Herzschlag nach
+ * einer frischen Installation soll keinen Abgleich auslösen, nur weil das Konto
+ * schon bei einer Zahl über null steht.
+ */
+export async function getLastChangeSeq(): Promise<number | null> {
+  return readMeta('lastChangeSeq', isFiniteNumber)
+}
+
+export async function setLastChangeSeq(seq: number): Promise<void> {
+  await writeMeta('lastChangeSeq', seq)
+}
+
 // ---------------------------------------------------------------------------
 // Rohzugriff für den Abgleich
 //
@@ -1126,32 +1142,70 @@ export async function setSelfHealMarker(hash: string, at: number): Promise<void>
 // Datei: Jeder Datenbankzugriff der App gehört an genau einen Ort, sonst muss
 // bei einer Schemaänderung an mehreren Stellen gesucht werden.
 //
-// Ausgeschrieben statt generisch, weil `idb` Storename und Wertetyp aneinander
-// bindet — ein gemeinsamer Helfer bräuchte einen Cast und damit genau die
-// Typlöcher, die diese Schicht vermeiden soll.
+// Die LESEFUNKTIONEN stehen ausgeschrieben da, weil jede von genau einer
+// Stelle gebraucht wird (Rückgängig-Machen in den Detailseiten).
+//
+// Geschrieben wird dagegen nur noch über `mutateRow` weiter unten. Hier stand
+// früher ein zweiter Satz `put*Row` und dazu die Begründung, ein gemeinsamer
+// Helfer bräuchte einen Cast, weil `idb` Storename und Wertetyp aneinander
+// bindet. Das stimmt nicht: Über einen Generic auf die Storenamen bleibt die
+// Bindung erhalten, castfrei. Getrenntes Lesen und Schreiben war ausserdem
+// genau der Weg, auf dem eine gerade getippte Eingabe verschwinden konnte.
 // ---------------------------------------------------------------------------
 
 export async function readListRow(id: string): Promise<ListRow | undefined> {
   return (await getDb()).get('lists', id)
 }
 
-/**
- * ABWEICHUNG VOM MUSTER DER ÜBRIGEN `put*Row`: bewahrt das lokale
- * Gesehen-Wasserzeichen. Der Pull baut seine Zeile vollständig aus der
- * Serverantwort (`applyList` in `app/sync/engine/pull.ts`) und kennt `seenAt`
- * nicht — ohne diese Zeile würde jeder Abgleich die Liste wieder als "nie
- * gesehen" markieren und die Übersicht mit falschen Hinweisen fluten.
- */
-export async function putListRow(row: ListRow): Promise<void> {
-  const db = await getDb()
+/** Die sieben Tabellen, deren Zeilen der Abgleich zusammenführt. */
+export type RowStoreName
+  = | 'lists'
+    | 'list_items'
+    | 'recipes'
+    | 'recipe_ingredients'
+    | 'recipe_steps'
+    | 'recipe_chat_messages'
+    | 'badges'
 
-  // Lesen und Schreiben in EINER Transaktion, damit ein gleichzeitiges
-  // `markListSeen` nicht zwischen die beiden Schritte fallen und sein
-  // frisches Wasserzeichen verlieren kann.
-  const tx = db.transaction('lists', 'readwrite')
-  const store = tx.objectStore('lists')
-  const previous = await store.get(row.id)
-  await store.put({ ...row, seenAt: row.seenAt ?? previous?.seenAt ?? null })
+/**
+ * Lesen, Zusammenführen und Schreiben einer Zeile in EINER Transaktion.
+ *
+ * WOGEGEN DAS STEHT
+ *
+ * Der Abgleich las bisher eine Zeile, rechnete, und schrieb sie danach über
+ * einen zweiten, getrennten Aufruf zurück. Zwischen beiden liegt mindestens ein
+ * `await`, und damit ein Fenster, in dem die Oberfläche oder ein zweiter Tab
+ * eine neuere lokale Änderung schreiben kann. Der anschliessende Schreibvorgang
+ * des Abgleichs beruht dann auf dem ALTEN Stand und überschreibt sie — samt
+ * `dirty`-Flag. Die Eingabe ist damit nicht nur weg, sie wird auch nie
+ * hochgeladen. Nichts davon erzeugt einen Fehler.
+ *
+ * `putListRow` oben löst genau dieses Problem seit jeher für `seenAt`. Hier ist
+ * dasselbe Muster verallgemeinert, statt es ein zweites Mal zu erfinden.
+ *
+ * DIE REGEL, AN DER DAS SONST SCHEITERT
+ *
+ * Eine IndexedDB-Transaktion committet automatisch, sobald die Microtask-Queue
+ * leerläuft. Wird darin auf irgendetwas gewartet, das KEINE Datenbankoperation
+ * ist — Netz, Krypto, ein Zeitgeber —, stirbt sie mit `TransactionInactiveError`.
+ * `merge` muss deshalb vollständig synchron sein. Das ist möglich, weil
+ * `mergePulledEntity` synchron ist; die Signatur hält es fest.
+ *
+ * `null` aus `merge` heisst "nichts schreiben" — für den Fall, dass die
+ * Serverzeile nichts Neues bringt.
+ */
+export async function mutateRow<N extends RowStoreName>(
+  storeName: N,
+  id: string,
+  merge: (local: ShlisteDb[N]['value'] | undefined) => ShlisteDb[N]['value'] | null,
+): Promise<void> {
+  const db = await getDb()
+  const tx = db.transaction(storeName, 'readwrite')
+  const store = tx.objectStore(storeName)
+
+  const local = await store.get(id)
+  const next = merge(local)
+  if (next !== null) await store.put(next)
 
   await tx.done
 }
@@ -1160,46 +1214,22 @@ export async function readItemRow(id: string): Promise<ListItemRow | undefined> 
   return (await getDb()).get('list_items', id)
 }
 
-export async function putItemRow(row: ListItemRow): Promise<void> {
-  await (await getDb()).put('list_items', row)
-}
-
 export async function readRecipeRow(id: string): Promise<RecipeRow | undefined> {
   return (await getDb()).get('recipes', id)
-}
-
-export async function putRecipeRow(row: RecipeRow): Promise<void> {
-  await (await getDb()).put('recipes', row)
 }
 
 export async function readIngredientRow(id: string): Promise<RecipeIngredientRow | undefined> {
   return (await getDb()).get('recipe_ingredients', id)
 }
 
-export async function putIngredientRow(row: RecipeIngredientRow): Promise<void> {
-  await (await getDb()).put('recipe_ingredients', row)
-}
-
 export async function readStepRow(id: string): Promise<RecipeStepRow | undefined> {
   return (await getDb()).get('recipe_steps', id)
-}
-
-export async function putStepRow(row: RecipeStepRow): Promise<void> {
-  await (await getDb()).put('recipe_steps', row)
 }
 
 export async function readBadgeRow(id: string): Promise<BadgeRow | undefined> {
   return (await getDb()).get('badges', id)
 }
 
-export async function putBadgeRow(row: BadgeRow): Promise<void> {
-  await (await getDb()).put('badges', row)
-}
-
 export async function readChatMessageRow(id: string): Promise<RecipeChatMessageRow | undefined> {
   return (await getDb()).get('recipe_chat_messages', id)
-}
-
-export async function putChatMessageRow(row: RecipeChatMessageRow): Promise<void> {
-  await (await getDb()).put('recipe_chat_messages', row)
 }

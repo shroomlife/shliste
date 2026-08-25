@@ -18,25 +18,32 @@
 import { describe, expect, test } from 'bun:test'
 import type { RealtimeEvent } from '../realtime/events'
 import type { DeltaTarget } from './delta'
-import type { PullStore, RealtimeStore, RowStores } from './ports'
+import type { EntityStore, PullStore, RealtimeStore, RowStores } from './ports'
 import { createRealtimeSync, planRealtimeActions } from './realtime'
 
 /* ------------------------------------------------------------------ *
  * Attrappen
  * ------------------------------------------------------------------ */
 
-function emptyEntityStore<TRow extends { id: string }>() {
+function emptyEntityStore<TRow extends { id: string }>(): EntityStore<TRow> {
   const all = new Map<string, TRow>()
   return {
-    read: (id: string) => Promise.resolve(all.get(id)),
-    write: (row: TRow) => {
-      all.set(row.id, row)
+    // Bildet `mutateRow` nach: ein unteilbares Lesen-Rechnen-Schreiben.
+    mutate: (id, merge) => {
+      const next = merge(all.get(id))
+      if (next !== null) all.set(next.id, next)
       return Promise.resolve()
     },
   }
 }
 
-const rows = {
+/*
+ * Ohne Doppel-Cast: `as unknown as RowStores` hat hier zuletzt einen echten
+ * Typfehler verdeckt — die Attrappe hatte die Form des Ports gar nicht mehr,
+ * und aufgefallen ist es erst zur Laufzeit. Eine benannte Annotation lässt den
+ * Compiler die Arbeit machen.
+ */
+const rows: RowStores = {
   lists: emptyEntityStore(),
   items: emptyEntityStore(),
   recipes: emptyEntityStore(),
@@ -44,7 +51,7 @@ const rows = {
   steps: emptyEntityStore(),
   badges: emptyEntityStore(),
   chatMessages: emptyEntityStore(),
-} as unknown as RowStores
+}
 
 interface Recorder {
   store: RealtimeStore
@@ -73,6 +80,9 @@ function recorder(options: {
     replaceMembers: () => Promise.resolve(),
     readCursor: () => Promise.resolve(null),
     writeCursor: () => Promise.resolve(),
+    // Änderungsnummer: für diese Tests belanglos, aber Teil des Ports.
+    readChangeSeq: () => Promise.resolve(null),
+    writeChangeSeq: () => Promise.resolve(),
   }
 
   const self: Recorder = {
@@ -146,29 +156,29 @@ const CHANGED_RESPONSE = {
 
 describe('planRealtimeActions', () => {
   test('item_changed wird ein gezielter Positions-Abruf', () => {
-    const plan = planRealtimeActions([{ type: 'item_changed', listId: 'l1', itemIds: ['a', 'b'] }])
+    const plan = planRealtimeActions([{ type: 'item_changed', listId: 'l1', itemIds: ['a', 'b'], listUpdatedAt: null }])
 
     expect(plan.needsFullSync).toBe(false)
-    expect(plan.deltas).toEqual([{ kind: 'items', listId: 'l1', itemIds: ['a', 'b'] }])
+    expect(plan.deltas).toEqual([{ kind: 'items', listId: 'l1', itemIds: ['a', 'b'], listUpdatedAt: null }])
   })
 
   test('zwei item_changed derselben Liste vereinigen ihre Ids', () => {
     const plan = planRealtimeActions([
-      { type: 'item_changed', listId: 'l1', itemIds: ['a'] },
-      { type: 'item_changed', listId: 'l1', itemIds: ['b', 'a'] },
+      { type: 'item_changed', listId: 'l1', itemIds: ['a'], listUpdatedAt: null },
+      { type: 'item_changed', listId: 'l1', itemIds: ['b', 'a'], listUpdatedAt: null },
     ])
 
-    expect(plan.deltas).toEqual([{ kind: 'items', listId: 'l1', itemIds: ['a', 'b'] }])
+    expect(plan.deltas).toEqual([{ kind: 'items', listId: 'l1', itemIds: ['a', 'b'], listUpdatedAt: null }])
   })
 
   test('list_changed schlägt item_changed — in beide Richtungen', () => {
     const itemsFirst = planRealtimeActions([
-      { type: 'item_changed', listId: 'l1', itemIds: ['a'] },
+      { type: 'item_changed', listId: 'l1', itemIds: ['a'], listUpdatedAt: null },
       { type: 'list_changed', listId: 'l1' },
     ])
     const listFirst = planRealtimeActions([
       { type: 'list_changed', listId: 'l1' },
-      { type: 'item_changed', listId: 'l1', itemIds: ['a'] },
+      { type: 'item_changed', listId: 'l1', itemIds: ['a'], listUpdatedAt: null },
     ])
 
     expect(itemsFirst.deltas).toEqual([{ kind: 'list', listId: 'l1' }])
@@ -215,7 +225,7 @@ describe('createRealtimeSync', () => {
   test('holt das Delta und meldet die Änderung', async () => {
     const deps = recorder({ deltaResponse: CHANGED_RESPONSE })
 
-    await syncFor(deps).handleEvents([{ type: 'item_changed', listId: 'l1', itemIds: ['i1'] }])
+    await syncFor(deps).handleEvents([{ type: 'item_changed', listId: 'l1', itemIds: ['i1'], listUpdatedAt: null }])
 
     expect(deps.queries).toEqual(['type=items&listId=l1&ids=i1'])
     expect(deps.fullSyncs).toBe(0)
@@ -234,7 +244,7 @@ describe('createRealtimeSync', () => {
   test('EIN UNGESENDETER LOKALER STAND ERZWINGT DEN VOLLEN LAUF', async () => {
     const deps = recorder({ dirtyLists: ['l1'] })
 
-    await syncFor(deps).handleEvents([{ type: 'item_changed', listId: 'l1', itemIds: ['i1'] }])
+    await syncFor(deps).handleEvents([{ type: 'item_changed', listId: 'l1', itemIds: ['i1'], listUpdatedAt: null }])
 
     expect(deps.fullSyncs).toBe(1)
     expect(deps.queries).toEqual([])
@@ -333,9 +343,9 @@ describe('createRealtimeSync', () => {
 
     // So käme es an, wenn die Bündelung ausfiele: dieselbe Liste dreimal.
     await syncFor(deps).handleEvents([
-      { type: 'item_changed', listId: 'l1', itemIds: ['a'] },
-      { type: 'item_changed', listId: 'l1', itemIds: ['b'] },
-      { type: 'item_changed', listId: 'l1', itemIds: ['a'] },
+      { type: 'item_changed', listId: 'l1', itemIds: ['a'], listUpdatedAt: null },
+      { type: 'item_changed', listId: 'l1', itemIds: ['b'], listUpdatedAt: null },
+      { type: 'item_changed', listId: 'l1', itemIds: ['a'], listUpdatedAt: null },
     ])
 
     expect(deps.queries).toEqual(['type=items&listId=l1&ids=a%2Cb'])
@@ -350,7 +360,7 @@ describe('Plan und Abruf passen zusammen', () => {
   test('jedes geplante Ziel hat eine der drei bekannten Formen', () => {
     const plan = planRealtimeActions([
       { type: 'list_changed', listId: 'l1' },
-      { type: 'item_changed', listId: 'l2', itemIds: ['a'] },
+      { type: 'item_changed', listId: 'l2', itemIds: ['a'], listUpdatedAt: null },
       { type: 'recipe_changed', recipeId: 'r1' },
     ])
 

@@ -36,6 +36,7 @@ import {
   getDirtySteps,
   getHasMigrated,
   getLastSignedInUserId,
+  getLastChangeSeq,
   getLastSyncedAt,
   getListsForView,
   getRecipesForView,
@@ -49,6 +50,7 @@ import {
   putPulledHistoryEntry,
   replaceListMembers,
   setHasMigrated,
+  setLastChangeSeq,
   setLastSyncedAt,
   trimHistoryForParent,
   type DirtyStoreName,
@@ -62,70 +64,42 @@ import type {
   RowStores,
   SyncStore,
 } from './ports'
-import {
-  putBadgeRow,
-  putChatMessageRow,
-  putIngredientRow,
-  putItemRow,
-  putListRow,
-  putRecipeRow,
-  putStepRow,
-  readBadgeRow,
-  readChatMessageRow,
-  readIngredientRow,
-  readItemRow,
-  readListRow,
-  readRecipeRow,
-  readStepRow,
-} from '../../db/repositories'
+import { mutateRow } from '../../db/repositories'
 
+/*
+ * Die sieben Zeilenspeicher.
+ *
+ * Jeder ist nur noch eine Bindung von `mutateRow` an seine Tabelle: Lesen,
+ * Zusammenführen und Schreiben laufen dort in EINER Transaktion. Vorher waren
+ * es zwei getrennte Aufrufe, und genau dazwischen konnte eine gerade getippte
+ * Eingabe verlorengehen (ausführlich in db/repositories.ts und ports.ts).
+ */
 const lists: EntityStore<ListRow> = {
-  read: readListRow,
-  write: async (row) => {
-    await putListRow(row)
-  },
+  mutate: (id, merge) => mutateRow('lists', id, merge),
 }
 
 const items: EntityStore<ListItemRow> = {
-  read: readItemRow,
-  write: async (row) => {
-    await putItemRow(row)
-  },
+  mutate: (id, merge) => mutateRow('list_items', id, merge),
 }
 
 const recipes: EntityStore<RecipeRow> = {
-  read: readRecipeRow,
-  write: async (row) => {
-    await putRecipeRow(row)
-  },
+  mutate: (id, merge) => mutateRow('recipes', id, merge),
 }
 
 const ingredients: EntityStore<RecipeIngredientRow> = {
-  read: readIngredientRow,
-  write: async (row) => {
-    await putIngredientRow(row)
-  },
+  mutate: (id, merge) => mutateRow('recipe_ingredients', id, merge),
 }
 
 const steps: EntityStore<RecipeStepRow> = {
-  read: readStepRow,
-  write: async (row) => {
-    await putStepRow(row)
-  },
+  mutate: (id, merge) => mutateRow('recipe_steps', id, merge),
 }
 
 const badges: EntityStore<BadgeRow> = {
-  read: readBadgeRow,
-  write: async (row) => {
-    await putBadgeRow(row)
-  },
+  mutate: (id, merge) => mutateRow('badges', id, merge),
 }
 
 const chatMessages: EntityStore<RecipeChatMessageRow> = {
-  read: readChatMessageRow,
-  write: async (row) => {
-    await putChatMessageRow(row)
-  },
+  mutate: (id, merge) => mutateRow('recipe_chat_messages', id, merge),
 }
 
 const rows: RowStores = { lists, items, recipes, ingredients, steps, badges, chatMessages }
@@ -202,6 +176,8 @@ export const localStore: SyncStore & RealtimeStore & ConflictStore = {
   trimHistoryForParent,
   readCursor: getLastSyncedAt,
   writeCursor: setLastSyncedAt,
+  readChangeSeq: getLastChangeSeq,
+  writeChangeSeq: setLastChangeSeq,
   readHasMigrated: getHasMigrated,
   writeHasMigrated: setHasMigrated,
   readLastSignedInUserId: getLastSignedInUserId,

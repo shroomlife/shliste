@@ -12,6 +12,8 @@
  * Werte Zeichenketten, weil Redis-Streams nur Zeichenketten kennen. `itemIds`
  * ist deshalb ein JSON-String und keine Liste.
  */
+import type { IsoUtc } from '../../../shared/types/domain'
+import { isIsoUtc } from '../../db/timestamps'
 
 /** Der Server schickt kein Detail: den gesamten Bestand abgleichen. */
 export interface SyncNeededEvent {
@@ -24,6 +26,19 @@ export interface ItemChangedEvent {
   listId: string
   /** Kann leer sein, wenn der Server keine Ids mitgeschickt hat. */
   itemIds: string[]
+  /**
+   * Der neue Sortierzeitpunkt der Elternliste.
+   *
+   * Jede Item-Änderung zieht `list.updatedAt` hoch, weil die Übersicht danach
+   * sortiert. Ohne dieses Feld erfuhr der Client das nur über ein zusätzliches
+   * `list_changed` — und weil das Coalescing `list_changed` gewinnen lässt,
+   * landete jedes Abhaken im Listen-Delta, das die Liste MIT ALLEN Items
+   * zurückgibt. Bei der grössten Liste in Produktion sind das 312 Einträge
+   * statt einem.
+   *
+   * `null`, wenn der Server das Feld nicht schickt (ältere API).
+   */
+  listUpdatedAt: IsoUtc | null
 }
 
 /** Die Liste selbst hat sich geändert (Name, Farbe, Mitglieder, Löschung). */
@@ -87,6 +102,17 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function readNonEmptyString(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null
+}
+
+/**
+ * Ein Zeitstempel aus einem Ereignis, oder `null`.
+ *
+ * Geprüft statt behauptet: Der Wert landet als `updatedAt` in der lokalen
+ * Zeile und geht damit ins feldgenaue Last-Write-Wins ein. Ein Wert in einem
+ * anderen Format würde dort lautlos jeden Vergleich verlieren oder gewinnen.
+ */
+function readIsoOrNull(value: unknown): IsoUtc | null {
+  return isIsoUtc(value) ? value : null
 }
 
 /**
@@ -159,7 +185,7 @@ export function parseRealtimeEvent(raw: string): RealtimeEvent | null {
       // liesse und die Bündelung es als leere Menge weiterreichen würde.
       if (itemIds === null) return { type: 'list_changed', listId }
 
-      return { type: 'item_changed', listId, itemIds }
+      return { type: 'item_changed', listId, itemIds, listUpdatedAt: readIsoOrNull(decoded.listUpdatedAt) }
     }
 
     case 'list_changed':

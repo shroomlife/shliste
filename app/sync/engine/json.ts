@@ -52,6 +52,19 @@ export function readNumberOr(source: Record<string, unknown>, key: string, fallb
 }
 
 /**
+ * Dasselbe, aber mit `null` statt eines Ersatzwertes.
+ *
+ * Für Felder, bei denen "fehlt" etwas ANDERES bedeutet als jede Zahl — die
+ * Änderungsnummer etwa: `0` heisst "das Konto hatte noch nie eine Änderung",
+ * `null` heisst "dieser Server kennt das Feld nicht". Ein Ersatzwert würde die
+ * beiden Fälle zusammenwerfen.
+ */
+export function readNumber(source: Record<string, unknown>, key: string): number | null {
+  const value = source[key]
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+/**
  * Das Zeitformat der API: ISO-UTC, Millisekunden OPTIONAL.
  *
  * Die API erlaubt beide Schreibweisen (`ISO_UTC_TIMESTAMP_PATTERN` in

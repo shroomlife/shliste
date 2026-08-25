@@ -44,13 +44,50 @@ describe('parseRealtimeEvent', () => {
       type: 'item_changed',
       listId: LIST_ID,
       itemIds: [ITEM_ID],
+      // Ohne das Feld im Rahmen (ältere API) steht hier null — der Client
+      // holt den Sortierzeitpunkt dann wie bisher über `list_changed`.
+      listUpdatedAt: null,
     })
+  })
+
+  test('nimmt den Sortierzeitpunkt der Elternliste mit', () => {
+    // Damit braucht ein Abhaken kein zusätzliches `list_changed` mehr. Ohne
+    // dieses Feld gewinnt im Coalescing `list_changed`, und der Listen-Delta
+    // liefert die Liste MIT ALLEN Items — 312 statt einem bei der grössten
+    // Liste in Produktion.
+    const raw = JSON.stringify({
+      type: 'item_changed',
+      listId: LIST_ID,
+      itemIds: JSON.stringify([ITEM_ID]),
+      listUpdatedAt: '2026-08-25T10:00:00.000Z',
+    })
+
+    expect(parseRealtimeEvent(raw)).toEqual({
+      type: 'item_changed',
+      listId: LIST_ID,
+      itemIds: [ITEM_ID],
+      listUpdatedAt: '2026-08-25T10:00:00.000Z',
+    })
+  })
+
+  test('ein Zeitstempel in fremdem Format wird verworfen, nicht übernommen', () => {
+    // Der Wert landet als `updatedAt` in der lokalen Zeile und geht damit ins
+    // feldgenaue Last-Write-Wins ein. Ein anderes Format würde dort lautlos
+    // jeden Vergleich gewinnen oder verlieren.
+    const raw = JSON.stringify({
+      type: 'item_changed',
+      listId: LIST_ID,
+      itemIds: JSON.stringify([ITEM_ID]),
+      listUpdatedAt: '25.08.2026',
+    })
+
+    expect(parseRealtimeEvent(raw)).toMatchObject({ listUpdatedAt: null })
   })
 
   test('erlaubt eine leere Id-Liste', () => {
     const raw = JSON.stringify({ type: 'item_changed', listId: LIST_ID, itemIds: '[]' })
 
-    expect(parseRealtimeEvent(raw)).toEqual({ type: 'item_changed', listId: LIST_ID, itemIds: [] })
+    expect(parseRealtimeEvent(raw)).toEqual({ type: 'item_changed', listId: LIST_ID, itemIds: [], listUpdatedAt: null })
   })
 
   test('fällt bei unbrauchbaren itemIds auf die Obermenge list_changed zurück', () => {

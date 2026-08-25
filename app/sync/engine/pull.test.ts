@@ -23,7 +23,7 @@ import type {
   RecipeStepRow,
 } from '../../db/schema'
 import { CLEAN, DIRTY } from '../../db/schema'
-import type { EntityStore, ListRemovalStore, PullStore, RowStores } from './ports'
+import type { EntityStore, RowMerge, ListRemovalStore, PullStore, RowStores } from './ports'
 import { parsePullResponse, runPull } from './pull'
 
 const OLD: IsoUtc = '2026-01-15T10:00:00.000Z'
@@ -41,10 +41,18 @@ function memoryEntityStore<TRow extends { id: string }>(
   const store = {
     all,
     writes: 0,
-    read: (id: string) => Promise.resolve(all.get(id)),
-    write: (row: TRow) => {
-      all.set(row.id, row)
-      store.writes += 1
+    /*
+     * Bildet `mutateRow` nach: Lesen, Zusammenführen und Schreiben in einem
+     * Zug. Genau diese Unteilbarkeit ist die Zusage, gegen die hier geprüft
+     * wird — mit getrenntem read/write wäre der Test blind für das Fenster,
+     * in dem eine lokale Eingabe verlorengehen konnte.
+     */
+    mutate: (id: string, merge: RowMerge<TRow>) => {
+      const next = merge(all.get(id))
+      if (next !== null) {
+        all.set(next.id, next)
+        store.writes += 1
+      }
       return Promise.resolve()
     },
   }
@@ -121,6 +129,9 @@ function fakePullStore(options: {
       return Promise.resolve()
     },
     readCursor: () => Promise.resolve(store.cursor),
+    // Änderungsnummer: für diese Tests belanglos, aber Teil des Ports.
+    readChangeSeq: () => Promise.resolve(null),
+    writeChangeSeq: () => Promise.resolve(),
     writeCursor: (value) => {
       store.cursor = value
       return Promise.resolve()

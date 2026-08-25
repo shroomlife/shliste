@@ -59,8 +59,9 @@ export type Dirty<T> = T & { dirty: DirtyFlag }
  *
  * NIE im Push: Die Nutzlast zählt ihre Felder explizit auf (`toPushList` in
  * `app/sync/engine/push.ts`), ein lokales Feld kann also nicht hineinrutschen.
- * NIE vom Pull überschrieben: `putListRow` bewahrt das Wasserzeichen der
- * bestehenden Zeile (Begründung dort).
+ * NIE vom Pull überschrieben: `applyList` in `app/sync/engine/pull.ts` trägt
+ * das Wasserzeichen der bestehenden Zeile ausdrücklich fort — es liest und
+ * schreibt in EINER Transaktion und sieht den Vorgänger deshalb direkt.
  *
  * Optional auf Typ-Ebene, denn IndexedDB ist schemalos: Zeilen aus der Zeit
  * vor diesem Feld tragen es nicht, und ein Versions-Bump wäre dafür falsch —
@@ -124,6 +125,20 @@ export interface SyncMetaMap {
   lastSelfHealHash: string
   /** Zeitpunkt des letzten Versuchs, in Millisekunden seit Epoch. */
   lastSelfHealAt: number
+  /**
+   * Die Änderungsnummer des Servers, bis zu der dieses Gerät auf dem Stand ist.
+   *
+   * Der SSE-Herzschlag trägt die aktuelle Nummer des Kontos mit. Ist sie höher
+   * als die hier gespeicherte, hat dieses Gerät etwas verpasst — unabhängig
+   * davon, WARUM: verlorenes Ereignis, Redis-Ausfall, verschluckter Weckruf.
+   * Der Vergleich zweier Zahlen ersetzt damit eine transaktionale Outbox auf
+   * der Serverseite (siehe lib/change-seq.ts der API).
+   *
+   * MUSS die Sitzung überleben: Nach einem Neuladen ohne gespeicherte Nummer
+   * gälte der erste Herzschlag als Lücke und löste einen überflüssigen
+   * Abgleich aus — bei jedem Seitenaufruf.
+   */
+  lastChangeSeq: number
 }
 
 export type SyncMetaKey = keyof SyncMetaMap

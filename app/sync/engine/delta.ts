@@ -15,7 +15,9 @@
  *
  * Gegenstück in der API: `api.shliste.app/src/routes/sync/delta.ts`.
  */
-import type { ListItem } from '../../../shared/types/domain'
+import type { IsoUtc, ListItem } from '../../../shared/types/domain'
+import { DIRTY } from '../../db/schema'
+import { compareIso } from '../../db/timestamps'
 import { parseListItem } from './entities'
 import { isRecord, parseAll, readArray } from './json'
 import type { PullStore } from './ports'
@@ -41,7 +43,20 @@ import {
  */
 export type DeltaTarget
   = | { kind: 'list', listId: string }
-    | { kind: 'items', listId: string, itemIds: readonly string[] }
+    | {
+      kind: 'items'
+      listId: string
+      itemIds: readonly string[]
+      /**
+       * Der neue Sortierzeitpunkt der Elternliste, wie ihn das Ereignis
+       * mitgeliefert hat.
+       *
+       * Ohne ihn bräuchte die Übersicht ein zusätzliches `list_changed`, um die
+       * Reihenfolge zu aktualisieren — und weil das Coalescing `list_changed`
+       * gewinnen lässt, landete jedes Abhaken im Listen-Delta samt aller Items.
+       */
+      listUpdatedAt: IsoUtc | null
+    }
     | { kind: 'recipe', recipeId: string }
 
 /**
@@ -148,6 +163,10 @@ export async function runDelta(
 
   await applyPulledRows(store, response)
 
+  if (target.kind === 'items' && target.listUpdatedAt !== null) {
+    await bumpListSortTime(store, target.listId, target.listUpdatedAt)
+  }
+
   const changed = response.lists.length + response.items.length + response.recipes.length > 0
   return {
     target,
@@ -156,4 +175,30 @@ export async function runDelta(
     recipes: response.recipes.length,
     changed,
   }
+}
+
+/**
+ * Zieht den Sortierzeitpunkt der Elternliste nach, ohne die ganze Liste zu holen.
+ *
+ * DIE ZWEI BEDINGUNGEN SIND DER GANZE PUNKT:
+ *
+ * 1. NUR WENN DIE LISTE LOKAL SAUBER IST. Eine ungesendete lokale Änderung hat
+ *    ihren eigenen, neueren Stand und geht beim nächsten Push hinaus — sie hier
+ *    zu überschreiben wäre genau der stille Verlust, den der Umbau dieser
+ *    Schicht abgestellt hat.
+ * 2. NUR VORWÄRTS. Ein älterer Zeitpunkt kommt aus einem überholten Ereignis
+ *    (die Zustellung ist nicht geordnet) und würde die Reihenfolge der
+ *    Übersicht zurückdrehen.
+ *
+ * Der Server macht dasselbe: Er setzt bei einer Item-Änderung ausschliesslich
+ * `updatedAt` der Liste und lässt die Feldstempel unberührt (`push.ts` der
+ * API). Beide Seiten kommen damit auf denselben Wert.
+ */
+async function bumpListSortTime(store: PullStore, listId: string, updatedAt: IsoUtc): Promise<void> {
+  await store.rows.lists.mutate(listId, (local) => {
+    if (local === undefined) return null
+    if (local.dirty === DIRTY) return null
+    if (compareIso(updatedAt, local.updatedAt) <= 0) return null
+    return { ...local, updatedAt }
+  })
 }

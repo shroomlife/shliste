@@ -3,7 +3,7 @@
  *
  * Zwei Composables mit klar getrennten Rollen:
  *
- * - `useSync()` ist die LESENDE Seite plus die Auslöser. Ueberall aufrufbar,
+ * - `useSync()` ist die LESENDE Seite plus die Auslöser. Überall aufrufbar,
  *   hält selbst nichts am Laufen.
  * - `useSyncRunner()` ist die LAUFENDE Seite: Verbindung, Zeitgeber,
  *   Ereignisbehandlung. GENAU EINMAL aufrufen, im App-Layout. Ein zweiter
@@ -30,6 +30,7 @@ import { computeContentHashes, divergentAreas } from '../sync/merge/content-hash
 import {
   countDirtyContent,
   getAllForContentHash,
+  getLastChangeSeq,
   getSelfHealMarker,
   setLastSyncedAt,
   setSelfHealMarker,
@@ -93,7 +94,7 @@ export const RECONCILE_INTERVAL_MS = 15 * 60_000
  *
  * Auf Modulebene und nicht in `useState`: Er ist kein Zustand, den eine
  * Ansicht anzeigt, sondern ein Handle. Auf dem Server wird er nie gesetzt
- * (`scheduleSync` kehrt dort sofort zurück), ein Uebersprechen zwischen
+ * (`scheduleSync` kehrt dort sofort zurück), ein Übersprechen zwischen
  * Anfragen ist damit ausgeschlossen.
  */
 let mutationTimer: ReturnType<typeof setTimeout> | null = null
@@ -318,10 +319,35 @@ export function useSyncRunner(): void {
     await setLastSyncedAt(null)
     const ergebnis = await syncEngine.sync()
     if (!ergebnis.ran) {
-      // Es lief bereits etwas — der Versuch ist dann nicht verbraucht.
+      // Es lief bereits etwas — hier oder in einem anderen Tab. Der Versuch ist
+      // dann nicht verbraucht.
       integrityChecked = false
       return
     }
+
+    /*
+     * DIE SPERRE NUR NACH EINEM ECHTEN ERFOLG SETZEN.
+     *
+     * `ran: true` heisst nur "dieser Lauf gehörte mir", nicht "er hat
+     * geklappt": Ein Fehler im Zyklus wird gefangen und landet als Phase im
+     * Zustand, der Rückgabewert bleibt derselbe. Ohne diese Unterscheidung
+     * würde ein Abgleich, der am Netz gescheitert ist, die Selbstheilung für
+     * genau diesen Serverstand DAUERHAFT sperren — und zwar still: Die
+     * Abweichung bliebe bestehen, jeder weitere Versuch liefe in
+     * `already-tried`, und niemand sähe einen Fehler.
+     *
+     * Der Marker ist eine Zusage ("gegen diesen Stand wurde abgeglichen"), und
+     * die darf nur geben, wer sie auch eingelöst hat. Bei einem Fehlschlag wird
+     * stattdessen die Prüfung wieder freigegeben, damit der nächste Anlass es
+     * erneut versucht.
+     */
+    const phase = ergebnis.snapshot.phase
+    if (phase === 'error' || phase === 'offline' || phase === 'authRequired') {
+      console.warn(`[Sync] Selbstheilung nicht abgeschlossen (${phase}) — der Versuch bleibt offen.`)
+      integrityChecked = false
+      return
+    }
+
     if (status.contentHashV2 !== null) {
       await setSelfHealMarker(status.contentHashV2, Date.now())
     }
@@ -400,7 +426,44 @@ export function useSyncRunner(): void {
 
       void handleEvents(events).catch(reportSyncFailure)
     },
+    /*
+     * Der Herzschlag meldet die Änderungsnummer des Kontos. Ist sie höher als
+     * der eigene Stand, hat dieser Tab etwas verpasst — und zwar unabhängig
+     * davon, WARUM: verlorenes Ereignis, Redis-Ausfall, verschluckter Weckruf.
+     *
+     * Genau das ist der Ersatz für eine transaktionale Outbox auf der
+     * Serverseite. Fällt Redis aus, bleibt die Leitung offen und schlägt
+     * weiter, liefert aber kein einziges Ereignis mehr; der Tab sähe eine
+     * kerngesunde Verbindung und wäre trotzdem blind. Bisher fiel das erst
+     * beim planmässigen Abgleich auf — nach bis zu 15 Minuten. Jetzt nach
+     * höchstens einem Herzschlag.
+     */
+    onChangeSeq: (seq) => {
+      void handleServerChangeSeq(seq).catch(reportSyncFailure)
+    },
   })
+
+  /**
+   * Vergleicht die gemeldete Nummer mit dem eigenen Stand.
+   *
+   * Ein unbekannter eigener Stand (`null`) löst NICHTS aus: Nach einer frischen
+   * Installation steht das Konto längst bei einer Zahl über null, und ein
+   * Abgleich allein deshalb wäre bei jedem ersten Herzschlag einer.
+   *
+   * Der eigene Stand wird bewusst bei jedem Schlag frisch gelesen statt
+   * zwischengespeichert. Es ist ein Primärschlüssel-Lesevorgang alle 15
+   * Sekunden, und ein Zwischenspeicher müsste bei jedem Abgleich, jedem Delta
+   * und jedem Kontowechsel mitgeführt werden — mehr Gelegenheiten, falsch zu
+   * liegen, als der Lesevorgang kostet.
+   */
+  async function handleServerChangeSeq(seq: number): Promise<void> {
+    if (!isSignedIn.value) return
+
+    const eigener = await getLastChangeSeq()
+    if (eigener === null || seq <= eigener) return
+
+    await requestSync()
+  }
 
   watchEffect(() => {
     realtimeView.value = {

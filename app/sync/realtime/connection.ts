@@ -95,6 +95,30 @@ export const LIVENESS_TIMEOUT_MS = HEARTBEAT_INTERVAL_MS * 4
  */
 export const SERVER_STALL_BUDGET_MS = HEARTBEAT_INTERVAL_MS * 3
 
+/**
+ * Liest die Änderungsnummer aus der Nutzlast eines Herzschlags.
+ *
+ * `null` bei allem, was nicht eindeutig eine endliche Zahl ist — auch bei
+ * fehlendem Feld. Der Rahmen kam vor dem 25.08.2026 mit leerer Nutzlast
+ * (`{}`), eine ältere API ist also kein Fehlerfall, sondern der Normalfall von
+ * gestern.
+ *
+ * Exportiert, weil daran eine Zusage hängt, die sonst nur im Betrieb auffiele:
+ * Die 0 ist ein gültiger Stand (frisches Konto) und darf nicht als "keine
+ * Nummer" durchfallen.
+ */
+export function readChangeSeq(data: string): number | null {
+  try {
+    const parsed: unknown = JSON.parse(data)
+    if (typeof parsed !== 'object' || parsed === null) return null
+    const seq = (parsed as Record<string, unknown>)['seq']
+    return typeof seq === 'number' && Number.isFinite(seq) ? seq : null
+  }
+  catch {
+    return null
+  }
+}
+
 export type RealtimeStatus = 'idle' | 'connecting' | 'open' | 'reconnecting'
 
 export interface RealtimeConnectionOptions {
@@ -105,6 +129,31 @@ export interface RealtimeConnectionOptions {
   /** Ein empfangenes, entdupliziertes Ereignis. */
   onEvent: (event: RealtimeEvent) => void
   onStatus?: (status: RealtimeStatus) => void
+  /**
+   * Der erste Rahmen dieser Verbindung ist eingetroffen — Herzschlag oder
+   * Ereignis.
+   *
+   * ERST HIER ist die Leitung bewiesen, nicht schon bei `open`. Eine
+   * EventSource meldet `open`, sobald die Antwortkopfzeilen da sind; ob je ein
+   * Byte Nutzlast folgt, sagt das nicht. Genau diese Unterscheidung führt die
+   * Verbindung intern längst (`proven`, hält Wartezeit und Fehlerzähler
+   * zurück) — sie war nur nach aussen nicht sichtbar, und deshalb hat die
+   * Ebene darüber ihre Minuten-Reserve schon bei `open` abgeschaltet.
+   */
+  onProven?: () => void
+  /**
+   * Die Änderungsnummer des Kontos, wie der Herzschlag sie meldet.
+   *
+   * Der Herzschlag entsteht LOKAL im API-Prozess, nicht in Redis. Fällt Redis
+   * aus, bleibt die Leitung offen und schlägt weiter, liefert aber kein
+   * einziges Ereignis mehr — der Tab sähe eine kerngesunde Verbindung und wäre
+   * trotzdem blind. Der Vergleich dieser Zahl mit dem eigenen Stand ist dann
+   * das Einzige, woran er es merkt.
+   *
+   * Fehlt die Zahl im Rahmen (ältere API), wird nichts gemeldet und alles
+   * verhält sich wie bisher.
+   */
+  onChangeSeq?: (seq: number) => void
   /** Meldet, sobald `DEGRADED_AFTER_FAILURES` erreicht ist, und danach je Fehlversuch. */
   onDegraded?: (consecutiveFailures: number) => void
   /** Nur für Tests: die Zufallsquelle der Streuung austauschbar machen. */
@@ -316,8 +365,27 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
       proven = true
       backoffMs = INITIAL_BACKOFF_MS
       consecutiveFailures = 0
+      options.onProven?.()
     }
     noteAlive()
+  }
+
+  /**
+   * Der Herzschlag: Lebenszeichen UND Standmeldung.
+   *
+   * Die Nutzlast ist `{"seq": 42}` — die Änderungsnummer des Kontos zum
+   * Zeitpunkt des Schlags. Der Rahmen kam früher ohne Inhalt (`{}`), ein
+   * fehlendes Feld ist deshalb kein Fehler, sondern eine ältere API.
+   *
+   * Bewusst tolerant: Was sich nicht lesen lässt, wird verworfen, ohne den
+   * Herzschlag als Lebenszeichen zu entwerten. Eine kaputte Zahl darf nicht
+   * dazu führen, dass die Verbindung als tot gilt.
+   */
+  function handleHeartbeat(event: MessageEvent<string>): void {
+    handleFrame()
+
+    const seq = readChangeSeq(event.data)
+    if (seq !== null) options.onChangeSeq?.(seq)
   }
 
   function closeSource(): void {
@@ -328,7 +396,7 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
     source.onopen = null
     source.onmessage = null
     source.onerror = null
-    source.removeEventListener('heartbeat', handleFrame)
+    source.removeEventListener('heartbeat', handleHeartbeat)
     source.close()
     source = null
   }
@@ -444,7 +512,7 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
     // er braucht einen eigenen Zuhörer, weil er `onmessage` ausdrücklich NICHT
     // erreicht: Dort gälte er als unbekanntes Ereignis und löste alle 15
     // Sekunden einen vollständigen Abgleich aus.
-    next.addEventListener('heartbeat', handleFrame)
+    next.addEventListener('heartbeat', handleHeartbeat)
     next.onerror = () => {
       // Ab hier würde `EventSource` von selbst mit derselben, inzwischen
       // wertlosen Adresse weiterprobieren. Genau das unterbindet das

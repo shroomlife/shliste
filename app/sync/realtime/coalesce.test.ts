@@ -14,8 +14,8 @@ const LIST_A = 'a0000000-0000-4000-8000-00000000000a'
 const LIST_B = 'a0000000-0000-4000-8000-00000000000b'
 const RECIPE = 'a0000000-0000-4000-8000-00000000000c'
 
-function itemChanged(listId: string, itemIds: string[]): RealtimeEvent {
-  return { type: 'item_changed', listId, itemIds }
+function itemChanged(listId: string, itemIds: string[], listUpdatedAt: string | null = null): RealtimeEvent {
+  return { type: 'item_changed', listId, itemIds, listUpdatedAt }
 }
 
 describe('coalesceKeyFor', () => {

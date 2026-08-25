@@ -40,6 +40,15 @@ export interface UseRealtimeOptions {
    * eigenen Server.
    */
   apiBase: MaybeRefOrGetter<string>
+  /**
+   * Der Herzschlag meldet eine Änderungsnummer.
+   *
+   * Der Aufrufer vergleicht sie mit dem eigenen Stand und gleicht ab, wenn sie
+   * höher ist. Der Vergleich liegt bewusst NICHT hier: Diese Ebene hält die
+   * Verbindung und weiss nichts von Datenbanken — genau die Trennung, die
+   * `app/sync/engine/realtime.ts` im Kopf beschreibt.
+   */
+  onChangeSeq?: (seq: number) => void
 }
 
 export interface UseRealtime {
@@ -92,8 +101,27 @@ export function useRealtime(options: UseRealtimeOptions): UseRealtime {
     },
     onStatus: (next) => {
       status.value = next
-      // Eine stehende Verbindung ist der Beweis, dass Echtzeit wieder geht.
-      if (next === 'open') isDegraded.value = false
+    },
+    /*
+     * ERST der erste Rahmen hebt den degradierten Zustand auf, nicht schon
+     * `open`.
+     *
+     * Vorher stand die Aufhebung im `onStatus` bei `open`, und `useSync` hat
+     * daraufhin die Minuten-Reserve abgeschaltet. Eine EventSource meldet
+     * `open` aber schon, sobald die Antwortkopfzeilen da sind — ob je Nutzlast
+     * folgt, sagt das nicht. Eine offene, aber stumme Leitung schaltete damit
+     * die Reserve ab und liess den Tab bis zur 60-Sekunden-Frist ohne jeden
+     * Weg an neue Daten.
+     *
+     * Die Verbindung selbst unterscheidet das längst (`proven` in
+     * connection.ts, hält Wartezeit und Fehlerzähler bis zum ersten Rahmen
+     * zurück). Hier wird sie nur endlich beim Wort genommen.
+     */
+    onProven: () => {
+      isDegraded.value = false
+    },
+    onChangeSeq: (seq) => {
+      options.onChangeSeq?.(seq)
     },
     onDegraded: () => {
       isDegraded.value = true

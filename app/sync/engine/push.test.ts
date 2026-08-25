@@ -408,9 +408,10 @@ function memoryEntityStore<TRow extends { id: string }>(rows: TRow[] = []): Enti
   const all = new Map(rows.map(row => [row.id, row]))
   return {
     all,
-    read: id => Promise.resolve(all.get(id)),
-    write: (row) => {
-      all.set(row.id, row)
+    // Bildet `mutateRow` nach: ein unteilbares Lesen-Rechnen-Schreiben.
+    mutate: (id, merge) => {
+      const next = merge(all.get(id))
+      if (next !== null) all.set(next.id, next)
       return Promise.resolve()
     },
   }

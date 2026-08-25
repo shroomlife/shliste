@@ -26,16 +26,34 @@ import type {
 import type { DirtyStoreName } from '../../db/repositories'
 
 /**
- * Lesen und Schreiben einer einzelnen Zeile.
+ * Zusammenführen einer Serverzeile mit dem lokalen Stand.
  *
- * Bewusst je Entität ein eigenes Paar statt einer generischen Funktion mit
- * Storenamen: `idb` bindet Storenamen und Wertetyp aneinander, ein
- * generischer Helfer müsste diese Bindung mit einem Cast aufbrechen. Dieselbe
- * Begründung wie bei den Upserts in `app/db/repositories.ts`.
+ * MUSS SYNCHRON SEIN. Der Aufruf läuft innerhalb einer IndexedDB-Transaktion,
+ * und die committet automatisch, sobald die Microtask-Queue leerläuft — ein
+ * `await` auf irgendetwas, das keine Datenbankoperation ist, tötet sie mit
+ * `TransactionInactiveError`. Der Rückgabetyp hält das fest, damit es nicht
+ * beim ersten Umbau verlorengeht.
+ *
+ * `null` heisst "nichts schreiben".
+ */
+export type RowMerge<TRow> = (local: TRow | undefined) => TRow | null
+
+/**
+ * Ein Zeilenspeicher für den Abgleich.
+ *
+ * NUR `mutate`, bewusst kein getrenntes `read`/`write`: Genau diese Trennung
+ * war der Weg, auf dem eine gerade getippte Eingabe verschwinden konnte.
+ * Zwischen dem Lesen und dem Zurückschreiben liegt mindestens ein `await`, und
+ * in diesem Fenster kann die Oberfläche oder ein zweiter Tab eine neuere
+ * Änderung schreiben, die der Abgleich danach auf Basis des alten Standes
+ * überschreibt — samt `dirty`-Flag, also ohne dass sie je hochgeladen würde.
+ * Nichts davon erzeugt einen Fehler.
+ *
+ * Als eine Form ist die Lücke nicht mehr sorgfältig zu vermeiden, sondern
+ * strukturell nicht mehr da.
  */
 export interface EntityStore<TRow> {
-  read: (id: string) => Promise<TRow | undefined>
-  write: (row: TRow) => Promise<void>
+  mutate: (id: string, merge: RowMerge<TRow>) => Promise<void>
 }
 
 /** Die sieben Tabellen, die am Abgleich teilnehmen. */
@@ -90,6 +108,15 @@ export interface PullStore {
   /** Das Wasserzeichen des letzten vollständigen Pulls. */
   readCursor: () => Promise<IsoUtc | null>
   writeCursor: (value: IsoUtc) => Promise<void>
+  /**
+   * Die Änderungsnummer, bis zu der dieses Gerät auf dem Stand ist.
+   *
+   * `null` heisst "noch nie gesehen" und nicht `0`: Nach einer frischen
+   * Installation soll der erste Herzschlag keinen Abgleich auslösen, nur weil
+   * das Konto schon bei einer Zahl über null steht.
+   */
+  readChangeSeq: () => Promise<number | null>
+  writeChangeSeq: (value: number) => Promise<void>
 }
 
 /**

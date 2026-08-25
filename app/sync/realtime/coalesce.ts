@@ -73,6 +73,16 @@ export function mergeEvents(existing: RealtimeEvent, incoming: RealtimeEvent): R
       type: 'item_changed',
       listId: existing.listId,
       itemIds: unionIds(existing.itemIds, incoming.itemIds),
+      /*
+       * Der jüngere Sortierzeitpunkt gewinnt, und ein fehlender darf einen
+       * vorhandenen nicht verdrängen.
+       *
+       * Ohne diese Zeile fiele der Zeitpunkt beim Zusammenfassen unter den
+       * Tisch — und genau der ist der Grund, warum ein Abhaken kein
+       * zusätzliches `list_changed` mehr braucht. Die Übersicht sortierte
+       * danach still falsch.
+       */
+      listUpdatedAt: incoming.listUpdatedAt ?? existing.listUpdatedAt,
     }
     return merged
   }

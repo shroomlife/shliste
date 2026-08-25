@@ -48,19 +48,19 @@ class FakeEventSource {
   onerror: (() => void) | null = null
   closed = false
 
-  private listeners = new Map<string, Set<() => void>>()
+  private listeners = new Map<string, Set<(event: MessageEvent<string>) => void>>()
 
   constructor(readonly url: string) {
     registriere(this)
   }
 
-  addEventListener(type: string, handler: () => void): void {
+  addEventListener(type: string, handler: (event: MessageEvent<string>) => void): void {
     const set = this.listeners.get(type) ?? new Set()
     set.add(handler)
     this.listeners.set(type, set)
   }
 
-  removeEventListener(type: string, handler: () => void): void {
+  removeEventListener(type: string, handler: (event: MessageEvent<string>) => void): void {
     this.listeners.get(type)?.delete(handler)
   }
 
@@ -74,8 +74,14 @@ class FakeEventSource {
     this.onopen?.()
   }
 
-  emitHeartbeat(): void {
-    for (const handler of this.listeners.get('heartbeat') ?? []) handler()
+  /**
+   * Der Herzschlag trägt seit dem 25.08.2026 eine Nutzlast: die
+   * Änderungsnummer des Kontos. Der Standardwert bildet die ältere API nach,
+   * die einen leeren Rahmen schickte.
+   */
+  emitHeartbeat(data = '{}'): void {
+    const event = { data } as MessageEvent<string>
+    for (const handler of this.listeners.get('heartbeat') ?? []) handler(event)
   }
 
   /** Anzahl der noch eingetragenen Zuhörer eines Typs. */
@@ -92,8 +98,12 @@ function registriere(quelle: FakeEventSource): void {
 
 interface Aufbau {
   events: string[]
+  /** Jede vom Herzschlag gemeldete Änderungsnummer, in Reihenfolge. */
+  seqs: number[]
   /** Jede Meldung von `onDegraded`, in der Reihenfolge des Auftretens. */
   degraded: number[]
+  /** Wie oft `onProven` gemeldet hat — der Beweis, dass wirklich etwas fliesst. */
+  proven: number
   stop: () => void
 }
 
@@ -111,15 +121,27 @@ async function flush(): Promise<void> {
 function aufbauen(): Aufbau {
   const events: string[] = []
   const degraded: number[] = []
+  const seqs: number[] = []
+  const aufbau = {
+    events,
+    degraded,
+    seqs,
+    proven: 0,
+    // Platzhalter: das echte `stop` kommt erst nach dem Aufbau der Verbindung.
+    stop: (): void => {},
+  }
   const connection = createRealtimeConnection({
     apiBase: 'https://api.shliste.app',
     requestTicket: () => Promise.resolve('t'.repeat(64)),
     onEvent: event => events.push(event.type),
     onDegraded: failures => degraded.push(failures),
+    onProven: () => { aufbau.proven += 1 },
+    onChangeSeq: seq => seqs.push(seq),
     random: () => 0.5,
   })
   connection.start()
-  return { events, degraded, stop: connection.stop }
+  aufbau.stop = connection.stop
+  return aufbau
 }
 
 /**
@@ -262,5 +284,109 @@ describe('Totmann-Schalter', () => {
     // Ein zurückgebliebener Zeitgeber würde eine getrennte Verbindung wieder
     // aufwecken — im Hintergrund-Tab genau das, was vermieden werden soll.
     expect(gebauteQuellen).toBe(vorher)
+  })
+})
+
+describe('Bewiesen ist erst, was auch fliesst', () => {
+  test('ein blosses open beweist NICHTS', async () => {
+    /*
+     * DER EIGENTLICHE FALL. Eine EventSource meldet `open`, sobald die
+     * Antwortkopfzeilen da sind — ob je ein Byte Nutzlast folgt, sagt das
+     * nicht. Vorher hat `useRealtime` genau daraufhin den degradierten Zustand
+     * aufgehoben, und `useSync` hat die Minuten-Reserve abgeschaltet. Eine
+     * offene, aber stumme Leitung liess den Tab damit bis zur
+     * 60-Sekunden-Frist ohne jeden Weg an neue Daten.
+     */
+    const aufbau = aufbauen()
+    await flush()
+    letzteQuelle?.emitOpen()
+
+    expect(aufbau.proven).toBe(0)
+    aufbau.stop()
+  })
+
+  test('der erste Rahmen beweist die Leitung', async () => {
+    const aufbau = aufbauen()
+    await flush()
+    letzteQuelle?.emitOpen()
+    letzteQuelle?.emitHeartbeat()
+
+    expect(aufbau.proven).toBe(1)
+    aufbau.stop()
+  })
+
+  test('weitere Rahmen melden nicht erneut', async () => {
+    // Der Zustand ist erreicht, nicht wiederholt zu erreichen. Ein Melden bei
+    // jedem Herzschlag wäre alle 15 Sekunden ein Schreibvorgang auf einen
+    // reaktiven Wert, der sich gar nicht ändert.
+    const aufbau = aufbauen()
+    await flush()
+    letzteQuelle?.emitOpen()
+    letzteQuelle?.emitHeartbeat()
+    letzteQuelle?.emitHeartbeat()
+    letzteQuelle?.emitHeartbeat()
+
+    expect(aufbau.proven).toBe(1)
+    aufbau.stop()
+  })
+})
+
+describe('Änderungsnummer im Herzschlag', () => {
+  test('meldet die Nummer aus der Nutzlast', async () => {
+    /*
+     * DER GRUND FÜR DIE GANZE MECHANIK: Der Herzschlag entsteht LOKAL im
+     * API-Prozess, nicht in Redis. Fällt Redis aus, schlägt er weiter, während
+     * kein einziges Ereignis mehr durchkommt — der Tab sieht eine kerngesunde
+     * Leitung und ist trotzdem blind. Diese Zahl ist dann das Einzige, woran
+     * er es merkt.
+     */
+    const aufbau = aufbauen()
+    await flush()
+    letzteQuelle?.emitOpen()
+    letzteQuelle?.emitHeartbeat(JSON.stringify({ seq: 42 }))
+
+    expect(aufbau.seqs).toEqual([42])
+    aufbau.stop()
+  })
+
+  test('die Nummer 0 wird gemeldet, nicht verschluckt', async () => {
+    // Ein frisches Konto steht auf 0. Würde die 0 als "keine Nummer" gelten,
+    // bekäme genau dieses Konto nie einen Vergleichswert.
+    const aufbau = aufbauen()
+    await flush()
+    letzteQuelle?.emitOpen()
+    letzteQuelle?.emitHeartbeat(JSON.stringify({ seq: 0 }))
+
+    expect(aufbau.seqs).toEqual([0])
+    aufbau.stop()
+  })
+
+  test('ein leerer Rahmen meldet nichts und bleibt trotzdem ein Lebenszeichen', async () => {
+    // So sah der Rahmen vor dem 25.08.2026 aus. Eine ältere API ist kein
+    // Fehlerfall, sondern der Normalfall von gestern — und der Herzschlag muss
+    // seine erste Aufgabe weiter erfüllen.
+    const aufbau = aufbauen()
+    await flush()
+    letzteQuelle?.emitOpen()
+    letzteQuelle?.emitHeartbeat('{}')
+
+    expect(aufbau.seqs).toEqual([])
+    expect(aufbau.proven).toBe(1)
+    aufbau.stop()
+  })
+
+  test('eine kaputte Nutzlast entwertet den Herzschlag NICHT', async () => {
+    // Die wichtigste Zusicherung hier: Eine unlesbare Zahl darf nicht dazu
+    // führen, dass die Verbindung als tot gilt. Sonst würde aus einer
+    // Kleinigkeit ein Verbindungsabbruch alle 15 Sekunden.
+    const aufbau = aufbauen()
+    await flush()
+    letzteQuelle?.emitOpen()
+    letzteQuelle?.emitHeartbeat('{kaputt')
+    letzteQuelle?.emitHeartbeat(JSON.stringify({ seq: 'sieben' }))
+
+    expect(aufbau.seqs).toEqual([])
+    expect(aufbau.proven).toBe(1)
+    aufbau.stop()
   })
 })

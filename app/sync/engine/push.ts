@@ -958,50 +958,70 @@ export function keptIds(rows: readonly { id: string }[], skipped: readonly strin
 async function applyConflicts(rows: RowStores, conflicts: PushConflicts, pushSnapshot: IsoUtc): Promise<number> {
   let applied = 0
 
+  /*
+   * Prüfen und Schreiben laufen in EINER Transaktion (`mutate`). Die
+   * Prüfung "wurde die Zeile seit dem Push lokal bearbeitet?" wäre sonst
+   * wertlos: Sie schützt gegen Änderungen VOR dem Lesen, nicht gegen die
+   * zwischen Lesen und Schreiben — und genau dort ist das Fenster.
+   */
   for (const list of conflicts.lists) {
-    const local = await rows.lists.read(list.id)
-    if (isLocallyNewer(local, pushSnapshot)) continue
-    // Der Eigentümer kommt hier NICHT verlässlich vom Server: Die
-    // Konfliktzeilen des Pushs tragen in `userId` die Kennung des AUFRUFERS,
-    // nicht die des Eigentümers (siehe push.ts der API). Bei einer geteilten
-    // Liste wäre das falsch, deshalb gewinnt der lokal bekannte Eigentümer.
-    await rows.lists.write({ ...list, ownerUserId: local?.ownerUserId ?? list.ownerUserId, dirty: CLEAN })
-    applied += 1
+    await rows.lists.mutate(list.id, (local) => {
+      if (isLocallyNewer(local, pushSnapshot)) return null
+      applied += 1
+      return {
+        ...list,
+        // Der Eigentümer kommt hier NICHT verlässlich vom Server: Die
+        // Konfliktzeilen des Pushs tragen in `userId` die Kennung des
+        // AUFRUFERS, nicht die des Eigentümers (siehe push.ts der API). Bei
+        // einer geteilten Liste wäre das falsch, deshalb gewinnt der lokal
+        // bekannte Eigentümer.
+        ownerUserId: local?.ownerUserId ?? list.ownerUserId,
+        dirty: CLEAN,
+        // Rein lokales Wasserzeichen, das der Server nicht kennt und nie
+        // überschreiben darf (siehe applyList in ./pull.ts).
+        seenAt: local?.seenAt ?? null,
+      }
+    })
   }
 
   for (const item of conflicts.listItems) {
-    const local = await rows.items.read(item.id)
-    if (isLocallyNewer(local, pushSnapshot)) continue
-    await rows.items.write({ ...item, dirty: CLEAN })
-    applied += 1
+    await rows.items.mutate(item.id, (local) => {
+      if (isLocallyNewer(local, pushSnapshot)) return null
+      applied += 1
+      return { ...item, dirty: CLEAN }
+    })
   }
 
   for (const recipe of conflicts.recipes) {
-    const local = await rows.recipes.read(recipe.id)
-    if (isLocallyNewer(local, pushSnapshot)) continue
-    await rows.recipes.write({ ...recipe, dirty: CLEAN })
-    applied += 1
+    await rows.recipes.mutate(recipe.id, (local) => {
+      if (isLocallyNewer(local, pushSnapshot)) return null
+      applied += 1
+      return { ...recipe, dirty: CLEAN }
+    })
   }
 
   for (const ingredient of conflicts.recipeIngredients) {
-    const local = await rows.ingredients.read(ingredient.id)
-    if (isLocallyNewer(local, pushSnapshot)) continue
-    await rows.ingredients.write({ ...ingredient, dirty: CLEAN })
-    applied += 1
+    await rows.ingredients.mutate(ingredient.id, (local) => {
+      if (isLocallyNewer(local, pushSnapshot)) return null
+      applied += 1
+      return { ...ingredient, dirty: CLEAN }
+    })
   }
 
   for (const step of conflicts.recipeSteps) {
-    const local = await rows.steps.read(step.id)
-    if (isLocallyNewer(local, pushSnapshot)) continue
-    await rows.steps.write({ ...step, dirty: CLEAN })
-    applied += 1
+    await rows.steps.mutate(step.id, (local) => {
+      if (isLocallyNewer(local, pushSnapshot)) return null
+      applied += 1
+      return { ...step, dirty: CLEAN }
+    })
   }
 
   for (const badge of conflicts.badges) {
-    const local = await rows.badges.read(badge.id)
-    if (isLocallyNewer(local, pushSnapshot)) continue
-    await rows.badges.write({ ...badge, dirty: CLEAN })
-    applied += 1
+    await rows.badges.mutate(badge.id, (local) => {
+      if (isLocallyNewer(local, pushSnapshot)) return null
+      applied += 1
+      return { ...badge, dirty: CLEAN }
+    })
   }
 
   return applied

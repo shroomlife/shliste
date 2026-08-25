@@ -25,7 +25,7 @@ import type {
 } from '../../db/schema'
 import { CLEAN, DIRTY } from '../../db/schema'
 import { deltaQuery, parseDeltaResponse, runDelta } from './delta'
-import type { EntityStore, PullStore, RowStores } from './ports'
+import type { EntityStore, RowMerge, PullStore, RowStores } from './ports'
 
 const OLD: IsoUtc = '2026-01-15T10:00:00.000Z'
 const NEW: IsoUtc = '2026-02-20T10:00:00.000Z'
@@ -38,9 +38,10 @@ function memoryEntityStore<TRow extends { id: string }>(rows: TRow[] = []): Enti
   const all = new Map(rows.map(row => [row.id, row]))
   return {
     all,
-    read: (id: string) => Promise.resolve(all.get(id)),
-    write: (row: TRow) => {
-      all.set(row.id, row)
+    // Bildet `mutateRow` nach: ein unteilbares Lesen-Rechnen-Schreiben.
+    mutate: (id: string, merge: RowMerge<TRow>) => {
+      const next = merge(all.get(id))
+      if (next !== null) all.set(next.id, next)
       return Promise.resolve()
     },
   }
@@ -54,8 +55,8 @@ interface FakeStore extends PullStore {
   members: Map<string, readonly ListMember[]>
 }
 
-function fakeStore(options: { items?: ListItemRow[] } = {}): FakeStore {
-  const listStore = memoryEntityStore<ListRow>()
+function fakeStore(options: { items?: ListItemRow[], lists?: ListRow[] } = {}): FakeStore {
+  const listStore = memoryEntityStore<ListRow>(options.lists ?? [])
   const itemStore = memoryEntityStore<ListItemRow>(options.items ?? [])
   const recipeStore = memoryEntityStore<RecipeRow>()
 
@@ -83,6 +84,9 @@ function fakeStore(options: { items?: ListItemRow[] } = {}): FakeStore {
       return Promise.resolve()
     },
     readCursor: () => Promise.resolve(null),
+    // Änderungsnummer: für diese Tests belanglos, aber Teil des Ports.
+    readChangeSeq: () => Promise.resolve(null),
+    writeChangeSeq: () => Promise.resolve(),
     writeCursor: () => {
       store.cursorWrites += 1
       return Promise.resolve()
@@ -167,13 +171,13 @@ describe('deltaQuery', () => {
   })
 
   test('Positionen: Ids kommagetrennt in einem Parameter', () => {
-    const query = deltaQuery({ kind: 'items', listId: 'l1', itemIds: ['a', 'b'] })
+    const query = deltaQuery({ kind: 'items', listId: 'l1', itemIds: ['a', 'b'], listUpdatedAt: null })
     expect(query).toBe('type=items&listId=l1&ids=a%2Cb')
     expect(new URLSearchParams(query).get('ids')).toBe('a,b')
   })
 
   test('ohne Ids bleibt ids weg — der Server liefert dann alle Positionen', () => {
-    expect(deltaQuery({ kind: 'items', listId: 'l1', itemIds: [] })).toBe('type=items&listId=l1')
+    expect(deltaQuery({ kind: 'items', listId: 'l1', itemIds: [], listUpdatedAt: null })).toBe('type=items&listId=l1')
   })
 
   test('ein Rezept wird über id angefragt, nicht über listId', () => {
@@ -240,7 +244,7 @@ describe('runDelta', () => {
         asked = query
         return Promise.resolve({ lists: [], items: [serverItem()], recipes: [] })
       },
-      { kind: 'items', listId: 'l1', itemIds: ['i1'] },
+      { kind: 'items', listId: 'l1', itemIds: ['i1'], listUpdatedAt: null },
     )
 
     expect(asked).toBe('type=items&listId=l1&ids=i1')
@@ -316,7 +320,7 @@ describe('runDelta', () => {
     await runDelta(
       store,
       () => Promise.resolve({ lists: [], items: [serverItem({ name: 'Server älter' })], recipes: [] }),
-      { kind: 'items', listId: 'l1', itemIds: ['i1'] },
+      { kind: 'items', listId: 'l1', itemIds: ['i1'], listUpdatedAt: null },
     )
 
     const merged = store.items.get('i1')
@@ -332,10 +336,121 @@ describe('runDelta', () => {
     const fetchDelta = (): Promise<unknown> =>
       Promise.resolve({ lists: [], items: [serverItem()], recipes: [] })
 
-    await runDelta(store, fetchDelta, { kind: 'items', listId: 'l1', itemIds: ['i1'] })
+    await runDelta(store, fetchDelta, { kind: 'items', listId: 'l1', itemIds: ['i1'], listUpdatedAt: null })
     const first = { ...store.items.get('i1') }
-    await runDelta(store, fetchDelta, { kind: 'items', listId: 'l1', itemIds: ['i1'] })
+    await runDelta(store, fetchDelta, { kind: 'items', listId: 'l1', itemIds: ['i1'], listUpdatedAt: null })
 
     expect({ ...store.items.get('i1') }).toEqual(first)
+  })
+})
+
+/* ------------------------------------------------------------------ *
+ * Sortierzeitpunkt der Elternliste
+ * ------------------------------------------------------------------ */
+
+/** Die Liste, um die es in diesem Abschnitt geht. */
+const LIST_ID = 'l1'
+
+/** Eine lokale Listenzeile, so schlank wie der Test sie braucht. */
+function lokaleListe(updatedAt: string, dirty: 0 | 1): ListRow {
+  return {
+    id: LIST_ID,
+    name: 'Wocheneinkauf',
+    color: '#fff',
+    secret: false,
+    lastSuggestedItems: '',
+    sourceUrl: null,
+    ownerUserId: 'user-1',
+    createdAt: '2026-08-01T00:00:00.000Z',
+    updatedAt,
+    deletedAt: null,
+    fieldTimestamps: null,
+    dirty,
+    seenAt: null,
+  } as ListRow
+}
+
+describe('Sortierzeitpunkt der Elternliste', () => {
+  const ALT = '2026-08-25T10:00:00.000Z'
+  const NEU = '2026-08-25T11:00:00.000Z'
+
+  test('wird aus dem Ereignis nachgezogen, ohne die Liste zu holen', async () => {
+    /*
+     * DER GANZE ZWECK: Ohne diesen Weg bräuchte die Übersicht ein zusätzliches
+     * `list_changed`, um die Reihenfolge zu aktualisieren. Und weil das
+     * Coalescing `list_changed` gewinnen lässt, landete jedes Abhaken im
+     * Listen-Delta, das die Liste MIT ALLEN Items zurückgibt — 312 statt einem
+     * bei der grössten Liste in Produktion.
+     */
+    const store = fakeStore({ lists: [lokaleListe(ALT, 0)] })
+    await runDelta(store, () => Promise.resolve({ lists: [], items: [], recipes: [] }), {
+      kind: 'items',
+      listId: LIST_ID,
+      itemIds: [],
+      listUpdatedAt: NEU,
+    })
+
+    expect(store.lists.get(LIST_ID)?.updatedAt).toBe(NEU)
+    // Sauber geblieben: Der Server hat denselben Wert gesetzt, es gibt nichts
+    // hochzuladen.
+    expect(store.lists.get(LIST_ID)?.dirty).toBe(0)
+  })
+
+  test('eine ungesendete lokale Änderung wird NICHT überschrieben', async () => {
+    // Ihr eigener Stand ist neuer und geht beim nächsten Push hinaus. Sie hier
+    // zu überschreiben wäre genau der stille Verlust, den diese Schicht
+    // abgestellt hat.
+    const store = fakeStore({ lists: [lokaleListe(ALT, 1)] })
+    await runDelta(store, () => Promise.resolve({ lists: [], items: [], recipes: [] }), {
+      kind: 'items',
+      listId: LIST_ID,
+      itemIds: [],
+      listUpdatedAt: NEU,
+    })
+
+    expect(store.lists.get(LIST_ID)?.updatedAt).toBe(ALT)
+  })
+
+  test('geht nur vorwärts', async () => {
+    // Die Zustellung ist nicht geordnet. Ein überholtes Ereignis würde die
+    // Reihenfolge der Übersicht sonst zurückdrehen.
+    const store = fakeStore({ lists: [lokaleListe(NEU, 0)] })
+    await runDelta(store, () => Promise.resolve({ lists: [], items: [], recipes: [] }), {
+      kind: 'items',
+      listId: LIST_ID,
+      itemIds: [],
+      listUpdatedAt: ALT,
+    })
+
+    expect(store.lists.get(LIST_ID)?.updatedAt).toBe(NEU)
+  })
+
+  test('ohne Zeitpunkt im Ereignis passiert nichts', async () => {
+    // So verhält sich eine ältere API. Der Client holt den Sortierzeitpunkt
+    // dann wie bisher über das begleitende `list_changed`.
+    const store = fakeStore({ lists: [lokaleListe(ALT, 0)] })
+    await runDelta(store, () => Promise.resolve({ lists: [], items: [], recipes: [] }), {
+      kind: 'items',
+      listId: LIST_ID,
+      itemIds: [],
+      listUpdatedAt: null,
+    })
+
+    expect(store.lists.get(LIST_ID)?.updatedAt).toBe(ALT)
+  })
+
+  test('eine lokal unbekannte Liste wird nicht angelegt', async () => {
+    // Ein Ereignis ist ein Hinweis, keine Nutzlast. Aus einem Zeitstempel eine
+    // halbe Liste zu bauen wäre schlimmer als sie erst beim nächsten Pull zu
+    // bekommen.
+    const store = fakeStore()
+    await runDelta(store, () => Promise.resolve({ lists: [], items: [], recipes: [] }), {
+      kind: 'items',
+      listId: LIST_ID,
+      itemIds: [],
+      listUpdatedAt: NEU,
+    })
+
+    expect(store.lists.size).toBe(0)
   })
 })

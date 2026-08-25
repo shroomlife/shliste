@@ -51,7 +51,7 @@ import {
   parseRecipe,
   parseStep,
 } from './entities'
-import { isRecord, parseAll, readArray, readBooleanOr, readIso, readNumberOr } from './json'
+import { isRecord, parseAll, readArray, readBooleanOr, readIso, readNumber, readNumberOr } from './json'
 import type { ListRemovalStore, PullStore, RowStores } from './ports'
 
 /* ------------------------------------------------------------------ *
@@ -102,6 +102,14 @@ export interface PullResponse {
   /** `null`, wenn der Server keinen brauchbaren Zeitpunkt geliefert hat. */
   serverTime: IsoUtc | null
   truncated: boolean
+  /**
+   * Die Änderungsnummer des Kontos, bis zu der diese Antwort reicht.
+   *
+   * `null`, wenn der Server sie nicht liefert — so verhielt er sich, bevor es
+   * das Feld gab. Der Herzschlag vergleicht sie mit dem hier gespeicherten
+   * Stand und deckt damit jede Lücke auf, egal woher sie kommt.
+   */
+  changeSeq: number | null
   changes: PullChanges | null
 }
 
@@ -125,6 +133,7 @@ export function parsePullResponse(value: unknown): PullResponse {
     // Fehlt das Feld, gilt die Antwort als vollständig — so verhielt sich der
     // Server, bevor es das Feld gab.
     truncated: readBooleanOr(record, 'truncated', false),
+    changeSeq: readNumber(record, 'changeSeq'),
     changes: parseChanges(record['changes']),
   }
 }
@@ -307,149 +316,166 @@ function pickNumber(values: Record<string, unknown>, key: string, fallback: numb
 }
 
 async function applyList(rows: RowStores, server: PulledList): Promise<void> {
-  const local = await rows.lists.read(server.id)
-  const merged = mergePulledEntity('list', toLocalRow(local, listValues), {
-    values: listValues(server),
-    fieldTimestamps: server.fieldTimestamps,
-  })
-  const values = merged.values
+  await rows.lists.mutate(server.id, (local) => {
+    const merged = mergePulledEntity('list', toLocalRow(local, listValues), {
+      values: listValues(server),
+      fieldTimestamps: server.fieldTimestamps,
+    })
+    const values = merged.values
 
-  await rows.lists.write({
-    id: server.id,
-    name: pickString(values, 'name', server.name),
-    color: pickString(values, 'color', server.color),
-    secret: pickBoolean(values, 'secret', server.secret),
-    lastSuggestedItems: pickString(values, 'lastSuggestedItems', server.lastSuggestedItems),
-    sourceUrl: pickNullableString(values, 'sourceUrl', server.sourceUrl),
-    ownerUserId: server.ownerUserId,
-    createdAt: server.createdAt,
-    updatedAt: server.updatedAt,
-    deletedAt: pickNullableString(values, 'deletedAt', server.deletedAt),
-    fieldTimestamps: merged.fieldTimestamps,
-    dirty: dirtyFlagOf(merged),
+    return {
+      id: server.id,
+      name: pickString(values, 'name', server.name),
+      color: pickString(values, 'color', server.color),
+      secret: pickBoolean(values, 'secret', server.secret),
+      lastSuggestedItems: pickString(values, 'lastSuggestedItems', server.lastSuggestedItems),
+      sourceUrl: pickNullableString(values, 'sourceUrl', server.sourceUrl),
+      ownerUserId: server.ownerUserId,
+      createdAt: server.createdAt,
+      updatedAt: server.updatedAt,
+      deletedAt: pickNullableString(values, 'deletedAt', server.deletedAt),
+      fieldTimestamps: merged.fieldTimestamps,
+      dirty: dirtyFlagOf(merged),
+      /*
+       * `seenAt` ist rein lokal und darf der Abgleich NIE überschreiben — sonst
+       * gälte nach jedem Abgleich jede Liste wieder als "nie gesehen" und die
+       * Übersicht flutete mit falschen Hinweisen.
+       *
+       * Vorher hat `putListRow` das Wasserzeichen bewahrt. Seit hier in EINER
+       * Transaktion gelesen und geschrieben wird, gehört es an diese Stelle.
+       * Der Compiler hilft dabei nicht: Das Feld ist optional (IndexedDB ist
+       * schemalos), ein Weglassen fiele erst im Betrieb auf.
+       */
+      seenAt: local?.seenAt ?? null,
+    }
   })
 }
 
 async function applyItem(rows: RowStores, server: ListItem): Promise<void> {
-  const local = await rows.items.read(server.id)
-  const merged = mergePulledEntity('listItem', toLocalRow(local, itemValues), {
-    values: itemValues(server),
-    fieldTimestamps: server.fieldTimestamps,
-  })
-  const values = merged.values
+  await rows.items.mutate(server.id, (local) => {
+    const merged = mergePulledEntity('listItem', toLocalRow(local, itemValues), {
+      values: itemValues(server),
+      fieldTimestamps: server.fieldTimestamps,
+    })
+    const values = merged.values
 
-  await rows.items.write({
-    id: server.id,
-    listId: server.listId,
-    name: pickString(values, 'name', server.name),
-    quantity: pickNumber(values, 'quantity', server.quantity),
-    checked: pickBoolean(values, 'checked', server.checked),
-    removed: pickBoolean(values, 'removed', server.removed),
-    orderIndex: pickNumber(values, 'orderIndex', server.orderIndex),
-    sortKey: pickNullableString(values, 'sortKey', server.sortKey),
-    createdBy: server.createdBy,
-    modifiedBy: server.modifiedBy,
-    createdAt: server.createdAt,
-    updatedAt: server.updatedAt,
-    deletedAt: pickNullableString(values, 'deletedAt', server.deletedAt),
-    fieldTimestamps: merged.fieldTimestamps,
-    dirty: dirtyFlagOf(merged),
+    return {
+      id: server.id,
+      listId: server.listId,
+      name: pickString(values, 'name', server.name),
+      quantity: pickNumber(values, 'quantity', server.quantity),
+      checked: pickBoolean(values, 'checked', server.checked),
+      removed: pickBoolean(values, 'removed', server.removed),
+      orderIndex: pickNumber(values, 'orderIndex', server.orderIndex),
+      sortKey: pickNullableString(values, 'sortKey', server.sortKey),
+      createdBy: server.createdBy,
+      modifiedBy: server.modifiedBy,
+      createdAt: server.createdAt,
+      updatedAt: server.updatedAt,
+      deletedAt: pickNullableString(values, 'deletedAt', server.deletedAt),
+      fieldTimestamps: merged.fieldTimestamps,
+      dirty: dirtyFlagOf(merged),
+    }
   })
 }
 
 async function applyRecipe(rows: RowStores, server: PulledRecipe): Promise<void> {
-  const local = await rows.recipes.read(server.id)
-  const merged = mergePulledEntity('recipe', toLocalRow(local, recipeValues), {
-    values: recipeValues(server),
-    fieldTimestamps: server.fieldTimestamps,
-  })
-  const values = merged.values
+  await rows.recipes.mutate(server.id, (local) => {
+    const merged = mergePulledEntity('recipe', toLocalRow(local, recipeValues), {
+      values: recipeValues(server),
+      fieldTimestamps: server.fieldTimestamps,
+    })
+    const values = merged.values
 
-  await rows.recipes.write({
-    id: server.id,
-    name: pickString(values, 'name', server.name),
-    color: pickString(values, 'color', server.color),
-    sourceUrl: pickNullableString(values, 'sourceUrl', server.sourceUrl),
-    imagePath: pickNullableString(values, 'imagePath', server.imagePath),
-    createdAt: server.createdAt,
-    updatedAt: server.updatedAt,
-    deletedAt: pickNullableString(values, 'deletedAt', server.deletedAt),
-    fieldTimestamps: merged.fieldTimestamps,
-    dirty: dirtyFlagOf(merged),
+    return {
+      id: server.id,
+      name: pickString(values, 'name', server.name),
+      color: pickString(values, 'color', server.color),
+      sourceUrl: pickNullableString(values, 'sourceUrl', server.sourceUrl),
+      imagePath: pickNullableString(values, 'imagePath', server.imagePath),
+      createdAt: server.createdAt,
+      updatedAt: server.updatedAt,
+      deletedAt: pickNullableString(values, 'deletedAt', server.deletedAt),
+      fieldTimestamps: merged.fieldTimestamps,
+      dirty: dirtyFlagOf(merged),
+    }
   })
 }
 
 async function applyIngredient(rows: RowStores, server: RecipeIngredient): Promise<void> {
-  const local = await rows.ingredients.read(server.id)
-  const merged = mergePulledEntity('recipeIngredient', toLocalRow(local, ingredientValues), {
-    values: ingredientValues(server),
-    fieldTimestamps: server.fieldTimestamps,
-  })
-  const values = merged.values
+  await rows.ingredients.mutate(server.id, (local) => {
+    const merged = mergePulledEntity('recipeIngredient', toLocalRow(local, ingredientValues), {
+      values: ingredientValues(server),
+      fieldTimestamps: server.fieldTimestamps,
+    })
+    const values = merged.values
 
-  await rows.ingredients.write({
-    id: server.id,
-    recipeId: server.recipeId,
-    name: pickString(values, 'name', server.name),
-    quantity: pickNumber(values, 'quantity', server.quantity),
-    orderIndex: pickNumber(values, 'orderIndex', server.orderIndex),
-    sortKey: pickNullableString(values, 'sortKey', server.sortKey),
-    createdBy: server.createdBy,
-    modifiedBy: server.modifiedBy,
-    createdAt: server.createdAt,
-    updatedAt: server.updatedAt,
-    deletedAt: pickNullableString(values, 'deletedAt', server.deletedAt),
-    fieldTimestamps: merged.fieldTimestamps,
-    dirty: dirtyFlagOf(merged),
+    return {
+      id: server.id,
+      recipeId: server.recipeId,
+      name: pickString(values, 'name', server.name),
+      quantity: pickNumber(values, 'quantity', server.quantity),
+      orderIndex: pickNumber(values, 'orderIndex', server.orderIndex),
+      sortKey: pickNullableString(values, 'sortKey', server.sortKey),
+      createdBy: server.createdBy,
+      modifiedBy: server.modifiedBy,
+      createdAt: server.createdAt,
+      updatedAt: server.updatedAt,
+      deletedAt: pickNullableString(values, 'deletedAt', server.deletedAt),
+      fieldTimestamps: merged.fieldTimestamps,
+      dirty: dirtyFlagOf(merged),
+    }
   })
 }
 
 async function applyStep(rows: RowStores, server: RecipeStep): Promise<void> {
-  const local = await rows.steps.read(server.id)
-  const merged = mergePulledEntity('recipeStep', toLocalRow(local, stepValues), {
-    values: stepValues(server),
-    fieldTimestamps: server.fieldTimestamps,
-  })
-  const values = merged.values
+  await rows.steps.mutate(server.id, (local) => {
+    const merged = mergePulledEntity('recipeStep', toLocalRow(local, stepValues), {
+      values: stepValues(server),
+      fieldTimestamps: server.fieldTimestamps,
+    })
+    const values = merged.values
 
-  await rows.steps.write({
-    id: server.id,
-    recipeId: server.recipeId,
-    description: pickString(values, 'description', server.description),
-    orderIndex: pickNumber(values, 'orderIndex', server.orderIndex),
-    sortKey: pickNullableString(values, 'sortKey', server.sortKey),
-    isChecked: pickBoolean(values, 'isChecked', server.isChecked),
-    aiExplanation: pickNullableString(values, 'aiExplanation', server.aiExplanation),
-    createdBy: server.createdBy,
-    modifiedBy: server.modifiedBy,
-    createdAt: server.createdAt,
-    updatedAt: server.updatedAt,
-    deletedAt: pickNullableString(values, 'deletedAt', server.deletedAt),
-    fieldTimestamps: merged.fieldTimestamps,
-    dirty: dirtyFlagOf(merged),
+    return {
+      id: server.id,
+      recipeId: server.recipeId,
+      description: pickString(values, 'description', server.description),
+      orderIndex: pickNumber(values, 'orderIndex', server.orderIndex),
+      sortKey: pickNullableString(values, 'sortKey', server.sortKey),
+      isChecked: pickBoolean(values, 'isChecked', server.isChecked),
+      aiExplanation: pickNullableString(values, 'aiExplanation', server.aiExplanation),
+      createdBy: server.createdBy,
+      modifiedBy: server.modifiedBy,
+      createdAt: server.createdAt,
+      updatedAt: server.updatedAt,
+      deletedAt: pickNullableString(values, 'deletedAt', server.deletedAt),
+      fieldTimestamps: merged.fieldTimestamps,
+      dirty: dirtyFlagOf(merged),
+    }
   })
 }
 
 async function applyBadge(rows: RowStores, server: Badge): Promise<void> {
-  const local = await rows.badges.read(server.id)
-  const merged = mergePulledEntity('badge', toLocalRow(local, badgeValues), {
-    values: badgeValues(server),
-    fieldTimestamps: server.fieldTimestamps,
-  })
-  const values = merged.values
+  await rows.badges.mutate(server.id, (local) => {
+    const merged = mergePulledEntity('badge', toLocalRow(local, badgeValues), {
+      values: badgeValues(server),
+      fieldTimestamps: server.fieldTimestamps,
+    })
+    const values = merged.values
 
-  await rows.badges.write({
-    id: server.id,
-    recipeId: server.recipeId,
-    recipeName: pickString(values, 'recipeName', server.recipeName),
-    recipeImagePath: pickNullableString(values, 'recipeImagePath', server.recipeImagePath),
-    recipeColor: pickString(values, 'recipeColor', server.recipeColor),
-    earnedAt: pickString(values, 'earnedAt', server.earnedAt),
-    createdAt: server.createdAt,
-    updatedAt: server.updatedAt,
-    deletedAt: pickNullableString(values, 'deletedAt', server.deletedAt),
-    fieldTimestamps: merged.fieldTimestamps,
-    dirty: dirtyFlagOf(merged),
+    return {
+      id: server.id,
+      recipeId: server.recipeId,
+      recipeName: pickString(values, 'recipeName', server.recipeName),
+      recipeImagePath: pickNullableString(values, 'recipeImagePath', server.recipeImagePath),
+      recipeColor: pickString(values, 'recipeColor', server.recipeColor),
+      earnedAt: pickString(values, 'earnedAt', server.earnedAt),
+      createdAt: server.createdAt,
+      updatedAt: server.updatedAt,
+      deletedAt: pickNullableString(values, 'deletedAt', server.deletedAt),
+      fieldTimestamps: merged.fieldTimestamps,
+      dirty: dirtyFlagOf(merged),
+    }
   })
 }
 
@@ -461,10 +487,7 @@ async function applyBadge(rows: RowStores, server: Badge): Promise<void> {
  * nicht gepushten Nachricht löschen.
  */
 async function applyChatMessage(rows: RowStores, server: RecipeChatMessage): Promise<void> {
-  const local = await rows.chatMessages.read(server.id)
-  if (local !== undefined) return
-
-  await rows.chatMessages.write({ ...server, dirty: CLEAN })
+  await rows.chatMessages.mutate(server.id, local => (local !== undefined ? null : { ...server, dirty: CLEAN }))
 }
 
 /* ------------------------------------------------------------------ *
@@ -492,7 +515,7 @@ export interface PulledRows {
  * Schreibt gezogene Zeilen in die lokale Datenbank.
  *
  * IDEMPOTENT, UND ZWAR ZWINGEND: Dieselben Zeilen kommen wegen der
- * Cursor-Ueberlappung mehrfach herunter, und ein Delta überschneidet sich
+ * Cursor-Überlappung mehrfach herunter, und ein Delta überschneidet sich
  * regelmässig mit dem nächsten vollen Pull. Jeder Aufruf führt deshalb neu
  * zusammen, statt auf "schon gesehen" zu setzen.
  *
@@ -567,6 +590,8 @@ export interface PullOutcome {
    */
   revokedLists: number
   pendingInvites: PendingInvite[]
+  /** Bis hierher ist dieses Gerät jetzt auf dem Stand. `null` = unbekannt. */
+  changeSeq: number | null
   changes: PullChanges | null
 }
 
@@ -604,10 +629,25 @@ export async function runPull(
     cursorAdvanced = true
   }
 
+  /*
+   * Die Änderungsnummer wird zusammen mit dem Wasserzeichen fortgeschrieben —
+   * und nur dann.
+   *
+   * Bei `truncated` ist die Antwort unvollständig. Die Nummer trotzdem zu
+   * übernehmen hiesse: "Ich bin auf diesem Stand", obwohl es nicht stimmt. Der
+   * nächste Herzschlag sähe dann keine Lücke mehr und die fehlenden Zeilen
+   * kämen erst beim planmässigen Abgleich — genau die stille Verzögerung, die
+   * die Nummer abschaffen soll.
+   */
+  if (cursorAdvanced && response.changeSeq !== null) {
+    await store.writeChangeSeq(response.changeSeq)
+  }
+
   return {
     since,
     serverTime: response.serverTime,
     truncated: response.truncated,
+    changeSeq: response.changeSeq,
     cursorAdvanced,
     lists: response.lists.length,
     recipes: response.recipes.length,

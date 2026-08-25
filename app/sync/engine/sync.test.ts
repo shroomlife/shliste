@@ -32,9 +32,10 @@ const SERVER_TIME: IsoUtc = '2026-03-01T12:00:00.000Z'
 function memoryEntityStore<TRow extends { id: string }>(): EntityStore<TRow> {
   const all = new Map<string, TRow>()
   return {
-    read: id => Promise.resolve(all.get(id)),
-    write: (row) => {
-      all.set(row.id, row)
+    // Bildet `mutateRow` nach: ein unteilbares Lesen-Rechnen-Schreiben.
+    mutate: (id, merge) => {
+      const next = merge(all.get(id))
+      if (next !== null) all.set(next.id, next)
       return Promise.resolve()
     },
   }
@@ -103,6 +104,9 @@ function fakeSyncStore(options: {
     trimHistoryForParent: () => Promise.resolve(),
     replaceMembers: (_listId: string, _members: readonly ListMember[]) => Promise.resolve(),
     readCursor: () => Promise.resolve(store.cursor),
+    // Änderungsnummer: für diese Tests belanglos, aber Teil des Ports.
+    readChangeSeq: () => Promise.resolve(null),
+    writeChangeSeq: () => Promise.resolve(),
     writeCursor: (value) => {
       store.cursor = value
       return Promise.resolve()

@@ -40,6 +40,7 @@ import {
   type SyncStateStore,
 } from './state'
 import { requestJson, SYNC_ENDPOINTS, type RequestOptions } from './transport'
+import { runAsLeader } from './leader'
 
 /* ------------------------------------------------------------------ *
  * Antworten, die nur hier gebraucht werden
@@ -348,19 +349,36 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
     if (running) return { ran: false, reason: 'busy' }
     running = true
 
-    state.set({ phase: 'syncing', message: null, retryAfterMs: null })
-
+    /*
+     * Der Mutex oben deckt nur DIESEN Tab ab: Er ist eine Variable im
+     * Arbeitsspeicher. Zwei offene Tabs hatten bisher zwei Schleifen, zwei
+     * Mutexe und dieselbe IndexedDB darunter — sie konnten gleichzeitig ziehen,
+     * zusammenführen und schreiben. Die Sperre in ./leader.ts zieht die Grenze
+     * über alle Tabs hinweg.
+     *
+     * Ist sie belegt, kehrt der Aufruf sofort zurück, statt sich anzustellen.
+     * Für den Aufrufer sieht das aus wie ein laufender Abgleich, und genau das
+     * ist es ja auch — nur eben in einem anderen Tab.
+     */
     try {
-      await runCycle()
-    }
-    catch (cause) {
-      const error = toSyncError(cause)
-      state.set({
-        phase: phaseFromError(error),
-        message: describeSyncError(error),
-        retryAfterMs: error.retryAfterMs,
-        pendingCount: await countPendingQuietly(store),
+      const ergebnis = await runAsLeader(async () => {
+        state.set({ phase: 'syncing', message: null, retryAfterMs: null })
+
+        try {
+          await runCycle()
+        }
+        catch (cause) {
+          const error = toSyncError(cause)
+          state.set({
+            phase: phaseFromError(error),
+            message: describeSyncError(error),
+            retryAfterMs: error.retryAfterMs,
+            pendingCount: await countPendingQuietly(store),
+          })
+        }
       })
+
+      if (!ergebnis.ran) return { ran: false, reason: 'busy' }
     }
     finally {
       running = false
