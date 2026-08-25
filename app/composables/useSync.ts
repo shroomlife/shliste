@@ -60,11 +60,19 @@ export const FALLBACK_POLL_MS = 60_000
 /**
  * Wartezeit nach einer lokalen Änderung, bevor gepusht wird.
  *
- * Beim Abhaken einer Einkaufsliste fallen Änderungen in Serie an. Ohne diese
- * Pause bekäme der Server je Haken eine eigene Runde; mit ihr fasst ein Push
- * zusammen, was in derselben Handbewegung entstanden ist.
+ * Kurz, weil jede Sync-Mutation dieser App eine DISKRETE Aktion ist —
+ * abhaken, anlegen, löschen, umsortieren. Texte speichert die UI erst beim
+ * Bestätigen, einen Tastendruck-Strom gibt es im Sync-Pfad nicht; ein
+ * längeres Fenster schützte also vor nichts und war nur als Sende-Latenz
+ * spürbar. 500 ms bündeln weiterhin den typischen Abhak-Burst zu einem Push
+ * und sind derselbe Wert wie der Dirty-Observer der Android-App — beide
+ * Richtungen fühlen sich damit gleich schnell an.
+ *
+ * Kommt je kontinuierliche Eingabe in den Sync-Pfad (Live-Editor), gehört
+ * hier ein zweites, längeres Fenster nur für diese Klasse hin — nicht ein
+ * längeres für alle.
  */
-export const MUTATION_DEBOUNCE_MS = 1_500
+export const MUTATION_DEBOUNCE_MS = 500
 
 /**
  * Abstand des regelmässigen Sicherheitsabgleichs — auch bei gesund
