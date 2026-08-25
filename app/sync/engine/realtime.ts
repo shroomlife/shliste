@@ -201,8 +201,46 @@ export function createRealtimeSync(deps: RealtimeSyncDeps): RealtimeSync {
       if (outcome.changed) changed = true
     }
 
+    /*
+     * DEN EIGENEN STAND FORTSCHREIBEN — sonst ist die Delta-Abkürzung wertlos.
+     *
+     * Der Herzschlag trägt dieselbe Änderungsnummer wie das Ereignis. Bliebe
+     * der gespeicherte Stand nach einem Delta stehen, zeigte der nächste
+     * Herzschlag — also binnen 15 Sekunden — eine höhere Nummer und löste
+     * jedes Mal einen vollen Abgleich aus. Jedes Abhaken auf einem anderen
+     * Gerät kostete dann erst ein Delta und kurz darauf einen vollen Pull;
+     * teurer als vor der ganzen Mechanik.
+     *
+     * ERST NACH den Deltas und nur bei diesem Weg: Der volle Lauf oben
+     * schreibt seine Nummer selbst (siehe runPull), und zwar die, die zu SEINER
+     * Antwort gehört. Hier gilt die höchste aus den verarbeiteten Ereignissen.
+     */
+    const hoechste = highestSeq(events)
+    if (hoechste !== null) {
+      const bisher = await store.readChangeSeq()
+      // Nur vorwärts: Die Zustellung ist nicht geordnet, und ein überholtes
+      // Ereignis darf den Stand nicht zurückdrehen.
+      if (bisher === null || hoechste > bisher) await store.writeChangeSeq(hoechste)
+    }
+
     if (changed) onApplied?.()
   }
 
   return { handleEvents }
+}
+
+/**
+ * Die höchste Änderungsnummer eines Ereignisbündels, oder `null`.
+ *
+ * `null` heisst "keines der Ereignisse trug eine" — bei einer älteren API der
+ * Normalfall. Dann bleibt der gespeicherte Stand stehen und der Herzschlag
+ * verhält sich wie vor dieser Mechanik.
+ */
+export function highestSeq(events: readonly RealtimeEvent[]): number | null {
+  let hoechste: number | null = null
+  for (const event of events) {
+    if (event.seq === null) continue
+    if (hoechste === null || event.seq > hoechste) hoechste = event.seq
+  }
+  return hoechste
 }

@@ -15,13 +15,34 @@
 import type { IsoUtc } from '../../../shared/types/domain'
 import { isIsoUtc } from '../../db/timestamps'
 
+/**
+ * Die Änderungsnummer des Kontos nach dem Commit, der dieses Ereignis
+ * ausgelöst hat (`lib/change-seq.ts` der API).
+ *
+ * WOZU AUF JEDEM EREIGNIS: Der Herzschlag trägt dieselbe Nummer. Ohne sie hier
+ * könnte ein Tab nach einem Delta-Abgleich seinen Stand nicht fortschreiben —
+ * der nächste Herzschlag zeigte eine höhere Nummer als die gespeicherte und
+ * löste jedes Mal einen vollen Abgleich aus. Die Delta-Optimierung wäre damit
+ * nicht nur wertlos, sondern teurer als vorher.
+ *
+ * AUF DER LEITUNG IST SIE EINE ZEICHENKETTE, im Herzschlag dagegen eine Zahl.
+ * Der Unterschied ist nicht willkürlich: Redis-Streams kennen nur Zeichenketten,
+ * der Herzschlag entsteht dagegen als JSON im API-Prozess. Hier wird beides zur
+ * Zahl.
+ *
+ * `null`, wenn der Server sie nicht mitschickt (ältere API).
+ */
+export interface WithChangeSeq {
+  seq: number | null
+}
+
 /** Der Server schickt kein Detail: den gesamten Bestand abgleichen. */
-export interface SyncNeededEvent {
+export interface SyncNeededEvent extends WithChangeSeq {
   type: 'sync_needed'
 }
 
 /** Einzelne Positionen einer Liste haben sich geändert. */
-export interface ItemChangedEvent {
+export interface ItemChangedEvent extends WithChangeSeq {
   type: 'item_changed'
   listId: string
   /** Kann leer sein, wenn der Server keine Ids mitgeschickt hat. */
@@ -42,18 +63,18 @@ export interface ItemChangedEvent {
 }
 
 /** Die Liste selbst hat sich geändert (Name, Farbe, Mitglieder, Löschung). */
-export interface ListChangedEvent {
+export interface ListChangedEvent extends WithChangeSeq {
   type: 'list_changed'
   listId: string
 }
 
-export interface RecipeChangedEvent {
+export interface RecipeChangedEvent extends WithChangeSeq {
   type: 'recipe_changed'
   recipeId: string
 }
 
 /** Eine Einladung liegt vor. Der Aufrufer holt alle offenen Einladungen. */
-export interface MemberInvitedEvent {
+export interface MemberInvitedEvent extends WithChangeSeq {
   type: 'member_invited'
   listId: string
 }
@@ -67,12 +88,12 @@ export interface MemberInvitedEvent {
  * Mitglieder weiter. Ein Delta-Abruf liefert mangels Mitgliedschaft nichts
  * zurück, die Liste bliebe hier also für immer sichtbar.
  */
-export interface ListRemovedEvent {
+export interface ListRemovedEvent extends WithChangeSeq {
   type: 'list_removed'
   listId: string
 }
 
-export interface BadgeChangedEvent {
+export interface BadgeChangedEvent extends WithChangeSeq {
   type: 'badge_changed'
 }
 
@@ -93,7 +114,7 @@ export type RealtimeEventType = RealtimeEvent['type']
  * Als Konstante exportiert, damit Aufrufer nicht jedes Mal ein eigenes Objekt
  * bauen. Der Typ ist unveränderlich, ein geteiltes Objekt also gefahrlos.
  */
-export const SYNC_NEEDED: SyncNeededEvent = Object.freeze<SyncNeededEvent>({ type: 'sync_needed' })
+export const SYNC_NEEDED: SyncNeededEvent = Object.freeze<SyncNeededEvent>({ type: 'sync_needed', seq: null })
 
 /** Wahr für jedes nicht-null Objekt. Arrays eingeschlossen. */
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -113,6 +134,22 @@ function readNonEmptyString(value: unknown): string | null {
  */
 function readIsoOrNull(value: unknown): IsoUtc | null {
   return isIsoUtc(value) ? value : null
+}
+
+/**
+ * Die Änderungsnummer aus einem Ereignis.
+ *
+ * Auf der Leitung ist sie eine ZEICHENKETTE — Redis-Streams kennen nichts
+ * anderes. Der Herzschlag dagegen ist JSON aus dem API-Prozess und trägt eine
+ * Zahl. Beide Formen landen hier als Zahl, alles andere als `null`.
+ *
+ * Die 0 ist ein gültiger Stand (frisches Konto) und darf nicht durchfallen.
+ */
+function readSeq(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null
+  if (typeof value !== 'string' || value.length === 0) return null
+  const zahl = Number(value)
+  return Number.isFinite(zahl) ? zahl : null
 }
 
 /**
@@ -167,12 +204,14 @@ export function parseRealtimeEvent(raw: string): RealtimeEvent | null {
   if (!isRecord(decoded)) return null
 
   const type = decoded.type
+  const seq = readSeq(decoded.seq)
   switch (type) {
     case 'sync_needed':
-      return SYNC_NEEDED
+      // Mit Nummer ein eigenes Objekt, ohne die geteilte Konstante.
+      return seq === null ? SYNC_NEEDED : { type: 'sync_needed', seq }
 
     case 'badge_changed':
-      return { type: 'badge_changed' }
+      return { type: 'badge_changed', seq }
 
     case 'item_changed': {
       const listId = readNonEmptyString(decoded.listId)
@@ -183,9 +222,9 @@ export function parseRealtimeEvent(raw: string): RealtimeEvent | null {
       // geändert. Ein `item_changed` mit leerem Array wäre die schlechtere
       // Wahl, weil es sich nicht von "nichts hat sich geändert" unterscheiden
       // liesse und die Bündelung es als leere Menge weiterreichen würde.
-      if (itemIds === null) return { type: 'list_changed', listId }
+      if (itemIds === null) return { type: 'list_changed', listId, seq }
 
-      return { type: 'item_changed', listId, itemIds, listUpdatedAt: readIsoOrNull(decoded.listUpdatedAt) }
+      return { type: 'item_changed', listId, itemIds, listUpdatedAt: readIsoOrNull(decoded.listUpdatedAt), seq }
     }
 
     case 'list_changed':
@@ -193,13 +232,13 @@ export function parseRealtimeEvent(raw: string): RealtimeEvent | null {
     case 'list_removed': {
       const listId = readNonEmptyString(decoded.listId)
       if (listId === null) return null
-      return { type, listId }
+      return { type, listId, seq }
     }
 
     case 'recipe_changed': {
       const recipeId = readNonEmptyString(decoded.recipeId)
       if (recipeId === null) return null
-      return { type: 'recipe_changed', recipeId }
+      return { type: 'recipe_changed', recipeId, seq }
     }
 
     default:

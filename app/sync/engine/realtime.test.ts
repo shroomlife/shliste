@@ -55,6 +55,8 @@ const rows: RowStores = {
 
 interface Recorder {
   store: RealtimeStore
+  /** Der zuletzt fortgeschriebene Stand, oder null wenn nie geschrieben. */
+  changeSeq: number | null
   removed: string[]
   queries: string[]
   fullSyncs: number
@@ -69,6 +71,8 @@ function recorder(options: {
   dirtyRecipes?: readonly string[]
   /** Was der Delta-Abruf zurückgibt. Standard: eine leere Antwort. */
   deltaResponse?: unknown
+  /** Ausgangsstand der Änderungsnummer. */
+  changeSeq?: number | null
 } = {}): Recorder {
   const dirtyLists = new Set(options.dirtyLists ?? [])
   const dirtyRecipes = new Set(options.dirtyRecipes ?? [])
@@ -81,11 +85,15 @@ function recorder(options: {
     readCursor: () => Promise.resolve(null),
     writeCursor: () => Promise.resolve(),
     // Änderungsnummer: für diese Tests belanglos, aber Teil des Ports.
-    readChangeSeq: () => Promise.resolve(null),
-    writeChangeSeq: () => Promise.resolve(),
+    readChangeSeq: () => Promise.resolve(self.changeSeq),
+    writeChangeSeq: (value) => {
+      self.changeSeq = value
+      return Promise.resolve()
+    },
   }
 
   const self: Recorder = {
+    changeSeq: options.changeSeq ?? null,
     removed: [],
     queries: [],
     fullSyncs: 0,
@@ -156,7 +164,7 @@ const CHANGED_RESPONSE = {
 
 describe('planRealtimeActions', () => {
   test('item_changed wird ein gezielter Positions-Abruf', () => {
-    const plan = planRealtimeActions([{ type: 'item_changed', listId: 'l1', itemIds: ['a', 'b'], listUpdatedAt: null }])
+    const plan = planRealtimeActions([{ type: 'item_changed', listId: 'l1', itemIds: ['a', 'b'], listUpdatedAt: null, seq: null }])
 
     expect(plan.needsFullSync).toBe(false)
     expect(plan.deltas).toEqual([{ kind: 'items', listId: 'l1', itemIds: ['a', 'b'], listUpdatedAt: null }])
@@ -164,8 +172,8 @@ describe('planRealtimeActions', () => {
 
   test('zwei item_changed derselben Liste vereinigen ihre Ids', () => {
     const plan = planRealtimeActions([
-      { type: 'item_changed', listId: 'l1', itemIds: ['a'], listUpdatedAt: null },
-      { type: 'item_changed', listId: 'l1', itemIds: ['b', 'a'], listUpdatedAt: null },
+      { type: 'item_changed', listId: 'l1', itemIds: ['a'], listUpdatedAt: null, seq: null },
+      { type: 'item_changed', listId: 'l1', itemIds: ['b', 'a'], listUpdatedAt: null, seq: null },
     ])
 
     expect(plan.deltas).toEqual([{ kind: 'items', listId: 'l1', itemIds: ['a', 'b'], listUpdatedAt: null }])
@@ -173,12 +181,12 @@ describe('planRealtimeActions', () => {
 
   test('list_changed schlägt item_changed — in beide Richtungen', () => {
     const itemsFirst = planRealtimeActions([
-      { type: 'item_changed', listId: 'l1', itemIds: ['a'], listUpdatedAt: null },
-      { type: 'list_changed', listId: 'l1' },
+      { type: 'item_changed', listId: 'l1', itemIds: ['a'], listUpdatedAt: null, seq: null },
+      { type: 'list_changed', listId: 'l1', seq: null },
     ])
     const listFirst = planRealtimeActions([
-      { type: 'list_changed', listId: 'l1' },
-      { type: 'item_changed', listId: 'l1', itemIds: ['a'], listUpdatedAt: null },
+      { type: 'list_changed', listId: 'l1', seq: null },
+      { type: 'item_changed', listId: 'l1', itemIds: ['a'], listUpdatedAt: null, seq: null },
     ])
 
     expect(itemsFirst.deltas).toEqual([{ kind: 'list', listId: 'l1' }])
@@ -187,15 +195,15 @@ describe('planRealtimeActions', () => {
 
   test('verschiedene Listen bleiben getrennt', () => {
     const plan = planRealtimeActions([
-      { type: 'list_changed', listId: 'l1' },
-      { type: 'list_changed', listId: 'l2' },
+      { type: 'list_changed', listId: 'l1', seq: null },
+      { type: 'list_changed', listId: 'l2', seq: null },
     ])
 
     expect(plan.deltas).toHaveLength(2)
   })
 
   test('list_removed landet in removals und nicht in den Abrufen', () => {
-    const plan = planRealtimeActions([{ type: 'list_removed', listId: 'l1' }])
+    const plan = planRealtimeActions([{ type: 'list_removed', listId: 'l1', seq: null }])
 
     expect(plan.removals).toEqual(['l1'])
     expect(plan.deltas).toEqual([])
@@ -204,9 +212,9 @@ describe('planRealtimeActions', () => {
 
   test('sync_needed, member_invited und badge_changed verlangen den vollen Lauf', () => {
     for (const event of [
-      { type: 'sync_needed' },
-      { type: 'member_invited', listId: 'l1' },
-      { type: 'badge_changed' },
+      { type: 'sync_needed', seq: null },
+      { type: 'member_invited', listId: 'l1', seq: null },
+      { type: 'badge_changed', seq: null },
     ] as RealtimeEvent[]) {
       expect(planRealtimeActions([event]).needsFullSync).toBe(true)
     }
@@ -225,7 +233,7 @@ describe('createRealtimeSync', () => {
   test('holt das Delta und meldet die Änderung', async () => {
     const deps = recorder({ deltaResponse: CHANGED_RESPONSE })
 
-    await syncFor(deps).handleEvents([{ type: 'item_changed', listId: 'l1', itemIds: ['i1'], listUpdatedAt: null }])
+    await syncFor(deps).handleEvents([{ type: 'item_changed', listId: 'l1', itemIds: ['i1'], listUpdatedAt: null, seq: null }])
 
     expect(deps.queries).toEqual(['type=items&listId=l1&ids=i1'])
     expect(deps.fullSyncs).toBe(0)
@@ -235,7 +243,7 @@ describe('createRealtimeSync', () => {
   test('ein Delta ohne Inhalt meldet keine Änderung', async () => {
     const deps = recorder()
 
-    await syncFor(deps).handleEvents([{ type: 'list_changed', listId: 'l1' }])
+    await syncFor(deps).handleEvents([{ type: 'list_changed', listId: 'l1', seq: null }])
 
     expect(deps.queries).toHaveLength(1)
     expect(deps.applied).toBe(0)
@@ -244,7 +252,7 @@ describe('createRealtimeSync', () => {
   test('EIN UNGESENDETER LOKALER STAND ERZWINGT DEN VOLLEN LAUF', async () => {
     const deps = recorder({ dirtyLists: ['l1'] })
 
-    await syncFor(deps).handleEvents([{ type: 'item_changed', listId: 'l1', itemIds: ['i1'], listUpdatedAt: null }])
+    await syncFor(deps).handleEvents([{ type: 'item_changed', listId: 'l1', itemIds: ['i1'], listUpdatedAt: null, seq: null }])
 
     expect(deps.fullSyncs).toBe(1)
     expect(deps.queries).toEqual([])
@@ -253,7 +261,7 @@ describe('createRealtimeSync', () => {
   test('dasselbe gilt für Rezepte', async () => {
     const deps = recorder({ dirtyRecipes: ['r1'] })
 
-    await syncFor(deps).handleEvents([{ type: 'recipe_changed', recipeId: 'r1' }])
+    await syncFor(deps).handleEvents([{ type: 'recipe_changed', recipeId: 'r1', seq: null }])
 
     expect(deps.fullSyncs).toBe(1)
     expect(deps.queries).toEqual([])
@@ -263,8 +271,8 @@ describe('createRealtimeSync', () => {
     const deps = recorder({ dirtyLists: ['l2'] })
 
     await syncFor(deps).handleEvents([
-      { type: 'list_changed', listId: 'l2' },
-      { type: 'list_changed', listId: 'l3' },
+      { type: 'list_changed', listId: 'l2', seq: null },
+      { type: 'list_changed', listId: 'l3', seq: null },
     ])
 
     // Kein einziges Delta: Der volle Lauf bringt beide Listen ohnehin mit.
@@ -276,8 +284,8 @@ describe('createRealtimeSync', () => {
     const deps = recorder()
 
     await syncFor(deps).handleEvents([
-      { type: 'list_changed', listId: 'l1' },
-      { type: 'sync_needed' },
+      { type: 'list_changed', listId: 'l1', seq: null },
+      { type: 'sync_needed', seq: null },
     ])
 
     expect(deps.queries).toEqual([])
@@ -288,8 +296,8 @@ describe('createRealtimeSync', () => {
     const deps = recorder()
 
     await syncFor(deps).handleEvents([
-      { type: 'list_removed', listId: 'l1' },
-      { type: 'sync_needed' },
+      { type: 'list_removed', listId: 'l1', seq: null },
+      { type: 'sync_needed', seq: null },
     ])
 
     expect(deps.removed).toEqual(['l1'])
@@ -299,7 +307,7 @@ describe('createRealtimeSync', () => {
   test('eine Entfernung meldet die Änderung auch ohne Delta', async () => {
     const deps = recorder()
 
-    await syncFor(deps).handleEvents([{ type: 'list_removed', listId: 'l1' }])
+    await syncFor(deps).handleEvents([{ type: 'list_removed', listId: 'l1', seq: null }])
 
     expect(deps.removed).toEqual(['l1'])
     expect(deps.applied).toBe(1)
@@ -323,7 +331,7 @@ describe('createRealtimeSync', () => {
       runFullSync: deps.runFullSync,
     })
 
-    await expect(sync.handleEvents([{ type: 'list_changed', listId: 'l1' }]))
+    await expect(sync.handleEvents([{ type: 'list_changed', listId: 'l1', seq: null }]))
       .rejects.toThrow('Netz weg')
   })
 
@@ -331,8 +339,8 @@ describe('createRealtimeSync', () => {
     const deps = recorder()
 
     await syncFor(deps).handleEvents([
-      { type: 'list_changed', listId: 'l1' },
-      { type: 'recipe_changed', recipeId: 'r1' },
+      { type: 'list_changed', listId: 'l1', seq: null },
+      { type: 'recipe_changed', recipeId: 'r1', seq: null },
     ])
 
     expect(deps.queries).toEqual(['type=list&listId=l1', 'type=recipe&id=r1'])
@@ -343,9 +351,9 @@ describe('createRealtimeSync', () => {
 
     // So käme es an, wenn die Bündelung ausfiele: dieselbe Liste dreimal.
     await syncFor(deps).handleEvents([
-      { type: 'item_changed', listId: 'l1', itemIds: ['a'], listUpdatedAt: null },
-      { type: 'item_changed', listId: 'l1', itemIds: ['b'], listUpdatedAt: null },
-      { type: 'item_changed', listId: 'l1', itemIds: ['a'], listUpdatedAt: null },
+      { type: 'item_changed', listId: 'l1', itemIds: ['a'], listUpdatedAt: null, seq: null },
+      { type: 'item_changed', listId: 'l1', itemIds: ['b'], listUpdatedAt: null, seq: null },
+      { type: 'item_changed', listId: 'l1', itemIds: ['a'], listUpdatedAt: null, seq: null },
     ])
 
     expect(deps.queries).toEqual(['type=items&listId=l1&ids=a%2Cb'])
@@ -359,12 +367,76 @@ describe('createRealtimeSync', () => {
 describe('Plan und Abruf passen zusammen', () => {
   test('jedes geplante Ziel hat eine der drei bekannten Formen', () => {
     const plan = planRealtimeActions([
-      { type: 'list_changed', listId: 'l1' },
-      { type: 'item_changed', listId: 'l2', itemIds: ['a'], listUpdatedAt: null },
-      { type: 'recipe_changed', recipeId: 'r1' },
+      { type: 'list_changed', listId: 'l1', seq: null },
+      { type: 'item_changed', listId: 'l2', itemIds: ['a'], listUpdatedAt: null, seq: null },
+      { type: 'recipe_changed', recipeId: 'r1', seq: null },
     ])
 
     const kinds = plan.deltas.map((target: DeltaTarget) => target.kind)
     expect(kinds).toEqual(['list', 'items', 'recipe'])
+  })
+})
+
+/* ------------------------------------------------------------------ *
+ * Die Änderungsnummer nach einem Delta
+ * ------------------------------------------------------------------ */
+
+describe('Änderungsnummer nach einem Delta', () => {
+  test('wird auf die höchste des Bündels fortgeschrieben', async () => {
+    /*
+     * DIE LÜCKE, GEGEN DIE DIESER TEST STEHT: Der Herzschlag trägt dieselbe
+     * Nummer wie das Ereignis. Bliebe der gespeicherte Stand nach einem Delta
+     * stehen, zeigte der nächste Herzschlag — binnen 15 Sekunden — eine höhere
+     * Nummer und löste einen vollen Abgleich aus. Jedes Abhaken auf einem
+     * anderen Gerät kostete dann erst ein Delta und kurz darauf einen vollen
+     * Pull: teurer als vor der ganzen Mechanik.
+     */
+    const r = recorder()
+    const realtime = createRealtimeSync(r)
+
+    await realtime.handleEvents([
+      { type: 'item_changed', listId: 'l1', itemIds: ['i1'], listUpdatedAt: null, seq: 4 },
+      { type: 'item_changed', listId: 'l2', itemIds: ['i2'], listUpdatedAt: null, seq: 7 },
+    ])
+
+    expect(r.changeSeq).toBe(7)
+  })
+
+  test('geht nur vorwärts', async () => {
+    // Die Zustellung ist nicht geordnet. Ein überholtes Ereignis würde den
+    // Stand sonst zurückdrehen und eine Lücke vortäuschen, die keine ist.
+    const r = recorder({ changeSeq: 9 })
+    const realtime = createRealtimeSync(r)
+
+    await realtime.handleEvents([
+      { type: 'item_changed', listId: 'l1', itemIds: ['i1'], listUpdatedAt: null, seq: 3 },
+    ])
+
+    expect(r.changeSeq).toBe(9)
+  })
+
+  test('ohne Nummer im Ereignis bleibt der Stand stehen', async () => {
+    // So verhält sich eine ältere API. Dann greift der Herzschlag-Vergleich
+    // nicht und alles läuft wie vor dieser Mechanik.
+    const r = recorder({ changeSeq: 5 })
+    const realtime = createRealtimeSync(r)
+
+    await realtime.handleEvents([
+      { type: 'item_changed', listId: 'l1', itemIds: ['i1'], listUpdatedAt: null, seq: null },
+    ])
+
+    expect(r.changeSeq).toBe(5)
+  })
+
+  test('bei einem vollen Lauf schreibt DIESER seine Nummer, nicht das Ereignis', async () => {
+    // Der volle Lauf holt eine eigene Antwort mit eigener Nummer (siehe
+    // runPull). Die aus dem Ereignis wäre dann eine Zusage über einen Stand,
+    // den dieser Weg gar nicht geprüft hat.
+    const r = recorder()
+    const realtime = createRealtimeSync(r)
+
+    await realtime.handleEvents([{ type: 'sync_needed', seq: 42 }])
+
+    expect(r.changeSeq).toBeNull()
   })
 })

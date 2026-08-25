@@ -15,33 +15,33 @@ const LIST_B = 'a0000000-0000-4000-8000-00000000000b'
 const RECIPE = 'a0000000-0000-4000-8000-00000000000c'
 
 function itemChanged(listId: string, itemIds: string[], listUpdatedAt: string | null = null): RealtimeEvent {
-  return { type: 'item_changed', listId, itemIds, listUpdatedAt }
+  return { type: 'item_changed', listId, itemIds, listUpdatedAt, seq: null }
 }
 
 describe('coalesceKeyFor', () => {
   test('teilt einen Schlüssel für Positions- und Listenänderung', () => {
     expect(coalesceKeyFor(itemChanged(LIST_A, ['i1']))).toBe(`list:${LIST_A}`)
-    expect(coalesceKeyFor({ type: 'list_changed', listId: LIST_A })).toBe(`list:${LIST_A}`)
+    expect(coalesceKeyFor({ type: 'list_changed', listId: LIST_A, seq: null })).toBe(`list:${LIST_A}`)
   })
 
   test('gibt der Entfernung einen eigenen Schlüssel', () => {
-    expect(coalesceKeyFor({ type: 'list_removed', listId: LIST_A })).toBe(`list-removed:${LIST_A}`)
+    expect(coalesceKeyFor({ type: 'list_removed', listId: LIST_A, seq: null })).toBe(`list-removed:${LIST_A}`)
   })
 
   test('schlüsselt Rezepte je Rezept', () => {
-    expect(coalesceKeyFor({ type: 'recipe_changed', recipeId: RECIPE })).toBe(`recipe:${RECIPE}`)
+    expect(coalesceKeyFor({ type: 'recipe_changed', recipeId: RECIPE, seq: null })).toBe(`recipe:${RECIPE}`)
   })
 
   test('schlüsselt den Rest je Ereignistyp', () => {
-    expect(coalesceKeyFor({ type: 'sync_needed' })).toBe('other:sync_needed')
-    expect(coalesceKeyFor({ type: 'badge_changed' })).toBe('other:badge_changed')
-    expect(coalesceKeyFor({ type: 'member_invited', listId: LIST_A })).toBe('other:member_invited')
+    expect(coalesceKeyFor({ type: 'sync_needed', seq: null })).toBe('other:sync_needed')
+    expect(coalesceKeyFor({ type: 'badge_changed', seq: null })).toBe('other:badge_changed')
+    expect(coalesceKeyFor({ type: 'member_invited', listId: LIST_A, seq: null })).toBe('other:member_invited')
   })
 })
 
 describe('mergeEvents', () => {
   test('list_changed schlägt item_changed in beide Richtungen', () => {
-    const listChanged: RealtimeEvent = { type: 'list_changed', listId: LIST_A }
+    const listChanged: RealtimeEvent = { type: 'list_changed', listId: LIST_A, seq: null }
 
     expect(mergeEvents(itemChanged(LIST_A, ['i1']), listChanged)).toEqual(listChanged)
     expect(mergeEvents(listChanged, itemChanged(LIST_A, ['i1']))).toEqual(listChanged)
@@ -54,8 +54,8 @@ describe('mergeEvents', () => {
   })
 
   test('nimmt sonst das jüngere Ereignis', () => {
-    const older: RealtimeEvent = { type: 'recipe_changed', recipeId: RECIPE }
-    const newer: RealtimeEvent = { type: 'recipe_changed', recipeId: RECIPE }
+    const older: RealtimeEvent = { type: 'recipe_changed', recipeId: RECIPE, seq: null }
+    const newer: RealtimeEvent = { type: 'recipe_changed', recipeId: RECIPE, seq: null }
 
     expect(mergeEvents(older, newer)).toBe(newer)
   })
@@ -79,38 +79,38 @@ describe('coalesceEvents', () => {
   test('lässt list_changed über item_changed derselben Liste gewinnen', () => {
     const result = coalesceEvents([
       itemChanged(LIST_A, ['i1']),
-      { type: 'list_changed', listId: LIST_A },
+      { type: 'list_changed', listId: LIST_A, seq: null },
       itemChanged(LIST_A, ['i2']),
     ])
 
-    expect(result).toEqual([{ type: 'list_changed', listId: LIST_A }])
+    expect(result).toEqual([{ type: 'list_changed', listId: LIST_A, seq: null }])
   })
 
   test('lässt die Entfernung neben der Änderung stehen', () => {
     const result = coalesceEvents([
-      { type: 'list_removed', listId: LIST_A },
-      { type: 'list_changed', listId: LIST_A },
+      { type: 'list_removed', listId: LIST_A, seq: null },
+      { type: 'list_changed', listId: LIST_A, seq: null },
       itemChanged(LIST_A, ['i1']),
     ])
 
     expect(result).toHaveLength(2)
     expect(result).toEqual([
-      { type: 'list_removed', listId: LIST_A },
-      { type: 'list_changed', listId: LIST_A },
+      { type: 'list_removed', listId: LIST_A, seq: null },
+      { type: 'list_changed', listId: LIST_A, seq: null },
     ])
   })
 
   test('behält die Reihenfolge des ersten Auftretens', () => {
     const result = coalesceEvents([
-      { type: 'list_removed', listId: LIST_B },
-      { type: 'recipe_changed', recipeId: RECIPE },
+      { type: 'list_removed', listId: LIST_B, seq: null },
+      { type: 'recipe_changed', recipeId: RECIPE, seq: null },
       itemChanged(LIST_A, ['i1']),
-      { type: 'recipe_changed', recipeId: RECIPE },
+      { type: 'recipe_changed', recipeId: RECIPE, seq: null },
     ])
 
     expect(result).toEqual([
-      { type: 'list_removed', listId: LIST_B },
-      { type: 'recipe_changed', recipeId: RECIPE },
+      { type: 'list_removed', listId: LIST_B, seq: null },
+      { type: 'recipe_changed', recipeId: RECIPE, seq: null },
       itemChanged(LIST_A, ['i1']),
     ])
   })
@@ -119,11 +119,11 @@ describe('coalesceEvents', () => {
     // Absicht: Der Aufrufer holt daraufhin ALLE offenen Einladungen, nicht die
     // eine. Zwei Hinweise wären zwei gleiche Abrufe.
     const result = coalesceEvents([
-      { type: 'member_invited', listId: LIST_A },
-      { type: 'member_invited', listId: LIST_B },
+      { type: 'member_invited', listId: LIST_A, seq: null },
+      { type: 'member_invited', listId: LIST_B, seq: null },
     ])
 
-    expect(result).toEqual([{ type: 'member_invited', listId: LIST_B }])
+    expect(result).toEqual([{ type: 'member_invited', listId: LIST_B, seq: null }])
   })
 
   test('lässt eine leere Folge leer', () => {
@@ -174,14 +174,14 @@ describe('createEventCoalescer', () => {
     const batches: RealtimeEvent[][] = []
     const coalescer = createEventCoalescer(events => batches.push(events), 1)
 
-    coalescer.push({ type: 'sync_needed' })
-    coalescer.push({ type: 'sync_needed' })
+    coalescer.push({ type: 'sync_needed', seq: null })
+    coalescer.push({ type: 'sync_needed', seq: null })
 
     await new Promise<void>((resolve) => {
       setTimeout(resolve, 20)
     })
 
-    expect(batches).toEqual([[{ type: 'sync_needed' }]])
+    expect(batches).toEqual([[{ type: 'sync_needed', seq: null }]])
 
     coalescer.cancel()
   })

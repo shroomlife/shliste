@@ -47,6 +47,13 @@ export function coalesceKeyFor(event: RealtimeEvent): string {
   }
 }
 
+/** Die grössere der beiden Nummern, `null` nur wenn beide fehlen. */
+function hoechste(a: number | null, b: number | null): number | null {
+  if (a === null) return b
+  if (b === null) return a
+  return a > b ? a : b
+}
+
 /** Vereinigt zwei Id-Mengen unter Beibehaltung der Reihenfolge. */
 function unionIds(first: readonly string[], second: readonly string[]): string[] {
   return Array.from(new Set([...first, ...second]))
@@ -83,6 +90,15 @@ export function mergeEvents(existing: RealtimeEvent, incoming: RealtimeEvent): R
        * danach still falsch.
        */
       listUpdatedAt: incoming.listUpdatedAt ?? existing.listUpdatedAt,
+      /*
+       * Die HÖCHSTE Nummer gewinnt, nicht die jüngere.
+       *
+       * Sie ist der Stand, den der Aufrufer nach dem Delta quittiert. Würde
+       * hier die kleinere stehen, zeigte der nächste Herzschlag eine Lücke, die
+       * längst geschlossen ist — und löste einen überflüssigen vollen Abgleich
+       * aus, bei jedem einzelnen Bündel.
+       */
+      seq: hoechste(existing.seq, incoming.seq),
     }
     return merged
   }

@@ -15,22 +15,22 @@ const RECIPE_ID = 'a0000000-0000-4000-8000-000000000003'
 
 describe('parseRealtimeEvent', () => {
   test('deutet die Ereignisse ohne Nutzlast', () => {
-    expect(parseRealtimeEvent('{"type":"sync_needed"}')).toEqual({ type: 'sync_needed' })
-    expect(parseRealtimeEvent('{"type":"badge_changed"}')).toEqual({ type: 'badge_changed' })
+    expect(parseRealtimeEvent('{"type":"sync_needed"}')).toEqual({ type: 'sync_needed', seq: null })
+    expect(parseRealtimeEvent('{"type":"badge_changed"}')).toEqual({ type: 'badge_changed', seq: null })
   })
 
   test('deutet die Ereignisse mit Listenbezug', () => {
     expect(parseRealtimeEvent(`{"type":"list_changed","listId":"${LIST_ID}"}`))
-      .toEqual({ type: 'list_changed', listId: LIST_ID })
+      .toEqual({ type: 'list_changed', listId: LIST_ID, seq: null })
     expect(parseRealtimeEvent(`{"type":"member_invited","listId":"${LIST_ID}"}`))
-      .toEqual({ type: 'member_invited', listId: LIST_ID })
+      .toEqual({ type: 'member_invited', listId: LIST_ID, seq: null })
     expect(parseRealtimeEvent(`{"type":"list_removed","listId":"${LIST_ID}"}`))
-      .toEqual({ type: 'list_removed', listId: LIST_ID })
+      .toEqual({ type: 'list_removed', listId: LIST_ID, seq: null })
   })
 
   test('deutet recipe_changed', () => {
     expect(parseRealtimeEvent(`{"type":"recipe_changed","recipeId":"${RECIPE_ID}"}`))
-      .toEqual({ type: 'recipe_changed', recipeId: RECIPE_ID })
+      .toEqual({ type: 'recipe_changed', recipeId: RECIPE_ID, seq: null })
   })
 
   test('packt itemIds aus dem verschachtelten JSON aus', () => {
@@ -38,6 +38,7 @@ describe('parseRealtimeEvent', () => {
       type: 'item_changed',
       listId: LIST_ID,
       itemIds: JSON.stringify([ITEM_ID]),
+      seq: null,
     })
 
     expect(parseRealtimeEvent(raw)).toEqual({
@@ -47,6 +48,7 @@ describe('parseRealtimeEvent', () => {
       // Ohne das Feld im Rahmen (ältere API) steht hier null — der Client
       // holt den Sortierzeitpunkt dann wie bisher über `list_changed`.
       listUpdatedAt: null,
+      seq: null,
     })
   })
 
@@ -60,6 +62,7 @@ describe('parseRealtimeEvent', () => {
       listId: LIST_ID,
       itemIds: JSON.stringify([ITEM_ID]),
       listUpdatedAt: '2026-08-25T10:00:00.000Z',
+      seq: null,
     })
 
     expect(parseRealtimeEvent(raw)).toEqual({
@@ -67,6 +70,7 @@ describe('parseRealtimeEvent', () => {
       listId: LIST_ID,
       itemIds: [ITEM_ID],
       listUpdatedAt: '2026-08-25T10:00:00.000Z',
+      seq: null,
     })
   })
 
@@ -79,15 +83,16 @@ describe('parseRealtimeEvent', () => {
       listId: LIST_ID,
       itemIds: JSON.stringify([ITEM_ID]),
       listUpdatedAt: '25.08.2026',
+      seq: null,
     })
 
     expect(parseRealtimeEvent(raw)).toMatchObject({ listUpdatedAt: null })
   })
 
   test('erlaubt eine leere Id-Liste', () => {
-    const raw = JSON.stringify({ type: 'item_changed', listId: LIST_ID, itemIds: '[]' })
+    const raw = JSON.stringify({ type: 'item_changed', listId: LIST_ID, itemIds: '[]', seq: null })
 
-    expect(parseRealtimeEvent(raw)).toEqual({ type: 'item_changed', listId: LIST_ID, itemIds: [], listUpdatedAt: null })
+    expect(parseRealtimeEvent(raw)).toEqual({ type: 'item_changed', listId: LIST_ID, itemIds: [], listUpdatedAt: null, seq: null })
   })
 
   test('fällt bei unbrauchbaren itemIds auf die Obermenge list_changed zurück', () => {
@@ -95,16 +100,16 @@ describe('parseRealtimeEvent', () => {
     // geändert". Ein item_changed mit leerer Liste wäre nicht von "nichts
     // geändert" zu unterscheiden.
     const cases = [
-      JSON.stringify({ type: 'item_changed', listId: LIST_ID }),
-      JSON.stringify({ type: 'item_changed', listId: LIST_ID, itemIds: 'kein json' }),
+      JSON.stringify({ type: 'item_changed', listId: LIST_ID, seq: null }),
+      JSON.stringify({ type: 'item_changed', listId: LIST_ID, itemIds: 'kein json', seq: null }),
       JSON.stringify({ type: 'item_changed', listId: LIST_ID, itemIds: '{"a":1}' }),
-      JSON.stringify({ type: 'item_changed', listId: LIST_ID, itemIds: '[1,2]' }),
-      JSON.stringify({ type: 'item_changed', listId: LIST_ID, itemIds: '["ok",null]' }),
-      JSON.stringify({ type: 'item_changed', listId: LIST_ID, itemIds: 42 }),
+      JSON.stringify({ type: 'item_changed', listId: LIST_ID, itemIds: '[1,2]', seq: null }),
+      JSON.stringify({ type: 'item_changed', listId: LIST_ID, itemIds: '["ok",null]', seq: null }),
+      JSON.stringify({ type: 'item_changed', listId: LIST_ID, itemIds: 42, seq: null }),
     ]
 
     for (const raw of cases) {
-      expect(parseRealtimeEvent(raw)).toEqual({ type: 'list_changed', listId: LIST_ID })
+      expect(parseRealtimeEvent(raw)).toEqual({ type: 'list_changed', listId: LIST_ID, seq: null })
     }
   })
 
