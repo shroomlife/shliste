@@ -45,10 +45,33 @@ describe('parseRealtimeEvent', () => {
       type: 'item_changed',
       listId: LIST_ID,
       itemIds: [ITEM_ID],
-      // Ohne das Feld im Rahmen (ältere API) steht hier null — der Client
-      // holt den Sortierzeitpunkt dann wie bisher über `list_changed`.
+      // Ohne das Feld im Rahmen steht hier null — der Client holt den
+      // Sortierzeitpunkt dann wie bisher über `list_changed`.
       listUpdatedAt: null,
       seq: null,
+    })
+  })
+
+  test('das Ereignis der Link-Anreicherung trägt keinen Sortierzeitpunkt', () => {
+    // KEIN ALTLASTFALL, sondern der Dauerzustand: Die serverseitige
+    // Anreicherung schreibt Titel und Vorschaubild an die Zeile, rührt aber
+    // `updatedAt` der Liste NICHT an — es hat sich ja nichts an der
+    // Sortierung geändert. Ihr `item_changed` kommt deshalb ohne das Feld,
+    // und der Client darf das nicht als Fehler behandeln, sondern zieht
+    // schlicht den Sortierzeitpunkt nicht nach.
+    const raw = JSON.stringify({
+      type: 'item_changed',
+      listId: LIST_ID,
+      itemIds: JSON.stringify([ITEM_ID]),
+      seq: '42',
+    })
+
+    expect(parseRealtimeEvent(raw)).toEqual({
+      type: 'item_changed',
+      listId: LIST_ID,
+      itemIds: [ITEM_ID],
+      listUpdatedAt: null,
+      seq: 42,
     })
   })
 

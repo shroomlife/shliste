@@ -21,11 +21,27 @@ function open(): Promise<IDBPDatabase<ShlisteDb>> {
       // ausschliesslich IndexedDB-Anfragen aneinander, die Transaktion kann
       // also zwischendurch nicht von selbst schliessen.
       //
-      // Ein Fehler hier ist keiner, den die Oberfläche behandeln könnte: Die
-      // Transaktion rollt dann zurück, das Öffnen scheitert, und der nächste
-      // Versuch beginnt von vorn. Protokolliert wird er trotzdem.
+      // DER ABBRUCH IM FEHLERFALL IST DER EIGENTLICHE PUNKT. Scheitert eine
+      // IndexedDB-Anfrage, bricht die Transaktion ohnehin ab. Ein gewöhnlicher
+      // JavaScript-Fehler mitten in der Schleife täte das NICHT: Die
+      // Transaktion hätte nichts mehr zu tun, committete brav, die Version
+      // stünde auf 3 — und alle Zeilen hinter der Abbruchstelle hätten die
+      // vier Schlüssel für immer nicht, weil der Nachtrag nur bei
+      // `oldVersion < 3` läuft. Genau der Phantom-Zeitstempel, gegen den
+      // dieser Versionssprung existiert, wäre für einen Teil des Bestands
+      // wieder da. Lieber laut scheitern: Der Abbruch rollt zurück, das
+      // Öffnen schlägt fehl, `getDb` verwirft die gescheiterte Verbindung
+      // und der nächste Zugriff beginnt sauber von vorn.
       void backfillLinkFields(oldVersion, transaction).catch((error: unknown) => {
         console.error('[db] Nachtragen der Link-Felder ist fehlgeschlagen:', error)
+        try {
+          transaction.abort()
+        }
+        catch (abortError: unknown) {
+          // Die Transaktion war schon beendet — dann hat sie der Fehler
+          // bereits abgebrochen, und es gibt nichts mehr zu tun.
+          console.warn('[db] Die Upgrade-Transaktion war bereits beendet:', abortError)
+        }
       })
     },
 

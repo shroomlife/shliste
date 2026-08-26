@@ -29,6 +29,7 @@ import type {
 } from '../../../shared/types/domain'
 import { CLEAN, type ListItemRow } from '../../db/schema'
 import { isAtOrBefore, nowIso } from '../../db/timestamps'
+import { linkMirrorsFor, type LinkMirrors } from '../merge/link-mirrors'
 import { sanitize } from '../merge/limits'
 import {
   parseBadge,
@@ -997,25 +998,23 @@ async function applyConflicts(rows: RowStores, conflicts: PushConflicts, pushSna
       if (local !== undefined && isLocallyNewer(local, pushSnapshot)) {
         /*
          * Die Zeile behält ihren neueren lokalen Stand — aber die drei
-         * Server-Spiegel kommen trotzdem wörtlich mit.
+         * Server-Spiegel kommen mit, SOFERN SIE ZU IHRER ADRESSE GEHÖREN.
          *
-         * Sie gehören dem Server, konkurrieren mit nichts Lokalem und sind
-         * der einzige Weg, wie Titel und Vorschaubild überhaupt hier ankommen.
-         * Ohne diesen Zweig bekäme ausgerechnet ein Gerät mit ungesendeten
-         * Änderungen die Anreicherung nie zu sehen — und zwar dauerhaft, denn
-         * der nächste Push löst denselben Konflikt wieder aus.
+         * Beide Hälften sind wichtig. Ohne die Übernahme bekäme ausgerechnet
+         * ein Gerät mit ungesendeten Änderungen die Anreicherung nie zu
+         * sehen, und zwar dauerhaft: Der nächste Push löst denselben Konflikt
+         * wieder aus. Ohne die Bedingung klebte man den Titel der ALTEN Seite
+         * an einen frisch gesetzten Link — die lokale Zeile kann längst eine
+         * andere `url` tragen, das ist ja der Grund, warum sie neuer ist.
+         * `linkMirrorsFor` entscheidet das anhand der Adresse; die Regel
+         * gilt wortgleich im Pull und beim lokalen Schreiben.
          *
          * Kein `applied += 1`: Der Konflikt selbst ist NICHT aufgelöst, die
          * Zeile bleibt schmutzig und geht beim nächsten Push wieder mit.
-         * Gleiche Regel wie `applyItem` in `./pull.ts`.
          */
-        if (!linkMirrorsDiffer(local, item)) return null
-        return {
-          ...local,
-          linkTitle: item.linkTitle,
-          linkImagePath: item.linkImagePath,
-          linkImageKind: item.linkImageKind,
-        }
+        const mirrors = linkMirrorsFor(item, local.url)
+        if (!linkMirrorsDiffer(local, mirrors)) return null
+        return { ...local, ...mirrors }
       }
       applied += 1
       return { ...item, dirty: CLEAN }
@@ -1067,8 +1066,8 @@ function isLocallyNewer(local: { updatedAt: IsoUtc } | undefined, pushSnapshot: 
  * Nur dann lohnt der Schreibvorgang im Konfliktpfad. Sonst schriebe jeder
  * Konflikt dieselbe Zeile grundlos neu.
  */
-function linkMirrorsDiffer(local: ListItemRow, server: ListItem): boolean {
-  return local.linkTitle !== server.linkTitle
-    || local.linkImagePath !== server.linkImagePath
-    || local.linkImageKind !== server.linkImageKind
+function linkMirrorsDiffer(local: ListItemRow, next: LinkMirrors): boolean {
+  return local.linkTitle !== next.linkTitle
+    || local.linkImagePath !== next.linkImagePath
+    || local.linkImageKind !== next.linkImageKind
 }

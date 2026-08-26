@@ -217,6 +217,44 @@ describe('clampNumber', () => {
   })
 })
 
+describe('sanitize: der Link einer Zeile überlebt jeden Durchlauf', () => {
+  /*
+   * EIN DATENVERLUST-BEFUND AUS DEM ANDROID-REPO, hier festgenagelt: Dieser
+   * Sanitizer läuft vor JEDEM Push über JEDE schmutzige Zeile — nicht nur
+   * über frisch eingegebene. Prüfte er die Adresse inhaltlich und verwürfe
+   * sie bei Zweifeln, verschwände ein längst gespeicherter, gültiger Link an
+   * einer Zeile, die aus einem ganz anderen Grund schmutzig ist (etwa bloss
+   * abgehakt) — still, ohne Fehler, und für alle Mitglieder einer geteilten
+   * Liste.
+   *
+   * Deshalb KAPPT er hier nur die Länge und prüft nichts. Wer das je zu
+   * `validHttpUrlOrNull` oder gar zu einem Nicht-Leerraum-Muster ändert,
+   * baut genau diesen Verlust ein.
+   */
+  test('eine Adresse mit Leerzeichen im Pfad kommt unverändert heraus', () => {
+    const mitLeerzeichen = 'https://x.de/a b'
+    expect(sanitize('listItem', makeListItem({ url: mitLeerzeichen })).url).toBe(mitLeerzeichen)
+  })
+
+  test('auch eine Adresse, die keine ist, wird nicht verworfen', () => {
+    // Was nicht wie eine Adresse aussieht, kann trotzdem eine sein — und
+    // selbst wenn nicht: Der Server entscheidet das, nicht der Sanitizer.
+    // Seine einzige Aufgabe ist, ein 422 auf den GESAMTEN Push zu verhindern.
+    expect(sanitize('listItem', makeListItem({ url: 'kaputt' })).url).toBe('kaputt')
+  })
+
+  test('null bleibt null', () => {
+    expect(sanitize('listItem', makeListItem({ url: null })).url).toBeNull()
+  })
+
+  test('nur die Länge wird gekappt, und zwar auf ITEM_URL', () => {
+    const zuLang = `https://x.de/${'a'.repeat(SYNC_FIELD_LIMITS.ITEM_URL)}`
+    const gekappt = sanitize('listItem', makeListItem({ url: zuLang })).url
+    expect(gekappt).toHaveLength(SYNC_FIELD_LIMITS.ITEM_URL)
+    expect(zuLang.startsWith(gekappt ?? '')).toBe(true)
+  })
+})
+
 describe('sortKeyForSync', () => {
   test('lässt gültige Schlüssel unverändert', () => {
     expect(sortKeyForSync('a0V')).toBe('a0V')

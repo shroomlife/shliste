@@ -114,6 +114,21 @@ const isDeleteOpen = ref(false)
 const renameValue = ref('')
 const sourceUrlValue = ref('')
 
+/**
+ * Die Quelle des Rezepts, sofern sie in ein `href` darf.
+ *
+ * DERSELBE WACHPOSTEN WIE AN DER LINK-KACHEL (siehe `linkUrl` in
+ * `ListItemRow.vue`), und aus demselben Grund: `sourceUrl` ist ein
+ * SYNCHRONISIERTES Feld. Der Abgleich liest es als beliebige Zeichenkette und
+ * kappt nur die Länge — geprüft wird es ausschliesslich dort, wo ein Mensch
+ * es hier eintippt. Ein anderer Schreiber könnte also `javascript:…`
+ * hineinlegen, und ohne diese Prüfung stünde das als anklickbarer Link da.
+ */
+const sourceLinkUrl = computed(() => {
+  const raw = recipe.value?.sourceUrl ?? null
+  return raw !== null && isHttpUrl(raw) ? raw : null
+})
+
 // Dieselben Aktionen wie bei einer Liste, an derselben Stelle: Was gleich
 // funktioniert, soll auch gleich zu finden sein.
 const menuItems = computed(() => [[
@@ -634,8 +649,8 @@ function onImageGenerated(imageRef: string): void {
            Sie steht auf Mobil wie auf dem Desktop unter dem Titel, weil sie
            zum Rezept gehört und nicht zur Werkbank. -->
       <a
-        v-if="recipe?.sourceUrl"
-        :href="recipe.sourceUrl"
+        v-if="sourceLinkUrl !== null"
+        :href="sourceLinkUrl"
         target="_blank"
         rel="noopener noreferrer"
         class="relative flex w-fit items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.9375rem] font-bold"

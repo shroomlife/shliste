@@ -25,7 +25,6 @@ import type {
   FieldTimestamps,
   HistoryEntry,
   IsoUtc,
-  LinkImageKind,
   LinkMirrorField,
   List,
   ListItem,
@@ -36,6 +35,7 @@ import type {
   RecipeStep,
   SyncedEntity,
 } from '../../shared/types/domain'
+import { linkMirrorsFor, type LinkMirrors } from '../sync/merge/link-mirrors'
 import { sanitize } from '../sync/merge/limits'
 import { getDb } from './client'
 import {
@@ -146,13 +146,6 @@ export function mergeFieldTimestamps(
   return merged
 }
 
-/** Die drei Server-Spiegel eines Listeneintrags. */
-export interface LinkMirrorValues {
-  linkTitle: string | null
-  linkImagePath: string | null
-  linkImageKind: LinkImageKind | null
-}
-
 /**
  * Was aus den Server-Spiegeln wird, wenn diese Zeile geschrieben wird.
  *
@@ -166,21 +159,15 @@ export interface LinkMirrorValues {
  * macht in derselben Sekunde dasselbe (Reset-Regel im Push), diese Zeile ist
  * also kein Alleingang, sondern der lokale Vorgriff darauf.
  *
- * Eine neue Zeile hat nichts zu behalten und bekommt drei `null`.
+ * Der benannte Schreibweg auf die gemeinsame Regel in
+ * `app/sync/merge/link-mirrors.ts` — dieselbe gilt im Pull und in der
+ * Konfliktantwort des Pushs.
  */
 export function linkFieldsAfterWrite(
   previous: Pick<ListItem, 'url' | LinkMirrorField> | undefined,
   nextUrl: string | null,
-): LinkMirrorValues {
-  if (previous === undefined || previous.url !== nextUrl) {
-    return { linkTitle: null, linkImagePath: null, linkImageKind: null }
-  }
-
-  return {
-    linkTitle: previous.linkTitle,
-    linkImagePath: previous.linkImagePath,
-    linkImageKind: previous.linkImageKind,
-  }
+): LinkMirrors {
+  return linkMirrorsFor(previous, nextUrl)
 }
 
 /** Die Felder, die diese Schicht selbst führt. */
@@ -360,13 +347,27 @@ export async function upsertList(input: Draft<List>): Promise<ListRow> {
  * hängt allein davon ab, ob sich die Adresse geändert hat
  * (`linkFieldsAfterWrite`). Sie bekommen dadurch auch nie einen
  * Feld-Zeitstempel — `changedFields` sieht nur die Felder des Entwurfs.
+ *
+ * LESEN UND SCHREIBEN IN EINER TRANSAKTION, seit die Spiegel dazugekommen
+ * sind. Vorher hing das Ergebnis nur an dem, was der Aufrufer mitbrachte;
+ * jetzt hängt es zusätzlich am INHALT der gelesenen Zeile. Zwischen einem
+ * freien `get` und einem freien `put` liegt aber mindestens ein `await`, und
+ * genau in dieses Fenster schreibt der Abgleich seine frisch angereicherten
+ * Spiegel (transaktional, über `mutateRow`). Ein Häkchen, das zufällig
+ * gleichzeitig gesetzt wird, würde Titel und Vorschaubild sonst still auf den
+ * Stand von vor dem Lesen zurückdrehen. Dieselbe Begründung wie bei
+ * `upsertList` (dort für `seenAt`) und bei `mutateRow` weiter unten.
  */
 export async function upsertItem(input: ListItemDraft): Promise<ListItemRow> {
   const db = await getDb()
-  const previous = await db.get('list_items', input.id)
+  const tx = db.transaction('list_items', 'readwrite')
+  const previous = await tx.store.get(input.id)
   const changed = changedFields(previous, input)
 
+  // Ein Schreibvorgang ohne inhaltliche Änderung würde die Zeile grundlos
+  // schmutzig machen und einen Push auslösen.
   if (previous !== undefined && changed.length === 0) {
+    await tx.done
     return previous
   }
 
@@ -375,7 +376,8 @@ export async function upsertItem(input: ListItemDraft): Promise<ListItemRow> {
     ...linkFieldsAfterWrite(previous, input.url),
     ...buildRowMeta(previous, changed, nowIso()),
   }
-  await db.put('list_items', row)
+  await tx.store.put(row)
+  await tx.done
   return row
 }
 

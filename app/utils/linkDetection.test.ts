@@ -8,6 +8,7 @@
  */
 import { describe, expect, test } from 'bun:test'
 import { detectLinkInput } from './linkDetection'
+import { validHttpUrlOrNull } from './url'
 
 describe('detectLinkInput', () => {
   test('ein Treffer liefert die Adresse in einem Objekt', () => {
@@ -27,6 +28,15 @@ describe('detectLinkInput', () => {
 
   test('das ergänzte https bleibt der einzige Eingriff', () => {
     expect(detectLinkInput('www.Rewe.DE/angebote')?.url).toBe('https://www.Rewe.DE/angebote')
+  })
+
+  test('innerer Leerraum ist NUR hier ein Ausschlussgrund', () => {
+    // Die Eingabezeile macht daraus einen gewöhnlichen Eintrag, weil
+    // „https://x.de/a b" viel wahrscheinlicher ein Satz als eine Adresse ist.
+    // Die Adressprüfung selbst sieht das anders und muss es auch: Sie
+    // entscheidet über einen Wert, der schon feststeht (siehe `url.test.ts`).
+    expect(detectLinkInput('https://x.de/a b')).toBeNull()
+    expect(validHttpUrlOrNull('https://x.de/a b')).toBe('https://x.de/a b')
   })
 
   test('eine überlange Adresse ist ein gewöhnlicher Eintrag', () => {

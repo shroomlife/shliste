@@ -620,6 +620,26 @@ describe('runPull — Link-Felder', () => {
     expect(row?.dirty).toBe(DIRTY)
   })
 
+  test('ein lokaler Sieg mit DERSELBEN url behält die Spiegel', async () => {
+    // Gleiche Adresse, nur ein neuerer Zeitstempel: Der Titel beschreibt
+    // weiterhin genau diese Seite und darf bleiben.
+    const store = fakePullStore({
+      items: [localItem({
+        url: 'https://kochwelt.de/rezept',
+        dirty: DIRTY,
+        fieldTimestamps: { url: NEW },
+      })],
+    })
+
+    await runPull(store, () => Promise.resolve(pullBody({
+      lists: [serverList({ items: [serverItem({ ...ANGEREICHERT, fieldTimestamps: { url: OLD } })] })],
+    })))
+
+    const row = store.items.get('i1')
+    expect(row?.url).toBe('https://kochwelt.de/rezept')
+    expect(row?.linkTitle).toBe('Ofenkartoffeln mit Kräuterquark')
+  })
+
   test('DIE KERNZUSAGE: die Spiegel kommen verbatim, auch wenn die Zeile schmutzig bleibt', async () => {
     // Ohne diese Zeile bekäme ausgerechnet ein Gerät mit ungesendeten
     // Änderungen Titel und Vorschaubild nie zu sehen.
@@ -642,6 +662,29 @@ describe('runPull — Link-Felder', () => {
     expect(row?.linkTitle).toBe('Ofenkartoffeln mit Kräuterquark')
     expect(row?.linkImagePath).toBe('link:0123456789abcdef0123456789abcdef.webp')
     expect(row?.linkImageKind).toBe('preview')
+  })
+
+  test('UND DIE GRENZE: gewinnt eine ANDERE lokale url, bleiben die Spiegel weg', async () => {
+    // Der Fall, in dem „immer verbatim" falsch wäre: Der Servertitel gehört
+    // zur Adresse des SERVERS. Gewinnt lokal eine andere, klebte man den
+    // Titel der alten Seite an einen frisch gesetzten Link.
+    const store = fakePullStore({
+      items: [localItem({
+        url: 'https://rewe.de/mein-link',
+        dirty: DIRTY,
+        fieldTimestamps: { url: NEW },
+      })],
+    })
+
+    await runPull(store, () => Promise.resolve(pullBody({
+      lists: [serverList({ items: [serverItem({ ...ANGEREICHERT, fieldTimestamps: { url: OLD } })] })],
+    })))
+
+    const row = store.items.get('i1')
+    expect(row?.url).toBe('https://rewe.de/mein-link')
+    expect(row?.linkTitle).toBeNull()
+    expect(row?.linkImagePath).toBeNull()
+    expect(row?.linkImageKind).toBeNull()
   })
 
   test('ein lokaler Sieg mit null bleibt null', async () => {

@@ -136,15 +136,30 @@ const linkUrl = computed(() => (item.url !== null && isHttpUrl(item.url) ? item.
          Tastatur wie Screenreader kaputt. Genau deshalb hat die Zeile zwei
          Ziele: die Kachel öffnet die Seite, der Name das Bearbeiten-Blatt.
 
-         Der Abstand richtet sich danach, was links davon steht: 8 Pixel
-         hinter der Mengenkachel, sonst der normale Zeilenrand. -->
+         DIE 6 PIXEL INNENABSTAND SIND DIE TRENNUNG DER BEIDEN ZIELE: Ohne sie
+         klebte die Hover-Fläche der Kachel direkt am Icon und verschwamm mit
+         der des Namensknopfs — man sah zwei Ziele nicht als zwei. Mit ihnen
+         ist die getönte Fläche eine eigene, abgesetzte Schaltfläche um die
+         Kachel herum, und weil `state-layer` seinen Fokusring am selben
+         Rechteck zeichnet, sieht die Tastatur exakt dasselbe Ziel wie die Maus.
+
+         DIE MASSE BLEIBEN, WEIL SIE SICH GEGENSEITIG AUFHEBEN: 48 Pixel Kachel
+         plus zweimal 6 ergeben exakt die 60 Pixel Zeilenhöhe, die Zeile wächst
+         also nicht. Und die 6 Pixel, die der Innenabstand nach links und rechts
+         zulegt, nimmt der äussere Abstand jeweils wieder weg — links über den
+         eigenen Rand (8 statt 14 Pixel am Zeilenrand, 2 statt 8 hinter der
+         Mengenkachel), rechts über den kleineren linken Rand des Namensknopfs
+         (8 statt 14). Kachel und Name stehen dadurch auf denselben Pixeln wie
+         vorher. Bewusst KEIN negativer Rand dafür: Der liesse den Namensknopf
+         über der rechten Hälfte des Innenabstands liegen und dort den Hover
+         der Kachel abfangen. -->
     <a
       v-if="linkUrl !== null"
       :href="linkUrl"
       target="_blank"
       rel="noopener noreferrer"
-      class="flex shrink-0 items-center self-center rounded-lg"
-      :class="[item.quantity > 1 ? 'ml-2' : 'ml-3.5', item.checked && 'opacity-50']"
+      class="state-layer flex shrink-0 items-center self-center rounded-xl p-1.5"
+      :class="[item.quantity > 1 ? 'ml-0.5' : 'ml-2', item.checked && 'opacity-50']"
       :aria-label="`Link öffnen: ${host}`"
     >
       <LinkTile
@@ -156,7 +171,8 @@ const linkUrl = computed(() => (item.url !== null && isHttpUrl(item.url) ? item.
 
     <button
       type="button"
-      class="state-layer flex min-h-15 min-w-0 grow items-center rounded-sm px-3.5 py-2 text-left"
+      class="state-layer flex min-h-15 min-w-0 grow items-center rounded-sm pr-3.5 py-2 text-left"
+      :class="linkUrl !== null ? 'pl-2' : 'pl-3.5'"
       :aria-label="`${displayName} bearbeiten`"
       @click="emit('edit')"
     >

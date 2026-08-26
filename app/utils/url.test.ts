@@ -96,6 +96,48 @@ describe('validHttpUrlOrNull', () => {
     expect(validHttpUrlOrNull(`${genau}a`)).toBeNull()
   })
 
+  test('ein Leerzeichen AB DEM PFAD macht eine Adresse NICHT ungültig', () => {
+    // WICHTIG UND LEICHT ZU VERWECHSELN: „kein innerer Leerraum" ist eine
+    // Regel der EINGABEZEILE (`detectLinkInput`) und keine der Adressprüfung.
+    // Der Server-Sanitizer lehnt so etwas ebenfalls nicht ab — wer eine
+    // Adresse mit Leerzeichen ins Link-Feld einfügt oder teilt, bekommt sie
+    // gespeichert.
+    //
+    // DAS IST KEIN FEINSCHLIFF, SONDERN EIN DATENVERLUST-BEFUND aus dem
+    // Android-Repo: Diese Prüfung läuft an JEDER Schreibstelle, nicht nur an
+    // frisch getippten Eingaben. Eine strengere Regel hätte eine längst
+    // gespeicherte, gültige Adresse beim nächsten Schreibvorgang auf `null`
+    // gesetzt — an einer Zeile, die bloss abgehakt wurde, und für alle
+    // Mitglieder einer geteilten Liste.
+    expect(validHttpUrlOrNull('https://x.de/a b')).toBe('https://x.de/a b')
+    expect(validHttpUrlOrNull('https://x.de/a?q=1 2')).toBe('https://x.de/a?q=1 2')
+    expect(hostOf('https://x.de/a b')).toBe('x.de')
+  })
+
+  test('ein Leerzeichen IM HOSTNAMEN macht sie sehr wohl ungültig', () => {
+    expect(validHttpUrlOrNull('https://x .de/a')).toBeNull()
+    expect(validHttpUrlOrNull('https://x.de /a')).toBeNull()
+  })
+
+  test('Steuerzeichen fallen überall durch — auch versteckt im Hostnamen', () => {
+    // DIE FALLE: Der WHATWG-Parser ENTFERNT Tabulator, Zeilenvorschub und
+    // Wagenrücklauf still aus der Eingabe, bevor er sie liest. `new URL`
+    // liefert für die erste Zeile hier klaglos den Host `x.de` — und weil
+    // diese Funktion die EINGABE zurückgibt und nicht `toString()`, landete
+    // der Umbruch sonst in der gespeicherten Adresse. Ein Leerzeichen an
+    // derselben Stelle wird abgelehnt; ohne diese Prüfung käme man mit einem
+    // Umbruch also an genau dem Schutz vorbei, der den Hostnamen schützt.
+    expect(validHttpUrlOrNull('https://x\n.de/a')).toBeNull()
+    expect(validHttpUrlOrNull('https://x\t.de/a')).toBeNull()
+    expect(validHttpUrlOrNull('https://x.de/a\nb')).toBeNull()
+    expect(validHttpUrlOrNull('https://x.de/a\rb')).toBeNull()
+    expect(validHttpUrlOrNull('https://x.de/a\u0000b')).toBeNull()
+
+    // Und derselbe Wert taugt auch nicht als `href` oder als Host.
+    expect(isHttpUrl('https://x\n.de/a')).toBe(false)
+    expect(hostOf('https://x\n.de/a')).toBe('')
+  })
+
   test('relative Pfade sind keine Adresse', () => {
     expect(validHttpUrlOrNull('/app/lists')).toBeNull()
     expect(validHttpUrlOrNull('rewe.de')).toBeNull()

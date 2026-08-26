@@ -646,11 +646,21 @@ describe('runPush', () => {
     expect(stored?.linkImageKind).toBe('preview')
   })
 
+  /** Eine lokal frischere Zeile, die noch auf DIESELBE Seite zeigt. */
+  function lokalFrischerMitGleicherUrl(overrides: Partial<ListItemRow> = {}): ListItemRow {
+    return {
+      ...dirtyItem('i1', 'l1', FUTURE),
+      name: 'Gerade getippt',
+      url: 'https://kochwelt.de/rezept',
+      ...overrides,
+    }
+  }
+
   test('DIE KERNZUSAGE: auch eine lokal frischere Zeile bekommt die Spiegel', async () => {
     // Ohne diesen Zweig bekäme ausgerechnet ein Gerät mit ungesendeten
     // Änderungen die Anreicherung nie zu sehen — und zwar dauerhaft, denn
     // der nächste Push löst denselben Konflikt wieder aus.
-    const lokal: ListItemRow = { ...dirtyItem('i1', 'l1', FUTURE), name: 'Gerade getippt' }
+    const lokal = lokalFrischerMitGleicherUrl()
     const store = fakePushStore({ items: [dirtyItem('i1', 'l1')] }, { items: [lokal] })
 
     await runPush(store, () => Promise.resolve({
@@ -668,14 +678,32 @@ describe('runPush', () => {
     expect(stored?.linkImageKind).toBe('preview')
   })
 
+  test('UND DIE GRENZE: zeigt die frischere Zeile woandershin, bleiben die Spiegel weg', async () => {
+    // Der Fall, in dem „immer verbatim" falsch wäre: Die lokale Zeile trägt
+    // längst eine ANDERE Adresse — das ist ja der Grund, warum sie neuer ist.
+    // Der Servertitel beschreibt dann die alte Seite, und ihn zu übernehmen
+    // klebte einen fremden Titel an einen frisch gesetzten Link.
+    const lokal = lokalFrischerMitGleicherUrl({ url: 'https://rewe.de/angebote' })
+    const store = fakePushStore({ items: [dirtyItem('i1', 'l1')] }, { items: [lokal] })
+
+    await runPush(store, () => Promise.resolve({
+      ...OK_RESPONSE,
+      conflicts: { listItems: [conflictItem()] },
+    }))
+
+    const stored = store.items.get('i1')
+    expect(stored?.url).toBe('https://rewe.de/angebote')
+    expect(stored?.linkTitle).toBeNull()
+    expect(stored?.linkImagePath).toBeNull()
+    expect(stored?.linkImageKind).toBeNull()
+  })
+
   test('gleiche Spiegel schreiben die frischere Zeile nicht grundlos neu', async () => {
-    const lokal: ListItemRow = {
-      ...dirtyItem('i1', 'l1', FUTURE),
-      name: 'Gerade getippt',
+    const lokal = lokalFrischerMitGleicherUrl({
       linkTitle: 'Ofenkartoffeln mit Kräuterquark',
       linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
       linkImageKind: 'preview',
-    }
+    })
     const store = fakePushStore({ items: [dirtyItem('i1', 'l1')] }, { items: [lokal] })
 
     await runPush(store, () => Promise.resolve({

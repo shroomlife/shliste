@@ -117,6 +117,23 @@ const sourceUrlValue = ref('')
 const isLocked = computed(() => list.value?.secret === true)
 
 /**
+ * Die Quelle der Liste, sofern sie in ein `href` darf.
+ *
+ * DERSELBE WACHPOSTEN WIE AN DER LINK-KACHEL (siehe `linkUrl` in
+ * `ListItemRow.vue`), und aus demselben Grund: `sourceUrl` ist ein
+ * SYNCHRONISIERTES Feld. Der Abgleich liest es als beliebige Zeichenkette und
+ * kappt nur die Länge — geprüft wird es ausschliesslich dort, wo ein Mensch
+ * es hier eintippt. Ein anderer Schreiber (ein fehlerhafter Client, ein
+ * Mitglied einer geteilten Liste, das direkt gegen die API schreibt) könnte
+ * also `javascript:…` hineinlegen, und ohne diese Prüfung stünde das als
+ * anklickbarer Link in jeder Ansicht.
+ */
+const sourceLinkUrl = computed(() => {
+  const raw = list.value?.sourceUrl ?? null
+  return raw !== null && isHttpUrl(raw) ? raw : null
+})
+
+/**
  * Der Eintrag im Menü heisst für Mitglieder anders als für Eigentümer, weil er
  * etwas anderes bedeutet: Der Eigentümer löscht die Liste für alle, ein
  * Mitglied verlässt sie nur. Derselbe Vorgang, zwei Wahrheiten — der Server
@@ -839,8 +856,8 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
            Bei einer gesperrten Liste nicht — die Adresse verriete, worum es
            geht, und genau das schützt die Sperre. -->
       <a
-        v-if="list?.sourceUrl && !isLocked"
-        :href="list.sourceUrl"
+        v-if="sourceLinkUrl !== null && !isLocked"
+        :href="sourceLinkUrl"
         target="_blank"
         rel="noopener noreferrer"
         class="flex w-fit items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.9375rem] font-bold"

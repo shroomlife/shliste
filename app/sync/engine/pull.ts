@@ -39,6 +39,7 @@ import type {
 import { CLEAN, DIRTY, type DirtyFlag } from '../../db/schema'
 import type { LocalRow, PullMergeResult } from '../merge/field-lww'
 import { mergePulledEntity } from '../merge/field-lww'
+import { linkMirrorsFor } from '../merge/link-mirrors'
 import {
   parseBadge,
   parseChatMessage,
@@ -379,6 +380,7 @@ async function applyItem(rows: RowStores, server: ListItem): Promise<void> {
       fieldTimestamps: server.fieldTimestamps,
     })
     const values = merged.values
+    const mergedUrl = pickNullableString(values, 'url', server.url)
 
     return {
       id: server.id,
@@ -389,23 +391,24 @@ async function applyItem(rows: RowStores, server: ListItem): Promise<void> {
       removed: pickBoolean(values, 'removed', server.removed),
       orderIndex: pickNumber(values, 'orderIndex', server.orderIndex),
       sortKey: pickNullableString(values, 'sortKey', server.sortKey),
-      url: pickNullableString(values, 'url', server.url),
+      url: mergedUrl,
       /*
-       * Die drei Spiegel kommen IMMER wörtlich vom Server — auch wenn die
-       * Zeile durch einen lokalen Feldsieg schmutzig bleibt.
+       * Die drei Spiegel kommen wörtlich vom Server — auch wenn die Zeile
+       * durch einen lokalen Feldsieg schmutzig bleibt. Sie sind serverseitig
+       * gepflegt und werden nie gemergt: Es gibt keinen lokalen Wert, der mit
+       * ihnen konkurrieren könnte, und keinen Zeitstempel, an dem sich ein
+       * Vergleich orientieren würde. Würde man sie an eine saubere Zeile
+       * knüpfen, bekäme ein Gerät mit einer ungesendeten Umbenennung das
+       * Vorschaubild nie zu sehen.
        *
-       * Sie sind serverseitig gepflegt und werden nie gemergt: Es gibt keinen
-       * lokalen Wert, der mit ihnen konkurrieren könnte, und keinen
-       * Zeitstempel, an dem sich ein Vergleich orientieren würde. Sie hier
-       * hinter `values` zu verstecken hiesse, dass ein Gerät mit einer
-       * ungesendeten Umbenennung das Vorschaubild nie zu sehen bekäme.
-       *
-       * Dieselbe Zeile steht im Konfliktpfad des Pushs (`applyConflicts` in
-       * `push.ts`). Wer hier etwas ändert, ändert es dort mit.
+       * DIE EINE BEDINGUNG: Sie gehören zu der Adresse, die der Server kennt.
+       * Hat die lokale Adresse den Feldvergleich gewonnen und ist eine andere,
+       * beschreibt der Servertitel die ALTE Seite — dann bleiben die Spiegel
+       * leer, bis der Server die neue Adresse gesehen hat. Die Regel steht in
+       * `app/sync/merge/link-mirrors.ts` und gilt genauso im Konfliktpfad des
+       * Pushs und beim lokalen Schreiben.
        */
-      linkTitle: server.linkTitle,
-      linkImagePath: server.linkImagePath,
-      linkImageKind: server.linkImageKind,
+      ...linkMirrorsFor(server, mergedUrl),
       createdBy: server.createdBy,
       modifiedBy: server.modifiedBy,
       createdAt: server.createdAt,
