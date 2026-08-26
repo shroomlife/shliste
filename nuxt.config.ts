@@ -188,6 +188,24 @@ export default defineNuxtConfig({
       // Android-App. Die alte manifest.json wich hier ab, was auf Android zu
       // zwei verschiedenen Tönungen der Systemleiste führte.
       theme_color: '#FDECF5',
+      /**
+       * Die installierte App als Ziel für „Teilen".
+       *
+       * GET und nicht POST: Wir empfangen Text und eine Adresse, keine
+       * Dateien. GET braucht dafür keinen Service-Worker-Eingriff — das
+       * Betriebssystem öffnet schlicht `/app/share?title=…&text=…&url=…`,
+       * und die Seite liest den Abfrageteil. Ein POST müsste im Service
+       * Worker abgefangen und zwischengespeichert werden, mit allem, was
+       * daran schiefgehen kann.
+       *
+       * Die Zieladresse liegt innerhalb von `scope` und wird vom
+       * navigateFallback abgedeckt, funktioniert also auch offline.
+       */
+      share_target: {
+        action: '/app/share',
+        method: 'GET',
+        params: { title: 'title', text: 'text', url: 'url' },
+      },
       icons: [
         { src: '/images/logo/logo192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
         { src: '/images/logo/logo512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },

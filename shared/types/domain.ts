@@ -66,10 +66,14 @@ export type LinkImageKind = 'preview' | 'icon'
  * Die eine lokale Ausnahme: Ändert sich `url`, nullt der Client die drei
  * sofort selbst — sonst stünde der Titel der alten Seite unter der neuen
  * Adresse, bis der Server nachzieht.
+ *
+ * NUR EIN TYP UND KEINE KONSTANTE: Diese Datei enthält ausschliesslich Typen
+ * und wird deshalb beim Übersetzen restlos wegradiert. Ein Laufzeitwert darin
+ * erzeugte einen echten Import über die Grenze von `app/` nach `shared/`, und
+ * genau daran ist der Produktionsbuild gescheitert. Die Liste als Werte steht
+ * dort, wo sie gebraucht wird (`app/db/schema.ts`).
  */
-export const LINK_MIRROR_FIELDS = ['linkTitle', 'linkImagePath', 'linkImageKind'] as const
-
-export type LinkMirrorField = typeof LINK_MIRROR_FIELDS[number]
+export type LinkMirrorField = 'linkTitle' | 'linkImagePath' | 'linkImageKind'
 
 export interface ListItem extends SyncedEntity {
   listId: string

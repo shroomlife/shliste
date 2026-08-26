@@ -378,6 +378,59 @@ function lokaleListe(updatedAt: string, dirty: 0 | 1): ListRow {
   } as ListRow
 }
 
+describe('runDelta — Link-Felder', () => {
+  /*
+   * DER DELTA-PFAD IST DER, ÜBER DEN DIE ANREICHERUNG WIRKLICH ANKOMMT: Der
+   * Server schickt nach dem Anreichern ein `item_changed`, und daraufhin holt
+   * der Client GENAU diese eine Zeile. Käme der Spiegel hier nicht mit, sähe
+   * man Titel und Vorschaubild erst beim nächsten vollen Abgleich.
+   */
+  const ANGEREICHERT = {
+    url: 'https://kochwelt.de/rezept',
+    linkTitle: 'Ofenkartoffeln mit Kräuterquark',
+    linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
+    linkImageKind: 'preview',
+  }
+
+  test('Titel und Vorschaubild kommen über das Delta an', async () => {
+    const store = fakeStore({ items: [localItem()] })
+
+    await runDelta(
+      store,
+      () => Promise.resolve({ lists: [], items: [serverItem(ANGEREICHERT)], recipes: [] }),
+      { kind: 'items', listId: 'l1', itemIds: ['i1'], listUpdatedAt: null },
+    )
+
+    const row = store.items.get('i1')
+    expect(row?.url).toBe('https://kochwelt.de/rezept')
+    expect(row?.linkTitle).toBe('Ofenkartoffeln mit Kräuterquark')
+    expect(row?.linkImagePath).toBe('link:0123456789abcdef0123456789abcdef.webp')
+    expect(row?.linkImageKind).toBe('preview')
+  })
+
+  test('auch eine schmutzige Zeile bekommt die Spiegel', async () => {
+    const store = fakeStore({
+      items: [localItem({
+        name: 'Lokal neuer',
+        url: 'https://kochwelt.de/rezept',
+        dirty: DIRTY,
+        fieldTimestamps: { name: NEW },
+      })],
+    })
+
+    await runDelta(
+      store,
+      () => Promise.resolve({ lists: [], items: [serverItem({ ...ANGEREICHERT, fieldTimestamps: { name: OLD } })], recipes: [] }),
+      { kind: 'items', listId: 'l1', itemIds: ['i1'], listUpdatedAt: null },
+    )
+
+    const row = store.items.get('i1')
+    expect(row?.name).toBe('Lokal neuer')
+    expect(row?.dirty).toBe(DIRTY)
+    expect(row?.linkTitle).toBe('Ofenkartoffeln mit Kräuterquark')
+  })
+})
+
 describe('Sortierzeitpunkt der Elternliste', () => {
   const ALT = '2026-08-25T10:00:00.000Z'
   const NEU = '2026-08-25T11:00:00.000Z'

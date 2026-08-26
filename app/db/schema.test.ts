@@ -69,9 +69,22 @@ describe('needsLinkBackfill', () => {
     })).toBe(false)
   })
 
-  test('ein einziger fehlender Schlüssel genügt', () => {
-    // Sonst bliebe eine halb migrierte Zeile für immer halb migriert.
-    expect(needsLinkBackfill({ ...altzeile, url: null, linkTitle: null, linkImagePath: null })).toBe(true)
+  test('ein einziger fehlender Schlüssel genügt — für jeden der vier', () => {
+    // Sonst bliebe eine halb migrierte Zeile für immer halb migriert. Der
+    // Test geht alle vier durch, damit kein Schlüssel aus der Prüfliste
+    // fallen kann, ohne dass es auffällt.
+    const vollstaendig = { ...altzeile, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null }
+    expect(needsLinkBackfill(vollstaendig)).toBe(false)
+
+    for (const key of ['url', 'linkTitle', 'linkImagePath', 'linkImageKind']) {
+      // Ohne `delete` zusammengesetzt: Ein dynamisches `delete` ist in diesem
+      // Repo untersagt, und ein Filter über die Einträge sagt ohnehin klarer,
+      // was gemeint ist — „alle ausser diesem einen".
+      const ohneEinen = Object.fromEntries(
+        Object.entries(vollstaendig).filter(([vorhanden]) => vorhanden !== key),
+      )
+      expect(needsLinkBackfill(ohneEinen)).toBe(true)
+    }
   })
 })
 

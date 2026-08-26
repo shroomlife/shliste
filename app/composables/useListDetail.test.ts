@@ -12,7 +12,7 @@
  */
 import { describe, expect, test } from 'bun:test'
 import type { ListItem } from '../../shared/types/domain'
-import { groupByChecked, nextOrderIndex, sortOpenFirst, toItemDraft } from './useListDetail'
+import { groupByChecked, isValidItemContent, nextOrderIndex, sortOpenFirst, toItemDraft } from './useListDetail'
 
 const NOW = '2026-08-19T10:15:00.000Z'
 
@@ -198,5 +198,28 @@ describe('toItemDraft', () => {
 
     expect(draft.deletedAt).toBe(NOW)
     expect(draft.removed).toBe(true)
+  })
+})
+
+describe('isValidItemContent', () => {
+  test('ein Name allein genügt', () => {
+    expect(isValidItemContent('Milch', null)).toBe(true)
+  })
+
+  test('ein Link allein genügt auch', () => {
+    // Genau der Fall beim Teilen: Niemand tippt beim Weitergeben einer Seite
+    // einen Namen. Die Zeile zeigt dann den Seitentitel oder den Host.
+    expect(isValidItemContent('', 'https://kochwelt.de/rezept')).toBe(true)
+  })
+
+  test('ohne beides entstünde eine leere Zeile', () => {
+    // Eine leere, tippbare Zeile, die niemand mehr zuordnen kann — genau das
+    // sieht ein alter Android-Client, solange er das Feld noch nicht kennt.
+    expect(isValidItemContent('', null)).toBe(false)
+    expect(isValidItemContent('   ', null)).toBe(false)
+  })
+
+  test('ein Name aus lauter Leerzeichen zählt nicht als Name', () => {
+    expect(isValidItemContent('   ', 'https://kochwelt.de/rezept')).toBe(true)
   })
 })

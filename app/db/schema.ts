@@ -24,7 +24,6 @@ import type {
   RecipeIngredient,
   RecipeStep,
 } from '../../shared/types/domain'
-import { LINK_MIRROR_FIELDS } from '../../shared/types/domain'
 
 export const DB_NAME = 'shliste'
 
@@ -304,8 +303,16 @@ export function createSchema(db: IDBPDatabase<ShlisteDb>): void {
  * Version 3: die Link-Felder nachtragen
  * ------------------------------------------------------------------ */
 
-/** Die vier Schlüssel, die Version 3 an jeder Eintragszeile garantiert. */
-const LINK_ROW_KEYS: readonly string[] = ['url', ...LINK_MIRROR_FIELDS]
+/**
+ * Die vier Schlüssel, die Version 3 an jeder Eintragszeile garantiert.
+ *
+ * Der Typ bindet jeden Eintrag an einen echten Feldnamen der Domäne, ein
+ * Tippfehler fällt also beim Übersetzen auf. Die Vollständigkeit sichert
+ * `fillLinkFields` — dessen Rückgabetyp verlangt alle vier Felder, ein
+ * vergessenes fällt dort auf — und der Test, der alle vier durchgeht.
+ */
+const LINK_ROW_KEYS: readonly ('url' | LinkMirrorField)[]
+  = ['url', 'linkTitle', 'linkImagePath', 'linkImageKind']
 
 /**
  * Fehlt dieser Zeile mindestens einer der vier Link-Schlüssel?
