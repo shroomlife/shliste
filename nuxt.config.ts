@@ -227,6 +227,23 @@ export default defineNuxtConfig({
             cacheableResponse: { statuses: [200] },
           },
         },
+        // Dieselbe Begründung für die Vorschaubilder der Link-Einträge: Ihre
+        // Adresse trägt die Prüfsumme des Bildes, ein Eintrag kann also nie
+        // veralten. Mehr Einträge als bei Rezeptbildern, weil eine einzige
+        // Liste voller Links schon Dutzende braucht — und sie sind mit 160
+        // Pixeln Kantenlänge deutlich kleiner.
+        {
+          urlPattern: /\/api\/link-previews\//,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'link-previews',
+            expiration: {
+              maxEntries: 300,
+              maxAgeSeconds: 60 * 60 * 24 * 30,
+            },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
       ],
     },
 
