@@ -32,10 +32,17 @@ describe('parseHttpUrl', () => {
   test('ohne Hostnamen ist es keine Adresse', () => {
     expect(parseHttpUrl('http://')).toBeNull()
     expect(parseHttpUrl('https://')).toBeNull()
-    // Zur Erinnerung, weil es beim Lesen überrascht: `https:///pfad` ist nach
-    // WHATWG KEINE hostlose Adresse — der Parser liest `pfad` als Host. Der
-    // Fall ist also gültig und wird bewusst nicht abgelehnt.
-    expect(parseHttpUrl('https:///pfad')?.hostname).toBe('pfad')
+    // Der überraschende Fall, und warum er trotzdem abgelehnt wird: Nach
+    // WHATWG ist `https:///pfad` KEINE hostlose Adresse — der Parser überliest
+    // den leeren Autoritätsteil und liest `pfad` als Host. Die Prüfung auf
+    // `hostname.length` greift hier also nie.
+    //
+    // Abgelehnt wird trotzdem, über eine zweite Prüfung an der rohen Eingabe:
+    // Der Android-Client lehnt so eine Adresse über sein Muster ohnehin ab, und
+    // ohne diese Zeile gäben Client und Server verschiedene Antworten. Seit dem
+    // 27.08.2026 steht der Fall in link-fixtures.json und gilt für alle drei
+    // Repos.
+    expect(parseHttpUrl('https:///pfad')).toBeNull()
   })
 
   test('kaputte Eingaben werfen nicht, sie liefern null', () => {

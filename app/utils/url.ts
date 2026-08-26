@@ -61,6 +61,9 @@ function hasControlCharacter(value: string): boolean {
   return false
 }
 
+/** Der Teil zwischen `://` und dem nächsten `/`, `?` oder `#`. */
+const AUTHORITY_PATTERN = /^https?:\/\/([^/?#]*)/i
+
 /**
  * Liest eine Web-Adresse.
  *
@@ -89,6 +92,13 @@ export function parseHttpUrl(value: string): URL | null {
 
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
   if (parsed.hostname.length === 0) return null
+
+  // `new URL('https:///x')` liefert den Hostnamen `x`: Der Parser überliest
+  // einen LEEREN Autoritätsteil einfach. Die Prüfung eine Zeile darüber greift
+  // deshalb nie. Eine Adresse ohne Autorität ist aber keine, und der
+  // Android-Client lehnt sie über sein Muster ohnehin ab — ohne diese Zeile
+  // liefen die Plattformen genau hier auseinander.
+  if ((AUTHORITY_PATTERN.exec(trimmed)?.[1] ?? '').length === 0) return null
 
   return parsed
 }

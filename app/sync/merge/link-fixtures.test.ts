@@ -17,7 +17,7 @@
 import { describe, expect, test } from 'bun:test'
 import { detectLinkInput } from '../../utils/linkDetection'
 import { listItemDisplayName, showHostLine } from '../../utils/listItemDisplay'
-import { hostOf } from '../../utils/url'
+import { hostOf, validHttpUrlOrNull } from '../../utils/url'
 import linkFixtures from './link-fixtures.json'
 
 /**
@@ -28,9 +28,10 @@ import linkFixtures from './link-fixtures.json'
  * meldet grün. Reihenfolge beim Ergänzen: hier in der Quelle eintragen, die
  * Zahlen in allen drei Loadern hochsetzen, beide Kopien neu ziehen.
  */
-const EXPECTED_SCHEMA_VERSION = 1
+const EXPECTED_SCHEMA_VERSION = 2
 const EXPECTED_DISPLAY_NAME_COUNT = 10
 const EXPECTED_DETECT_COUNT = 13
+const EXPECTED_VALID_URL_COUNT = 14
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -101,20 +102,27 @@ function readDisplayNameCase(value: unknown, index: number): DisplayNameCase {
   }
 }
 
-interface DetectCase {
+/**
+ * Ein Fall der Form „eine Zeichenkette rein, eine Zeichenkette oder null
+ * raus". Zwei der drei Tabellen haben diese Form: `detectLinkInput` und
+ * `validHttpUrl`.
+ */
+interface InputOutputCase {
   name: string
   input: string
   expected: string | null
 }
 
-function readDetectCase(value: unknown, index: number): DetectCase {
-  const where = `detectLinkInput[${index}]`
-  if (!isRecord(value)) throw new Error(`${where}: Objekt erwartet`)
+function readInputOutputCase(table: string) {
+  return (value: unknown, index: number): InputOutputCase => {
+    const where = `${table}[${index}]`
+    if (!isRecord(value)) throw new Error(`${where}: Objekt erwartet`)
 
-  return {
-    name: readString(value, 'name', where),
-    input: readString(value, 'input', where),
-    expected: readNullableString(value, 'expected', where),
+    return {
+      name: readString(value, 'name', where),
+      input: readString(value, 'input', where),
+      expected: readNullableString(value, 'expected', where),
+    }
   }
 }
 
@@ -123,28 +131,33 @@ if (!isRecord(raw)) throw new Error('link-fixtures.json: Objekt erwartet')
 
 const schemaVersion = readNumber(raw, 'schemaVersion', 'link-fixtures.json')
 const displayNameCases = readArray(raw, 'displayName').map(readDisplayNameCase)
-const detectCases = readArray(raw, 'detectLinkInput').map(readDetectCase)
+const detectCases = readArray(raw, 'detectLinkInput').map(readInputOutputCase('detectLinkInput'))
+const validUrlCases = readArray(raw, 'validHttpUrl').map(readInputOutputCase('validHttpUrl'))
 
 describe('Link-Fixtures', () => {
   test('die Datei trägt die Vertragsversion, die dieser Loader kennt', () => {
     expect(schemaVersion).toBe(EXPECTED_SCHEMA_VERSION)
   })
 
-  test('beide Tabellen haben exakt die erwartete Anzahl Fälle', () => {
+  test('alle drei Tabellen haben exakt die erwartete Anzahl Fälle', () => {
     // Exakt und nicht „mindestens": Auch ein ZUSÄTZLICHER Fall ist Drift,
     // solange er nicht in allen drei Repos steht.
     expect(displayNameCases.length).toBe(EXPECTED_DISPLAY_NAME_COUNT)
     expect(detectCases.length).toBe(EXPECTED_DETECT_COUNT)
+    expect(validUrlCases.length).toBe(EXPECTED_VALID_URL_COUNT)
   })
 
   test('jeder Fall hat einen eindeutigen Namen', () => {
-    expect(new Set(displayNameCases.map(one => one.name)).size).toBe(displayNameCases.length)
-    expect(new Set(detectCases.map(one => one.name)).size).toBe(detectCases.length)
+    // Über ALLE Tabellen hinweg eindeutig: Ein Fehlschlag nennt nur den Namen,
+    // und zwei gleich benannte Fälle in verschiedenen Tabellen schickten die
+    // Suche in die falsche Datei.
+    const alle = [...displayNameCases, ...detectCases, ...validUrlCases].map(one => one.name)
+    expect(new Set(alle).size).toBe(alle.length)
   })
 
   test('die Datei erklärt jede Regel, die sie prüft', () => {
     const contract = readRecord(raw, 'contract', 'link-fixtures.json')
-    for (const key of ['displayName', 'host', 'showHostLine', 'detectLinkInput']) {
+    for (const key of ['displayName', 'host', 'showHostLine', 'detectLinkInput', 'validHttpUrl']) {
       expect(readString(contract, key, 'link-fixtures.json.contract').length).toBeGreaterThan(40)
     }
   })
@@ -165,6 +178,24 @@ describe('Link-Fixtures: Link-Erkennung', () => {
     test(one.name, () => {
       const detected = detectLinkInput(one.input)
       expect(detected === null ? null : detected.url).toBe(one.expected)
+    })
+  }
+})
+
+/**
+ * Die Prüfung, die an JEDER Schreibstelle läuft — und die als einzige der drei
+ * Regeln auch auf dem Server existiert (`sanitizeItemUrl`).
+ *
+ * Sie hat diese Tabelle bekommen, weil die drei Repos hier dreifach
+ * auseinandergelaufen waren: Die PWA lehnte Steuerzeichen ab, Android nur den
+ * Zeilenumbruch, der Server gar keine — und eine vierte Abweichung (leerer
+ * Autoritätsteil) fiel erst beim Nachrechnen auf. Eine davon hätte einen
+ * gespeicherten Link beim nächsten Abgleich still gelöscht.
+ */
+describe('Link-Fixtures: Adressprüfung', () => {
+  for (const one of validUrlCases) {
+    test(one.name, () => {
+      expect(validHttpUrlOrNull(one.input)).toBe(one.expected)
     })
   }
 })
