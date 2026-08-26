@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "description": "Golden Fixtures für den Field-Level-LWW-Merge in Pull-Richtung (Server -> Gerät). Bewusst als JSON und nicht als TypeScript abgelegt, damit dieselben Fälle auch im API-Repo und im Android-Projekt gegen die dortige Implementierung laufen. Jeder Fall beschreibt eine Zeile: den lokalen Stand (oder null), den Serverstand und das erwartete Merge-Ergebnis. QUELLE DER WAHRHEIT ist shliste.app/app/sync/merge/fixtures.json. Weil die drei GitHub-Repos getrennt sind, liegt dieselbe Datei zusätzlich als wortgleiche Kopie in api.shliste.app/src/lib/fixtures.json und in android-app/app/src/test/resources/fixtures.json. Geändert oder ergänzt wird ausschliesslich die Quelle, danach werden beide Kopien neu gezogen. Jeder der drei Loader prüft schemaVersion und die Anzahl der Fälle, damit eine einseitig ergänzte Kopie sofort auffällt statt still zu driften.",
+  "schemaVersion": 2,
+  "description": "Golden Fixtures für den Field-Level-LWW-Merge in Pull-Richtung (Server -> Gerät). Bewusst als JSON und nicht als TypeScript abgelegt, damit dieselben Fälle auch im API-Repo und im Android-Projekt gegen die dortige Implementierung laufen. Jeder Fall beschreibt eine Zeile: den lokalen Stand (oder null), den Serverstand und das erwartete Merge-Ergebnis. QUELLE DER WAHRHEIT ist shliste.app/app/sync/merge/fixtures.json. Weil die drei GitHub-Repos getrennt sind, liegt dieselbe Datei zusätzlich als wortgleiche Kopie in api.shliste.app/src/lib/fixtures.json und in android-app/app/src/test/resources/fixtures.json. Geändert oder ergänzt wird ausschliesslich die Quelle, danach werden beide Kopien neu gezogen. Jeder der drei Loader prüft schemaVersion und die Anzahl der Fälle, damit eine einseitig ergänzte Kopie sofort auffällt statt still zu driften. Schema-Version 2 (26.08.2026) ergänzt das Feld url an Listeneinträgen: es ist ein gewöhnliches LWW-Feld und steht zusätzlich in ADD_WINS_CONTENT_FIELDS, weil ein Link zum Inhalt eines Eintrags gehört. Die serverseitig gepflegten Spiegel (linkTitle, linkImagePath, linkImageKind) nehmen am Merge NICHT teil und stehen deshalb in keinem Fall.",
   "contract": {
     "comparison": "numerisch in Epoch-Millisekunden; fehlende und unparsbare Zeitstempel verlieren jeden Vergleich",
     "tie": "beim Pull gewinnt der Server (beim Push gewinnt serverseitig der Client - die Asymmetrie ist Absicht)",
@@ -94,16 +94,16 @@
       "entityType": "listItem",
       "local": {
         "dirty": true,
-        "values": { "name": "neu", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "values": { "name": "neu", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": null },
         "fieldTimestamps": { "name": "2026-07-16T11:00:00.000Z" }
       },
       "server": {
-        "values": { "name": "alt", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "values": { "name": "alt", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": "2026-07-16T10:00:00.000Z" },
         "fieldTimestamps": { "deletedAt": "2026-07-16T10:00:00.000Z" }
       },
       "expected": {
-        "values": { "name": "neu", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
-        "fieldTimestamps": { "name": "2026-07-16T11:00:00.000Z", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "values": { "name": "neu", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T11:00:00.000Z", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "url": "", "deletedAt": "2026-07-16T10:00:00.000Z" },
         "dirty": true,
         "restored": true
       }
@@ -114,16 +114,16 @@
       "entityType": "listItem",
       "local": {
         "dirty": true,
-        "values": { "name": "neu", "quantity": 2, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "values": { "name": "neu", "quantity": 2, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": null },
         "fieldTimestamps": { "name": "2026-07-16T11:00:00.000Z" }
       },
       "server": {
-        "values": { "name": "alt", "quantity": 2, "checked": false, "removed": true, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "values": { "name": "alt", "quantity": 2, "checked": false, "removed": true, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": null },
         "fieldTimestamps": { "removed": "2026-07-16T10:00:00.000Z" }
       },
       "expected": {
-        "values": { "name": "neu", "quantity": 2, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
-        "fieldTimestamps": { "name": "2026-07-16T11:00:00.000Z", "quantity": "", "checked": "", "removed": "2026-07-16T10:00:00.000Z", "orderIndex": "", "sortKey": "", "deletedAt": "" },
+        "values": { "name": "neu", "quantity": 2, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "2026-07-16T11:00:00.000Z", "quantity": "", "checked": "", "removed": "2026-07-16T10:00:00.000Z", "orderIndex": "", "sortKey": "", "url": "", "deletedAt": "" },
         "dirty": true,
         "restored": true
       }
@@ -134,16 +134,16 @@
       "entityType": "listItem",
       "local": {
         "dirty": true,
-        "values": { "name": "Milch", "quantity": 1, "checked": false, "removed": false, "orderIndex": 3, "sortKey": "a3", "deletedAt": null },
+        "values": { "name": "Milch", "quantity": 1, "checked": false, "removed": false, "orderIndex": 3, "sortKey": "a3", "url": null, "deletedAt": null },
         "fieldTimestamps": { "name": "2026-07-16T09:00:00.000Z", "orderIndex": "2026-07-16T11:00:00.000Z", "sortKey": "2026-07-16T11:00:00.000Z" }
       },
       "server": {
-        "values": { "name": "Milch", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "values": { "name": "Milch", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": "2026-07-16T10:00:00.000Z" },
         "fieldTimestamps": { "name": "2026-07-16T09:00:00.000Z", "orderIndex": "2026-07-16T08:00:00.000Z", "sortKey": "2026-07-16T08:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" }
       },
       "expected": {
-        "values": { "name": "Milch", "quantity": 1, "checked": false, "removed": false, "orderIndex": 3, "sortKey": "a3", "deletedAt": "2026-07-16T10:00:00.000Z" },
-        "fieldTimestamps": { "name": "2026-07-16T09:00:00.000Z", "quantity": "", "checked": "", "removed": "", "orderIndex": "2026-07-16T11:00:00.000Z", "sortKey": "2026-07-16T11:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "values": { "name": "Milch", "quantity": 1, "checked": false, "removed": false, "orderIndex": 3, "sortKey": "a3", "url": null, "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "name": "2026-07-16T09:00:00.000Z", "quantity": "", "checked": "", "removed": "", "orderIndex": "2026-07-16T11:00:00.000Z", "sortKey": "2026-07-16T11:00:00.000Z", "url": "", "deletedAt": "2026-07-16T10:00:00.000Z" },
         "dirty": true,
         "restored": false
       }
@@ -154,16 +154,16 @@
       "entityType": "listItem",
       "local": {
         "dirty": true,
-        "values": { "name": "Brot", "quantity": 1, "checked": false, "removed": false, "orderIndex": 7, "sortKey": "a7", "deletedAt": null },
+        "values": { "name": "Brot", "quantity": 1, "checked": false, "removed": false, "orderIndex": 7, "sortKey": "a7", "url": null, "deletedAt": null },
         "fieldTimestamps": { "orderIndex": "2026-07-16T11:00:00.000Z", "sortKey": "2026-07-16T11:00:00.000Z" }
       },
       "server": {
-        "values": { "name": "Brot", "quantity": 1, "checked": false, "removed": true, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "values": { "name": "Brot", "quantity": 1, "checked": false, "removed": true, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": null },
         "fieldTimestamps": { "removed": "2026-07-16T10:00:00.000Z" }
       },
       "expected": {
-        "values": { "name": "Brot", "quantity": 1, "checked": false, "removed": true, "orderIndex": 7, "sortKey": "a7", "deletedAt": null },
-        "fieldTimestamps": { "name": "", "quantity": "", "checked": "", "removed": "2026-07-16T10:00:00.000Z", "orderIndex": "2026-07-16T11:00:00.000Z", "sortKey": "2026-07-16T11:00:00.000Z", "deletedAt": "" },
+        "values": { "name": "Brot", "quantity": 1, "checked": false, "removed": true, "orderIndex": 7, "sortKey": "a7", "url": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "", "quantity": "", "checked": "", "removed": "2026-07-16T10:00:00.000Z", "orderIndex": "2026-07-16T11:00:00.000Z", "sortKey": "2026-07-16T11:00:00.000Z", "url": "", "deletedAt": "" },
         "dirty": true,
         "restored": false
       }
@@ -174,16 +174,16 @@
       "entityType": "listItem",
       "local": {
         "dirty": true,
-        "values": { "name": "x", "quantity": 1, "checked": false, "removed": true, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "values": { "name": "x", "quantity": 1, "checked": false, "removed": true, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": "2026-07-16T10:00:00.000Z" },
         "fieldTimestamps": { "name": "2026-07-16T09:00:00.000Z", "removed": "2026-07-16T12:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" }
       },
       "server": {
-        "values": { "name": "x", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "values": { "name": "x", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": null },
         "fieldTimestamps": {}
       },
       "expected": {
-        "values": { "name": "x", "quantity": 1, "checked": false, "removed": true, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
-        "fieldTimestamps": { "name": "2026-07-16T09:00:00.000Z", "quantity": "", "checked": "", "removed": "2026-07-16T12:00:00.000Z", "orderIndex": "", "sortKey": "", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "values": { "name": "x", "quantity": 1, "checked": false, "removed": true, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "name": "2026-07-16T09:00:00.000Z", "quantity": "", "checked": "", "removed": "2026-07-16T12:00:00.000Z", "orderIndex": "", "sortKey": "", "url": "", "deletedAt": "2026-07-16T10:00:00.000Z" },
         "dirty": true,
         "restored": false
       }
@@ -194,16 +194,16 @@
       "entityType": "listItem",
       "local": {
         "dirty": true,
-        "values": { "name": "lokal", "quantity": 5, "checked": true, "removed": false, "orderIndex": 2, "sortKey": "a2", "deletedAt": null },
+        "values": { "name": "lokal", "quantity": 5, "checked": true, "removed": false, "orderIndex": 2, "sortKey": "a2", "url": null, "deletedAt": null },
         "fieldTimestamps": {}
       },
       "server": {
-        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": null },
         "fieldTimestamps": {}
       },
       "expected": {
-        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
-        "fieldTimestamps": { "name": "", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "deletedAt": "" },
+        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "url": "", "deletedAt": "" },
         "dirty": false,
         "restored": false
       }
@@ -214,16 +214,16 @@
       "entityType": "listItem",
       "local": {
         "dirty": true,
-        "values": { "name": "lokal", "quantity": 5, "checked": true, "removed": false, "orderIndex": 2, "sortKey": "a2", "deletedAt": null },
+        "values": { "name": "lokal", "quantity": 5, "checked": true, "removed": false, "orderIndex": 2, "sortKey": "a2", "url": null, "deletedAt": null },
         "fieldTimestamps": null
       },
       "server": {
-        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": null },
         "fieldTimestamps": null
       },
       "expected": {
-        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
-        "fieldTimestamps": { "name": "", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "deletedAt": "" },
+        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": null },
+        "fieldTimestamps": { "name": "", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "url": "", "deletedAt": "" },
         "dirty": false,
         "restored": false
       }
@@ -334,15 +334,15 @@
       "entityType": "listItem",
       "local": {
         "dirty": false,
-        "values": { "name": "lokal", "quantity": 9, "checked": true, "removed": true, "orderIndex": 4, "sortKey": "a4", "deletedAt": "2026-07-16T13:00:00.000Z" },
+        "values": { "name": "lokal", "quantity": 9, "checked": true, "removed": true, "orderIndex": 4, "sortKey": "a4", "url": null, "deletedAt": "2026-07-16T13:00:00.000Z" },
         "fieldTimestamps": { "name": "2026-07-16T13:00:00.000Z" }
       },
       "server": {
-        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": null },
         "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z" }
       },
       "expected": {
-        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "values": { "name": "server", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": null },
         "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z" },
         "dirty": false,
         "restored": false
@@ -410,16 +410,16 @@
       "entityType": "listItem",
       "local": {
         "dirty": true,
-        "values": { "name": "geändert", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "values": { "name": "geändert", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": null },
         "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z" }
       },
       "server": {
-        "values": { "name": "alt", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "values": { "name": "alt", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": "2026-07-16T10:00:00.000Z" },
         "fieldTimestamps": { "deletedAt": "2026-07-16T10:00:00.000Z" }
       },
       "expected": {
-        "values": { "name": "geändert", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
-        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "values": { "name": "geändert", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "url": "", "deletedAt": "2026-07-16T10:00:00.000Z" },
         "dirty": true,
         "restored": false
       }
@@ -430,16 +430,16 @@
       "entityType": "listItem",
       "local": {
         "dirty": true,
-        "values": { "name": "neu", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": null },
+        "values": { "name": "neu", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": null },
         "fieldTimestamps": { "name": "2026-07-16T11:00:00.000Z" }
       },
       "server": {
-        "values": { "name": "alt", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "values": { "name": "alt", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": "2026-07-16T10:00:00.000Z" },
         "fieldTimestamps": {}
       },
       "expected": {
-        "values": { "name": "neu", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "deletedAt": "2026-07-16T10:00:00.000Z" },
-        "fieldTimestamps": { "name": "2026-07-16T11:00:00.000Z", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "deletedAt": "" },
+        "values": { "name": "neu", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "name": "2026-07-16T11:00:00.000Z", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "url": "", "deletedAt": "" },
         "dirty": true,
         "restored": false
       }
@@ -482,6 +482,66 @@
         "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z", "color": "2026-07-16T10:00:00.000Z", "secret": "2026-07-16T10:00:00.000Z", "lastSuggestedItems": "2026-07-16T10:00:00.000Z", "sourceUrl": "2026-07-16T10:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" },
         "dirty": false,
         "restored": false
+      }
+    },
+    {
+      "name": "url: der lokal neuere Link gewinnt und hält die Zeile dirty",
+      "why": "Ein Link ist ein gewöhnliches LWW-Feld am Eintrag. Wer offline einen anderen Link hinterlegt, muss ihn behalten UND die Zeile dirty halten, sonst fällt der Gewinner beim nächsten Push aus der Auswahl.",
+      "entityType": "listItem",
+      "local": {
+        "dirty": true,
+        "values": { "name": "Ofenkartoffeln", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": "https://kochwelt.de/neu", "deletedAt": null },
+        "fieldTimestamps": { "url": "2026-07-16T11:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "Ofenkartoffeln", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": "https://kochwelt.de/alt", "deletedAt": null },
+        "fieldTimestamps": { "url": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "name": "Ofenkartoffeln", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": "https://kochwelt.de/neu", "deletedAt": null },
+        "fieldTimestamps": { "name": "", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "url": "2026-07-16T11:00:00.000Z", "deletedAt": "" },
+        "dirty": true,
+        "restored": false
+      }
+    },
+    {
+      "name": "url: bei Gleichstand gewinnt der Server-Link",
+      "why": "Dieselbe Asymmetrie wie bei jedem anderen Feld: Beim Pull ist der Server autoritativ. Ohne diesen Fall bliebe unbelegt, dass url der Pull-Regel folgt und nicht versehentlich die client-freundliche Push-Regel übernommen hat.",
+      "entityType": "listItem",
+      "local": {
+        "dirty": true,
+        "values": { "name": "Ofenkartoffeln", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": "https://kochwelt.de/lokal", "deletedAt": null },
+        "fieldTimestamps": { "url": "2026-07-16T10:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "Ofenkartoffeln", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": "https://kochwelt.de/server", "deletedAt": null },
+        "fieldTimestamps": { "url": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "name": "Ofenkartoffeln", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": "https://kochwelt.de/server", "deletedAt": null },
+        "fieldTimestamps": { "name": "", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "url": "2026-07-16T10:00:00.000Z", "deletedAt": "" },
+        "dirty": false,
+        "restored": false
+      }
+    },
+    {
+      "name": "Add-Wins: ein neuer Link nach der Löschung hebt sie auf",
+      "why": "url zählt zum Inhalt eines Eintrags, nicht zu seiner Position. Wer offline einen Link hinterlegt, während ein anderes Gerät löscht, will die Zeile behalten, genau wie beim Umbenennen. Belegt, dass url in ADD_WINS_CONTENT_FIELDS steht.",
+      "entityType": "listItem",
+      "local": {
+        "dirty": true,
+        "values": { "name": "Wanderschuhe", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": "https://outdoor-magazin.de/test", "deletedAt": null },
+        "fieldTimestamps": { "url": "2026-07-16T11:00:00.000Z" }
+      },
+      "server": {
+        "values": { "name": "Wanderschuhe", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": null, "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "deletedAt": "2026-07-16T10:00:00.000Z" }
+      },
+      "expected": {
+        "values": { "name": "Wanderschuhe", "quantity": 1, "checked": false, "removed": false, "orderIndex": 0, "sortKey": "a0", "url": "https://outdoor-magazin.de/test", "deletedAt": null },
+        "fieldTimestamps": { "name": "", "quantity": "", "checked": "", "removed": "", "orderIndex": "", "sortKey": "", "url": "2026-07-16T11:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "dirty": true,
+        "restored": true
       }
     }
   ]

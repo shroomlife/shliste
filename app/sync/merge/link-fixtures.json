@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "description": "Golden Fixtures für die beiden Regeln, die an Link-Einträgen auf allen drei Plattformen buchstabengleich gelten müssen: der Anzeigename einer Zeile und die Frage, ob eine Eingabe ein Link ist. Beides steht nicht im Merge und wäre deshalb von fixtures.json nicht erfasst, driftet aber genauso still. QUELLE DER WAHRHEIT ist shliste.app/app/sync/merge/link-fixtures.json. Weil die drei GitHub-Repos getrennt sind, liegt dieselbe Datei zusätzlich als wortgleiche Kopie in api.shliste.app/src/lib/link-fixtures.json und in android-app/app/src/test/resources/link-fixtures.json. Geändert wird ausschliesslich die Quelle, danach werden beide Kopien neu gezogen. Jeder der drei Loader prüft schemaVersion und die Anzahl der Fälle je Tabelle.",
+  "contract": {
+    "displayName": "name.trim() gewinnt; sonst der getrimmte linkTitle (ein leerer zählt nicht); sonst der Host der url; sonst die url selbst; sonst ein leerer String. Der Server schreibt NIE in name, deshalb kann eine Umbenennung durch den Titel nie überschrieben werden.",
+    "host": "Hostname der url, kleingeschrieben, ohne führendes www., ohne Port und ohne Zugangsdaten. Ist die url nicht lesbar, ist der Host ein leerer String.",
+    "showHostLine": "Die zweite Zeile unter dem Namen erscheint nur, wenn eine url gesetzt ist, der Host lesbar ist UND der Anzeigename nicht bereits der Host ist. Sonst stünde derselbe Text zweimal untereinander.",
+    "detectLinkInput": "Auf die getrimmte Eingabe angewendet: enthält sie inneren Leerraum, ist sie kein Link. Trifft ^https?://\\S+$ zu (Gross- und Kleinschreibung egal), wird sie UNVERÄNDERT übernommen. Trifft ^www\\.\\S+\\.\\S+$ zu, bekommt sie https:// vorangestellt. Das Ergebnis muss ausserdem die Prüfung für gültige Adressen bestehen (nur http/https, Hostname vorhanden, keine Zugangsdaten), sonst ist es kein Link. Alles andere ist ein gewöhnlicher Eintrag (null).",
+    "laenge": "Die Obergrenze von 2000 Zeichen steht bewusst NICHT in dieser Datei, sondern als benannte Konstante in jedem Repo (SYNC_FIELD_LIMITS.ITEM_URL beziehungsweise SyncLimits.ITEM_URL) und wird dort per Unit-Test geprüft. Ein einzelner überlanger Wert fällt spätestens am TypeBox-Schema der API auf; ein 2001 Zeichen langer String in einer Fixture-Datei wäre für jeden künftigen Diff teurer als der Nutzen."
+  },
+  "displayName": [
+    {
+      "name": "der eigene Name gewinnt immer",
+      "input": { "name": "Milch", "linkTitle": "Chefkoch Rezept", "url": "https://www.chefkoch.de/r/1" },
+      "expected": { "displayName": "Milch", "host": "chefkoch.de", "showHostLine": true }
+    },
+    {
+      "name": "Rand-Leerzeichen im Namen zählen nicht",
+      "input": { "name": "  Milch  ", "linkTitle": null, "url": null },
+      "expected": { "displayName": "Milch", "host": "", "showHostLine": false }
+    },
+    {
+      "name": "ein Name aus lauter Leerzeichen fällt auf den Seitentitel",
+      "input": { "name": "   ", "linkTitle": "Ofenkartoffeln mit Kräuterquark", "url": "https://kochwelt.de/rezept" },
+      "expected": { "displayName": "Ofenkartoffeln mit Kräuterquark", "host": "kochwelt.de", "showHostLine": true }
+    },
+    {
+      "name": "ohne Namen und ohne Titel steht der Host da",
+      "input": { "name": "", "linkTitle": null, "url": "https://www.rewe.de/angebote" },
+      "expected": { "displayName": "rewe.de", "host": "rewe.de", "showHostLine": false }
+    },
+    {
+      "name": "ein leerer Titel zählt nicht als Titel",
+      "input": { "name": "", "linkTitle": "", "url": "https://kochwelt.de/rezept" },
+      "expected": { "displayName": "kochwelt.de", "host": "kochwelt.de", "showHostLine": false }
+    },
+    {
+      "name": "der Titel wird getrimmt",
+      "input": { "name": "", "linkTitle": "  Wanderschuhe im Test  ", "url": "https://outdoor-magazin.de/test" },
+      "expected": { "displayName": "Wanderschuhe im Test", "host": "outdoor-magazin.de", "showHostLine": true }
+    },
+    {
+      "name": "nur ein führendes www. fällt weg, andere Subdomains bleiben stehen",
+      "input": { "name": "", "linkTitle": null, "url": "https://shop.rewe.de/p/1" },
+      "expected": { "displayName": "shop.rewe.de", "host": "shop.rewe.de", "showHostLine": false }
+    },
+    {
+      "name": "der Host wird kleingeschrieben, Port und Pfad zählen nicht mit",
+      "input": { "name": "", "linkTitle": null, "url": "https://WWW.Rewe.DE:443/p?q=1" },
+      "expected": { "displayName": "rewe.de", "host": "rewe.de", "showHostLine": false }
+    },
+    {
+      "name": "eine unlesbare Adresse ist als Anzeige immer noch besser als nichts",
+      "input": { "name": "", "linkTitle": null, "url": "kaputt" },
+      "expected": { "displayName": "kaputt", "host": "", "showHostLine": false }
+    },
+    {
+      "name": "ohne alles bleibt der Anzeigename leer",
+      "input": { "name": "", "linkTitle": null, "url": null },
+      "expected": { "displayName": "", "host": "", "showHostLine": false }
+    }
+  ],
+  "detectLinkInput": [
+    {
+      "name": "eine vollständige Adresse wird unverändert übernommen",
+      "input": "https://kochwelt.de/rezept",
+      "expected": "https://kochwelt.de/rezept"
+    },
+    {
+      "name": "die Schreibweise des Schemas ist egal, gespeichert wird wie getippt",
+      "input": "HTTPS://Kochwelt.DE/Rezept",
+      "expected": "HTTPS://Kochwelt.DE/Rezept"
+    },
+    {
+      "name": "http zählt genauso wie https",
+      "input": "http://beispiel.de/x",
+      "expected": "http://beispiel.de/x"
+    },
+    {
+      "name": "Rand-Leerzeichen werden abgeschnitten",
+      "input": "  https://kochwelt.de/x  ",
+      "expected": "https://kochwelt.de/x"
+    },
+    {
+      "name": "www ohne Schema bekommt https vorangestellt",
+      "input": "www.rewe.de",
+      "expected": "https://www.rewe.de"
+    },
+    {
+      "name": "auch beim www bleibt der Rest so stehen wie getippt",
+      "input": "WWW.Rewe.de/angebote",
+      "expected": "https://WWW.Rewe.de/angebote"
+    },
+    {
+      "name": "ein gewöhnliches Wort ist kein Link",
+      "input": "Milch",
+      "expected": null
+    },
+    {
+      "name": "eine Domain ohne www und ohne Schema bleibt ein gewöhnlicher Eintrag",
+      "input": "rewe.de",
+      "expected": null
+    },
+    {
+      "name": "innerer Leerraum macht aus der Eingabe einen Eintragsnamen",
+      "input": "https://kochwelt.de/x und Milch",
+      "expected": null
+    },
+    {
+      "name": "www braucht mindestens zwei Punkte",
+      "input": "www.x",
+      "expected": null
+    },
+    {
+      "name": "ein Schema ohne Adresse dahinter ist kein Link",
+      "input": "http://",
+      "expected": null
+    },
+    {
+      "name": "Zugangsdaten in der Adresse machen daraus keinen Link",
+      "input": "https://benutzer:geheim@beispiel.de/x",
+      "expected": null
+    },
+    {
+      "name": "eine leere Eingabe ist kein Link",
+      "input": "   ",
+      "expected": null
+    }
+  ]
+}

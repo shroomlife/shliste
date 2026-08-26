@@ -61,8 +61,8 @@ interface FixtureCase {
  * ziehen (`api.shliste.app/src/lib/fixtures.json`,
  * `android-app/app/src/test/resources/fixtures.json`).
  */
-const EXPECTED_SCHEMA_VERSION = 1
-const EXPECTED_CASE_COUNT = 24
+const EXPECTED_SCHEMA_VERSION = 2
+const EXPECTED_CASE_COUNT = 27
 
 /**
  * Die Fixtures werden zur Laufzeit geprüft statt dem JSON-Import zu glauben.

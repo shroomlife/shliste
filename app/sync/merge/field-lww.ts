@@ -46,7 +46,7 @@ export type EntityType = typeof ENTITY_TYPES[number]
  */
 export const MUTABLE_FIELDS: Record<string, readonly string[]> = {
   list: ['name', 'color', 'secret', 'lastSuggestedItems', 'sourceUrl', 'deletedAt'],
-  listItem: ['name', 'quantity', 'checked', 'removed', 'orderIndex', 'sortKey', 'deletedAt'],
+  listItem: ['name', 'quantity', 'checked', 'removed', 'orderIndex', 'sortKey', 'url', 'deletedAt'],
   recipe: ['name', 'color', 'sourceUrl', 'imagePath', 'deletedAt'],
   recipeIngredient: ['name', 'quantity', 'orderIndex', 'sortKey', 'deletedAt'],
   recipeStep: ['description', 'orderIndex', 'sortKey', 'isChecked', 'aiExplanation', 'deletedAt'],
@@ -70,10 +70,17 @@ export const MUTABLE_FIELDS: Record<string, readonly string[]> = {
  *    Zombie wieder da.
  *
  * Beides sieht beim Lesen wie ein vergessener Eintrag aus und ist keiner.
+ *
+ * `url` am Listeneintrag steht hier bewusst DRIN: Ein Link ist Inhalt, keine
+ * Position. Wer offline einen Link hinterlegt, während ein anderes Gerät
+ * löscht, meint dasselbe wie beim Umbenennen und will die Zeile behalten. Die
+ * serverseitig gepflegten Spiegel (`linkTitle`, `linkImagePath`,
+ * `linkImageKind`) stehen dagegen in KEINER der beiden Karten: Sie gehören dem
+ * Server, tragen keine Zeitstempel und dürfen eine Löschung nicht aufheben.
  */
 export const ADD_WINS_CONTENT_FIELDS: Record<string, readonly string[]> = {
   list: ['name', 'color', 'secret', 'lastSuggestedItems', 'sourceUrl'],
-  listItem: ['name', 'quantity', 'checked'],
+  listItem: ['name', 'quantity', 'checked', 'url'],
   recipe: ['name', 'color', 'sourceUrl', 'imagePath'],
   recipeIngredient: ['name', 'quantity'],
   recipeStep: ['description', 'isChecked', 'aiExplanation'],
