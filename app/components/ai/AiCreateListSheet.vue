@@ -15,7 +15,15 @@ import { requestImageToList, requestUrlToList, requestVoiceToList } from '~/ai/t
 import type { AiCreateMode, AiResult } from '~/ai/transport'
 import { formatRecordingDuration } from '~/composables/useAudioRecorder'
 
-const { mode } = defineProps<{ mode: AiCreateMode }>()
+const { mode, initialUrl = null } = defineProps<{
+  mode: AiCreateMode
+  /**
+   * Eine Adresse, mit der das Link-Feld beim Öffnen vorbefüllt wird — der
+   * Weg vom Teilen-Empfang hierher. Sonst müsste man dieselbe Adresse, die
+   * man gerade geteilt hat, noch einmal von Hand eintippen.
+   */
+  initialUrl?: string | null
+}>()
 
 const emit = defineEmits<{ created: [result: GeneratedList] }>()
 
@@ -155,21 +163,16 @@ async function submitImage(): Promise<void> {
 /**
  * Nimmt auch Eingaben ohne Schema an („rewe.de/…" wird zu https://…).
  * `null`, wenn daraus keine http(s)-Adresse wird.
+ *
+ * Zwei Schritte aus `app/utils/url.ts` statt einer eigenen Fassung: Das
+ * Schema wird ergänzt, weil hier ein Mensch tippt, und danach gilt dieselbe
+ * Prüfung wie überall sonst. Die Adresse geht dabei UNVERÄNDERT hinaus —
+ * früher normalisierte `URL.toString()` sie noch (angehängter Schrägstrich,
+ * kleingeschriebener Host), und die AI bekam eine andere Adresse zu sehen,
+ * als der Mensch eingegeben hatte.
  */
 function normalizedUrl(): string | null {
-  const raw = url.value.trim()
-  if (raw.length === 0) return null
-
-  const candidate = /^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : `https://${raw}`
-  try {
-    const parsed = new URL(candidate)
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
-    if (parsed.hostname.length === 0) return null
-    return parsed.toString()
-  }
-  catch {
-    return null
-  }
+  return validHttpUrlOrNull(withHttpsPrefix(url.value))
 }
 
 async function submitUrl(): Promise<void> {
@@ -185,9 +188,13 @@ async function submitUrl(): Promise<void> {
   finish(await requestUrlToList(target, active.signal))
 }
 
-/** Beim Schliessen alles zurücksetzen — auch eine noch laufende Anfrage. */
 watch(open, (isOpen) => {
-  if (isOpen) return
+  // Beim ÖFFNEN die mitgegebene Adresse übernehmen — beim Schliessen alles
+  // zurücksetzen, auch eine noch laufende Anfrage.
+  if (isOpen) {
+    if (initialUrl !== null) url.value = initialUrl
+    return
+  }
   controller?.abort()
   controller = null
   recorder.cancel()

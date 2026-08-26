@@ -46,6 +46,7 @@ const {
   updateStepDescription,
   setStepExplanation,
   renameRecipe,
+  setRecipeSourceUrl,
   deleteRecipe,
 } = useRecipeDetail()
 
@@ -103,9 +104,15 @@ useDragSort(stepList, {
   },
 })
 
+/**
+ * Das Blatt „Rezept bearbeiten" — Name und Quelle in einem Griff, wortgleich
+ * zum Listenbereich. Die Quelle ist die Seite, aus der das Rezept entstanden
+ * ist (etwa per „Rezept per Link"); sie stand bisher nur im Datensatz.
+ */
 const isRenameOpen = ref(false)
 const isDeleteOpen = ref(false)
 const renameValue = ref('')
+const sourceUrlValue = ref('')
 
 // Dieselben Aktionen wie bei einer Liste, an derselben Stelle: Was gleich
 // funktioniert, soll auch gleich zu finden sein.
@@ -118,10 +125,11 @@ const menuItems = computed(() => [[
     },
   },
   {
-    label: 'Umbenennen',
+    label: 'Rezept bearbeiten',
     icon: 'i-lucide-pencil',
     onSelect: () => {
       renameValue.value = recipe.value?.name ?? ''
+      sourceUrlValue.value = recipe.value?.sourceUrl ?? ''
       isRenameOpen.value = true
     },
   },
@@ -345,12 +353,28 @@ watch(isBadgeSheetOpen, (openNow) => {
   if (!openNow) lastAwardedBadge.value = null
 })
 
+/** Die geprüfte Quelle aus dem Feld — mit ergänztem Schema, wie in den AI-Blättern. */
+const sourceUrlParsed = computed(() => validHttpUrlOrNull(withHttpsPrefix(sourceUrlValue.value)))
+
+/** Steht etwas im Feld, das keine Adresse ist? Leer ist kein Fehler. */
+const sourceUrlError = computed(() =>
+  sourceUrlValue.value.trim().length > 0 && sourceUrlParsed.value === null)
+
+const canSubmitRename = computed(() => renameValue.value.trim().length > 0 && !sourceUrlError.value)
+
+async function submitEditRecipeWork(name: string, sourceUrl: string | null): Promise<void> {
+  // Zwei getrennte Schreibzüge und keiner zu viel: Jeder stempelt nur sein
+  // eigenes Feld neu, damit der Push nicht das jeweils andere überschreibt.
+  await renameRecipe(name)
+  await setRecipeSourceUrl(sourceUrl)
+}
+
 function submitRename(): void {
   const name = renameValue.value.trim()
-  if (name.length === 0) return
+  if (!canSubmitRename.value) return
 
   isRenameOpen.value = false
-  mutate(renameRecipe(name))
+  mutate(submitEditRecipeWork(name, sourceUrlParsed.value))
 }
 
 async function confirmDelete(): Promise<void> {
@@ -606,6 +630,24 @@ function onImageGenerated(imageRef: string): void {
         </UDropdownMenu>
       </div>
 
+      <!-- Die Quelle des Rezepts: eine Pille, die aus der App herausführt.
+           Sie steht auf Mobil wie auf dem Desktop unter dem Titel, weil sie
+           zum Rezept gehört und nicht zur Werkbank. -->
+      <a
+        v-if="recipe?.sourceUrl"
+        :href="recipe.sourceUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="relative flex w-fit items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.9375rem] font-bold"
+        style="background: var(--md-secondary); color: var(--md-on-secondary)"
+      >
+        <UIcon
+          name="i-lucide-external-link"
+          class="size-4 shrink-0"
+        />
+        Zur Website
+      </a>
+
       <!-- Der Akzentstrich ist die Rezeptfarbe des Desktop-Kopfs. -->
       <div
         class="hidden h-1 w-16 rounded-full xl:block"
@@ -632,17 +674,46 @@ function onImageGenerated(imageRef: string): void {
 
     <AppSheet
       v-model:open="isRenameOpen"
-      title="Rezept umbenennen"
-      description="Wie soll es heissen?"
+      title="Rezept bearbeiten"
+      description="Name und Quelle anpassen"
     >
-      <UInput
-        v-model="renameValue"
-        size="xl"
-        autofocus
-        enterkeyhint="done"
-        :ui="{ root: 'w-full' }"
-        @keyup.enter="submitRename"
-      />
+      <div class="flex flex-col gap-5">
+        <UInput
+          v-model="renameValue"
+          size="xl"
+          autofocus
+          enterkeyhint="next"
+          aria-label="Name des Rezepts"
+          placeholder="Name des Rezepts"
+          :ui="{ root: 'w-full' }"
+          @keyup.enter="submitRename"
+        />
+
+        <div class="flex flex-col gap-1.5">
+          <UInput
+            v-model="sourceUrlValue"
+            type="url"
+            size="xl"
+            icon="i-lucide-link"
+            inputmode="url"
+            enterkeyhint="done"
+            placeholder="Quelle (optional)"
+            aria-label="Quelle des Rezepts"
+            :aria-invalid="sourceUrlError"
+            :aria-describedby="sourceUrlError ? 'recipe-source-error' : undefined"
+            :ui="{ root: 'w-full' }"
+            @keyup.enter="submitRename"
+          />
+          <!-- Am Feld verankert: Ein roter Text daneben ist für einen
+               Screenreader sonst nur ein Absatz irgendwo im Blatt. -->
+          <span
+            v-if="sourceUrlError"
+            id="recipe-source-error"
+            class="text-[0.875rem] font-bold"
+            style="color: var(--md-delete-content)"
+          >Das sieht nicht nach einer gültigen Adresse aus.</span>
+        </div>
+      </div>
 
       <template #footer>
         <div class="flex justify-end gap-2">
@@ -655,7 +726,7 @@ function onImageGenerated(imageRef: string): void {
             Abbrechen
           </UButton>
           <UButton
-            :disabled="renameValue.trim().length === 0"
+            :disabled="!canSubmitRename"
             class="font-bold"
             @click="submitRename"
           >

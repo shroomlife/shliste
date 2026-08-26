@@ -8,14 +8,15 @@
  */
 import type { GeneratedRecipe } from '~/ai/recipeContract'
 import type { AiCreateMode } from '~/ai/transport'
-import { base64ToWebpBlob, toSyncImagePath, uploadRecipeImage } from '~/ai/images'
-import { attachRecipeImageById, persistGeneratedRecipeDetails } from '~/ai/persist'
 
 definePageMeta({ layout: 'app' })
 useHead({ title: 'Rezepte ~ shliste' })
 
 const route = useRoute()
 const { entries, reload, createRecipe } = useRecipes()
+// Das Anlegen aus einem AI-Ergebnis liegt in `useAiCreate`: Der
+// Teilen-Empfang braucht denselben Ablauf (siehe dort).
+const { createRecipeFromAi } = useAiCreate()
 const { badges, reload: reloadBadges } = useBadges()
 const { dataVersion, scheduleSync } = useSync()
 const { isSignedIn } = useAuth()
@@ -71,43 +72,6 @@ function startAiCreate(mode: AiCreateMode): void {
 
   aiMode.value = mode
   isAiCreateOpen.value = true
-}
-
-/**
- * Legt das von der AI gelieferte Rezept an — direkt über die Datenbank,
- * gebunden an die neue Rezept-Id (`app/ai/persist.ts`). BEWUSST NICHT über
- * den geteilten Detail-Zustand: Der gehört der offenen Detailansicht, und
- * ein Sync-Tick während der AI-Wartezeit würde die restlichen Schreibzüge
- * sonst an das dort geöffnete Rezept umleiten. `sourceUrl` (bei „Per Link")
- * wandert wie in Android an den Datensatz, und ein mitgeliefertes Bild geht
- * sofort zum Server, damit es als `sync:`-Referenz auf allen Geräten ankommt.
- */
-async function createRecipeFromAi(result: GeneratedRecipe): Promise<void> {
-  const created = await createRecipe(result.name)
-  await persistGeneratedRecipeDetails(created.id, result)
-
-  if (result.imageData !== null) {
-    // Ein gescheiterter Bild-Upload lässt das Rezept trotzdem entstehen:
-    // Zutaten und Schritte sind der Kern, das Bild ist die Zugabe.
-    const blob = base64ToWebpBlob(result.imageData)
-    const upload = blob !== null ? await uploadRecipeImage(created.id, blob) : null
-    const attached = upload !== null && upload.ok
-      ? await attachRecipeImageById(created.id, toSyncImagePath(upload.value))
-      : false
-    if (!attached) {
-      toast.add({
-        title: 'Bild konnte nicht gespeichert werden',
-        description: 'Das Rezept wurde ohne Bild angelegt.',
-        icon: 'i-lucide-image-off',
-      })
-    }
-  }
-
-  await reload()
-  scheduleSync()
-
-  toast.add({ title: `Rezept "${created.name}" erstellt`, icon: 'i-lucide-sparkles' })
-  await navigateTo(`/app/recipes/${created.id}`)
 }
 
 function onAiRecipeCreated(result: GeneratedRecipe): void {

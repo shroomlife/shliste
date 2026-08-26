@@ -55,6 +55,30 @@ const { item, justChanged = false, changedBy = null, sortable = false } = define
 }>()
 
 const emit = defineEmits<{ toggle: [], remove: [], edit: [] }>()
+
+/*
+ * Anzeigename, Host und Link — als computed und nicht im Template, weil
+ * Auto-Importe dem Template-Typecheck (vue-tsc) nicht zur Verfügung stehen.
+ */
+
+/**
+ * Was auf dem Schirm steht. Ein Link-Eintrag heisst lokal "" und zeigt den
+ * Seitentitel oder den Host (siehe `app/utils/listItemDisplay.ts`).
+ */
+const displayName = computed(() => listItemDisplayName(item))
+
+/** Die Herkunft unter dem Namen — nur, wenn sie nicht schon der Name ist. */
+const host = computed(() => hostOf(item.url))
+const showHost = computed(() => showHostLine(item))
+
+/**
+ * Die Adresse, die tatsaechlich in ein `href` darf.
+ *
+ * Der Wachposten vor dem Attribut: Was nicht als http(s)-Adresse lesbar ist,
+ * bekommt gar keine Kachel. Der Anzeigename fällt dann auf die rohe Adresse
+ * zurück, aber nichts Unlesbares landet in einem Link.
+ */
+const linkUrl = computed(() => (item.url !== null && isHttpUrl(item.url) ? item.url : null))
 </script>
 
 <template>
@@ -80,7 +104,7 @@ const emit = defineEmits<{ toggle: [], remove: [], edit: [] }>()
     <span
       class="min-w-0 grow truncate px-1 text-[1.375rem]"
       :class="item.checked && 'line-through'"
-    >{{ item.name }}</span>
+    >{{ displayName }}</span>
     <span
       v-if="item.quantity > 1"
       class="optical-center mr-2 flex h-7 min-w-9 shrink-0 items-center justify-center rounded-lg px-2 text-[1.0625rem] font-bold"
@@ -93,7 +117,7 @@ const emit = defineEmits<{ toggle: [], remove: [], edit: [] }>()
        in voller Zeilenhöhe (items-stretch), wie in ListItemContent.kt. -->
   <div
     v-else
-    class="group flex min-h-14 w-full items-stretch rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-colors"
+    class="group flex min-h-15 w-full items-stretch rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-colors"
     :class="[justChanged && 'delta-flash']"
     style="background: var(--md-surface)"
   >
@@ -107,17 +131,49 @@ const emit = defineEmits<{ toggle: [], remove: [], edit: [] }>()
         : 'background: var(--md-secondary); color: var(--md-on-secondary)'"
     >{{ item.quantity }}&times;</span>
 
+    <!-- Die Link-Kachel ist ein GESCHWISTER des Namensknopfs, nie darin: Ein
+         Link in einem Knopf wäre verschachteltes Bedienelement und für
+         Tastatur wie Screenreader kaputt. Genau deshalb hat die Zeile zwei
+         Ziele: die Kachel öffnet die Seite, der Name das Bearbeiten-Blatt.
+
+         Der Abstand richtet sich danach, was links davon steht: 8 Pixel
+         hinter der Mengenkachel, sonst der normale Zeilenrand. -->
+    <a
+      v-if="linkUrl !== null"
+      :href="linkUrl"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="flex shrink-0 items-center self-center rounded-lg"
+      :class="[item.quantity > 1 ? 'ml-2' : 'ml-3.5', item.checked && 'opacity-50']"
+      :aria-label="`Link öffnen: ${host}`"
+    >
+      <LinkTile
+        :url="linkUrl"
+        :link-image-path="item.linkImagePath"
+        :link-image-kind="item.linkImageKind"
+      />
+    </a>
+
     <button
       type="button"
-      class="state-layer flex min-h-14 min-w-0 grow items-center rounded-sm px-3.5 py-2 text-left"
-      :aria-label="`${item.name} bearbeiten`"
+      class="state-layer flex min-h-15 min-w-0 grow items-center rounded-sm px-3.5 py-2 text-left"
+      :aria-label="`${displayName} bearbeiten`"
       @click="emit('edit')"
     >
       <span class="flex min-w-0 grow flex-col">
         <span
           class="truncate text-[1.25rem]"
           :class="item.checked && 'opacity-50'"
-        >{{ item.name }}</span>
+        >{{ displayName }}</span>
+        <!-- Die Herkunft steht nur da, wenn sie etwas hinzufügt: Heisst der
+             Eintrag ohnehin schon "rewe.de", stünde derselbe Text zweimal
+             untereinander. -->
+        <span
+          v-if="showHost"
+          class="truncate text-[0.875rem]"
+          :class="item.checked && 'opacity-50'"
+          style="color: var(--md-on-surface-variant)"
+        >{{ host }}</span>
         <span
           v-if="justChanged && changedBy"
           class="text-[0.875rem] font-bold"
@@ -133,7 +189,7 @@ const emit = defineEmits<{ toggle: [], remove: [], edit: [] }>()
       type="button"
       class="flex w-14 shrink-0 items-center justify-center rounded-r-sm"
       style="background: var(--md-check-surface); color: var(--md-check-content)"
-      :aria-label="`${item.name} abhaken`"
+      :aria-label="`${displayName} abhaken`"
       @click="emit('toggle')"
     >
       <UIcon
@@ -149,7 +205,7 @@ const emit = defineEmits<{ toggle: [], remove: [], edit: [] }>()
         type="button"
         class="flex w-13 shrink-0 items-center justify-center"
         style="background: var(--md-undo-surface); color: var(--md-undo-content)"
-        :aria-label="`${item.name} wieder auf offen setzen`"
+        :aria-label="`${displayName} wieder auf offen setzen`"
         @click="emit('toggle')"
       >
         <UIcon
@@ -161,7 +217,7 @@ const emit = defineEmits<{ toggle: [], remove: [], edit: [] }>()
         type="button"
         class="flex w-13 shrink-0 items-center justify-center rounded-r-sm"
         style="background: var(--md-delete-surface); color: var(--md-delete-content)"
-        :aria-label="`${item.name} entfernen`"
+        :aria-label="`${displayName} entfernen`"
         @click="emit('remove')"
       >
         <UIcon

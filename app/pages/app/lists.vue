@@ -13,13 +13,15 @@
  */
 import type { GeneratedList } from '~/ai/contract'
 import type { AiCreateMode } from '~/ai/transport'
-import { persistGeneratedListDetails } from '~/ai/persist'
 
 definePageMeta({ layout: 'app' })
 useHead({ title: 'Listen ~ shliste' })
 
 const route = useRoute()
 const { entries, reload, createList } = useLists()
+// Das Anlegen aus einem AI-Ergebnis liegt in `useAiCreate`: Der
+// Teilen-Empfang braucht denselben Ablauf (siehe dort).
+const { createListFromAi } = useAiCreate()
 const { dataVersion, scheduleSync, snapshot, requestSync } = useSync()
 const { isSignedIn } = useAuth()
 const toast = useToast()
@@ -68,25 +70,6 @@ function startAiCreate(mode: AiCreateMode): void {
 
   aiMode.value = mode
   isAiCreateOpen.value = true
-}
-
-/**
- * Legt die von der AI gelieferte Liste an — direkt über die Datenbank,
- * gebunden an die neue Listen-Id (`app/ai/persist.ts`). BEWUSST NICHT über
- * den geteilten Detail-Zustand: Der gehört der offenen Detailansicht, und
- * ein Sync-Tick während der AI-Wartezeit würde die Einträge sonst in die
- * dort geöffnete Liste umleiten. `sourceUrl` (bei „Per Link") wandert wie
- * in Android an den Listen-Datensatz.
- */
-async function createListFromAi(result: GeneratedList): Promise<void> {
-  const created = await createList(result.name)
-  await persistGeneratedListDetails(created.id, result)
-
-  await reload()
-  scheduleSync()
-
-  toast.add({ title: `Liste "${created.name}" erstellt`, icon: 'i-lucide-sparkles' })
-  await navigateTo(`/app/lists/${created.id}`)
 }
 
 function onAiListCreated(result: GeneratedList): void {

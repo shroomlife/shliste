@@ -5,6 +5,7 @@ import type { HistoryEntryRow, ListMemberRow } from '~/db/schema'
 import type { AiEditApplyPayload } from '~/ai/diff'
 import { joinSuggestionCache } from '~/ai/suggestions'
 import { parseHistorySnapshot } from '~/history/snapshot'
+import { SYNC_FIELD_LIMITS } from '~/sync/merge/limits'
 
 /**
  * Detailansicht einer Liste — der Bildschirm, auf dem in dieser App die meiste
@@ -93,9 +94,17 @@ useDragSort(doneList, {
     if (item !== undefined) mutate(moveItemTo(item.id, to))
   },
 })
+/**
+ * Das Blatt „Liste bearbeiten" — Name und Quelle in einem Griff.
+ *
+ * Die Quelle ist die Seite, aus der die Liste entstanden ist (etwa per
+ * „Liste per Link"). Sie stand bisher nur im Datensatz und war nirgends zu
+ * sehen oder zu ändern; jetzt steht sie hier und als Pille im Kopf.
+ */
 const isRenameOpen = ref(false)
 const isDeleteOpen = ref(false)
 const renameValue = ref('')
+const sourceUrlValue = ref('')
 
 /**
  * Eine geheime Liste wird auf dem Web NICHT geöffnet.
@@ -124,10 +133,11 @@ const menuItems = computed(() => [[
     },
   },
   {
-    label: 'Umbenennen',
+    label: 'Liste bearbeiten',
     icon: 'i-lucide-pencil',
     onSelect: () => {
       renameValue.value = list.value?.name ?? ''
+      sourceUrlValue.value = list.value?.sourceUrl ?? ''
       isRenameOpen.value = true
     },
   },
@@ -152,12 +162,28 @@ const menuItems = computed(() => [[
   },
 ]])
 
+/** Die geprüfte Quelle aus dem Feld — mit ergänztem Schema, wie in den AI-Blättern. */
+const sourceUrlParsed = computed(() => validHttpUrlOrNull(withHttpsPrefix(sourceUrlValue.value)))
+
+/** Steht etwas im Feld, das keine Adresse ist? Leer ist kein Fehler. */
+const sourceUrlError = computed(() =>
+  sourceUrlValue.value.trim().length > 0 && sourceUrlParsed.value === null)
+
+const canSubmitRename = computed(() => renameValue.value.trim().length > 0 && !sourceUrlError.value)
+
+async function submitEditListWork(name: string, sourceUrl: string | null): Promise<void> {
+  // Zwei getrennte Schreibzüge und keiner zu viel: Jeder stempelt nur sein
+  // eigenes Feld neu, damit der Push nicht das jeweils andere überschreibt.
+  await renameList(name)
+  await setListSourceUrl(sourceUrl)
+}
+
 function submitRename(): void {
   const name = renameValue.value.trim()
-  if (name.length === 0) return
+  if (!canSubmitRename.value) return
 
   isRenameOpen.value = false
-  mutate(renameList(name))
+  mutate(submitEditListWork(name, sourceUrlParsed.value))
 }
 
 async function confirmDelete(): Promise<void> {
@@ -193,10 +219,21 @@ const {
   restoreItem,
   moveItemTo,
   renameList,
+  setListSourceUrl,
   deleteList,
 } = useListDetail()
 
 const newItemName = ref('')
+
+/**
+ * Obergrenze der Eingabezeile.
+ *
+ * Die Adresslänge und nicht die Namenslänge: In dieses eine Feld wird auch
+ * ein Link eingefügt. Als benannte Konstante und nicht direkt im Template,
+ * weil Importe dem Template-Typecheck (vue-tsc) nur über eine Bindung im
+ * Script zur Verfügung stehen.
+ */
+const ITEM_INPUT_MAXLENGTH = SYNC_FIELD_LIMITS.ITEM_URL
 
 /**
  * Menge für den nächsten Eintrag — die Kachel neben dem Eingabefeld.
@@ -486,7 +523,7 @@ function onEditItem(item: ListItem): void {
   isEditItemOpen.value = true
 }
 
-function onEditItemSave(changes: { name: string, quantity: number }): void {
+function onEditItemSave(changes: { name: string, quantity: number, url: string | null }): void {
   const target = editingItem.value
   if (target === null) return
   // Das Blatt liefert seinen ganzen Stand; was davon wirklich anders ist,
@@ -509,7 +546,7 @@ function onRemoveItem(item: ListItem): void {
   mutate(removeItem(item))
 
   toast.add({
-    title: `${item.name} entfernt`,
+    title: `${listItemDisplayName(item)} entfernt`,
     icon: 'i-lucide-trash-2',
     duration: 6000,
     actions: [{
@@ -559,7 +596,7 @@ async function restoreFromHistory(entry: HistoryEntryRow): Promise<void> {
     suppressNextAdditionCheck = true
     await upsertItem({ ...toItemDraft(existing), removed: false, deletedAt: null })
     await reloadDetail()
-    toast.add({ title: `${existing.name} wiederhergestellt`, icon: 'i-lucide-undo-2' })
+    toast.add({ title: `${listItemDisplayName(existing)} wiederhergestellt`, icon: 'i-lucide-undo-2' })
     return
   }
 
@@ -574,17 +611,30 @@ async function restoreFromHistory(entry: HistoryEntryRow): Promise<void> {
     return
   }
 
-  const row = await createItem(snapshot.name, snapshot.quantity)
+  // Der Link gehört zum Eintrag und kommt mit zurück. Titel und Vorschaubild
+  // nicht: Sie stehen nicht im Snapshot, weil der Server sie nach dem
+  // nächsten Push von selbst wieder holt.
+  const row = await createItem(snapshot.name, snapshot.quantity, snapshot.url)
   if (row !== null) {
-    toast.add({ title: `${row.name} wiederhergestellt`, icon: 'i-lucide-undo-2' })
+    toast.add({ title: `${listItemDisplayName(row)} wiederhergestellt`, icon: 'i-lucide-undo-2' })
   }
 }
 
+/**
+ * Legt an, was in der Eingabezeile steht.
+ *
+ * SIEHT DIE EINGABE WIE EINE ADRESSE AUS, wird daraus ein Link-Eintrag ohne
+ * Namen: Die Zeile zeigt dann den Seitentitel, den der Server nachträgt, und
+ * bis dahin den Host. Ein Eintrag namens „https://www.chefkoch.de/rezepte/…"
+ * wäre auf einem Einkaufszettel unbrauchbar. Die Regel dahinter ist bewusst
+ * eng und in `link-fixtures.json` für alle drei Plattformen festgenagelt.
+ */
 function addItem(): void {
-  const name = newItemName.value.trim()
-  if (name.length === 0) return
+  const raw = newItemName.value.trim()
+  if (raw.length === 0) return
 
   const quantity = newItemQuantity.value
+  const detected = detectLinkInput(raw)
 
   // Sofort leeren statt erst nach dem Schreiben: Der nächste Artikel soll ohne
   // Wartezeit tippbar sein, und ein zweites Enter darf nicht denselben Eintrag
@@ -592,7 +642,7 @@ function addItem(): void {
   // für DIESEN Eintrag, nicht für alle folgenden (ListBottomBar.kt).
   newItemName.value = ''
   newItemQuantity.value = QUANTITY_MIN
-  mutate(createItem(name, quantity).then(async (row) => {
+  mutate(createItem(detected === null ? raw : '', quantity, detected?.url ?? null).then(async (row) => {
     // Nur der EIGENE Neuzugang rollt ins Bild — fremde bekommen den
     // Hinweis-Chip. Wer oben abhakt, während jemand anderes unten ergänzt,
     // soll die Ansicht nicht verlieren (Detail.kt macht es genauso).
@@ -616,10 +666,19 @@ const isSuggestionsOpen = ref(false)
  * AI-Antwort den Einträgen wieder zugeordnet wird.
  */
 const aiItems = computed(() =>
-  items.value.map(item => ({ id: item.id, name: item.name, quantity: item.quantity, checked: item.checked })),
+  items.value.map(item => ({
+    id: item.id,
+    // Der ANZEIGENAME und nicht `name`: Ein Link-Eintrag heisst lokal "", und
+    // die AI bekäme sonst eine namenlose Position vorgesetzt. Nebeneffekt und
+    // Absicht zugleich: Schlägt sie genau den Anzeigenamen vor, zählt das im
+    // Diff als unverändert.
+    name: listItemDisplayName(item),
+    quantity: item.quantity,
+    checked: item.checked,
+  })),
 )
 
-const activeItemNames = computed(() => items.value.map(item => item.name))
+const activeItemNames = computed(() => items.value.map(item => listItemDisplayName(item)))
 
 /**
  * Wendet die angehakten Änderungen der Diff-Vorschau an — ausschliesslich
@@ -775,6 +834,24 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
           />
         </UDropdownMenu>
       </div>
+
+      <!-- Die Quelle der Liste: eine Pille, die aus der App herausführt.
+           Bei einer gesperrten Liste nicht — die Adresse verriete, worum es
+           geht, und genau das schützt die Sperre. -->
+      <a
+        v-if="list?.sourceUrl && !isLocked"
+        :href="list.sourceUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="flex w-fit items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.9375rem] font-bold"
+        style="background: var(--md-secondary); color: var(--md-on-secondary)"
+      >
+        <UIcon
+          name="i-lucide-external-link"
+          class="size-4 shrink-0"
+        />
+        Zur Website
+      </a>
 
       <div
         v-if="items.length && !isLocked"
@@ -1024,17 +1101,46 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
 
     <AppSheet
       v-model:open="isRenameOpen"
-      title="Liste umbenennen"
-      description="Wie soll sie heissen?"
+      title="Liste bearbeiten"
+      description="Name und Quelle anpassen"
     >
-      <UInput
-        v-model="renameValue"
-        size="xl"
-        autofocus
-        enterkeyhint="done"
-        :ui="{ root: 'w-full' }"
-        @keyup.enter="submitRename"
-      />
+      <div class="flex flex-col gap-5">
+        <UInput
+          v-model="renameValue"
+          size="xl"
+          autofocus
+          enterkeyhint="next"
+          aria-label="Name der Liste"
+          placeholder="Name der Liste"
+          :ui="{ root: 'w-full' }"
+          @keyup.enter="submitRename"
+        />
+
+        <div class="flex flex-col gap-1.5">
+          <UInput
+            v-model="sourceUrlValue"
+            type="url"
+            size="xl"
+            icon="i-lucide-link"
+            inputmode="url"
+            enterkeyhint="done"
+            placeholder="Quelle (optional)"
+            aria-label="Quelle der Liste"
+            :aria-invalid="sourceUrlError"
+            :aria-describedby="sourceUrlError ? 'list-source-error' : undefined"
+            :ui="{ root: 'w-full' }"
+            @keyup.enter="submitRename"
+          />
+          <!-- Am Feld verankert: Ein roter Text daneben ist für einen
+               Screenreader sonst nur ein Absatz irgendwo im Blatt. -->
+          <span
+            v-if="sourceUrlError"
+            id="list-source-error"
+            class="text-[0.875rem] font-bold"
+            style="color: var(--md-delete-content)"
+          >Das sieht nicht nach einer gültigen Adresse aus.</span>
+        </div>
+      </div>
 
       <template #footer>
         <div class="flex justify-end gap-2">
@@ -1047,7 +1153,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
             Abbrechen
           </UButton>
           <UButton
-            :disabled="renameValue.trim().length === 0"
+            :disabled="!canSubmitRename"
             class="font-bold"
             @click="submitRename"
           >
@@ -1158,6 +1264,9 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
       <!-- Feld, Mengenkachel und AI-Knopf sind gleich hoch, ohne dass hier
            eine Höhe steht: `xl` ist app-weit auf `--size-control-xl` gesetzt
            (app.config.ts), und die Kachel unten greift dasselbe Token ab. -->
+      <!-- `maxlength` auf die Adresslänge und nicht auf die Namenslänge: In
+           dieses Feld wird auch ein Link eingefügt, und der darf 2000 Zeichen
+           haben. Die Namenslänge deckelt ohnehin der Sanitizer vor dem Push. -->
       <UInput
         v-model="newItemName"
         placeholder="Artikel hinzufügen"
@@ -1165,6 +1274,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
         size="xl"
         class="grow"
         enterkeyhint="done"
+        :maxlength="ITEM_INPUT_MAXLENGTH"
         :ui="{ root: 'w-full' }"
         @keyup.enter="addItem"
       />
