@@ -14,6 +14,7 @@
 import type {
   Badge,
   HistoryEntry,
+  LinkImageKind,
   List,
   ListItem,
   ListMember,
@@ -82,6 +83,29 @@ export function parseList(value: unknown): List | null {
   }
 }
 
+/**
+ * Die Art des Vorschaubildes.
+ *
+ * Ein unbekannter Wert wird zu `null` statt geraten — dieselbe Regel wie bei
+ * der Chat-Rolle. Der Domänentyp zählt zwei Literale auf, und ein erfundenes
+ * drittes liefe in jedem `v-if` der Oberfläche ins Leere. `null` heisst dann
+ * schlicht "kein Bild", und die Kachel zeigt ihr Ersatz-Icon.
+ */
+function readLinkImageKind(source: Record<string, unknown>): LinkImageKind | null {
+  const value = readNullableString(source, 'linkImageKind')
+  return value === 'preview' || value === 'icon' ? value : null
+}
+
+/**
+ * Ein Listeneintrag.
+ *
+ * DIE VIER LINK-FELDER SIND TOLERANT GELESEN: Ein Server, der sie noch nicht
+ * kennt, schickt sie nicht mit — dann sind sie `null`, und das ist der
+ * richtige Ruhezustand. Umgekehrt schickt der Server drei Felder mit, die den
+ * Client NICHTS angehen (`linkFetchedAt`, `linkAttempts`,
+ * `linkNextAttemptAt`): Sie sind sein Warteschlangenzustand, werden hier gar
+ * nicht erst gelesen und fallen damit von selbst weg.
+ */
 export function parseListItem(value: unknown): ListItem | null {
   if (!isRecord(value)) return null
   const base = readBase(value)
@@ -99,6 +123,10 @@ export function parseListItem(value: unknown): ListItem | null {
     removed: readBooleanOr(value, 'removed', false),
     orderIndex: readNumberOr(value, 'orderIndex', 0),
     sortKey: readNullableString(value, 'sortKey'),
+    url: readNullableString(value, 'url'),
+    linkTitle: readNullableString(value, 'linkTitle'),
+    linkImagePath: readNullableString(value, 'linkImagePath'),
+    linkImageKind: readLinkImageKind(value),
     createdBy: readNullableString(value, 'createdBy'),
     modifiedBy: readNullableString(value, 'modifiedBy'),
     deletedAt: readNullableIso(value, 'deletedAt'),

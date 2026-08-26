@@ -15,11 +15,13 @@
  * Alias-Auflösung (dieselbe Begründung wie in `db/timestamps.ts`).
  */
 import type { ListItem } from '../../shared/types/domain'
-import { appendHistoryEntry, getItemRow, getItemsForList, getList, upsertItem, upsertList, type Draft } from '../db/repositories'
+import { appendHistoryEntry, getItemRow, getItemsForList, getList, upsertItem, upsertList, type ListItemDraft } from '../db/repositories'
 import { listItemSnapshotJson } from '../history/snapshot'
 import { nextSortKey, planMoveTo } from '../sync/merge/reorder'
 import { nowIso } from '../db/timestamps'
 import type { ListItemRow, ListRow } from '../db/schema'
+import { listItemDisplayName } from '../utils/listItemDisplay'
+import { validHttpUrlOrNull } from '../utils/url'
 
 /* ------------------------------------------------------------------ *
  * Reine Funktionen — ohne IndexedDB und ohne Vue, deshalb direkt testbar.
@@ -95,8 +97,12 @@ export function clampQuantity(value: number): number {
  * `createdAt`, `updatedAt`, `fieldTimestamps` und `dirty` führt die
  * Datenbankschicht selbst. Sie beim Schreiben mitzugeben würde das
  * Last-Write-Wins verfälschen, weshalb `Draft<T>` sie gar nicht erst zulässt.
+ *
+ * Die drei Server-Spiegel fehlen ebenfalls: Sie gehören dem Server, und was
+ * lokal mit ihnen passiert, entscheidet `linkFieldsAfterWrite` anhand der
+ * Adresse (siehe `db/repositories.ts`).
  */
-export function toItemDraft(item: ListItem): Draft<ListItem> {
+export function toItemDraft(item: ListItem): ListItemDraft {
   return {
     id: item.id,
     listId: item.listId,
@@ -106,10 +112,22 @@ export function toItemDraft(item: ListItem): Draft<ListItem> {
     removed: item.removed,
     orderIndex: item.orderIndex,
     sortKey: item.sortKey,
+    url: item.url,
     createdBy: item.createdBy,
     modifiedBy: item.modifiedBy,
     deletedAt: item.deletedAt,
   }
+}
+
+/**
+ * Darf diese Zeile so gespeichert werden?
+ *
+ * Ein leerer Name ist erlaubt, aber NUR mit Adresse: Dann zeigt die Liste den
+ * Seitentitel oder den Host. Ohne beides bliebe eine leere, tippbare Zeile
+ * übrig, die niemand mehr zuordnen kann.
+ */
+export function isValidItemContent(name: string, url: string | null): boolean {
+  return name.trim().length > 0 || url !== null
 }
 
 /* ------------------------------------------------------------------ *
@@ -205,10 +223,16 @@ export function useListDetail() {
    * wie jedes andere Feld: `upsertItem` stempelt bei einer neuen Zeile alles,
    * was übergeben wurde (`changedFields` in `db/repositories.ts`).
    */
-  async function addItem(name: string, quantity: number = 1): Promise<ListItemRow | null> {
+  async function addItem(
+    name: string,
+    quantity: number = 1,
+    url: string | null = null,
+  ): Promise<ListItemRow | null> {
     const trimmed = name.trim()
     const target = list.value
-    if (trimmed.length === 0 || target === null) return null
+    // Leerer Name UND keine Adresse: Daraus entstünde eine leere, tippbare
+    // Zeile, die niemand mehr zuordnen kann.
+    if (!isValidItemContent(trimmed, url) || target === null) return null
 
     const row = await upsertItem({
       id: crypto.randomUUID(),
@@ -219,6 +243,7 @@ export function useListDetail() {
       removed: false,
       orderIndex: nextOrderIndex(items.value),
       sortKey: nextSortKey(items.value),
+      url,
       createdBy: null,
       modifiedBy: null,
       deletedAt: null,
@@ -242,14 +267,26 @@ export function useListDetail() {
    * unterscheidet, stempelt `upsertItem` ohnehin nicht neu — so überträgt der
    * Push später genau diese eine Änderung, ohne fremde Felder anzufassen.
    */
-  async function updateItem(item: ListItem, changes: { name?: string, quantity?: number }): Promise<void> {
+  async function updateItem(
+    item: ListItem,
+    changes: { name?: string, quantity?: number, url?: string | null },
+  ): Promise<void> {
     const current = items.value.find(row => row.id === item.id)
     if (current === undefined) return
 
     const draft = toItemDraft(current)
-    const name = changes.name?.trim()
-    if (name !== undefined && name.length > 0) draft.name = name
+    // Die Adresse zuerst: Sie entscheidet mit darüber, ob ein leerer Name
+    // durchgehen darf.
+    if (changes.url !== undefined) draft.url = validHttpUrlOrNull(changes.url)
     if (changes.quantity !== undefined) draft.quantity = clampQuantity(changes.quantity)
+
+    const name = changes.name?.trim()
+    if (name !== undefined && isValidItemContent(name, draft.url)) draft.name = name
+
+    // Letzte Verteidigungslinie: Wer die Adresse entfernt, ohne einen Namen
+    // zu setzen, hinterliesse eine leere Zeile. Die Oberfläche fängt das schon
+    // ab; hier wird still nichts geschrieben statt Unsinn zu speichern.
+    if (!isValidItemContent(draft.name, draft.url)) return
 
     await upsertItem(draft)
     await reload()
@@ -277,7 +314,9 @@ export function useListDetail() {
       actionType: 'deleted',
       entityType: 'list_item',
       entityId: item.id,
-      description: `${item.name} gelöscht`,
+      // Der Anzeigename und nicht `name`: Ein Link-Eintrag heisst lokal "",
+      // und "  gelöscht" wäre im Verlauf nicht wiederzuerkennen.
+      description: `${listItemDisplayName(item)} gelöscht`,
       snapshotJson: listItemSnapshotJson(item),
       createdBy: null,
       createdAt: nowIso(),
@@ -368,6 +407,33 @@ export function useListDetail() {
   }
 
   /**
+   * Setzt die Quelle der Liste — die Seite, aus der sie entstanden ist.
+   *
+   * Wie `renameList` über `upsertList`, damit nur `sourceUrl` einen frischen
+   * Zeitstempel bekommt. `null` entfernt die Quelle; ein ungültiger Wert wird
+   * abgelehnt und nicht etwa umgeschrieben (siehe `app/utils/url.ts`).
+   */
+  async function setListSourceUrl(sourceUrl: string | null): Promise<void> {
+    const target = list.value
+    if (target === null) return
+
+    const next = validHttpUrlOrNull(sourceUrl)
+    if (next === target.sourceUrl) return
+
+    await upsertList({
+      id: target.id,
+      name: target.name,
+      color: target.color,
+      secret: target.secret,
+      lastSuggestedItems: target.lastSuggestedItems,
+      sourceUrl: next,
+      ownerUserId: target.ownerUserId,
+      deletedAt: target.deletedAt,
+    })
+    await reload()
+  }
+
+  /**
    * Löscht die Liste — beziehungsweise verlässt sie.
    *
    * EIN VORGANG FÜR BEIDES, und zwar nicht aus Bequemlichkeit: Der Server
@@ -410,6 +476,7 @@ export function useListDetail() {
     restoreItem,
     moveItemTo,
     renameList,
+    setListSourceUrl,
     deleteList,
   }
 }

@@ -10,11 +10,12 @@
  * der Push: er überträgt Zeilen, nicht Dokumente, und ein eingebettetes Item
  * hätte keinen eigenen Zeitstempel für das Last-Write-Wins.
  */
-import type { DBSchema, IDBPDatabase } from 'idb'
+import type { DBSchema, IDBPDatabase, IDBPTransaction, StoreNames } from 'idb'
 import type {
   Badge,
   HistoryEntry,
   IsoUtc,
+  LinkMirrorField,
   List,
   ListItem,
   ListMember,
@@ -23,15 +24,20 @@ import type {
   RecipeIngredient,
   RecipeStep,
 } from '../../shared/types/domain'
+import { LINK_MIRROR_FIELDS } from '../../shared/types/domain'
 
 export const DB_NAME = 'shliste'
 
 /**
+ * Version 3: die Link-Felder an `list_items` (`url` plus die drei
+ * Server-Spiegel). Kein neuer Store und kein neuer Index — der Sprung
+ * existiert allein für den DATENnachtrag, siehe `backfillLinkFields`.
+ *
  * Version 2: neuer Store `history_entries` (synchronisierte Lösch-Historie,
  * Gegenstück zu Androids `history_entries`-Tabelle). Version 1 war der
  * Erststand mit den acht Stores plus `sync_meta`.
  */
-export const DB_VERSION = 2
+export const DB_VERSION = 3
 
 /**
  * 1 = diese Zeile wurde lokal geändert und muss gepusht werden.
@@ -74,6 +80,18 @@ export interface ListLocalFields {
 
 export type ListRow = Dirty<List> & ListLocalFields
 export type ListItemRow = Dirty<ListItem>
+
+/**
+ * Eine Eintragszeile, wie IndexedDB sie WIRKLICH liefert.
+ *
+ * IndexedDB ist schemalos: Zeilen, die vor den Link-Feldern entstanden sind,
+ * tragen die vier Schlüssel gar nicht. Der Typ sagt hier die Wahrheit, damit
+ * der Nachtrag ohne Cast auskommt. Nach dem Upgrade auf Version 3 ist jede
+ * Zeile vollständig, überall sonst genügt deshalb `ListItemRow`.
+ */
+export type StoredListItemRow
+  = Omit<ListItemRow, 'url' | LinkMirrorField>
+    & Partial<Pick<ListItemRow, 'url' | LinkMirrorField>>
 export type RecipeRow = Dirty<Recipe>
 export type RecipeIngredientRow = Dirty<RecipeIngredient>
 export type RecipeStepRow = Dirty<RecipeStep>
@@ -279,5 +297,72 @@ export function createSchema(db: IDBPDatabase<ShlisteDb>): void {
 
   if (!db.objectStoreNames.contains('sync_meta')) {
     db.createObjectStore('sync_meta')
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Version 3: die Link-Felder nachtragen
+ * ------------------------------------------------------------------ */
+
+/** Die vier Schlüssel, die Version 3 an jeder Eintragszeile garantiert. */
+const LINK_ROW_KEYS: readonly string[] = ['url', ...LINK_MIRROR_FIELDS]
+
+/**
+ * Fehlt dieser Zeile mindestens einer der vier Link-Schlüssel?
+ *
+ * Geprüft wird die EXISTENZ des Schlüssels und nicht sein Wert: `null` ist
+ * der gültige Ruhezustand, `undefined` ist die Altlast. Genau dieser
+ * Unterschied ist der Grund für den ganzen Versionssprung — `changedFields`
+ * vergleicht mit `Object.is`, und `undefined` gegen `null` gilt dort als
+ * Änderung. Ein Häkchen auf einer Altzeile würde also einen Zeitstempel auf
+ * `url` setzen, den niemand verursacht hat, und dieser Phantom-Stempel
+ * gewönne beim nächsten Merge gegen den Server.
+ */
+export function needsLinkBackfill(row: object): boolean {
+  return LINK_ROW_KEYS.some(key => !Object.hasOwn(row, key))
+}
+
+/**
+ * Ergänzt die fehlenden Link-Schlüssel mit `null` und lässt alles andere in
+ * Ruhe — insbesondere `dirty`, `updatedAt` und die `fieldTimestamps`.
+ *
+ * Der Nachtrag ist keine inhaltliche Änderung, sondern das Auffüllen einer
+ * Form. Würde er die Zeile schmutzig machen, lüde jedes Gerät nach dem Update
+ * seinen gesamten Bestand hoch.
+ */
+export function fillLinkFields(row: StoredListItemRow): ListItemRow {
+  return {
+    ...row,
+    url: row.url ?? null,
+    linkTitle: row.linkTitle ?? null,
+    linkImagePath: row.linkImagePath ?? null,
+    linkImageKind: row.linkImageKind ?? null,
+  }
+}
+
+/** Die Transaktion, in der ein Versionswechsel läuft. */
+type UpgradeTransaction = IDBPTransaction<ShlisteDb, StoreNames<ShlisteDb>[], 'versionchange'>
+
+/**
+ * Trägt die Link-Felder an allen bestehenden Einträgen nach.
+ *
+ * Läuft EINMALIG beim Sprung auf Version 3 und in DERSELBEN
+ * versionchange-Transaktion wie die Store-Anlage: Entweder die Datenbank ist
+ * danach vollständig auf Version 3, oder der Wechsel gilt als gescheitert und
+ * wird zurückgerollt. Ein Lese-Shim in `repositories.ts` wird dadurch
+ * überflüssig — nach diesem Lauf hat jede Zeile alle Schlüssel.
+ *
+ * Nur bei einem echten Upgrade (`oldVersion > 0`): Eine frisch angelegte
+ * Datenbank hat keine Zeilen, über die sich laufen liesse.
+ */
+export async function backfillLinkFields(oldVersion: number, transaction: UpgradeTransaction): Promise<void> {
+  if (oldVersion === 0 || oldVersion >= 3) return
+
+  let cursor = await transaction.objectStore('list_items').openCursor()
+  while (cursor !== null) {
+    if (needsLinkBackfill(cursor.value)) {
+      await cursor.update(fillLinkFields(cursor.value))
+    }
+    cursor = await cursor.continue()
   }
 }

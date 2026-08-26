@@ -81,10 +81,11 @@ async function uebernehmen(listId: string, listName: string): Promise<void> {
   laeuft.value = true
 
   try {
-    const anzahl = await addItemsToList(
+    const rows = await addItemsToList(
       listId,
       auswahl.value.map(zutat => ({ name: zutat.name, quantity: zutat.quantity })),
     )
+    const anzahl = rows.length
     open.value = false
 
     // Null angelegte Einträge mit einem grünen Haken zu melden wäre eine

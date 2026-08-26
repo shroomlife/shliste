@@ -175,6 +175,10 @@ function serverItem(overrides: Record<string, unknown> = {}): Record<string, unk
     removed: false,
     orderIndex: 0,
     sortKey: null,
+    url: null,
+    linkTitle: null,
+    linkImagePath: null,
+    linkImageKind: null,
     createdAt: OLD,
     updatedAt: OLD,
     deletedAt: null,
@@ -226,6 +230,10 @@ function localItem(overrides: Partial<ListItemRow> = {}): ListItemRow {
     removed: false,
     orderIndex: 0,
     sortKey: null,
+    url: null,
+    linkTitle: null,
+    linkImagePath: null,
+    linkImageKind: null,
     createdBy: null,
     modifiedBy: null,
     createdAt: OLD,
@@ -503,6 +511,153 @@ describe('runPull — Anwenden', () => {
 /* ------------------------------------------------------------------ *
  * Entzogene Listen
  * ------------------------------------------------------------------ */
+
+/* ------------------------------------------------------------------ *
+ * Die Link-Felder
+ * ------------------------------------------------------------------ */
+
+describe('runPull — Link-Felder', () => {
+  const ANGEREICHERT = {
+    url: 'https://kochwelt.de/rezept',
+    linkTitle: 'Ofenkartoffeln mit Kräuterquark',
+    linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
+    linkImageKind: 'preview',
+  }
+
+  test('alle vier Felder kommen an', async () => {
+    const store = fakePullStore()
+
+    await runPull(store, () => Promise.resolve(pullBody({
+      lists: [serverList({ items: [serverItem(ANGEREICHERT)] })],
+    })))
+
+    const row = store.items.get('i1')
+    expect(row?.url).toBe('https://kochwelt.de/rezept')
+    expect(row?.linkTitle).toBe('Ofenkartoffeln mit Kräuterquark')
+    expect(row?.linkImagePath).toBe('link:0123456789abcdef0123456789abcdef.webp')
+    expect(row?.linkImageKind).toBe('preview')
+  })
+
+  test('ein Server ohne die Felder liefert vier null statt undefined', async () => {
+    // Der Rollout läuft getrennt: Ein Client trifft auf beide Fassungen.
+    const store = fakePullStore()
+
+    await runPull(store, () => Promise.resolve(pullBody({
+      lists: [serverList({
+        items: [{
+          id: 'i1',
+          listId: 'l1',
+          name: 'Milch',
+          quantity: 1,
+          checked: false,
+          removed: false,
+          orderIndex: 0,
+          sortKey: null,
+          createdAt: OLD,
+          updatedAt: OLD,
+          deletedAt: null,
+          fieldTimestamps: null,
+          createdBy: null,
+          modifiedBy: null,
+        }],
+      })],
+    })))
+
+    const row = store.items.get('i1')
+    expect(row?.url).toBeNull()
+    expect(row?.linkTitle).toBeNull()
+    expect(row?.linkImagePath).toBeNull()
+    expect(row?.linkImageKind).toBeNull()
+  })
+
+  test('eine unbekannte Bildart wird zu null statt geraten', async () => {
+    const store = fakePullStore()
+
+    await runPull(store, () => Promise.resolve(pullBody({
+      lists: [serverList({ items: [serverItem({ ...ANGEREICHERT, linkImageKind: 'banner' })] })],
+    })))
+
+    expect(store.items.get('i1')?.linkImageKind).toBeNull()
+  })
+
+  test('die Serverfelder der Warteschlange interessieren den Client nicht', async () => {
+    // `linkFetchedAt`, `linkAttempts` und `linkNextAttemptAt` sind der
+    // Warteschlangenzustand des Servers. Sie werden gar nicht erst gelesen.
+    const store = fakePullStore()
+
+    await runPull(store, () => Promise.resolve(pullBody({
+      lists: [serverList({
+        items: [serverItem({
+          ...ANGEREICHERT,
+          linkFetchedAt: OLD,
+          linkAttempts: 3,
+          linkNextAttemptAt: NEW,
+        })],
+      })],
+    })))
+
+    const row = store.items.get('i1')
+    expect(row).not.toHaveProperty('linkFetchedAt')
+    expect(row).not.toHaveProperty('linkAttempts')
+    expect(row).not.toHaveProperty('linkNextAttemptAt')
+  })
+
+  test('url wird gemergt: der neuere lokale Link gewinnt und hält die Zeile schmutzig', async () => {
+    const store = fakePullStore({
+      items: [localItem({
+        url: 'https://rewe.de/mein-link',
+        dirty: DIRTY,
+        fieldTimestamps: { url: NEW },
+      })],
+    })
+
+    await runPull(store, () => Promise.resolve(pullBody({
+      lists: [serverList({ items: [serverItem({ ...ANGEREICHERT, fieldTimestamps: { url: OLD } })] })],
+    })))
+
+    const row = store.items.get('i1')
+    expect(row?.url).toBe('https://rewe.de/mein-link')
+    expect(row?.dirty).toBe(DIRTY)
+  })
+
+  test('DIE KERNZUSAGE: die Spiegel kommen verbatim, auch wenn die Zeile schmutzig bleibt', async () => {
+    // Ohne diese Zeile bekäme ausgerechnet ein Gerät mit ungesendeten
+    // Änderungen Titel und Vorschaubild nie zu sehen.
+    const store = fakePullStore({
+      items: [localItem({
+        name: 'Lokal neuer',
+        url: 'https://kochwelt.de/rezept',
+        dirty: DIRTY,
+        fieldTimestamps: { name: NEW },
+      })],
+    })
+
+    await runPull(store, () => Promise.resolve(pullBody({
+      lists: [serverList({ items: [serverItem(ANGEREICHERT)] })],
+    })))
+
+    const row = store.items.get('i1')
+    expect(row?.name).toBe('Lokal neuer')
+    expect(row?.dirty).toBe(DIRTY)
+    expect(row?.linkTitle).toBe('Ofenkartoffeln mit Kräuterquark')
+    expect(row?.linkImagePath).toBe('link:0123456789abcdef0123456789abcdef.webp')
+    expect(row?.linkImageKind).toBe('preview')
+  })
+
+  test('ein lokaler Sieg mit null bleibt null', async () => {
+    // Wer den Link entfernt hat, hat ihn entfernt — auch gegen einen Server,
+    // der noch den alten Wert kennt.
+    const store = fakePullStore({
+      items: [localItem({ url: null, dirty: DIRTY, fieldTimestamps: { url: NEW } })],
+    })
+
+    await runPull(store, () => Promise.resolve(pullBody({
+      lists: [serverList({ items: [serverItem({ ...ANGEREICHERT, fieldTimestamps: { url: OLD } })] })],
+    })))
+
+    expect(store.items.get('i1')?.url).toBeNull()
+  })
+})
 
 describe('runPull — entzogene Listen', () => {
   /**

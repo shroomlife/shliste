@@ -24,6 +24,7 @@
  */
 import type { HistoryEntityType, ListItem, RecipeIngredient, RecipeStep } from '../../shared/types/domain'
 import { isRecord, readNumberOr, readString } from '../sync/engine/json'
+import { validHttpUrlOrNull } from '../utils/url'
 
 /* ------------------------------------------------------------------ *
  * Schreiben — Vereinigungs-Format (PWA- + Android-Feldnamen)
@@ -39,7 +40,19 @@ function snapshotQuantity(value: number): number {
   return Number.isFinite(value) ? Math.trunc(value) : 1
 }
 
-/** Die Zeile eines Listeneintrags, wie sie in `snapshotJson` wandert. */
+/**
+ * Die Zeile eines Listeneintrags, wie sie in `snapshotJson` wandert.
+ *
+ * `url` ist dabei, die drei Server-Spiegel nicht: Der Link gehört zum
+ * Eintrag und soll die Wiederherstellung überleben, Titel und Vorschaubild
+ * holt der Server danach von selbst wieder. Sie hier mitzuschreiben hiesse,
+ * einen Serverzustand einzufrieren, der bis zur Wiederherstellung längst
+ * veraltet sein kann.
+ *
+ * Androids kotlinx-Reader ist tolerant gegenüber einem zusätzlichen Feld
+ * (`ignoreUnknownKeys`) und lässt `url` auf seinem Vorgabewert, solange die
+ * dortige Datenklasse es noch nicht kennt.
+ */
 export function listItemSnapshotJson(item: ListItem): string {
   return JSON.stringify({
     id: item.id,
@@ -52,6 +65,7 @@ export function listItemSnapshotJson(item: ListItem): string {
     orderIndex: item.orderIndex,
     order: item.orderIndex,
     sortKey: item.sortKey,
+    url: item.url,
     createdBy: item.createdBy,
     modifiedBy: item.modifiedBy,
     deletedAt: item.deletedAt,
@@ -104,7 +118,7 @@ export function stepSnapshotJson(step: RecipeStep): string {
  * die Neuanlage, wenn die Original-Zeile nicht mehr existiert.
  */
 export type HistorySnapshot
-  = | { entityType: 'list_item', id: string | null, name: string, quantity: number }
+  = | { entityType: 'list_item', id: string | null, name: string, quantity: number, url: string | null }
     | { entityType: 'recipe_ingredient', id: string | null, name: string, quantity: number }
     | { entityType: 'recipe_step', id: string | null, description: string }
 
@@ -151,8 +165,20 @@ export function parseHistorySnapshot(entityType: HistoryEntityType, snapshotJson
     return { entityType, id: readSnapshotId(raw), description }
   }
 
+  // Der Link zuerst: Er entscheidet mit, ob ein leerer Name zulässig ist.
+  const url = entityType === 'list_item' ? validHttpUrlOrNull(readString(raw, 'url')) : null
+
   const name = readString(raw, 'name')
-  if (name === null || name.trim().length === 0) return null
+  if (name === null) return null
+
+  // Ein leerer Name ist NUR bei einem Link-Eintrag brauchbar — dort steht
+  // ohnehin der Seitentitel oder der Host auf dem Schirm. Ohne beides bliebe
+  // eine leere Zeile übrig, und dann ist der ehrliche Ausgang ein Hinweis.
+  if (name.trim().length === 0 && url === null) return null
+
+  if (entityType === 'list_item') {
+    return { entityType, id: readSnapshotId(raw), name, quantity: readSnapshotQuantity(raw), url }
+  }
 
   return {
     entityType,

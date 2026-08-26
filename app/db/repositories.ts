@@ -25,6 +25,8 @@ import type {
   FieldTimestamps,
   HistoryEntry,
   IsoUtc,
+  LinkImageKind,
+  LinkMirrorField,
   List,
   ListItem,
   ListMember,
@@ -61,6 +63,17 @@ import { compareIso, isAtOrBefore, isIsoUtc, nowIso } from './timestamps'
  * ein von Hand gesetztes `updatedAt` würde das Last-Write-Wins verfälschen.
  */
 export type Draft<T extends SyncedEntity> = Omit<T, 'createdAt' | 'updatedAt' | 'fieldTimestamps'>
+
+/**
+ * Was der Aufrufer an einem Listeneintrag setzen darf.
+ *
+ * Die drei Server-Spiegel fehlen ausdrücklich: Sie gehören dem Server, tragen
+ * keine Feld-Zeitstempel und werden nie gepusht. Wer sie hier setzen könnte,
+ * würde einen Wert erfinden, den beim nächsten Abgleich sowieso der Server
+ * überschreibt. Was lokal mit ihnen passiert, entscheidet allein
+ * `linkFieldsAfterWrite`.
+ */
+export type ListItemDraft = Omit<Draft<ListItem>, LinkMirrorField>
 
 /** Alle Stores, deren Zeilen gepusht werden. */
 export type DirtyStoreName
@@ -131,6 +144,43 @@ export function mergeFieldTimestamps(
     merged[field] = stamp
   }
   return merged
+}
+
+/** Die drei Server-Spiegel eines Listeneintrags. */
+export interface LinkMirrorValues {
+  linkTitle: string | null
+  linkImagePath: string | null
+  linkImageKind: LinkImageKind | null
+}
+
+/**
+ * Was aus den Server-Spiegeln wird, wenn diese Zeile geschrieben wird.
+ *
+ * BLEIBT DIE ADRESSE GLEICH, bleiben Titel und Bild stehen — sie beschreiben
+ * ja weiterhin dieselbe Seite. Ein Häkchen oder eine neue Menge darf die
+ * Vorschau nicht wegräumen.
+ *
+ * ÄNDERT SICH DIE ADRESSE (auch auf `null`), fallen alle drei sofort weg.
+ * Sonst stünde der Titel der alten Seite unter der neuen Adresse, bis der
+ * Server nachzieht — und das kann offline beliebig lange dauern. Der Server
+ * macht in derselben Sekunde dasselbe (Reset-Regel im Push), diese Zeile ist
+ * also kein Alleingang, sondern der lokale Vorgriff darauf.
+ *
+ * Eine neue Zeile hat nichts zu behalten und bekommt drei `null`.
+ */
+export function linkFieldsAfterWrite(
+  previous: Pick<ListItem, 'url' | LinkMirrorField> | undefined,
+  nextUrl: string | null,
+): LinkMirrorValues {
+  if (previous === undefined || previous.url !== nextUrl) {
+    return { linkTitle: null, linkImagePath: null, linkImageKind: null }
+  }
+
+  return {
+    linkTitle: previous.linkTitle,
+    linkImagePath: previous.linkImagePath,
+    linkImageKind: previous.linkImageKind,
+  }
 }
 
 /** Die Felder, die diese Schicht selbst führt. */
@@ -303,7 +353,15 @@ export async function upsertList(input: Draft<List>): Promise<ListRow> {
   return row
 }
 
-export async function upsertItem(input: Draft<ListItem>): Promise<ListItemRow> {
+/**
+ * Schreibt einen Listeneintrag.
+ *
+ * Die drei Server-Spiegel stehen NICHT im Entwurf: Was mit ihnen geschieht,
+ * hängt allein davon ab, ob sich die Adresse geändert hat
+ * (`linkFieldsAfterWrite`). Sie bekommen dadurch auch nie einen
+ * Feld-Zeitstempel — `changedFields` sieht nur die Felder des Entwurfs.
+ */
+export async function upsertItem(input: ListItemDraft): Promise<ListItemRow> {
   const db = await getDb()
   const previous = await db.get('list_items', input.id)
   const changed = changedFields(previous, input)
@@ -312,7 +370,11 @@ export async function upsertItem(input: Draft<ListItem>): Promise<ListItemRow> {
     return previous
   }
 
-  const row: ListItemRow = { ...input, ...buildRowMeta(previous, changed, nowIso()) }
+  const row: ListItemRow = {
+    ...input,
+    ...linkFieldsAfterWrite(previous, input.url),
+    ...buildRowMeta(previous, changed, nowIso()),
+  }
   await db.put('list_items', row)
   return row
 }

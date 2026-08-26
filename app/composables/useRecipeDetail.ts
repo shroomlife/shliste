@@ -30,6 +30,7 @@ import type { RecipeIngredientRow, RecipeRow, RecipeStepRow } from '../db/schema
 import { nowIso } from '../db/timestamps'
 import { ingredientSnapshotJson, stepSnapshotJson } from '../history/snapshot'
 import { nextSortKey, planMoveTo, type OrderedRow } from '../sync/merge/reorder'
+import { validHttpUrlOrNull } from '../utils/url'
 
 /* ------------------------------------------------------------------ *
  * Reine Funktionen — ohne IndexedDB und ohne Vue, deshalb direkt testbar.
@@ -460,16 +461,24 @@ export function useRecipeDetail() {
     await reload()
   }
 
-  /** Setzt die Quelle eines per Link erzeugten Rezepts — wie in Android. */
-  async function setRecipeSourceUrl(sourceUrl: string): Promise<void> {
+  /**
+   * Setzt die Quelle des Rezepts — die Seite, aus der es entstanden ist.
+   *
+   * Nullable, seit die Quelle auch von Hand bearbeitet werden kann: `null`
+   * entfernt sie wieder.
+   */
+  async function setRecipeSourceUrl(sourceUrl: string | null): Promise<void> {
     const target = recipe.value
     if (target === null) return
+
+    const next = validHttpUrlOrNull(sourceUrl)
+    if (next === target.sourceUrl) return
 
     await upsertRecipe({
       id: target.id,
       name: target.name,
       color: target.color,
-      sourceUrl,
+      sourceUrl: next,
       imagePath: target.imagePath,
       deletedAt: target.deletedAt,
     })

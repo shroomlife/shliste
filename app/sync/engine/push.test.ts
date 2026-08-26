@@ -76,6 +76,7 @@ function item(id: string, listId: string): PushListItem {
     removed: false,
     orderIndex: 0,
     sortKey: null,
+    url: null,
     createdAt: TS,
     updatedAt: TS,
     deletedAt: null,
@@ -464,8 +465,21 @@ function dirtyList(id: string, updatedAt: IsoUtc = TS): ListRow {
   return { ...list(id), ownerUserId: null, updatedAt, dirty: DIRTY }
 }
 
+/**
+ * Eine schmutzige Zeile in der lokalen Form.
+ *
+ * Die drei Server-Spiegel kommen hier dazu und stehen bewusst NICHT in
+ * `item()`: Die Push-Nutzlast kennt sie nicht, die gespeicherte Zeile schon.
+ */
 function dirtyItem(id: string, listId: string, updatedAt: IsoUtc = TS): ListItemRow {
-  return { ...item(id, listId), updatedAt, dirty: DIRTY }
+  return {
+    ...item(id, listId),
+    linkTitle: null,
+    linkImagePath: null,
+    linkImageKind: null,
+    updatedAt,
+    dirty: DIRTY,
+  }
 }
 
 const OK_RESPONSE = {
@@ -589,6 +603,89 @@ describe('runPush', () => {
     expect(store.lists.get('l1')?.dirty).toBe(DIRTY)
   })
 
+  /* ---------------------------------------------------------------- *
+   * Die Link-Felder im Konfliktpfad
+   * ---------------------------------------------------------------- */
+
+  /** Die Konfliktzeile, wie der Server sie zurückgibt — mit Spiegeln. */
+  function conflictItem(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+    return {
+      id: 'i1',
+      listId: 'l1',
+      name: 'Serverstand',
+      quantity: 1,
+      checked: false,
+      removed: false,
+      orderIndex: 0,
+      sortKey: null,
+      url: 'https://kochwelt.de/rezept',
+      linkTitle: 'Ofenkartoffeln mit Kräuterquark',
+      linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
+      linkImageKind: 'preview',
+      createdAt: TS,
+      updatedAt: TS,
+      deletedAt: null,
+      fieldTimestamps: null,
+      createdBy: null,
+      modifiedBy: null,
+      ...overrides,
+    }
+  }
+
+  test('ein übernommener Item-Konflikt bringt die Spiegel mit', async () => {
+    const store = fakePushStore({ items: [dirtyItem('i1', 'l1')] }, { items: [dirtyItem('i1', 'l1')] })
+
+    await runPush(store, () => Promise.resolve({
+      ...OK_RESPONSE,
+      conflicts: { listItems: [conflictItem()] },
+    }))
+
+    const stored = store.items.get('i1')
+    expect(stored?.dirty).toBe(CLEAN)
+    expect(stored?.linkTitle).toBe('Ofenkartoffeln mit Kräuterquark')
+    expect(stored?.linkImageKind).toBe('preview')
+  })
+
+  test('DIE KERNZUSAGE: auch eine lokal frischere Zeile bekommt die Spiegel', async () => {
+    // Ohne diesen Zweig bekäme ausgerechnet ein Gerät mit ungesendeten
+    // Änderungen die Anreicherung nie zu sehen — und zwar dauerhaft, denn
+    // der nächste Push löst denselben Konflikt wieder aus.
+    const lokal: ListItemRow = { ...dirtyItem('i1', 'l1', FUTURE), name: 'Gerade getippt' }
+    const store = fakePushStore({ items: [dirtyItem('i1', 'l1')] }, { items: [lokal] })
+
+    await runPush(store, () => Promise.resolve({
+      ...OK_RESPONSE,
+      conflicts: { listItems: [conflictItem()] },
+    }))
+
+    const stored = store.items.get('i1')
+    // Der lokale Stand bleibt und bleibt schmutzig …
+    expect(stored?.name).toBe('Gerade getippt')
+    expect(stored?.dirty).toBe(DIRTY)
+    // … die Spiegel kommen trotzdem wörtlich vom Server.
+    expect(stored?.linkTitle).toBe('Ofenkartoffeln mit Kräuterquark')
+    expect(stored?.linkImagePath).toBe('link:0123456789abcdef0123456789abcdef.webp')
+    expect(stored?.linkImageKind).toBe('preview')
+  })
+
+  test('gleiche Spiegel schreiben die frischere Zeile nicht grundlos neu', async () => {
+    const lokal: ListItemRow = {
+      ...dirtyItem('i1', 'l1', FUTURE),
+      name: 'Gerade getippt',
+      linkTitle: 'Ofenkartoffeln mit Kräuterquark',
+      linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
+      linkImageKind: 'preview',
+    }
+    const store = fakePushStore({ items: [dirtyItem('i1', 'l1')] }, { items: [lokal] })
+
+    await runPush(store, () => Promise.resolve({
+      ...OK_RESPONSE,
+      conflicts: { listItems: [conflictItem()] },
+    }))
+
+    expect(store.items.get('i1')).toEqual(lokal)
+  })
+
   test('Items und ihre Liste werden zusammen gesendet und beide sauber gesetzt', async () => {
     const store = fakePushStore({
       lists: [dirtyList('l1')],
@@ -618,6 +715,32 @@ function dirtyHistoryEntry(id: string, parentId: string): HistoryEntryRow {
     dirty: DIRTY,
   }
 }
+
+describe('buildPushPayload — Link-Felder', () => {
+  test('url geht mit, die drei Server-Spiegel nicht', () => {
+    // Die Spiegel gehören dem Server. Ein Client, der sie mitschickte,
+    // behauptete ein Wissen, das er nicht hat — die API ignoriert sie ohnehin.
+    const row: ListItemRow = { ...dirtyItem('i1', 'l1'), url: 'https://kochwelt.de/rezept', linkTitle: 'Ofenkartoffeln' }
+    const built = buildPushPayload({ ...emptyDirty(), items: [row] })
+
+    const sent = built.listItems[0]
+    expect(sent?.url).toBe('https://kochwelt.de/rezept')
+    expect(sent).not.toHaveProperty('linkTitle')
+    expect(sent).not.toHaveProperty('linkImagePath')
+    expect(sent).not.toHaveProperty('linkImageKind')
+  })
+
+  test('eine Zeile ohne Link sendet url als null', () => {
+    const built = buildPushPayload({ ...emptyDirty(), items: [dirtyItem('i1', 'l1')] })
+    expect(built.listItems[0]?.url).toBeNull()
+  })
+
+  test('eine überlange Adresse wird gekappt statt den ganzen Push zu kippen', () => {
+    const row: ListItemRow = { ...dirtyItem('i1', 'l1'), url: `https://beispiel.de/${'a'.repeat(3000)}` }
+    const built = buildPushPayload({ ...emptyDirty(), items: [row] })
+    expect(built.listItems[0]?.url).toHaveLength(2000)
+  })
+})
 
 describe('buildPushPayload', () => {
   test('eine schmutzige Historien-Zeile wandert mit allen Vertragsfeldern in den Push', () => {

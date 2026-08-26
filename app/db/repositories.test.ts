@@ -15,6 +15,7 @@ import {
   compareByManualOrder,
   compareByUpdatedAtDesc,
   type Draft,
+  linkFieldsAfterWrite,
   type ManualOrder,
   mergeFieldTimestamps,
   snapshotStampOf,
@@ -217,5 +218,63 @@ describe('compareByManualOrder', () => {
       [null, 0],
       [null, 1],
     ])
+  })
+})
+
+/* ------------------------------------------------------------------ *
+ * Die Server-Spiegel eines Link-Eintrags
+ * ------------------------------------------------------------------ */
+
+/** Eine gespeicherte Zeile mit Titel und Bild zu ihrer Adresse. */
+const angereichert = {
+  url: 'https://kochwelt.de/rezept',
+  linkTitle: 'Ofenkartoffeln mit Kräuterquark',
+  linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
+  linkImageKind: 'preview' as const,
+}
+
+describe('linkFieldsAfterWrite', () => {
+  test('bleibt die Adresse gleich, bleiben Titel und Bild stehen', () => {
+    // Ein Häkchen oder eine neue Menge darf die Vorschau nicht wegräumen.
+    expect(linkFieldsAfterWrite(angereichert, angereichert.url)).toEqual({
+      linkTitle: 'Ofenkartoffeln mit Kräuterquark',
+      linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
+      linkImageKind: 'preview',
+    })
+  })
+
+  test('eine andere Adresse räumt alle drei sofort weg', () => {
+    // Sonst stünde der Titel der alten Seite unter der neuen Adresse, bis der
+    // Server nachzieht — offline beliebig lange.
+    expect(linkFieldsAfterWrite(angereichert, 'https://rewe.de/angebote')).toEqual({
+      linkTitle: null,
+      linkImagePath: null,
+      linkImageKind: null,
+    })
+  })
+
+  test('auch das Entfernen der Adresse räumt sie weg', () => {
+    expect(linkFieldsAfterWrite(angereichert, null)).toEqual({
+      linkTitle: null,
+      linkImagePath: null,
+      linkImageKind: null,
+    })
+  })
+
+  test('eine neue Zeile hat nichts zu behalten', () => {
+    expect(linkFieldsAfterWrite(undefined, 'https://kochwelt.de/rezept')).toEqual({
+      linkTitle: null,
+      linkImagePath: null,
+      linkImageKind: null,
+    })
+  })
+
+  test('eine Zeile ohne Adresse behält ihre leeren Spiegel', () => {
+    const ohneLink = { url: null, linkTitle: null, linkImagePath: null, linkImageKind: null }
+    expect(linkFieldsAfterWrite(ohneLink, null)).toEqual({
+      linkTitle: null,
+      linkImagePath: null,
+      linkImageKind: null,
+    })
   })
 })

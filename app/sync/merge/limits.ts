@@ -37,6 +37,16 @@ export const SYNC_FIELD_LIMITS = {
   COLOR: 20,
   /** sourceUrl von Listen und Rezepten */
   SOURCE_URL: 2000,
+  /**
+   * `url` eines Listeneintrags — die Adresse hinter einem Link-Eintrag.
+   *
+   * Derselbe Wert wie `SOURCE_URL`, aber ein eigener Name: Es sind zwei
+   * Felder mit zwei Eigentümern, und ein gemeinsamer Name lüde dazu ein, das
+   * eine Limit zu ändern und dabei versehentlich das andere mitzuziehen.
+   * Gegenstücke: `SYNC_FIELD_LIMITS.ITEM_URL` in der API,
+   * `SyncLimits.ITEM_URL` in Android.
+   */
+  ITEM_URL: 2000,
   /** imagePath von Rezepten und Badge-recipeImagePath */
   IMAGE_PATH: 2000,
   /** lastSuggestedItems einer Liste */
@@ -184,6 +194,17 @@ function sanitizeList(row: List): List {
   }
 }
 
+/**
+ * Die drei Server-Spiegel werden hier NICHT gekappt: Sie stehen in keiner
+ * Push-Nutzlast und können deshalb kein 422 auslösen. Was der Server für sie
+ * einhält, hält er selbst ein.
+ *
+ * `url` wird gekappt und nicht verworfen — anders als `sortKey`. Eine
+ * gekappte Adresse ist zwar meist kaputt, aber sie ist immer noch der Hinweis
+ * darauf, was gemeint war; ein `null` an dieser Stelle löschte den Link still.
+ * Praktisch kommt der Fall nicht vor: Die Oberfläche lässt 2000 Zeichen gar
+ * nicht erst zu.
+ */
 function sanitizeListItem(row: ListItem): ListItem {
   return {
     ...row,
@@ -191,6 +212,7 @@ function sanitizeListItem(row: ListItem): ListItem {
     quantity: clampNumber(row.quantity),
     orderIndex: clampNumber(row.orderIndex),
     sortKey: sortKeyForSync(row.sortKey),
+    url: capTextOrNull(row.url, SYNC_FIELD_LIMITS.ITEM_URL),
     createdBy: userRefForSync(row.createdBy),
     modifiedBy: userRefForSync(row.modifiedBy),
   }

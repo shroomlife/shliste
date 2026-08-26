@@ -225,6 +225,13 @@ function listValues(row: List): Record<string, unknown> {
   }
 }
 
+/**
+ * Die Felder eines Eintrags, die am Merge teilnehmen.
+ *
+ * `url` steht hier DRIN (Nutzer-Feld, feldweises LWW wie `name`), die drei
+ * Server-Spiegel NICHT: Sie tragen keine Zeitstempel und werden verbatim
+ * übernommen — siehe `applyItem`.
+ */
 function itemValues(row: ListItem): Record<string, unknown> {
   return {
     name: row.name,
@@ -233,6 +240,7 @@ function itemValues(row: ListItem): Record<string, unknown> {
     removed: row.removed,
     orderIndex: row.orderIndex,
     sortKey: row.sortKey,
+    url: row.url,
     deletedAt: row.deletedAt,
   }
 }
@@ -381,6 +389,23 @@ async function applyItem(rows: RowStores, server: ListItem): Promise<void> {
       removed: pickBoolean(values, 'removed', server.removed),
       orderIndex: pickNumber(values, 'orderIndex', server.orderIndex),
       sortKey: pickNullableString(values, 'sortKey', server.sortKey),
+      url: pickNullableString(values, 'url', server.url),
+      /*
+       * Die drei Spiegel kommen IMMER wörtlich vom Server — auch wenn die
+       * Zeile durch einen lokalen Feldsieg schmutzig bleibt.
+       *
+       * Sie sind serverseitig gepflegt und werden nie gemergt: Es gibt keinen
+       * lokalen Wert, der mit ihnen konkurrieren könnte, und keinen
+       * Zeitstempel, an dem sich ein Vergleich orientieren würde. Sie hier
+       * hinter `values` zu verstecken hiesse, dass ein Gerät mit einer
+       * ungesendeten Umbenennung das Vorschaubild nie zu sehen bekäme.
+       *
+       * Dieselbe Zeile steht im Konfliktpfad des Pushs (`applyConflicts` in
+       * `push.ts`). Wer hier etwas ändert, ändert es dort mit.
+       */
+      linkTitle: server.linkTitle,
+      linkImagePath: server.linkImagePath,
+      linkImageKind: server.linkImageKind,
       createdBy: server.createdBy,
       modifiedBy: server.modifiedBy,
       createdAt: server.createdAt,

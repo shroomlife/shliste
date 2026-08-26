@@ -30,6 +30,10 @@ function makeItem(overrides: Partial<ListItem> = {}): ListItem {
     removed: false,
     orderIndex: 0,
     sortKey: null,
+    url: null,
+    linkTitle: null,
+    linkImagePath: null,
+    linkImageKind: null,
     createdBy: null,
     modifiedBy: null,
     ...overrides,
@@ -141,6 +145,22 @@ describe('toItemDraft', () => {
     expect(keys).not.toContain('fieldTimestamps')
   })
 
+  test('lässt die drei Server-Spiegel weg', () => {
+    // Sie gehören dem Server. Was lokal mit ihnen passiert, entscheidet allein
+    // `linkFieldsAfterWrite` anhand der Adresse.
+    const keys = Object.keys(toItemDraft(makeItem({
+      url: 'https://kochwelt.de/x',
+      linkTitle: 'Ofenkartoffeln',
+      linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
+      linkImageKind: 'preview',
+    })))
+
+    expect(keys).toContain('url')
+    expect(keys).not.toContain('linkTitle')
+    expect(keys).not.toContain('linkImagePath')
+    expect(keys).not.toContain('linkImageKind')
+  })
+
   test('übernimmt alle setzbaren Felder unverändert', () => {
     const item = makeItem({
       id: 'item-9',
@@ -151,6 +171,7 @@ describe('toItemDraft', () => {
       removed: false,
       orderIndex: 5,
       sortKey: 'a0',
+      url: 'https://kochwelt.de/rezept',
       createdBy: 'user-1',
       modifiedBy: 'user-2',
       deletedAt: null,
@@ -165,6 +186,7 @@ describe('toItemDraft', () => {
       removed: false,
       orderIndex: 5,
       sortKey: 'a0',
+      url: 'https://kochwelt.de/rezept',
       createdBy: 'user-1',
       modifiedBy: 'user-2',
       deletedAt: null,

@@ -256,6 +256,12 @@ export function planLegacyImport(input: {
         removed: false,
         orderIndex: index,
         sortKey: null,
+        // Die alte Fassung kannte keine Links, und Titel wie Vorschaubild
+        // pflegt ohnehin nur der Server.
+        url: null,
+        linkTitle: null,
+        linkImagePath: null,
+        linkImageKind: null,
         createdBy: null,
         modifiedBy: null,
       })

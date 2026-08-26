@@ -140,6 +140,45 @@ describe('Filter — sie gehören zur Formel', () => {
   })
 })
 
+describe('Die Link-Felder gehören NICHT in die Prüfsumme', () => {
+  /*
+   * WARUM DAS EIN EIGENER TEST IST: Die Prüfsumme ist der einzige Vergleich,
+   * der Abweichungen JENSEITS des Delta-Fensters findet. Nähme sie `url` oder
+   * die Server-Spiegel auf, hätten Client und Server so lange verschiedene
+   * Summen, bis die Anreicherung jeder einzelnen Zeile durch ist — und die
+   * Selbstheilung liefe genau so lange im Kreis. Der Server rechnet die
+   * Spalten deshalb ausdrücklich nicht mit (`status.ts` in der API), und
+   * Android tut es auch nicht.
+   */
+  test('ein hinzugefügter Link ändert die Summe nicht', () => {
+    const mitLink = {
+      ...FIXTURE,
+      items: FIXTURE.items.map(row =>
+        row.id === 'i1' ? eintrag({ ...row, url: 'https://kochwelt.de/rezept' }) : row),
+    }
+    expect(computeContentHashes(mitLink).parts.listItems).toBe(AUS_POSTGRES.listItems)
+    expect(computeContentHashes(mitLink).v2).toBe(computeContentHashes(FIXTURE).v2)
+  })
+
+  test('Titel, Bildpfad und Bildart ändern die Summe nicht', () => {
+    const angereichert = {
+      ...FIXTURE,
+      items: FIXTURE.items.map(row =>
+        row.id === 'i1'
+          ? eintrag({
+              ...row,
+              url: 'https://kochwelt.de/rezept',
+              linkTitle: 'Ofenkartoffeln mit Kräuterquark',
+              linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
+              linkImageKind: 'preview',
+            })
+          : row),
+    }
+    expect(computeContentHashes(angereichert).parts.listItems).toBe(AUS_POSTGRES.listItems)
+    expect(computeContentHashes(angereichert).v2).toBe(computeContentHashes(FIXTURE).v2)
+  })
+})
+
 describe('divergentAreas', () => {
   test('benennt genau die abweichenden Bereiche', () => {
     const abweichend = { ...AUS_POSTGRES, listItems: 'X', badges: 'Y' }

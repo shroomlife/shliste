@@ -41,6 +41,8 @@ export async function persistGeneratedListDetails(listId: string, generated: Gen
       removed: false,
       orderIndex: index,
       sortKey,
+      // Die KI liefert Namen, keine Adressen — ein KI-Eintrag ist nie ein Link.
+      url: null,
       createdBy: null,
       modifiedBy: null,
       deletedAt: null,

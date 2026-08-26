@@ -6,14 +6,27 @@
  * arbeiten, sich aber gegenseitig beim Versionswechsel blockieren.
  */
 import { openDB, type IDBPDatabase } from 'idb'
-import { createSchema, DB_NAME, DB_VERSION, type ShlisteDb } from './schema'
+import { backfillLinkFields, createSchema, DB_NAME, DB_VERSION, type ShlisteDb } from './schema'
 
 let connection: Promise<IDBPDatabase<ShlisteDb>> | null = null
 
 function open(): Promise<IDBPDatabase<ShlisteDb>> {
   return openDB<ShlisteDb>(DB_NAME, DB_VERSION, {
-    upgrade(db) {
+    upgrade(db, oldVersion, _newVersion, transaction) {
       createSchema(db)
+
+      // Der Datennachtrag läuft in DERSELBEN versionchange-Transaktion weiter
+      // und wird deshalb bewusst nicht abgewartet: `openDB` löst erst auf,
+      // wenn diese Transaktion vollständig durch ist. Die Schleife kettet
+      // ausschliesslich IndexedDB-Anfragen aneinander, die Transaktion kann
+      // also zwischendurch nicht von selbst schliessen.
+      //
+      // Ein Fehler hier ist keiner, den die Oberfläche behandeln könnte: Die
+      // Transaktion rollt dann zurück, das Öffnen scheitert, und der nächste
+      // Versuch beginnt von vorn. Protokolliert wird er trotzdem.
+      void backfillLinkFields(oldVersion, transaction).catch((error: unknown) => {
+        console.error('[db] Nachtragen der Link-Felder ist fehlgeschlagen:', error)
+      })
     },
 
     blocked() {

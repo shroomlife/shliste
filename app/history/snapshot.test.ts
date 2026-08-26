@@ -22,6 +22,10 @@ const item: ListItem = {
   removed: false,
   orderIndex: 3,
   sortKey: 'a0',
+  url: null,
+  linkTitle: null,
+  linkImagePath: null,
+  linkImageKind: null,
   createdBy: 'robin-uuid',
   modifiedBy: null,
   createdAt: '2026-08-22T10:00:00.000Z',
@@ -79,12 +83,12 @@ describe('Snapshot-Writer (Vereinigungs-Format)', () => {
 describe('parseHistorySnapshot', () => {
   test('liest die Android-Form: uuid, kotlinx-Defaults fehlen im JSON', () => {
     const parsed = parseHistorySnapshot('list_item', '{"uuid":"a1","name":"Butter"}')
-    expect(parsed).toEqual({ entityType: 'list_item', id: 'a1', name: 'Butter', quantity: 1 })
+    expect(parsed).toEqual({ entityType: 'list_item', id: 'a1', name: 'Butter', quantity: 1, url: null })
   })
 
   test('liest die eigene Form zurück (Roundtrip)', () => {
     const parsed = parseHistorySnapshot('list_item', listItemSnapshotJson(item))
-    expect(parsed).toEqual({ entityType: 'list_item', id: 'item-1', name: 'Milch', quantity: 2 })
+    expect(parsed).toEqual({ entityType: 'list_item', id: 'item-1', name: 'Milch', quantity: 2, url: null })
   })
 
   test('Schritt: Android-Form mit order statt orderIndex', () => {
@@ -102,5 +106,53 @@ describe('parseHistorySnapshot', () => {
   test('Unsinns-Mengen werden auf eine gültige Menge gezogen', () => {
     expect(parseHistorySnapshot('recipe_ingredient', '{"uuid":"z1","name":"Salz","quantity":-3}'))
       .toEqual({ entityType: 'recipe_ingredient', id: 'z1', name: 'Salz', quantity: 1 })
+  })
+})
+
+describe('parseHistorySnapshot: Link-Einträge', () => {
+  test('der Link wandert mit in den Snapshot und wieder heraus', () => {
+    const linkItem = { ...item, name: '', url: 'https://kochwelt.de/rezept' }
+    const parsed = parseHistorySnapshot('list_item', listItemSnapshotJson(linkItem))
+    expect(parsed).toEqual({
+      entityType: 'list_item',
+      id: 'item-1',
+      name: '',
+      quantity: 2,
+      url: 'https://kochwelt.de/rezept',
+    })
+  })
+
+  test('die Server-Spiegel stehen NICHT im Snapshot', () => {
+    // Sie wären ein eingefrorener Serverzustand, der bis zur
+    // Wiederherstellung längst veraltet sein kann. Der Server holt Titel und
+    // Bild nach der Wiederherstellung von selbst wieder.
+    const raw = JSON.parse(listItemSnapshotJson({
+      ...item,
+      url: 'https://kochwelt.de/rezept',
+      linkTitle: 'Ofenkartoffeln',
+      linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
+      linkImageKind: 'preview',
+    })) as Record<string, unknown>
+    expect(raw['url']).toBe('https://kochwelt.de/rezept')
+    expect(raw).not.toHaveProperty('linkTitle')
+    expect(raw).not.toHaveProperty('linkImagePath')
+    expect(raw).not.toHaveProperty('linkImageKind')
+  })
+
+  test('ein leerer Name ist NUR mit Link brauchbar', () => {
+    expect(parseHistorySnapshot('list_item', '{"uuid":"a1","name":"","url":"https://kochwelt.de/x"}'))
+      .toEqual({ entityType: 'list_item', id: 'a1', name: '', quantity: 1, url: 'https://kochwelt.de/x' })
+    // Ohne Link bliebe eine leere Zeile übrig — dann ist ein Hinweis ehrlicher.
+    expect(parseHistorySnapshot('list_item', '{"uuid":"a1","name":""}')).toBeNull()
+  })
+
+  test('ein unbrauchbarer Link wird zu null statt umgeschrieben', () => {
+    expect(parseHistorySnapshot('list_item', '{"uuid":"a1","name":"Milch","url":"javascript:alert(1)"}'))
+      .toEqual({ entityType: 'list_item', id: 'a1', name: 'Milch', quantity: 1, url: null })
+  })
+
+  test('ein Snapshot aus Android ohne url-Feld bleibt lesbar', () => {
+    expect(parseHistorySnapshot('list_item', '{"uuid":"a1","name":"Butter","order":2}'))
+      .toEqual({ entityType: 'list_item', id: 'a1', name: 'Butter', quantity: 1, url: null })
   })
 })

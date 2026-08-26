@@ -27,7 +27,7 @@ import type {
   RecipeIngredient,
   RecipeStep,
 } from '../../../shared/types/domain'
-import { CLEAN } from '../../db/schema'
+import { CLEAN, type ListItemRow } from '../../db/schema'
 import { isAtOrBefore, nowIso } from '../../db/timestamps'
 import { sanitize } from '../merge/limits'
 import {
@@ -63,6 +63,12 @@ export interface PushList {
   fieldTimestamps: FieldTimestamps | null
 }
 
+/**
+ * Die drei Server-Spiegel stehen bewusst NICHT in dieser Nutzlast: Sie
+ * gehören dem Server, der sie beim Anreichern selbst schreibt. Ein Client,
+ * der sie mitschickte, behauptete ein Wissen, das er nicht hat — die API
+ * ignoriert sie deshalb ohnehin.
+ */
 export interface PushListItem {
   id: string
   listId: string
@@ -72,6 +78,7 @@ export interface PushListItem {
   removed: boolean
   orderIndex: number
   sortKey: string | null
+  url: string | null
   createdAt: IsoUtc
   updatedAt: IsoUtc
   deletedAt: IsoUtc | null
@@ -318,6 +325,7 @@ function toPushListItem(row: ListItem): PushListItem {
     removed: row.removed,
     orderIndex: row.orderIndex,
     sortKey: row.sortKey,
+    url: row.url,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deletedAt: row.deletedAt,
@@ -986,7 +994,29 @@ async function applyConflicts(rows: RowStores, conflicts: PushConflicts, pushSna
 
   for (const item of conflicts.listItems) {
     await rows.items.mutate(item.id, (local) => {
-      if (isLocallyNewer(local, pushSnapshot)) return null
+      if (local !== undefined && isLocallyNewer(local, pushSnapshot)) {
+        /*
+         * Die Zeile behält ihren neueren lokalen Stand — aber die drei
+         * Server-Spiegel kommen trotzdem wörtlich mit.
+         *
+         * Sie gehören dem Server, konkurrieren mit nichts Lokalem und sind
+         * der einzige Weg, wie Titel und Vorschaubild überhaupt hier ankommen.
+         * Ohne diesen Zweig bekäme ausgerechnet ein Gerät mit ungesendeten
+         * Änderungen die Anreicherung nie zu sehen — und zwar dauerhaft, denn
+         * der nächste Push löst denselben Konflikt wieder aus.
+         *
+         * Kein `applied += 1`: Der Konflikt selbst ist NICHT aufgelöst, die
+         * Zeile bleibt schmutzig und geht beim nächsten Push wieder mit.
+         * Gleiche Regel wie `applyItem` in `./pull.ts`.
+         */
+        if (!linkMirrorsDiffer(local, item)) return null
+        return {
+          ...local,
+          linkTitle: item.linkTitle,
+          linkImagePath: item.linkImagePath,
+          linkImageKind: item.linkImageKind,
+        }
+      }
       applied += 1
       return { ...item, dirty: CLEAN }
     })
@@ -1029,4 +1059,16 @@ async function applyConflicts(rows: RowStores, conflicts: PushConflicts, pushSna
 
 function isLocallyNewer(local: { updatedAt: IsoUtc } | undefined, pushSnapshot: IsoUtc): boolean {
   return local !== undefined && !isAtOrBefore(local.updatedAt, pushSnapshot)
+}
+
+/**
+ * Weicht mindestens einer der drei Server-Spiegel ab?
+ *
+ * Nur dann lohnt der Schreibvorgang im Konfliktpfad. Sonst schriebe jeder
+ * Konflikt dieselbe Zeile grundlos neu.
+ */
+function linkMirrorsDiffer(local: ListItemRow, server: ListItem): boolean {
+  return local.linkTitle !== server.linkTitle
+    || local.linkImagePath !== server.linkImagePath
+    || local.linkImageKind !== server.linkImageKind
 }

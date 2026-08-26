@@ -44,8 +44,44 @@ export interface List extends SyncedEntity {
   ownerUserId: string | null
 }
 
+/**
+ * Woher das Vorschaubild eines Links stammt.
+ *
+ * `preview` ist das Bild der Seite (og:image), `icon` ihr Favicon. Der
+ * Unterschied ist eine Anzeigefrage: Ein Vorschaubild füllt die Kachel
+ * (`object-cover`), ein Favicon steht klein und mittig auf getöntem Grund.
+ * Ein unbekannter Wert vom Server wird beim Lesen zu `null` (siehe
+ * `parseListItem`).
+ */
+export type LinkImageKind = 'preview' | 'icon'
+
+/**
+ * Die drei Felder, die AUSSCHLIESSLICH der Server pflegt.
+ *
+ * Sie sind ein Spiegel und kein Besitz: Der Client sendet sie nie und mergt
+ * sie nie, sondern übernimmt sie bei jedem Abgleich wörtlich vom Server — auf
+ * JEDEM Pfad (Pull, Delta, Konfliktantwort des Pushs). Sie tragen deshalb auch
+ * keine `fieldTimestamps` und stehen in keiner der beiden LWW-Karten.
+ *
+ * Die eine lokale Ausnahme: Ändert sich `url`, nullt der Client die drei
+ * sofort selbst — sonst stünde der Titel der alten Seite unter der neuen
+ * Adresse, bis der Server nachzieht.
+ */
+export const LINK_MIRROR_FIELDS = ['linkTitle', 'linkImagePath', 'linkImageKind'] as const
+
+export type LinkMirrorField = typeof LINK_MIRROR_FIELDS[number]
+
 export interface ListItem extends SyncedEntity {
   listId: string
+  /**
+   * Der Name, den ein MENSCH vergeben hat. Der Server schreibt hier nie
+   * hinein, und genau dadurch kann eine Anreicherung eine Umbenennung nicht
+   * überschreiben.
+   *
+   * Darf leer sein, aber nur wenn `url` gesetzt ist: Ein Link-Eintrag entsteht
+   * beim Teilen ohne Namen und zeigt dann `linkTitle` oder den Host
+   * (`app/utils/listItemDisplay.ts`).
+   */
   name: string
   quantity: number
   checked: boolean
@@ -57,6 +93,20 @@ export interface ListItem extends SyncedEntity {
   orderIndex: number
   /** Base-62 Bruchindex. Lieber null als gekürzt — ein gekürzter Key ist ungültig. */
   sortKey: string | null
+  /**
+   * Die Adresse hinter dem Eintrag. NUTZER-FELD: gemergt wie `name`, gesendet
+   * wie `name`, und beim Merge zählt es als Inhalt (Add-Wins).
+   *
+   * Gespeichert wird die getrimmte Eingabe, nie eine normalisierte Fassung
+   * (Begründung in `app/utils/url.ts`).
+   */
+  url: string | null
+  /** Server-Spiegel: der Titel der Seite. Siehe `LINK_MIRROR_FIELDS`. */
+  linkTitle: string | null
+  /** Server-Spiegel: `link:{32 hex}.webp`. Siehe `LINK_MIRROR_FIELDS`. */
+  linkImagePath: string | null
+  /** Server-Spiegel: Art des Bildes. Siehe `LINK_MIRROR_FIELDS`. */
+  linkImageKind: LinkImageKind | null
   createdBy: string | null
   modifiedBy: string | null
 }

@@ -11,7 +11,42 @@
  * ergänzt den Verlauf, ohne dort eine zweite Sicht einzubauen. Geschrieben
  * wird hier nichts — alle Schreibwege bleiben bei `db/repositories`.
  */
+import type { IsoUtc } from '../../shared/types/domain'
 import { getDb } from '../db/client'
+
+/**
+ * Eine Zeile, so wie diese Datei sie zu sehen bekommt.
+ *
+ * `url` ist WAHLWEISE, und das ist keine Nachlässigkeit: Diese Projektion
+ * liest rohe Zeilen aus IndexedDB, an `repositories.ts` vorbei. Zeilen aus
+ * der Zeit vor dem Feld tragen den Schlüssel gar nicht.
+ */
+export interface SuggestionCandidate {
+  deletedAt: IsoUtc | null
+  removed: boolean
+  name: string
+  url?: string | null
+}
+
+/**
+ * Taugt diese Zeile als Vorschlagsquelle?
+ *
+ * Nur rausgeworfene, nicht gelöschte Zeilen mit einem Namen — und keine
+ * Link-Einträge: „chefkoch.de" als Vorschlag für den nächsten Einkauf wäre
+ * Unsinn. Die Android-App filtert dafür mit `AND url IS NULL`.
+ *
+ * DIE PRÜFUNG LAUTET `typeof === 'string'` UND NICHT `!== null`: Ein `!== null`
+ * würde bei einer Altzeile ohne den Schlüssel greifen und damit den gesamten
+ * Bestand aus den Vorschlägen werfen — also genau die Einträge, die die
+ * Vorschläge überhaupt tragen. Der Upgrade auf Datenbankversion 3 füllt die
+ * Schlüssel zwar nach; diese Datei ist aber die einzige ohne die Garantie aus
+ * `repositories.ts`, und die Prüfung kostet hier nichts.
+ */
+export function isSuggestionSource(row: SuggestionCandidate): boolean {
+  if (row.deletedAt !== null || !row.removed) return false
+  if (typeof row.url === 'string') return false
+  return row.name.trim().length > 0
+}
 
 /** Einmalige Namen früherer Einträge, case-insensitiv dedupliziert. */
 export async function getRemovedItemNamesForList(listId: string): Promise<string[]> {
@@ -22,11 +57,9 @@ export async function getRemovedItemNamesForList(listId: string): Promise<string
   const names: string[] = []
 
   for (const row of rows) {
-    if (row.deletedAt !== null || !row.removed) continue
+    if (!isSuggestionSource(row)) continue
 
     const name = row.name.trim()
-    if (name.length === 0) continue
-
     const key = name.toLowerCase()
     if (seen.has(key)) continue
 

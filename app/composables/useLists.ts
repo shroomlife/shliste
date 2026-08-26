@@ -1,6 +1,6 @@
-import type { ListRow } from '../db/schema'
+import type { ListItemRow, ListRow } from '../db/schema'
 import { getItemsForList, getListsForView, getMembersForList, isUnseenForeignChange, upsertItem, upsertList } from '../db/repositories'
-import { clampQuantity, nextOrderIndex } from './useListDetail'
+import { clampQuantity, isValidItemContent, nextOrderIndex } from './useListDetail'
 import { nextSortKey } from '../sync/merge/reorder'
 import { randomListColor } from '../utils/color'
 
@@ -155,18 +155,23 @@ export function useLists() {
    * bekämen fünf Zutaten denselben Platz und stünden anschliessend in
    * beliebiger Reihenfolge da.
    *
-   * @returns wie viele Einträge tatsächlich entstanden sind.
+   * @returns die tatsächlich angelegten Zeilen. Die Anzahl steht als
+   * `rows.length` darin — und die Ids braucht der Teilen-Empfang, um den
+   * neuen Eintrag in der Zielliste hervorzuheben.
    */
   async function addItemsToList(
     listId: string,
-    eintraege: readonly { name: string, quantity: number }[],
-  ): Promise<number> {
+    eintraege: readonly { name: string, quantity: number, url?: string | null }[],
+  ): Promise<ListItemRow[]> {
     const bestand = [...await getItemsForList(listId)]
-    let angelegt = 0
+    const angelegt: ListItemRow[] = []
 
     for (const eintrag of eintraege) {
       const name = eintrag.name.trim()
-      if (name.length === 0) continue
+      const url = eintrag.url ?? null
+      // Ein leerer Name ist nur mit Adresse ein Eintrag — sonst entstünde eine
+      // leere Zeile (siehe `isValidItemContent`).
+      if (!isValidItemContent(name, url)) continue
 
       const row = await upsertItem({
         id: crypto.randomUUID(),
@@ -177,16 +182,17 @@ export function useLists() {
         removed: false,
         orderIndex: nextOrderIndex(bestand),
         sortKey: nextSortKey(bestand),
+        url,
         createdBy: null,
         modifiedBy: null,
         deletedAt: null,
       })
 
       bestand.push(row)
-      angelegt += 1
+      angelegt.push(row)
     }
 
-    if (angelegt > 0) await reload()
+    if (angelegt.length > 0) await reload()
     return angelegt
   }
 
