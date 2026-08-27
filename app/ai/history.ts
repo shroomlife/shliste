@@ -39,8 +39,8 @@ export interface SuggestionCandidate {
  * würde bei einer Altzeile ohne den Schlüssel greifen und damit den gesamten
  * Bestand aus den Vorschlägen werfen — also genau die Einträge, die die
  * Vorschläge überhaupt tragen. Der Upgrade auf Datenbankversion 3 füllt die
- * Schlüssel zwar nach; diese Datei ist aber die einzige ohne die Garantie aus
- * `repositories.ts`, und die Prüfung kostet hier nichts.
+ * Schlüssel zwar nach; die Prüfung hält auch dann, wenn Zeilen später einmal an
+ * der Migration vorbei entstehen.
  */
 export function isSuggestionSource(row: SuggestionCandidate): boolean {
   if (row.deletedAt !== null || !row.removed) return false

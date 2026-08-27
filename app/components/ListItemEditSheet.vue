@@ -44,8 +44,12 @@ watch(open, (isOpen) => {
   url.value = item.url ?? ''
 })
 
-/** Die geprüfte Adresse aus dem Feld, oder `null`. Nie umgeschrieben. */
-const parsedUrl = computed(() => validHttpUrlOrNull(url.value))
+/**
+ * Die geprüfte Adresse aus dem Feld, oder `null`. Mit ergänztem Schema wie in
+ * jedem anderen Adressfeld der App: Wer `chefkoch.de/rezept` tippt, meint eine
+ * Adresse. Umgeschrieben wird sonst nichts.
+ */
+const parsedUrl = computed(() => validHttpUrlOrNull(withHttpsPrefix(url.value)))
 
 /**
  * Steht etwas im Feld, das keine Adresse ist?

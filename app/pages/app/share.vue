@@ -75,21 +75,41 @@ onMounted(() => {
   void initialise()
 })
 
+/**
+ * Ein zweites Teilen, während die Seite schon offen ist: Nur der Abfrageteil
+ * ändert sich, `onMounted` läuft kein zweites Mal. Ohne diesen Beobachter wäre
+ * der zweite Inhalt lautlos verloren.
+ */
+watch(() => route.query, () => {
+  void readSharedPayload()
+})
+
+/**
+ * Liest den geteilten Inhalt aus dem Abfrageteil und räumt ihn danach weg.
+ *
+ * Ein leerer Abfrageteil heisst „diese Seite wurde nicht gerade beschickt" —
+ * dann bleibt stehen, was schon im Zustand liegt (etwa nach einem Zurück aus
+ * einem KI-Blatt).
+ *
+ * Das Wegräumen per `replace` ist kein Aufräumen, sondern Absicht: Ohne das
+ * legte ein Neuladen oder ein Zurück denselben Eintrag ein zweites Mal an.
+ */
+async function readSharedPayload(): Promise<void> {
+  if (Object.keys(route.query).length === 0) return
+
+  payload.value = extractSharedLink({
+    title: firstQueryValue(route.query['title']),
+    text: firstQueryValue(route.query['text']),
+    url: firstQueryValue(route.query['url']),
+  })
+
+  newListName.value = payload.value?.title || sharedHost.value || ''
+
+  await navigateTo('/app/share', { replace: true })
+}
+
 async function initialise(): Promise<void> {
-  // Ein leerer Abfrageteil heisst „diese Seite wurde nicht gerade beschickt"
-  // — dann bleibt stehen, was schon im Zustand liegt (etwa nach einem Zurück
-  // aus einem KI-Blatt).
-  if (Object.keys(route.query).length > 0) {
-    payload.value = extractSharedLink({
-      title: firstQueryValue(route.query['title']),
-      text: firstQueryValue(route.query['text']),
-      url: firstQueryValue(route.query['url']),
-    })
-
-    newListName.value = payload.value?.title || sharedHost.value || ''
-
-    await navigateTo('/app/share', { replace: true })
-  }
+  await readSharedPayload()
 
   // Die Listen werden NACHGELADEN, nicht vorausgesetzt: Der geteilte Zustand
   // füllt sich erst, wenn jemand die Übersicht besucht hat. Wer direkt aus
