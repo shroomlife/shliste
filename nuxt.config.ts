@@ -11,7 +11,7 @@ export default defineNuxtConfig({
   ],
 
   // SSR bleibt an: der Nitro-Server wird ohnehin gebraucht, weil er das
-  // APP_SECRET haelt und die Anfragen an api.shliste.app signiert.
+  // APP_SECRET hält und die Anfragen an api.shliste.app signiert.
   // Die App-Seiten selbst rendern client-seitig (siehe routeRules) — ihre Daten
   // liegen offline-first in IndexedDB und existieren auf dem Server gar nicht.
   ssr: true,
@@ -26,14 +26,14 @@ export default defineNuxtConfig({
         // viewport-fit=cover: Ohne dieses Attribut liefert env(safe-area-inset-*)
         // auf iOS immer 0 — die fixe Bottom-Nav braucht den echten Wert.
         // interactive-widget=resizes-content: Die Bildschirmtastatur verkleinert
-        // den Inhalt, statt ihn zu ueberdecken — Eingabeleiste und Listenende
-        // bleiben damit ueber der Tastatur sichtbar (Chrome 108+, sonst wirkungslos).
+        // den Inhalt, statt ihn zu überdecken — Eingabeleiste und Listenende
+        // bleiben damit über der Tastatur sichtbar (Chrome 108+, sonst wirkungslos).
         { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content' },
-        { name: 'description', content: 'Erstelle und verwalte muehelos deine Einkaufslisten mit shliste. Pack Produkte ein, hake sie ab und behalte immer den Ueberblick beim Shoppen!' },
+        { name: 'description', content: 'Erstelle und verwalte mühelos deine Einkaufslisten mit shliste. Pack Produkte ein, hake sie ab und behalte immer den Überblick beim Shoppen!' },
         // Entspricht --color-secondary aus dem Android-Farbschema (SecondaryColor)
         { name: 'theme-color', content: '#FDECF5' },
-        // Beide Schreibweisen: Chrome hat die apple-Variante fuer veraltet
-        // erklaert und will die standardisierte, Safari liest weiterhin die
+        // Beide Schreibweisen: Chrome hat die apple-Variante für veraltet
+        // erklärt und will die standardisierte, Safari liest weiterhin die
         // eigene. Nur eine von beiden zu setzen kostet auf einer der beiden
         // Plattformen den Vollbildmodus der installierten App.
         { name: 'mobile-web-app-capable', content: 'yes' },
@@ -57,23 +57,23 @@ export default defineNuxtConfig({
   },
 
   // Start-Vibe Light. Dark Mode bleibt als Feature erhalten, ist aber nie
-  // der Initialzustand ohne gespeicherte Praeferenz.
+  // der Initialzustand ohne gespeicherte Präferenz.
   colorMode: {
     preference: 'light',
   },
 
   runtimeConfig: {
     // NUR serverseitig. Landet niemals im Client-Bundle — alles unterhalb von
-    // `public` wuerde beim Build ins Browser-Bundle inlined und waere damit
-    // fuer jeden Besucher lesbar, unabhaengig davon ob das Repo public ist.
+    // `public` würde beim Build ins Browser-Bundle inlined und wäre damit
+    // für jeden Besucher lesbar, unabhängig davon ob das Repo public ist.
     apiBase: process.env.NUXT_API_BASE || 'https://api.shliste.app',
     appSecret: process.env.NUXT_APP_SECRET || '',
 
     public: {
-      // Nur fuer die direkte SSE-Verbindung des Browsers zum Stream-Endpunkt.
+      // Nur für die direkte SSE-Verbindung des Browsers zum Stream-Endpunkt.
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'https://api.shliste.app',
-      // Oeffentliche Google-Client-ID (kein Geheimnis). Muss identisch zu
-      // GOOGLE_CLIENT_ID der API sein, sonst scheitert die aud-Pruefung.
+      // Öffentliche Google-Client-ID (kein Geheimnis). Muss identisch zu
+      // GOOGLE_CLIENT_ID der API sein, sonst scheitert die aud-Prüfung.
       googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID || '',
     },
   },
@@ -81,9 +81,9 @@ export default defineNuxtConfig({
   routeRules: {
     // Die Startseite wird NICHT prerendert, sondern gerendert und per SWR
     // gecacht: Eine prerenderte Seite liefert Nitro aus der statischen
-    // Schicht aus, BEVOR Server-Middleware laeuft — der Eingeloggt-Redirect
-    // (server/middleware/signed-in-redirect.ts) kaeme nie zum Zug. Mit SWR
-    // laeuft die Middleware zuerst, Anonyme bekommen weiter die gecachte
+    // Schicht aus, BEVOR Server-Middleware läuft — der Eingeloggt-Redirect
+    // (server/middleware/signed-in-redirect.ts) käme nie zum Zug. Mit SWR
+    // läuft die Middleware zuerst, Anonyme bekommen weiter die gecachte
     // Antwort. Empirisch am Produktionsbuild verifiziert, nicht vermutet.
     '/': { swr: 3600 },
     '/imprint': { prerender: true },
@@ -98,7 +98,7 @@ export default defineNuxtConfig({
     // Lesezeichen und der Start der installierten PWA. Innerhalb der App
     // zeigen alle Verweise direkt auf /app/lists.
     '/app': { redirect: { to: '/app/lists', statusCode: 302 } },
-    // Der App-Bereich rendert ausschliesslich im Client — seine Daten liegen
+    // Der App-Bereich rendert ausschließlich im Client — seine Daten liegen
     // in IndexedDB und sind auf dem Server nicht vorhanden.
     '/app/**': { ssr: false },
     // Diese eine Seite wird zusätzlich vorgerendert. Sie ist die Hülle, die der
@@ -139,9 +139,24 @@ export default defineNuxtConfig({
     ],
   },
 
+  /**
+   * Icons ins Client-Bundle scannen — sonst hängen alle 56 am Laufzeitabruf und
+   * warnen bei jedem Fehlschlag erneut. `globInclude` nennt die Dateitypen DIESES
+   * Projekts, statt den Scanner-Standard zu kopieren (der veraltete still); `.ts`
+   * muss mit, zwei Icons stehen in einem Composable. `scan` ist upstream noch als
+   * experimentell markiert, der Server-Provider bleibt deshalb als Netz bestehen.
+   */
+  icon: {
+    clientBundle: {
+      scan: {
+        globInclude: ['**/*.{vue,ts}'],
+      },
+    },
+  },
+
   // OG-Image-Generierung aus: sie zieht eine native resvg-Binary (rund 4 MB,
   // plattformspezifisch — die Windows-Variante landet sonst nutzlos im
-  // Linux-Image) plus eingebettete Inter-Schriften. Fuer eine App hinter
+  // Linux-Image) plus eingebettete Inter-Schriften. Für eine App hinter
   // Anmeldung bringt das nichts; die Startseite bekommt bei Bedarf ein
   // statisches OG-Bild.
   ogImage: { enabled: false },
@@ -269,14 +284,11 @@ export default defineNuxtConfig({
     // Dateien ausliefert, macht aus jedem Fehler eine Frage nach dem Cache.
     devOptions: { enabled: false },
 
-    // BEKANNT UND HARMLOS: Offline scheitert je Seitenaufruf eine Anfrage an
-    // /api/_nuxt_icon. Die Icons erscheinen trotzdem, sie liegen im
-    // Client-Bundle (43 Stueck, rund 10 KB) — nachgewiesen mit abgeschaltetem
-    // Server. Zwei naheliegende Auswege wurden geprueft und verworfen:
-    // `icon.provider: 'none'` unterbindet die Anfrage, laesst dann aber auch
-    // die Icons der vorgerenderten Seiten leer; ein Laufzeit-Cache greift
-    // nicht, weil jede Seite eine andere Icon-Kombination und damit eine
-    // andere Adresse anfragt.
+    // Die Icons liegen seit dem Scan-Bundle (siehe `icon` oben) im Client,
+    // offline entsteht keine Anfrage an /api/_nuxt_icon mehr. Die frühere
+    // Notiz zählte 43 Icons — das waren Nuxt UIs eigene, nicht die der App.
+    // `icon.provider: 'none'` bleibt verworfen: es lässt die Icons der
+    // vorgerenderten Seiten leer.
   },
 
   seo: { enabled: true },
