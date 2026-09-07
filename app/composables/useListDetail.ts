@@ -284,7 +284,7 @@ export function useListDetail() {
     if (name !== undefined && isValidItemContent(name, draft.url)) draft.name = name
 
     // Letzte Verteidigungslinie: Wer die Adresse entfernt, ohne einen Namen
-    // zu setzen, hinterliesse eine leere Zeile. Die Oberfläche fängt das schon
+    // zu setzen, hinterließe eine leere Zeile. Die Oberfläche fängt das schon
     // ab; hier wird still nichts geschrieben statt Unsinn zu speichern.
     if (!isValidItemContent(draft.name, draft.url)) return
 
@@ -314,7 +314,7 @@ export function useListDetail() {
       actionType: 'deleted',
       entityType: 'list_item',
       entityId: item.id,
-      // Der Anzeigename und nicht `name`: Ein Link-Eintrag heisst lokal "",
+      // Der Anzeigename und nicht `name`: Ein Link-Eintrag heißt lokal "",
       // und "  gelöscht" wäre im Verlauf nicht wiederzuerkennen.
       description: `${listItemDisplayName(item)} gelöscht`,
       snapshotJson: listItemSnapshotJson(item),

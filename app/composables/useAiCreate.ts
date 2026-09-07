@@ -4,7 +4,7 @@
  * WARUM DAS HIER LIEGT UND NICHT MEHR IN DEN BEIDEN ÜBERSICHTSSEITEN: Es gibt
  * einen dritten Aufrufer. Der Teilen-Empfang (`app/pages/app/share.vue`)
  * bietet dieselben beiden AI-Wege an und braucht denselben Ablauf — anlegen,
- * Details schreiben, neu laden, Abgleich anstossen, Hinweis zeigen,
+ * Details schreiben, neu laden, Abgleich anstoßen, Hinweis zeigen,
  * hinnavigieren. Eine dritte Kopie davon wäre die dritte Gelegenheit, einen
  * dieser Schritte zu vergessen.
  *

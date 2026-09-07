@@ -15,7 +15,7 @@
  * (`refresh_reuse_detected`) und widerruft die GESAMTE Session-Familie —
  * auch das gerade ausgegebene neue Token. Daraus folgen zwei eiserne Regeln:
  *
- * 1. NIEMALS einen Refresh-Request blind wiederholen. Ein Timeout heisst
+ * 1. NIEMALS einen Refresh-Request blind wiederholen. Ein Timeout heißt
  *    nicht „nicht angekommen": Der Request kann serverseitig durchgelaufen
  *    sein, das Token ist dann verbraucht — und die Wiederholung wäre genau
  *    der Doppel-Einsatz, der die Familie killt. Deshalb gibt es hier KEIN
@@ -199,7 +199,7 @@ export interface SessionTokenResult {
   sessionToken: string | null
   /**
    * true: Die API hat den Refresh ENDGÜLTIG abgelehnt; die Cookies sind
-   * bereits gelöscht. `null` ohne dieses Flag heisst dagegen nur „im Moment
+   * bereits gelöscht. `null` ohne dieses Flag heißt dagegen nur „im Moment
    * kein Token beschaffbar" (nie angemeldet oder API nicht erreichbar) —
    * dann ist NICHTS gelöscht worden.
    */
@@ -259,7 +259,7 @@ export async function resolveSessionToken(
 
   // Schritt 3: Refresh — serialisiert über die Single-Flight. Parallele
   // Requests desselben Nutzers warten auf DENSELBEN Austausch und wenden
-  // dessen Ergebnis anschliessend jeweils auf ihre eigene Antwort an
+  // dessen Ergebnis anschließend jeweils auf ihre eigene Antwort an
   // (Set-Cookie ist idempotent).
   const flightKey = createHash('sha256').update(refreshToken).digest('hex')
   const outcome = await runSingleFlight(inflightRefreshes, flightKey, () =>
@@ -287,7 +287,7 @@ export async function resolveSessionToken(
 /**
  * Bequemer Zugriff für die Proxy-Routen: nur das Token, oder null.
  *
- * `null` heisst für den Aufrufer schlicht „401 Nicht angemeldet" — ob nie
+ * `null` heißt für den Aufrufer schlicht „401 Nicht angemeldet" — ob nie
  * angemeldet oder endgültig widerrufen, macht für eine Proxy-Antwort keinen
  * Unterschied. Wer es unterscheiden muss (auth/me), nimmt `resolveSessionToken`.
  */

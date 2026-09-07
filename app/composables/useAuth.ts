@@ -14,7 +14,7 @@ import type { UserProfile } from '#shared/types/domain'
  * nur die Anzeige dazu. Ein unlesbares Profil-Cookie liefert `authenticated:
  * true` mit `profile: null` — die Oberfläche zeigt dann den
  * Platzhalter-Avatar, meldet aber NIEMANDEN ab. Wäre `isSignedIn` an das
- * Profil gekoppelt, würde ein blosses Anzeigeproblem den Abgleich stoppen.
+ * Profil gekoppelt, würde ein bloßes Anzeigeproblem den Abgleich stoppen.
  *
  * Bewusst `$fetch` statt `useFetch`: Anmelden und Abmelden passieren in
  * Ereignisbehandlern und sind Aktionen, keine Daten, die eine Ansicht zum
@@ -56,7 +56,7 @@ export function useAuth() {
    *
    * Nur im Browser: Auf dem Server hätte `$fetch` die Cookies des Besuchers
    * nicht dabei und bekäme deshalb verlässlich "abgemeldet" zurück — ein
-   * Ergebnis, das anschliessend die Hydration widerlegen würde.
+   * Ergebnis, das anschließend die Hydration widerlegen würde.
    */
   async function loadSession(): Promise<void> {
     if (import.meta.server) return
@@ -86,7 +86,7 @@ export function useAuth() {
    *
    * Geprüft wird das Token weder hier noch in der BFF, sondern erst von
    * api.shliste.app (Signatur, Aussteller, aud). Fehler werden absichtlich
-   * durchgereicht: Nur die aufrufende Oberfläche weiss, wie sie einen
+   * durchgereicht: Nur die aufrufende Oberfläche weiß, wie sie einen
    * fehlgeschlagenen Anmeldeversuch anzeigen will.
    */
   async function signIn(idToken: string): Promise<UserProfile> {
@@ -115,7 +115,7 @@ export function useAuth() {
    * `loadSession()` wieder zurück. Die BFF widerruft dabei auch das
    * Refresh-Token bei der API (echter Widerruf, nicht nur Cookie-Löschen).
    *
-   * Die lokalen Daten bleiben unangetastet. Abmelden heisst "kein Abgleich
+   * Die lokalen Daten bleiben unangetastet. Abmelden heißt "kein Abgleich
    * mehr", nicht "Listen weg".
    */
   async function signOut(): Promise<void> {

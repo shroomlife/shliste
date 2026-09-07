@@ -36,7 +36,7 @@ export function useRecipeChat() {
 
   const messages = ref<RecipeChatMessageRow[]>([])
   const isSending = ref(false)
-  /** Die clientseitige Fehler-Bubble; null heisst: kein Fehler sichtbar. */
+  /** Die clientseitige Fehler-Bubble; null heißt: kein Fehler sichtbar. */
   const errorMessage = ref<string | null>(null)
 
   /** Als Ref, damit die Ansicht den Retry-Knopf nur bei echtem Ziel zeigt. */
@@ -197,7 +197,7 @@ export function useRecipeChat() {
     }
   }
 
-  /** Bricht eine laufende Anfrage ab (z.B. beim Schliessen des Sheets). */
+  /** Bricht eine laufende Anfrage ab (z.B. beim Schließen des Sheets). */
   function cancel(): void {
     controller?.abort()
     controller = null

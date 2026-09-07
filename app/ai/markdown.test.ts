@@ -26,7 +26,7 @@ describe('parseInline', () => {
   })
 
   test('zwei fette Stellen werden nicht zu einer langen', () => {
-    // Ohne das nicht-gierige `.+?` verschlaenge der Ausdruck alles zwischen dem
+    // Ohne das nicht-gierige `.+?` verschlänge der Ausdruck alles zwischen dem
     // ersten und dem letzten Sternchenpaar zu EINEM fetten Block.
     expect(parseInline('**a** und **b**')).toEqual([
       { text: 'a', bold: true },
@@ -94,8 +94,8 @@ describe('parseMarkdown', () => {
   })
 
   test('Leerzeilen fallen weg', () => {
-    // Der Abstand zwischen den Bloecken traegt die Trennung; ein leerer Absatz
-    // waere eine zweite, doppelte Aussage darueber.
+    // Der Abstand zwischen den Blöcken trägt die Trennung; ein leerer Absatz
+    // wäre eine zweite, doppelte Aussage darüber.
     expect(parseMarkdown('erste Zeile\n\n\nzweite Zeile')).toEqual([
       { kind: 'paragraph', segments: [{ text: 'erste Zeile', bold: false }] },
       { kind: 'paragraph', segments: [{ text: 'zweite Zeile', bold: false }] },
@@ -143,8 +143,8 @@ describe('parseMarkdown', () => {
   })
 
   test('was wir NICHT können, bleibt sichtbarer Text', () => {
-    // Bewusst festgehalten: Ueberschriften, Links und Codebloecke deckt Android
-    // auch nicht ab. Wer das aendert, aendert es in beiden Clients.
+    // Bewusst festgehalten: Überschriften, Links und Codeblöcke deckt Android
+    // auch nicht ab. Wer das ändert, ändert es in beiden Clients.
     expect(parseMarkdown('# Überschrift')).toEqual([
       { kind: 'paragraph', segments: [{ text: '# Überschrift', bold: false }] },
     ])

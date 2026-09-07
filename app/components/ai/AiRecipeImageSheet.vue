@@ -64,7 +64,7 @@ function cancelRequest(): void {
   controller?.abort()
 }
 
-/** Beim Schliessen alles zurücksetzen — auch eine noch laufende Anfrage. */
+/** Beim Schließen alles zurücksetzen — auch eine noch laufende Anfrage. */
 watch(open, (isOpen) => {
   if (isOpen) return
   controller?.abort()

@@ -7,7 +7,7 @@
  * Abruf des Deltas gehört in die Sync-Engine, nicht in die Verbindung.
  *
  * GENAU EINMAL AUFRUFEN, sinnvollerweise im App-Layout. Jeder Aufruf öffnet
- * eine eigene Verbindung, und der Server schliesst ab der sechsten Verbindung
+ * eine eigene Verbindung, und der Server schließt ab der sechsten Verbindung
  * eines Kontos die jeweils älteste.
  *
  * Braucht eine Komponenteninstanz: `onMounted` und `onBeforeUnmount` binden
@@ -45,7 +45,7 @@ export interface UseRealtimeOptions {
    *
    * Der Aufrufer vergleicht sie mit dem eigenen Stand und gleicht ab, wenn sie
    * höher ist. Der Vergleich liegt bewusst NICHT hier: Diese Ebene hält die
-   * Verbindung und weiss nichts von Datenbanken — genau die Trennung, die
+   * Verbindung und weiß nichts von Datenbanken — genau die Trennung, die
    * `app/sync/engine/realtime.ts` im Kopf beschreibt.
    */
   onChangeSeq?: (seq: number) => void
@@ -110,7 +110,7 @@ export function useRealtime(options: UseRealtimeOptions): UseRealtime {
      * daraufhin die Minuten-Reserve abgeschaltet. Eine EventSource meldet
      * `open` aber schon, sobald die Antwortkopfzeilen da sind — ob je Nutzlast
      * folgt, sagt das nicht. Eine offene, aber stumme Leitung schaltete damit
-     * die Reserve ab und liess den Tab bis zur 60-Sekunden-Frist ohne jeden
+     * die Reserve ab und ließ den Tab bis zur 60-Sekunden-Frist ohne jeden
      * Weg an neue Daten.
      *
      * Die Verbindung selbst unterscheidet das längst (`proven` in

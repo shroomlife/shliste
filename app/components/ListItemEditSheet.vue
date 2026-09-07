@@ -5,8 +5,8 @@ import type { ListItem } from '#shared/types/domain'
  * Eintrag bearbeiten — Name, Link und Menge, das Pendant zu Androids
  * ListItemEditSheet.kt über dem AppSheet-Muster der App.
  *
- * Die Mengensteuerung übersetzt Androids NumberSliderInput sinngemäss auf
- * Zeigegeräte: grosse Minus- und Plus-Knöpfe (44 Pixel, WCAG 2.2 SC 2.5.8)
+ * Die Mengensteuerung übersetzt Androids NumberSliderInput sinngemäß auf
+ * Zeigegeräte: große Minus- und Plus-Knöpfe (44 Pixel, WCAG 2.2 SC 2.5.8)
  * fürs Feinjustieren und eine Ziffernreihe 1–9 für den schnellen Griff — die
  * allermeisten Einkäufe liegen in genau diesem Bereich. Der Wertebereich ist
  * derselbe wie auf Android: 1 bis 999.

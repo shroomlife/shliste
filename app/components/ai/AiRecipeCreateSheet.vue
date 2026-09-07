@@ -137,7 +137,7 @@ function onFileSelected(event: Event): void {
     return
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    errorMessage.value = 'Das Bild ist zu gross. Höchstens 10 MB sind möglich.'
+    errorMessage.value = 'Das Bild ist zu groß. Höchstens 10 MB sind möglich.'
     return
   }
 
@@ -189,7 +189,7 @@ async function submitUrl(): Promise<void> {
 }
 
 watch(open, (isOpen) => {
-  // Beim ÖFFNEN die mitgegebene Adresse übernehmen — beim Schliessen alles
+  // Beim ÖFFNEN die mitgegebene Adresse übernehmen — beim Schließen alles
   // zurücksetzen, auch eine noch laufende Anfrage.
   if (isOpen) {
     if (initialUrl !== null) url.value = initialUrl

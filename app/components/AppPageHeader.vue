@@ -1,10 +1,10 @@
 <script setup lang="ts">
 /**
- * Einheitlicher Seitenkopf für die Uebersichten (Listen, Rezepte).
+ * Einheitlicher Seitenkopf für die Übersichten (Listen, Rezepte).
  *
  * Die Aktion erscheint auf dem Desktop hier als beschrifteter Knopf und auf
  * Mobil stattdessen als schwebender Knopf (AppFab) — dieselbe Aktion, zwei
- * Darstellungen. Beide Uebersichten benutzen diese Komponente, damit sie
+ * Darstellungen. Beide Übersichten benutzen diese Komponente, damit sie
  * garantiert gleich aussehen und sich gleich verhalten.
  */
 const { title, actionLabel } = defineProps<{

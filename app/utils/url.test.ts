@@ -67,7 +67,7 @@ describe('validHttpUrlOrNull', () => {
     expect(validHttpUrlOrNull('https://kochwelt.de')).toBe('https://kochwelt.de')
   })
 
-  test('Grossbuchstaben im Host bleiben erhalten', () => {
+  test('Großbuchstaben im Host bleiben erhalten', () => {
     expect(validHttpUrlOrNull('https://WWW.Rewe.DE/Angebote')).toBe('https://WWW.Rewe.DE/Angebote')
   })
 
@@ -114,7 +114,7 @@ describe('validHttpUrlOrNull', () => {
     // Android-Repo: Diese Prüfung läuft an JEDER Schreibstelle, nicht nur an
     // frisch getippten Eingaben. Eine strengere Regel hätte eine längst
     // gespeicherte, gültige Adresse beim nächsten Schreibvorgang auf `null`
-    // gesetzt — an einer Zeile, die bloss abgehakt wurde, und für alle
+    // gesetzt — an einer Zeile, die bloß abgehakt wurde, und für alle
     // Mitglieder einer geteilten Liste.
     expect(validHttpUrlOrNull('https://x.de/a b')).toBe('https://x.de/a b')
     expect(validHttpUrlOrNull('https://x.de/a?q=1 2')).toBe('https://x.de/a?q=1 2')

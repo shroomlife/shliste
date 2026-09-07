@@ -47,7 +47,7 @@ describe('die beiden echten Fehlerbilder', () => {
 })
 
 describe('Normalbetrieb', () => {
-  test('gleiche Prüfsummen heissen synchron', () => {
+  test('gleiche Prüfsummen heißen synchron', () => {
     expect(urteil({ localHash: SERVER_A })).toEqual({ kind: 'in-sync' })
   })
 

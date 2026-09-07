@@ -8,7 +8,7 @@
  * allen drei Repos gegen die jeweilige Umsetzung läuft.
  *
  * BEWUSST ENG: Nur eine vollständige Adresse oder ein `www.`-Host zählen. Ein
- * blosses „rewe.de" bleibt ein gewöhnlicher Eintrag — Menschen schreiben
+ * bloßes „rewe.de" bleibt ein gewöhnlicher Eintrag — Menschen schreiben
  * Einkaufszettel voller Wörter mit Punkt („Dr. Oetker", „ca. 500g"), und aus
  * jedem davon einen Link zu machen wäre die schlechtere Überraschung.
  */
@@ -31,7 +31,7 @@ export interface DetectedLink {
 /**
  * Erkennt einen Link in der getrimmten Eingabe.
  *
- * `null` heisst „gewöhnlicher Eintrag" — der Aufrufer legt dann eine Zeile
+ * `null` heißt „gewöhnlicher Eintrag" — der Aufrufer legt dann eine Zeile
  * mit diesem Namen an. Bei einem Treffer legt er eine Zeile mit `url` und
  * LEEREM Namen an; angezeigt wird dann der Seitentitel oder der Host
  * (`listItemDisplay.ts`).
@@ -47,7 +47,7 @@ export function detectLinkInput(raw: string): DetectedLink | null {
 
   if (candidate === null) return null
 
-  // Die abschliessende Prüfung fängt, was die Muster durchlassen: Zugangsdaten
+  // Die abschließende Prüfung fängt, was die Muster durchlassen: Zugangsdaten
   // in der Adresse, überlange Werte, kaputte Klammern.
   const url = validHttpUrlOrNull(candidate)
   return url === null ? null : { url }

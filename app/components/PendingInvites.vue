@@ -33,7 +33,7 @@ const declineTarget = ref<PendingInvite | null>(null)
 const isDeclineOpen = ref(false)
 
 /**
- * Wer lädt hier ein? `null` heisst "Name nicht sichtbar" — dann übernimmt
+ * Wer lädt hier ein? `null` heißt "Name nicht sichtbar" — dann übernimmt
  * "Die Person" den Satz, derselbe Rückfall wie in der Android-App.
  */
 const declineInviterName = computed(() => {
@@ -74,7 +74,7 @@ function confirmDecline(): void {
 }
 
 // Verschwindet die Einladung, während ihre Rückfrage offen steht (der
-// Einladende zieht zurück, ein Pull räumt sie ab), schliesst die Rückfrage
+// Einladende zieht zurück, ein Pull räumt sie ab), schließt die Rückfrage
 // mit — sonst bestätigte man ins Leere oder das Blatt stünde beim nächsten
 // Auftauchen einer Einladung sofort wieder offen da.
 watch(() => invites, (current) => {
@@ -90,7 +90,7 @@ watch(() => invites, (current) => {
 <template>
   <!-- Das Bestätigungs-Blatt steht AUSSERHALB des v-if: Verschwindet die
        letzte Einladung, während es offen ist, darf es nicht kommentarlos aus
-       dem DOM gerissen werden — es schliesst sich über den watch im Script. -->
+       dem DOM gerissen werden — es schließt sich über den watch im Script. -->
   <div>
     <div
       v-if="invites.length"

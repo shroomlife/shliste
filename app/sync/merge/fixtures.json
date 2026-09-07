@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "description": "Golden Fixtures für den Field-Level-LWW-Merge in Pull-Richtung (Server -> Gerät). Bewusst als JSON und nicht als TypeScript abgelegt, damit dieselben Fälle auch im API-Repo und im Android-Projekt gegen die dortige Implementierung laufen. Jeder Fall beschreibt eine Zeile: den lokalen Stand (oder null), den Serverstand und das erwartete Merge-Ergebnis. QUELLE DER WAHRHEIT ist shliste.app/app/sync/merge/fixtures.json. Weil die drei GitHub-Repos getrennt sind, liegt dieselbe Datei zusätzlich als wortgleiche Kopie in api.shliste.app/src/lib/fixtures.json und in android-app/app/src/test/resources/fixtures.json. Geändert oder ergänzt wird ausschliesslich die Quelle, danach werden beide Kopien neu gezogen. Jeder der drei Loader prüft schemaVersion und die Anzahl der Fälle, damit eine einseitig ergänzte Kopie sofort auffällt statt still zu driften. Schema-Version 2 (26.08.2026) ergänzt das Feld url an Listeneinträgen: es ist ein gewöhnliches LWW-Feld und steht zusätzlich in ADD_WINS_CONTENT_FIELDS, weil ein Link zum Inhalt eines Eintrags gehört. Die serverseitig gepflegten Spiegel (linkTitle, linkImagePath, linkImageKind) nehmen am Merge NICHT teil und stehen deshalb in keinem Fall.",
+  "description": "Golden Fixtures für den Field-Level-LWW-Merge in Pull-Richtung (Server -> Gerät). Bewusst als JSON und nicht als TypeScript abgelegt, damit dieselben Fälle auch im API-Repo und im Android-Projekt gegen die dortige Implementierung laufen. Jeder Fall beschreibt eine Zeile: den lokalen Stand (oder null), den Serverstand und das erwartete Merge-Ergebnis. QUELLE DER WAHRHEIT ist shliste.app/app/sync/merge/fixtures.json. Weil die drei GitHub-Repos getrennt sind, liegt dieselbe Datei zusätzlich als wortgleiche Kopie in api.shliste.app/src/lib/fixtures.json und in android-app/app/src/test/resources/fixtures.json. Geändert oder ergänzt wird ausschließlich die Quelle, danach werden beide Kopien neu gezogen. Jeder der drei Loader prüft schemaVersion und die Anzahl der Fälle, damit eine einseitig ergänzte Kopie sofort auffällt statt still zu driften. Schema-Version 2 (26.08.2026) ergänzt das Feld url an Listeneinträgen: es ist ein gewöhnliches LWW-Feld und steht zusätzlich in ADD_WINS_CONTENT_FIELDS, weil ein Link zum Inhalt eines Eintrags gehört. Die serverseitig gepflegten Spiegel (linkTitle, linkImagePath, linkImageKind) nehmen am Merge NICHT teil und stehen deshalb in keinem Fall.",
   "contract": {
     "comparison": "numerisch in Epoch-Millisekunden; fehlende und unparsbare Zeitstempel verlieren jeden Vergleich",
     "tie": "beim Pull gewinnt der Server (beim Push gewinnt serverseitig der Client - die Asymmetrie ist Absicht)",
@@ -190,7 +190,7 @@
     },
     {
       "name": "leere fieldTimestamps auf beiden Seiten: der Server gewinnt jedes Feld",
-      "why": "Ohne Zeitstempel ist jedes Feld ein Gleichstand auf -Infinity, und Gleichstand heisst beim Pull Server. Die lokale Zeile ist danach sauber.",
+      "why": "Ohne Zeitstempel ist jedes Feld ein Gleichstand auf -Infinity, und Gleichstand heißt beim Pull Server. Die lokale Zeile ist danach sauber.",
       "entityType": "listItem",
       "local": {
         "dirty": true,
@@ -426,7 +426,7 @@
     },
     {
       "name": "gelöschte Zeile ohne deletedAt-Zeitstempel bleibt gelöscht",
-      "why": "Der leere Marker. Trägt eine gelöschte Zeile keinen deletedAt-Zeitstempel, ist unbekannt, WANN gelöscht wurde, und 'danach bearbeitet' lässt sich nicht belegen. Genau hier lief Android auseinander: Die Prüfung stand dort auf != null statt auf 'nicht leer', der leere String kam durch, wurde zu null geparst und galt damit als älter als jeder Edit. Die Zeile kam auf Android zurück, während API und PWA sie gelöscht liessen.",
+      "why": "Der leere Marker. Trägt eine gelöschte Zeile keinen deletedAt-Zeitstempel, ist unbekannt, WANN gelöscht wurde, und 'danach bearbeitet' lässt sich nicht belegen. Genau hier lief Android auseinander: Die Prüfung stand dort auf != null statt auf 'nicht leer', der leere String kam durch, wurde zu null geparst und galt damit als älter als jeder Edit. Die Zeile kam auf Android zurück, während API und PWA sie gelöscht ließen.",
       "entityType": "listItem",
       "local": {
         "dirty": true,

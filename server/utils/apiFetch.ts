@@ -133,7 +133,7 @@ export async function apiFetchRaw(path: string, options: ApiFetchOptions = {}): 
   const { method = 'GET', rawBody, sessionToken, clientIp } = options
   const { apiBase } = useRuntimeConfig()
 
-  // Wie oben: signiert wird ausschliesslich `url.pathname`. Ein Query-String
+  // Wie oben: signiert wird ausschließlich `url.pathname`. Ein Query-String
   // (z.B. `?ref=...`) landet in `url.search` und bleibt aus der Signatur heraus.
   const url = new URL(path, apiBase)
 

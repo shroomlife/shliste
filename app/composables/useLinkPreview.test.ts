@@ -4,7 +4,7 @@
  *
  * Der Pfad kommt zwar vom eigenen Server, wird aber behandelt wie jede fremde
  * Eingabe: Käme über ein manipuliertes Feld etwas anderes als 32 Hex-Zeichen
- * durch, liesse sich eine beliebige Adresse in ein `<img src>` schreiben.
+ * durch, ließe sich eine beliebige Adresse in ein `<img src>` schreiben.
  */
 import { describe, expect, test } from 'bun:test'
 import { resolveLinkPreviewUrl } from './useLinkPreview'
@@ -38,7 +38,7 @@ describe('resolveLinkPreviewUrl', () => {
 
   test('ein Zeilenumbruch hebelt das Muster nicht aus', () => {
     // In manchen Sprachen (Python, Perl) trifft `$` auch VOR einem
-    // abschliessenden Zeilenumbruch, und dieselbe Prüfung stünde dort offen.
+    // abschließenden Zeilenumbruch, und dieselbe Prüfung stünde dort offen.
     // JavaScript tut das nicht — festgehalten, damit es beim Portieren des
     // Musters in ein anderes Repo nicht unbemerkt kippt.
     expect(resolveLinkPreviewUrl(`link:${HASH}.webp\n`)).toBeNull()

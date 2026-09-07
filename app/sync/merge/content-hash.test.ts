@@ -9,7 +9,7 @@
  * `computeContentHashes` in `api.shliste.app/src/routes/sync/status.ts`:
  * `md5(string_agg(… , '' ORDER BY id))`.
  *
- * Die Testdaten sind bewusst unbequem gewählt: Ids ausserhalb der Reihenfolge
+ * Die Testdaten sind bewusst unbequem gewählt: Ids außerhalb der Reihenfolge
  * (prüft die Sortierung), Umlaute und ein Kaufmanns-Und (prüft die
  * UTF-8-Kodierung), ein `null` neben einem gesetzten Wert (prüft COALESCE),
  * Wahrheitswerte in beiden Zuständen.

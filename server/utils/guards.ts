@@ -1,5 +1,5 @@
 /**
- * Kleine Typwächter für Werte, die von aussen kommen.
+ * Kleine Typwächter für Werte, die von außen kommen.
  *
  * Antworten der API sind zur Laufzeit `unknown`: JSON aus einem fremden Prozess
  * ist ein Versprechen, kein Beweis. Statt es per Cast zu behaupten, wird es hier

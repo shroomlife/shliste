@@ -1,5 +1,5 @@
 /**
- * Wie eine Zeile heisst, wenn sie ein Link ist.
+ * Wie eine Zeile heißt, wenn sie ein Link ist.
  *
  * WARUM ES DIESEN HELFER GIBT: Ein Link-Eintrag entsteht mit LEEREM Namen —
  * niemand tippt beim Teilen einer Seite einen Namen. Angezeigt wird deshalb

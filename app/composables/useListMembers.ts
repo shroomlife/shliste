@@ -75,7 +75,7 @@ export function useListMembers() {
   /**
    * Lädt eine Adresse ein.
    *
-   * Gibt zurück, ob es geklappt hat. Ein Erfolg heisst NICHT, dass die Person
+   * Gibt zurück, ob es geklappt hat. Ein Erfolg heißt NICHT, dass die Person
    * schon Mitglied ist: Gibt es zu der Adresse kein Konto, wartet die
    * Einladung, bis sich jemand damit anmeldet.
    */

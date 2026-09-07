@@ -8,7 +8,7 @@
  *    Kollision je Zeile statt keiner.
  * 2. DIE SICHTBARE REIHENFOLGE STIMMT DANACH. Geprüft wird nicht, welche
  *    Schlüssel entstehen (die sind ein Implementierungsdetail), sondern wie die
- *    Liste anschliessend dasteht.
+ *    Liste anschließend dasteht.
  *
  * Die Zählweise von `toIndex` ist die von Sortable.js: die Position in der
  * Liste OHNE die gezogene Zeile. Ein Vertippen daran verschiebt um eins
@@ -93,7 +93,7 @@ describe('planMoveTo', () => {
     expect(planMoveTo(FRESH, FRESH, 'b', 1)).toBeNull()
   })
 
-  test('ausserhalb der Liste ergibt keinen Plan', () => {
+  test('außerhalb der Liste ergibt keinen Plan', () => {
     expect(planMoveTo(FRESH, FRESH, 'a', -1)).toBeNull()
     expect(planMoveTo(FRESH, FRESH, 'a', 4)).toBeNull()
   })
@@ -155,7 +155,7 @@ describe('nextSortKey', () => {
     expect(nextSortKey(FRESH)).toBe('aV')
   })
 
-  test('ein neuer Eintrag landet hinter dem grössten vorhandenen Schlüssel', () => {
+  test('ein neuer Eintrag landet hinter dem größten vorhandenen Schlüssel', () => {
     // Nur der Schlüssel zählt: `nextSortKey` fragt nichts anderes ab.
     const key = nextSortKey([
       { sortKey: 'a0' },
@@ -165,7 +165,7 @@ describe('nextSortKey', () => {
     expect(key > 'a1').toBe(true)
   })
 
-  test('massgeblich ist der grösste Schlüssel, nicht der der letzten Zeile', () => {
+  test('maßgeblich ist der größte Schlüssel, nicht der der letzten Zeile', () => {
     // Halb normalisiert: Die hinteren Zeilen haben noch keinen Schlüssel. Wer
     // stattdessen den der letzten Zeile nähme, bekäme `null` und landete vorn.
     const key = nextSortKey([
@@ -252,7 +252,7 @@ describe('Blöcke aus offenen und erledigten Einträgen', () => {
     const plan = planMoveTo(MIT_ABGEHAKTEM, OFFEN, 'B', 1)
 
     expect(plan).not.toBeNull()
-    // B rutscht hinter C, der Schlüssel muss also grösser als der von C sein.
+    // B rutscht hinter C, der Schlüssel muss also größer als der von C sein.
     expect((plan?.moved.sortKey ?? '') > 'aX').toBe(true)
   })
 

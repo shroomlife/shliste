@@ -46,14 +46,14 @@ export interface ReorderPlan {
  * Der steht auf beiden Seiten hinten (`compareByManualOrder` hier, `sortKey IS
  * NULL` in der ORDER-BY-Klausel des Android-DAO), INNERHALB des Topfes
  * entscheidet aber `orderIndex` — und den bilden die beiden Clients
- * unterschiedlich: Android nimmt die Anzahl der Einträge, das Web den grössten
+ * unterschiedlich: Android nimmt die Anzahl der Einträge, das Web den größten
  * vorhandenen Wert plus eins. Nach der ersten Löschung laufen die Folgen
  * auseinander, und dieselbe Liste steht auf zwei Geräten verschieden da.
  * Mit einem Schlüssel ab dem ersten Moment gibt es diesen Topf gar nicht erst.
  *
  * Der linke Nachbar ist der GRÖSSTE vorhandene Schlüssel und nicht der der
  * letzten Zeile: Eine Liste kann teils normalisiert sein, dann haben gerade
- * die hinteren Zeilen keinen. Der grösste Schlüssel ist der letzte belegte
+ * die hinteren Zeilen keinen. Der größte Schlüssel ist der letzte belegte
  * Platz, und dahinter gehört der neue Eintrag. Hat keine einzige Zeile einen,
  * ist der linke Nachbar `null` und es entsteht der Startschlüssel.
  *
@@ -95,7 +95,7 @@ export function nextSortKey(rows: readonly Pick<OrderedRow, 'sortKey'>[]): strin
  * Bei einer Liste ohne Blöcke (Zutaten, Rezeptschritte) ist `groupRows`
  * schlicht `allRows`.
  *
- * `null` heisst "nichts zu tun": unbekannte Zeile, Ziel ausserhalb des Blocks,
+ * `null` heißt "nichts zu tun": unbekannte Zeile, Ziel außerhalb des Blocks,
  * oder die Zeile liegt bereits dort.
  */
 export function planMoveTo(
@@ -123,7 +123,7 @@ export function planMoveTo(
   const keyById = new Map(allRows.map((row, position) => [row.id, allKeys[position] as string]))
 
   // SCHRITT 1 — die Absicht aus dem Block ablesen: hinter wen, vor wen?
-  // Nur der Block weiss, was "an Position 2" bedeutet, denn genau ihn hat der
+  // Nur der Block weiß, was "an Position 2" bedeutet, denn genau ihn hat der
   // Nutzer vor Augen gehabt.
   const groupWithout = groupRows.filter(row => row.id !== id)
   const leftNeighbourId = toIndex === 0 ? null : groupWithout[toIndex - 1]?.id ?? null

@@ -15,7 +15,7 @@ const { state = 'offline', actionable = false } = defineProps<{
    *
    * Heute ist das genau der Fall "welcher Stand gilt?" — eine Frage, die
    * gestellt wurde und noch offen ist. Ohne diesen Weg zurück wäre sie nach
-   * dem ersten Schliessen unerreichbar.
+   * dem ersten Schließen unerreichbar.
    */
   actionable?: boolean
 }>()

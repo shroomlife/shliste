@@ -88,7 +88,7 @@ export function parseList(value: unknown): List | null {
  *
  * Ein unbekannter Wert wird zu `null` statt geraten — dieselbe Regel wie bei
  * der Chat-Rolle. Der Domänentyp zählt zwei Literale auf, und ein erfundenes
- * drittes liefe in jedem `v-if` der Oberfläche ins Leere. `null` heisst dann
+ * drittes liefe in jedem `v-if` der Oberfläche ins Leere. `null` heißt dann
  * schlicht "kein Bild", und die Kachel zeigt ihr Ersatz-Icon.
  */
 function readLinkImageKind(source: Record<string, unknown>): LinkImageKind | null {
@@ -291,7 +291,7 @@ export function parseHistoryEntry(value: unknown): HistoryEntry | null {
 /**
  * Ein Mitglied einer geteilten Liste.
  *
- * `email` bleibt `null`, wenn der Server sie nicht mitschickt — das heisst
+ * `email` bleibt `null`, wenn der Server sie nicht mitschickt — das heißt
  * "Adresse nicht sichtbar" und NICHT "kein Konto" (siehe `member-view.ts` in
  * der API).
  */

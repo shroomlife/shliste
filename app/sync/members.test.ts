@@ -1,8 +1,8 @@
 /**
  * Das Einlesen der Mitglieder-Antwort.
  *
- * DER PUNKT, AN DEM ES WEHTUT: `email: null` heisst "Adresse nicht sichtbar"
- * und NICHT "kein Konto". Der Server füllt das Feld ausschliesslich für den
+ * DER PUNKT, AN DEM ES WEHTUT: `email: null` heißt "Adresse nicht sichtbar"
+ * und NICHT "kein Konto". Der Server füllt das Feld ausschließlich für den
  * Eigentümer der Liste. Wer daraus "hat kein Konto" liest, zeigt einem
  * Mitglied an, es sei nur eingeladen — und der Eigentümer entfernt womöglich
  * jemanden, der längst dabei ist.

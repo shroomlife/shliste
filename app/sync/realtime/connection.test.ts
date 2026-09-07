@@ -33,7 +33,7 @@ import {
 describe('Zeitbudget gegen den Server', () => {
   test('die Frist liegt über dem Stillschweigen des Servers', () => {
     // Staut sich der Puffer einer Verbindung, schiebt der Server den Herzschlag
-    // NICHT nach und schliesst erst nach dem dritten solchen Takt. Steht die
+    // NICHT nach und schließt erst nach dem dritten solchen Takt. Steht die
     // Frist hier auf demselben Wert, entscheidet der Zufall, wer zuerst
     // zuschlägt — und ein geordnetes Ende käme als Fehler an.
     expect(LIVENESS_TIMEOUT_MS).toBeGreaterThan(SERVER_STALL_BUDGET_MS)
@@ -172,12 +172,12 @@ describe('buildStreamUrl', () => {
       .toBe('https://api.shliste.app/realtime/events?ticket=abc123&lastEventId=1755600000000-0')
   })
 
-  test('verträgt einen abschliessenden Schrägstrich in der Basisadresse', () => {
+  test('verträgt einen abschließenden Schrägstrich in der Basisadresse', () => {
     expect(buildStreamUrl('https://api.shliste.app//', 'abc123', null))
       .toBe('https://api.shliste.app/realtime/events?ticket=abc123')
   })
 
-  test('kodiert Werte, die von aussen kommen', () => {
+  test('kodiert Werte, die von außen kommen', () => {
     const url = buildStreamUrl('https://api.shliste.app', 'a&b=c', null)
     expect(url).toBe('https://api.shliste.app/realtime/events?ticket=a%26b%3Dc')
   })

@@ -103,7 +103,7 @@ function reset(): void {
 describe('mutateRow', () => {
   test('öffnet GENAU EINE Transaktion und liest darin vor dem Schreiben', async () => {
     // Der Kern. Zwei Transaktionen wären zwei Zeitpunkte, und dazwischen läge
-    // wieder das Fenster, das dieser Umbau schliessen soll.
+    // wieder das Fenster, das dieser Umbau schließen soll.
     reset()
     daten.set('a', liste({ name: 'alt' }))
 

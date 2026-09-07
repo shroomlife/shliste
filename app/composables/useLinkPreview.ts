@@ -10,7 +10,7 @@
  * DAS MUSTER IST DER WACHPOSTEN: Der Pfad kommt vom Server, wird aber
  * behandelt wie jede fremde Eingabe. Nur 32 kleingeschriebene Hex-Zeichen
  * kommen durch — alles andere ergibt `null` und damit das Ersatz-Icon.
- * Andernfalls liesse sich über ein manipuliertes Feld eine beliebige Adresse
+ * Andernfalls ließe sich über ein manipuliertes Feld eine beliebige Adresse
  * in ein `src` schreiben.
  *
  * Rein und ohne Vue, damit es mit `bun test` prüfbar bleibt.

@@ -3,7 +3,7 @@
  *
  * Die API sichert JEDE Route mit einer Signatur ab, die das geteilte
  * APP_SECRET voraussetzt. Das Secret darf niemals in den Browser gelangen,
- * deshalb signiert ausschliesslich der Nitro-Server — dieses Modul ist der
+ * deshalb signiert ausschließlich der Nitro-Server — dieses Modul ist der
  * einzige Ort im Projekt, der das Secret liest.
  *
  * Der Algorithmus ist aus api.shliste.app/src/index.ts (Guard im .derive())
@@ -42,7 +42,7 @@ export function hashBody(rawBody = ''): string {
 /**
  * Baut die zu signierende Nachricht.
  *
- * `pathname` heisst wörtlich pathname: ohne Query-String, ohne Fragment. Wer
+ * `pathname` heißt wörtlich pathname: ohne Query-String, ohne Fragment. Wer
  * hier den vollen Pfad inklusive `?since=...` übergibt, erzeugt eine Signatur,
  * die die API nicht nachrechnen kann.
  */
@@ -82,7 +82,7 @@ export function createSignatureHeaders(
 /**
  * Signiert eine Anfrage mit dem Secret aus der server-only runtimeConfig.
  *
- * Gelesen wird ausschliesslich `useRuntimeConfig().appSecret` — niemals über
+ * Gelesen wird ausschließlich `useRuntimeConfig().appSecret` — niemals über
  * `public`. Alles unterhalb von `public` wird beim Build ins Browser-Bundle
  * inlined und wäre in diesem öffentlichen Repo für jeden lesbar.
  */

@@ -17,11 +17,11 @@ import {
 } from './errors'
 
 describe('classifyHttpStatus', () => {
-  test('401 heisst: die Sitzung ist tot', () => {
+  test('401 heißt: die Sitzung ist tot', () => {
     expect(classifyHttpStatus(401)).toBe('auth')
   })
 
-  test('429 heisst: warten, dann erneut', () => {
+  test('429 heißt: warten, dann erneut', () => {
     expect(classifyHttpStatus(429)).toBe('rateLimited')
   })
 
@@ -63,7 +63,7 @@ describe('parseRetryAfter', () => {
     expect(parseRetryAfter('Wed, 19 Aug 2026 10:01:00 GMT', now)).toBe(60_000)
   })
 
-  test('ein Datum in der Vergangenheit heisst "sofort", nicht "negativ"', () => {
+  test('ein Datum in der Vergangenheit heißt "sofort", nicht "negativ"', () => {
     expect(parseRetryAfter('Wed, 19 Aug 2026 09:59:00 GMT', now)).toBe(0)
   })
 

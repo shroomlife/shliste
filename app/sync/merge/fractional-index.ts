@@ -21,7 +21,7 @@ const BASE = DIGITS.length
  * Ziffer an einer Position des Alphabets.
  *
  * Der Wurf ersetzt den ungeprüften Index-Zugriff der API-Fassung: Dort ergäbe
- * ein Index ausserhalb des Alphabets still den String "undefined" mitten im
+ * ein Index außerhalb des Alphabets still den String "undefined" mitten im
  * Schlüssel. Bei gültigen Schlüsseln kann das nicht passieren; passiert es
  * doch, ist Fail Fast die ehrlichere Antwort als ein kaputter Sortierschlüssel,
  * der sich dann über den Sync verteilt.
@@ -45,7 +45,7 @@ function intPart(key: string): string {
 }
 
 /**
- * Mittelwert zwischen zwei Bruchteilen. `b === undefined` heisst "kein oberes
+ * Mittelwert zwischen zwei Bruchteilen. `b === undefined` heißt "kein oberes
  * Ende", der Mittelwert liegt dann zwischen `a` und dem Ende des Alphabets.
  */
 function mid(a: string, b: string | undefined): string {
@@ -98,7 +98,7 @@ function decInt(x: string): string {
   for (let i = x.length - 1; i >= 1; i--) {
     const next = DIGITS.indexOf(digits.charAt(i)) - 1
     if (next >= 0) return digits.slice(0, i) + digitAt(next) + digits.slice(i + 1)
-    // Unterlauf: Stelle auf die grösste Ziffer setzen und weiter nach links.
+    // Unterlauf: Stelle auf die größte Ziffer setzen und weiter nach links.
     digits = digits.slice(0, i) + digitAt(BASE - 1) + digits.slice(i + 1)
   }
 

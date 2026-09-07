@@ -12,11 +12,11 @@ import type { ListItem } from '#shared/types/domain'
  * gedämpften Ton.
  *
  * DIE BEDIENLOGIK IST DIE DER ANDROID-APP: Ein Tipp auf den Namensbereich
- * öffnet das Bearbeiten-Blatt, abgehakt wird ausschliesslich über die
+ * öffnet das Bearbeiten-Blatt, abgehakt wird ausschließlich über die
  * Aktionsflächen rechts. Vorher hakte der Tipp ab und Bearbeiten lag auf
  * einem Long-Press — also genau umgekehrt zur App, was auf beiden Geräten
- * dieselbe Bewegung zu zwei verschiedenen Ergebnissen führen liess. Die
- * grüne Fläche ist gross, sichtbar und trifft sich sicher; der Name ist es
+ * dieselbe Bewegung zu zwei verschiedenen Ergebnissen führen ließ. Die
+ * grüne Fläche ist groß, sichtbar und trifft sich sicher; der Name ist es
  * nicht, und ein versehentliches Abhaken beim Zielen kostete mehr als ein
  * versehentlich geöffnetes Blatt.
  *
@@ -62,7 +62,7 @@ const emit = defineEmits<{ toggle: [], remove: [], edit: [] }>()
  */
 
 /**
- * Was auf dem Schirm steht. Ein Link-Eintrag heisst lokal "" und zeigt den
+ * Was auf dem Schirm steht. Ein Link-Eintrag heißt lokal "" und zeigt den
  * Seitentitel oder den Host (siehe `app/utils/listItemDisplay.ts`).
  */
 const displayName = computed(() => listItemDisplayName(item))
@@ -72,7 +72,7 @@ const host = computed(() => hostOf(item.url))
 const showHost = computed(() => showHostLine(item))
 
 /**
- * Die Adresse, die tatsaechlich in ein `href` darf.
+ * Die Adresse, die tatsächlich in ein `href` darf.
  *
  * Der Wachposten vor dem Attribut: Was nicht als http(s)-Adresse lesbar ist,
  * bekommt gar keine Kachel. Der Anzeigename fällt dann auf die rohe Adresse
@@ -83,8 +83,8 @@ const linkUrl = computed(() => (item.url !== null && isHttpUrl(item.url) ? item.
 
 <template>
   <!-- Im Sortiermodus ist die Zeile ein Container mit Anfasser, sonst der
-       schlichte Knopf von vorher: Ein Anfasser IM Knopf waere verschachteltes
-       Bedienelement und fuer Tastatur wie Screenreader kaputt. -->
+       schlichte Knopf von vorher: Ein Anfasser IM Knopf wäre verschachteltes
+       Bedienelement und für Tastatur wie Screenreader kaputt. -->
   <div
     v-if="sortable"
     class="flex min-h-14 w-full items-center gap-1 rounded-lg pl-1 transition-colors"
@@ -112,7 +112,7 @@ const linkUrl = computed(() => (item.url !== null && isHttpUrl(item.url) ? item.
     >{{ item.quantity }}&times;</span>
   </div>
 
-  <!-- Ausserhalb des Sortiermodus: die Android-Anatomie. Mengenkachel links,
+  <!-- Außerhalb des Sortiermodus: die Android-Anatomie. Mengenkachel links,
        Namensknopf in der Mitte, Aktionsflächen rechts — alles Geschwister
        in voller Zeilenhöhe (items-stretch), wie in ListItemContent.kt. -->
   <div
@@ -146,11 +146,11 @@ const linkUrl = computed(() => (item.url !== null && isHttpUrl(item.url) ? item.
          DIE MASSE BLEIBEN, WEIL SIE SICH GEGENSEITIG AUFHEBEN: 48 Pixel Kachel
          plus zweimal 6 ergeben exakt die 60 Pixel Zeilenhöhe, die Zeile wächst
          also nicht. Und die 6 Pixel, die der Innenabstand nach links und rechts
-         zulegt, nimmt der äussere Abstand jeweils wieder weg — links über den
+         zulegt, nimmt der äußere Abstand jeweils wieder weg — links über den
          eigenen Rand (8 statt 14 Pixel am Zeilenrand, 2 statt 8 hinter der
          Mengenkachel), rechts über den kleineren linken Rand des Namensknopfs
          (8 statt 14). Kachel und Name stehen dadurch auf denselben Pixeln wie
-         vorher. Bewusst KEIN negativer Rand dafür: Der liesse den Namensknopf
+         vorher. Bewusst KEIN negativer Rand dafür: Der ließe den Namensknopf
          über der rechten Hälfte des Innenabstands liegen und dort den Hover
          der Kachel abfangen. -->
     <a
@@ -181,7 +181,7 @@ const linkUrl = computed(() => (item.url !== null && isHttpUrl(item.url) ? item.
           class="truncate text-[1.25rem]"
           :class="item.checked && 'opacity-50'"
         >{{ displayName }}</span>
-        <!-- Die Herkunft steht nur da, wenn sie etwas hinzufügt: Heisst der
+        <!-- Die Herkunft steht nur da, wenn sie etwas hinzufügt: Heißt der
              Eintrag ohnehin schon "rewe.de", stünde derselbe Text zweimal
              untereinander. -->
         <span
@@ -199,7 +199,7 @@ const linkUrl = computed(() => (item.url !== null && isHttpUrl(item.url) ? item.
     </button>
 
     <!-- Offene Zeile: die grüne Abhak-Fläche (SemanticColors.itemCheckSurface).
-         DER einzige Weg zum Abhaken — gross, sichtbar, sicher zu treffen. -->
+         DER einzige Weg zum Abhaken — groß, sichtbar, sicher zu treffen. -->
     <button
       v-if="!item.checked"
       type="button"

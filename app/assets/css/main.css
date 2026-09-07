@@ -2,27 +2,27 @@
 @import "@nuxt/ui";
 
 /*
- * Design-Tokens — 1:1 aus dem Android-Quellcode uebernommen, nicht geschaetzt.
+ * Design-Tokens — 1:1 aus dem Android-Quellcode übernommen, nicht geschätzt.
  * Quellen: ui/theme/Color.kt, ui/theme/Theme.kt, ui/theme/Type.kt,
  *          ui/theme/SemanticColors.kt, utils/ColorUtils.kt
  *
- * Bewusste Abweichung: Android laeuft mit dynamicColor = true, also ab Android 12
+ * Bewusste Abweichung: Android läuft mit dynamicColor = true, also ab Android 12
  * in der Wallpaper-Palette (Material You). Das gibt es im Web nicht. Die PWA
  * benutzt deshalb die Marken-Palette — das Fallback-Schema von Android — und ist
- * damit sogar markentreuer als die App auf den meisten Geraeten.
+ * damit sogar markentreuer als die App auf den meisten Geräten.
  */
 
 @theme static {
   /* --- Schrift ---------------------------------------------------------
-   * Zain laeuft schmal und hoch. Der Android-Quellcode haelt ausdruecklich
-   * fest: "18sp Zain wirkt etwa wie 14sp Roboto". Die Groessen liegen deshalb
-   * durchweg ueber den ueblichen Web-Werten. Nicht auf text-sm/text-base
-   * zurueckdrehen, sonst wirkt die App winzig.
-   * Verfuegbare Gewichte: 200/300/400/700/800/900 — kein 500, kein 600.
+   * Zain läuft schmal und hoch. Der Android-Quellcode hält ausdrücklich
+   * fest: "18sp Zain wirkt etwa wie 14sp Roboto". Die Größen liegen deshalb
+   * durchweg über den üblichen Web-Werten. Nicht auf text-sm/text-base
+   * zurückdrehen, sonst wirkt die App winzig.
+   * Verfügbare Gewichte: 200/300/400/700/800/900 — kein 500, kein 600.
    */
   --font-sans: "Zain", "Trebuchet MS", ui-sans-serif, system-ui, sans-serif;
 
-  /* Typo-Skala, uebernommen aus AppTypography */
+  /* Typo-Skala, übernommen aus AppTypography */
   --text-label-small: 0.75rem;    /* 12 */
   --text-label-medium: 0.9375rem; /* 15 */
   --text-body-small: 1rem;        /* 16 */
@@ -37,8 +37,8 @@
   --text-headline-large: 2.25rem; /* 36 */
 
   /* --- Höhe der Bedienelemente -----------------------------------------
-   * EINE Zahl je Grösse, für Eingabefelder, Knöpfe und die von Hand gebauten
-   * Kacheln gleichermassen.
+   * EINE Zahl je Größe, für Eingabefelder, Knöpfe und die von Hand gebauten
+   * Kacheln gleichermaßen.
    *
    * Nuxt UI leitet die Höhe seiner Bedienelemente sonst aus Polsterung und
    * Zeilenhöhe ab (`lg` = 2.25rem, `xl` = 2.5rem). Das ist an sich stimmig,
@@ -47,7 +47,7 @@
    * Genau so sah die Eingabeleiste einer Liste aus: Feld 41, Mengenkachel 44,
    * AI-Knopf 41.
    *
-   * `xl` liegt bewusst auf 2.75rem: 44 Pixel sind das Mindestmass der
+   * `xl` liegt bewusst auf 2.75rem: 44 Pixel sind das Mindestmaß der
    * iOS-Richtlinien für ein Tippziel, und `xl` trägt genau die Leisten, die man
    * im Laden mit dem Daumen bedient. `lg` bleibt eine Stufe darunter.
    *
@@ -61,7 +61,7 @@
 
   /* --- Radien ----------------------------------------------------------
    * Android hat keine Shapes.kt; die Werte stehen inline. Dominant sind
-   * 8 und 12, groessere Flaechen nutzen 16/20/24.
+   * 8 und 12, größere Flächen nutzen 16/20/24.
    */
   --radius-sm: 0.5rem;   /* 8  */
   --radius-md: 0.75rem;  /* 12 */
@@ -70,8 +70,8 @@
   --radius-2xl: 1.5rem;  /* 24 */
 
   /* --- Marke -----------------------------------------------------------
-   * Nuxt UI erwartet fuer ein Farbalias eine vollstaendige 50-950-Palette,
-   * nicht einen Einzelwert — sonst bleibt `primary` unaufgeloest und
+   * Nuxt UI erwartet für ein Farbalias eine vollständige 50-950-Palette,
+   * nicht einen Einzelwert — sonst bleibt `primary` unaufgelöst und
    * Buttons rendern unsichtbar.
    *
    * Die Stufen sind aus den echten Android-Werten abgeleitet, nicht erfunden:
@@ -83,7 +83,7 @@
    *   500 = PrimaryColor          (#E064B2)  <- der Markenton
    *   600 = tertiary im Light     (#B84C8F)
    *   950 = onPrimaryContainer    (#3B0021)
-   * Die Stufen 700 bis 900 fuellen den Verlauf dazwischen auf.
+   * Die Stufen 700 bis 900 füllen den Verlauf dazwischen auf.
    */
   --color-brand-50: #FDECF5;
   --color-brand-100: #FBE0EF;
@@ -104,20 +104,20 @@
 
 /*
  * Material-3-Rollen als CSS-Variablen. Light ist der Initialzustand
- * (Start-Vibe Light), Dark wird ueber .dark ergaenzt.
+ * (Start-Vibe Light), Dark wird über .dark ergänzt.
  */
 :root {
   /*
-   * Gefuellte Flaechen mit weisser Schrift benutzen den TIEFEREN Markenton.
+   * Gefüllte Flächen mit weißer Schrift benutzen den TIEFEREN Markenton.
    *
-   * Gemessen: #E064B2 auf Weiss ergibt 3,16:1 — das reicht nach WCAG 2.2 AA
-   * nur fuer grosse Schrift, nicht fuer Knopfbeschriftungen (dort 4,5:1).
+   * Gemessen: #E064B2 auf Weiß ergibt 3,16:1 — das reicht nach WCAG 2.2 AA
+   * nur für große Schrift, nicht für Knopfbeschriftungen (dort 4,5:1).
    * #B84C8F erreicht 4,70:1. Seit dem 28.06.2025 ist das in Deutschland nach
    * BFSG haftungsrelevant und keine Geschmacksfrage.
    *
    * Der Ton ist nicht erfunden: Es ist Androids `tertiary` und zugleich die
-   * Material-Tonstufe 40, die M3 fuer `primary` im hellen Schema vorsieht.
-   * Der Markenton #E064B2 bleibt ueberall dort, wo er ohne Schrift steht —
+   * Material-Tonstufe 40, die M3 für `primary` im hellen Schema vorsieht.
+   * Der Markenton #E064B2 bleibt überall dort, wo er ohne Schrift steht —
    * Logo, Lasuren, Akzente. Im Dark-Mode bleibt alles wie gehabt: #FF8CCB auf
    * #3B0021 sind 8,17:1.
    */
@@ -145,8 +145,8 @@
   --md-surface-variant: #F7EDF3;
   --md-on-surface-variant: #6B5A64;
 
-  /* Die fuenf Stufen sind die M3-Elevationsleiter und tragen im Web die
-     Flaechenhierarchie — Android ist fast schattenlos (shadowElevation 1dp). */
+  /* Die fünf Stufen sind die M3-Elevationsleiter und tragen im Web die
+     Flächenhierarchie — Android ist fast schattenlos (shadowElevation 1dp). */
   --md-surface-lowest: #FFFFFF;
   --md-surface-low: #FDF7FA;
   --md-surface-container: #FAF1F6;
@@ -168,14 +168,14 @@
   --md-sync-warning: #EF6C00;
 
   /* Delta-Flash: Anteil, um den der Zeilenhintergrund Richtung primary
-     interpoliert wird, wenn ein anderes Geraet die Zeile geaendert hat. */
+     interpoliert wird, wenn ein anderes Gerät die Zeile geändert hat. */
   --md-delta-peak: 12%;
 }
 
 .dark {
   /*
    * Im Dunkeln gilt wieder der helle Markenton. Der tiefere aus dem hellen
-   * Schema (siehe :root) ist dort nötig, weil weisse Schrift auf #E064B2 nur
+   * Schema (siehe :root) ist dort nötig, weil weiße Schrift auf #E064B2 nur
    * 3,16:1 erreicht — hier trägt die gefüllte Fläche dunkle Schrift, und
    * #FF8CCB mit #3B0021 sind gemessen 8,17:1. Ohne diese Zeile schleppte das
    * dunkle Schema den Ton des hellen mit, obwohl die Android-Palette dafür
@@ -235,7 +235,7 @@ body {
 /*
  * PROPORTION AUF SEHR GROSSEN SCHIRMEN
  *
- * Das Problem: Auf einem 4K-Monitor blieb die gesamte Oberfläche so gross wie
+ * Das Problem: Auf einem 4K-Monitor blieb die gesamte Oberfläche so groß wie
  * auf einem Laptop — die Icon-Leiste 84 Pixel schmal, die Schrift verloren in
  * der Fläche. Nicht ein einzelnes Element war zu klein, sondern alle zusammen
  * standen in keinem Verhältnis mehr zum Bildschirm.
@@ -243,7 +243,7 @@ body {
  * Deshalb genau EIN Hebel statt Dutzender Breakpoint-Regeln: Diese Oberfläche
  * ist durchgehend in rem gebaut — Schrift, Abstände (Tailwinds --spacing bleibt
  * auf 0.25rem), Radien, auch die Breite der Leiste (w-21 = 5.25rem). Wächst die
- * Wurzelgrösse, wächst alles gemeinsam und im selben Verhältnis. Was in Pixeln
+ * Wurzelgröße, wächst alles gemeinsam und im selben Verhältnis. Was in Pixeln
  * steht, bleibt bewusst stehen: eine Trennlinie soll ein Haar bleiben.
  *
  * Erst ab 1920px, damit üblichere Desktops unberührt bleiben, und stufenlos
@@ -252,10 +252,10 @@ body {
  * Oberfläche auf sehr breiten Schirmen ins Alberne.
  *
  * ZUM NACHSTELLEN: Nur die 1.5rem am Ende der clamp-Formel anfassen. Kleiner
- * heisst zurückhaltender, grösser heisst mehr. Alles andere folgt von selbst.
+ * heißt zurückhaltender, größer heißt mehr. Alles andere folgt von selbst.
  *
  * ZWEI FEINHEITEN, die sonst später jemanden kosten: `rem` bezieht sich auf dem
- * Wurzelelement auf die ANFÄNGLICHE Schriftgrösse (16px), nicht auf die eigene —
+ * Wurzelelement auf die ANFÄNGLICHE Schriftgröße (16px), nicht auf die eigene —
  * die Formel ist also nicht zirkulär. Und in einer Media Query meint `rem`
  * ebenfalls immer 16px, unabhängig davon, was hier drinnen gesetzt wird; die
  * Bedingung schaltet sich also nicht selbst ab, sobald sie greift.
@@ -265,10 +265,10 @@ body {
     /*
      * PROZENT, NICHT REM — und das ist kein Schreibstil, sondern der
      * Unterschied zwischen Skalieren und Überschreiben: `1rem` meint auf dem
-     * Wurzelelement immer 16px und hätte die Schriftgrösse, die jemand in
+     * Wurzelelement immer 16px und hätte die Schriftgröße, die jemand in
      * seinem Browser eingestellt hat, stillschweigend weggeworfen. Prozent
      * bezieht sich dagegen auf genau diese Einstellung. Wer 20px bevorzugt,
-     * bekommt hier 20px als Ausgangspunkt und dieselbe Vergrösserung obendrauf.
+     * bekommt hier 20px als Ausgangspunkt und dieselbe Vergrößerung obendrauf.
      *
      * Bei 1920px ergibt die Formel exakt 100% — der Übergang bleibt unsichtbar.
      */
@@ -282,7 +282,7 @@ body {
  * Die Typo-Skala stammt 1:1 aus der Android-App und ist für ein Handy
  * abgestimmt: Dort steht eine 36px-Überschrift auf 400px Breite und stimmt.
  * Wächst nun alles gemeinsam, wird daraus auf einem 4K-Schirm eine
- * 54px-Überschrift — und die wirkt nicht gross, sondern laut. Auf breiten
+ * 54px-Überschrift — und die wirkt nicht groß, sondern laut. Auf breiten
  * Flächen soll eine Skala flacher werden, nicht mitwachsen.
  *
  * Deshalb eine Obergrenze in Pixeln: Bis dahin wächst der Titel mit allem
@@ -300,7 +300,7 @@ body {
 
 /*
  * Listenfarben sind echtes Zufalls-RGB (r+g+b zwischen 100 und 700) und werden
- * als 20-Prozent-Lasur eingesetzt, nie voll gesaettigt — genau deshalb wirken
+ * als 20-Prozent-Lasur eingesetzt, nie voll gesättigt — genau deshalb wirken
  * auch stumpfe Zufallswerte ruhig. Entspricht ColorUtils.colorWith20Opacity.
  * Die Elemente setzen --list-color, den Rest macht diese Utility.
  */
@@ -313,7 +313,7 @@ body {
  *
  * Tailwind 4 hat den Zeiger für Knöpfe abgeschafft: Sein Preflight setzt
  * `cursor: default`, weil das der Browser-Standard für <button> ist. Für
- * eine Oberfläche ist das die falsche Wahl — der Zeiger ist seit dreissig
+ * eine Oberfläche ist das die falsche Wahl — der Zeiger ist seit dreißig
  * Jahren das Signal "hier passiert etwas", und ihn wegzulassen kostet
  * Erkennbarkeit ohne Gegenwert.
  *
@@ -340,13 +340,13 @@ body {
  * Darüberfahren ihre Farbe.
  *
  * Die Werte sind die von M3: 8 Prozent beim Zeigen, 12 beim Drücken. Hier
- * etwas zurückgenommen, weil die Flaechen dieser App ohnehin hell sind.
+ * etwas zurückgenommen, weil die Flächen dieser App ohnehin hell sind.
  */
 /*
  * Optische Mitte statt Kastenmitte — für Kacheln und Plaketten, in denen nur
- * Ziffern oder Grossbuchstaben stehen.
+ * Ziffern oder Großbuchstaben stehen.
  *
- * DAS FEHLERBILD: Die Mengenkachel "1x" sass sichtbar zu hoch in ihrem
+ * DAS FEHLERBILD: Die Mengenkachel "1x" saß sichtbar zu hoch in ihrem
  * Quadrat, obwohl `items-center justify-center` daran stand. Zentriert wird
  * dabei nämlich die ZEILENBOX, und die reicht bis zur Unterlänge der Schrift —
  * auch wenn gar kein Buchstabe mit Unterlänge darin vorkommt.
@@ -422,8 +422,8 @@ body {
 
 /*
  * Der eine orchestrierte Bewegungsmoment: eine Zeile, die gerade von einem
- * anderen Geraet geaendert wurde. Akzentleiste links plus Hintergrund, der
- * Richtung primary interpoliert und wieder zurueckfaellt. Spezifikation aus
+ * anderen Gerät geändert wurde. Akzentleiste links plus Hintergrund, der
+ * Richtung primary interpoliert und wieder zurückfällt. Spezifikation aus
  * SemanticColors.deltaFlashSurface.
  */
 @keyframes delta-flash {
@@ -471,7 +471,7 @@ body {
 
 /*
  * Ohne Bewegung bleibt auch hier nichts stehen: `animation: none` allein
- * liesse die Schicht bei voller Deckkraft liegen, also genau die Fläche, die
+ * ließe die Schicht bei voller Deckkraft liegen, also genau die Fläche, die
  * sonst wegblendet. Das Ergebnis entspricht dem der Zeilen — keine Bewegung
  * und keine Farbänderung.
  */

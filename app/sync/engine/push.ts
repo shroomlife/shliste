@@ -452,7 +452,7 @@ export type NoticeSink = (notice: string) => void
 type GroupSizes = Partial<Record<keyof PushPayload, number>>
 
 /**
- * Schneidet eine zu grosse Nutzlast in API-legale Blöcke — Eltern nie nach
+ * Schneidet eine zu große Nutzlast in API-legale Blöcke — Eltern nie nach
  * ihren Kindern.
  *
  * DAS PROBLEM, DAS ES ZU VERMEIDEN GILT: Schnitte man jeden Typ unabhängig
@@ -594,7 +594,7 @@ function createPacker() {
   }
 
   /**
-   * Terminiert immer: Jede Grenze ist grösser als null, ein frisch geöffneter
+   * Terminiert immer: Jede Grenze ist größer als null, ein frisch geöffneter
    * Block nimmt also garantiert mindestens ein Element auf.
    *
    * `pick` wird in jeder Runde neu ausgewertet, weil `close()` den Block
@@ -639,7 +639,7 @@ function createPacker() {
       fill(values, PUSH_BLOCK_LIMITS.historyEntries, block => block.historyEntries),
 
     /**
-     * Schliesst den aktuellen Block, wenn die ganze Gruppe (Elternteil plus
+     * Schließt den aktuellen Block, wenn die ganze Gruppe (Elternteil plus
      * Kinder) nicht mehr hineinpasst. Passt sie auch in einen leeren Block
      * nicht, verteilt `add` den Rest auf Folgeblöcke — das Elternteil steht
      * dann bereits im ersten davon.

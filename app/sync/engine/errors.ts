@@ -86,7 +86,7 @@ export function classifyHttpStatus(status: number): SyncFailureKind {
  * einzige sinnvolle Lesart, und ein negativer Timer wäre für jeden Aufrufer
  * eine Falle.
  *
- * `null` heisst "keine verwertbare Angabe" — der Aufrufer entscheidet dann
+ * `null` heißt "keine verwertbare Angabe" — der Aufrufer entscheidet dann
  * selbst, wie lange er wartet.
  */
 export function parseRetryAfter(value: string | null | undefined, now: Date = new Date()): number | null {
@@ -116,7 +116,7 @@ export function isRetryable(error: SyncError): boolean {
  * Macht aus einem beliebigen geworfenen Wert einen `SyncError`.
  *
  * Alles, was nicht schon einer ist, gilt als `offline`: An dieser Stelle
- * landen ausschliesslich Fehler, die VOR einer Antwort passiert sind — DNS,
+ * landen ausschließlich Fehler, die VOR einer Antwort passiert sind — DNS,
  * abgebrochene Verbindung, blockierter Netzwerkzugriff. `fetch` wirft dafür
  * ein nacktes `TypeError` ohne verwertbare Unterscheidung.
  */

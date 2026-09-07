@@ -21,7 +21,7 @@ const { parentId, resolveCreatorName } = defineProps<{
   parentId: string
   /**
    * Löst `createdBy` in einen Anzeigenamen auf — dieselbe Signatur wie
-   * `modifierName` in der Listendetailansicht. `null` heisst "nichts
+   * `modifierName` in der Listendetailansicht. `null` heißt "nichts
    * anzeigen": eigener Eintrag, keine geteilte Liste oder Mitglied nicht
    * (mehr) bekannt. Rezepte haben keine Mitglieder und lassen die Prop weg.
    */

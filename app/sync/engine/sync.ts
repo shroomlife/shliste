@@ -13,11 +13,11 @@
  *
  * DER MUTEX VERWIRFT, ER STAUT NICHT. Ein zweiter Aufruf während eines
  * laufenden Abgleichs gibt `{ ran: false, reason: 'busy' }` zurück und tut
- * nichts. Begründung: Einreihen hiesse, denselben Lauf gleich noch einmal zu
+ * nichts. Begründung: Einreihen hieße, denselben Lauf gleich noch einmal zu
  * fahren — der laufende hat alles mitgenommen, was zum Zeitpunkt seines
  * Snapshots schmutzig war, und alles Spätere bleibt schmutzig und kommt beim
  * nächsten Lauf ohnehin mit. Ein gestauter Lauf brächte also keine neuen
- * Daten, kostete aber eine zweite Runde Netzverkehr und liesse sich beliebig
+ * Daten, kostete aber eine zweite Runde Netzverkehr und ließe sich beliebig
  * aufstapeln (jeder Tastendruck eine Runde). Der Rückgabewert ist wichtig:
  * Ohne ihn läse ein Aufrufer den Erfolg eines FREMDEN Laufs als seinen eigenen.
  */
@@ -109,7 +109,7 @@ export function parseServerStatus(value: unknown): ServerStatus {
 export interface SessionState {
   authenticated: boolean
   /**
-   * Wurde die Sitzung gerade gegen die API bestätigt? `false` heisst "nicht
+   * Wurde die Sitzung gerade gegen die API bestätigt? `false` heißt "nicht
    * widerlegt" und nicht "ungültig" — offline gilt sie weiter.
    */
   verified: boolean
@@ -157,7 +157,7 @@ export type SyncOutcome
   = | { ran: false, reason: 'busy' }
     | { ran: true, snapshot: SyncSnapshot }
 
-/** Wie ein Lauf angestossen wurde. */
+/** Wie ein Lauf angestoßen wurde. */
 export interface SyncRunOptions {
   /**
    * Geht der Lauf auf eine ausdrückliche Handlung des Nutzers zurück?
@@ -187,7 +187,7 @@ export type ConflictStrategy = 'merge' | 'pushLocal' | 'pullServer'
 export interface SyncEngine {
   sync: (options?: SyncRunOptions) => Promise<SyncOutcome>
   /**
-   * Löst einen gemeldeten Konflikt auf und gleicht anschliessend ab.
+   * Löst einen gemeldeten Konflikt auf und gleicht anschließend ab.
    *
    * Nur nach einer Entscheidung des Nutzers aufrufen: `pullServer` verwirft
    * lokale Daten unwiederbringlich, `pushLocal` schreibt sie über den
@@ -200,7 +200,7 @@ export interface SyncEngine {
 /**
  * Was nach dem ersten Blick auf den Server zu tun ist.
  *
- * `'stop'` heisst: Es steht eine Entscheidung des Nutzers aus, es wird nichts
+ * `'stop'` heißt: Es steht eine Entscheidung des Nutzers aus, es wird nichts
  * gezogen und nichts geschrieben.
  */
 interface FirstSyncDecision {
@@ -356,7 +356,7 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
       notSyncedCount,
       conflict: null,
       // Nur aus einem gelaufenen Pull übernehmen: Ein Lauf, der gar nicht
-      // gezogen hat, weiss nichts über Einladungen und dürfte die zuletzt
+      // gezogen hat, weiß nichts über Einladungen und dürfte die zuletzt
       // bekannten nicht wegwerfen.
       ...(pull === null ? {} : { pendingInvites: pull.pendingInvites }),
       ...(pull?.cursorAdvanced === true ? { lastSyncedAt: pull.serverTime } : {}),
@@ -376,7 +376,7 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
      * zusammenführen und schreiben. Die Sperre in ./leader.ts zieht die Grenze
      * über alle Tabs hinweg.
      *
-     * Ist sie belegt, kehrt der Aufruf sofort zurück — ausser der Lauf geht auf
+     * Ist sie belegt, kehrt der Aufruf sofort zurück — außer der Lauf geht auf
      * eine ausdrückliche Handlung des Nutzers zurück, dann stellt er sich an.
      * Ein Tastendruck, der still verpufft, weil ein anderer Tab arbeitet, sieht
      * aus wie eine kaputte App.
@@ -406,7 +406,7 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
        * Die Sperre selbst kann werfen — `navigator.locks` ist in manchen
        * eingebetteten Kontexten gesperrt und wirft dann statt zu antworten.
        * Der `catch` im Rumpf greift dafür nicht: Der liegt INNERHALB des
-       * Rückrufs, der in diesem Fall nie läuft. Ohne diesen hier verliesse der
+       * Rückrufs, der in diesem Fall nie läuft. Ohne diesen hier verließe der
        * Fehler die Engine unbemerkt, der Zustand bliebe auf dem alten Wert
        * stehen und der Aufrufer bekäme eine unbehandelte Ablehnung.
        */
@@ -453,8 +453,8 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
       if (!ergebnis.ran) return { ran: false, reason: 'busy' }
     }
     catch (cause) {
-      // Dasselbe wie oben: Wirft die Sperre selbst, liegt das ausserhalb des
-      // Rückrufs und damit ausserhalb seines eigenen `catch`.
+      // Dasselbe wie oben: Wirft die Sperre selbst, liegt das außerhalb des
+      // Rückrufs und damit außerhalb seines eigenen `catch`.
       const error = toSyncError(cause)
       state.set({
         phase: phaseFromError(error),
@@ -470,7 +470,7 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
     return { ran: true, snapshot: state.get() }
   }
 
-  /** Der eigentliche Ablauf — läuft ausschliesslich unter der Sperre. */
+  /** Der eigentliche Ablauf — läuft ausschließlich unter der Sperre. */
   const resolveConflictUnterSperre = async (strategy: ConflictStrategy): Promise<void> => {
     try {
       // Der Marker wird in jedem der drei Wege gesetzt: Die Frage ist

@@ -48,7 +48,7 @@ const members = ref<ListMemberRow[]>([])
  * Der Name hinter einer Änderung, oder `null`.
  *
  * `null` in drei Fällen, und alle drei sind Absicht: bei der eigenen Änderung
- * (man weiss selbst, was man getan hat), bei einer Liste ohne Mitglieder (dann
+ * (man weiß selbst, was man getan hat), bei einer Liste ohne Mitglieder (dann
  * gibt es niemanden zu nennen) und wenn die Person unbekannt ist. Das
  * Aufleuchten der Zeile bleibt in allen Fällen.
  */
@@ -111,7 +111,7 @@ const sourceUrlValue = ref('')
  *
  * Android schützt sie mit Biometrie. Im Browser gäbe es dafür nur WebAuthn,
  * und das ist eine eigene Entscheidung — bis dahin ist "gesperrt" die
- * ehrliche Antwort. Einen schwächeren Schutz zu bauen hiesse, genau das
+ * ehrliche Antwort. Einen schwächeren Schutz zu bauen hieße, genau das
  * Feature zu verwässern, das es der Privatsphäre wegen gibt.
  */
 const isLocked = computed(() => list.value?.secret === true)
@@ -122,7 +122,7 @@ const isLocked = computed(() => list.value?.secret === true)
  * DERSELBE WACHPOSTEN WIE AN DER LINK-KACHEL (siehe `linkUrl` in
  * `ListItemRow.vue`), und aus demselben Grund: `sourceUrl` ist ein
  * SYNCHRONISIERTES Feld. Der Abgleich liest es als beliebige Zeichenkette und
- * kappt nur die Länge — geprüft wird es ausschliesslich dort, wo ein Mensch
+ * kappt nur die Länge — geprüft wird es ausschließlich dort, wo ein Mensch
  * es hier eintippt. Ein anderer Schreiber (ein fehlerhafter Client, ein
  * Mitglied einer geteilten Liste, das direkt gegen die API schreibt) könnte
  * also `javascript:…` hineinlegen, und ohne diese Prüfung stünde das als
@@ -134,7 +134,7 @@ const sourceLinkUrl = computed(() => {
 })
 
 /**
- * Der Eintrag im Menü heisst für Mitglieder anders als für Eigentümer, weil er
+ * Der Eintrag im Menü heißt für Mitglieder anders als für Eigentümer, weil er
  * etwas anderes bedeutet: Der Eigentümer löscht die Liste für alle, ein
  * Mitglied verlässt sie nur. Derselbe Vorgang, zwei Wahrheiten — der Server
  * entscheidet anhand der Mitgliedschaft.
@@ -268,7 +268,7 @@ function setNewItemQuantity(value: number): void {
   newItemQuantity.value = clampQuantity(value)
 }
 
-/** Ziffern-Tap: Wert setzen und das Popover schliessen — ein Griff, fertig. */
+/** Ziffern-Tap: Wert setzen und das Popover schließen — ein Griff, fertig. */
 function pickNewItemQuantity(value: number): void {
   setNewItemQuantity(value)
   isQuantityPickerOpen.value = false
@@ -373,7 +373,7 @@ watch(dataVersion, () => {
  * Vorbild Detail.kt der Android-App: Ergänzt jemand anderes Einträge,
  * während man weiter oben in der Liste steht, springt die Ansicht NICHT.
  * Stattdessen zählt ein tippbarer Hinweis am unteren Rand. Nur der eigene
- * Neuzugang rollt sanft ins Bild — den hat man schliesslich selbst getippt.
+ * Neuzugang rollt sanft ins Bild — den hat man schließlich selbst getippt.
  * ------------------------------------------------------------------ */
 
 const scrollContainer = useTemplateRef<HTMLElement>('scrollContainer')
@@ -381,7 +381,7 @@ const openEndSentinel = useTemplateRef<HTMLElement>('openEndSentinel')
 
 const pendingRemoteAdditions = ref(0)
 /**
- * "Unten" heisst: das ENDE DER OFFENEN GRUPPE ist im Bild — denn genau dort
+ * "Unten" heißt: das ENDE DER OFFENEN GRUPPE ist im Bild — denn genau dort
  * landet ein fremd ergänzter (unabgehakter) Eintrag. Das absolute Seitenende
  * läge hinter Erledigt-Block und AI-Griffen und damit weit am Landeplatz
  * vorbei; wer dort steht, sähe den Neuzugang gerade NICHT.
@@ -394,7 +394,7 @@ const remoteAdditionsLabel = computed(() =>
     : `${pendingRemoteAdditions.value} neue Einträge unten`,
 )
 
-/** Ids des letzten verarbeiteten Stands — `null` heisst "noch kein Stand". */
+/** Ids des letzten verarbeiteten Stands — `null` heißt "noch kein Stand". */
 let knownItemIds: Set<string> | null = null
 
 /** Ein Undo setzt den Eintrag an seine alte Stelle zurück — kein Neuzugang. */
@@ -417,7 +417,7 @@ function isRemoteAddition(item: ListItem): boolean {
 
 watch(items, (currentItems) => {
   // Der Leer-Zwischenstand beim Listenwechsel ist kein Stand: `load()` leert
-  // erst und füllt dann — ohne diese Sperre gälte anschliessend die komplette
+  // erst und füllt dann — ohne diese Sperre gälte anschließend die komplette
   // Liste als Neuzugang.
   if (list.value === null || list.value.id !== listId.value) {
     knownItemIds = null
@@ -463,7 +463,7 @@ watch([scrollContainer, openEndSentinel], ([container, sentinel]) => {
   bottomObserver = new IntersectionObserver(([entry]) => {
     const atBottom = entry?.isIntersecting ?? false
     isAtBottom.value = atBottom
-    // Unten angekommen heisst: gesehen. Der Hinweis verschwindet von selbst.
+    // Unten angekommen heißt: gesehen. Der Hinweis verschwindet von selbst.
     if (atBottom) pendingRemoteAdditions.value = 0
   }, { root: container })
 
@@ -685,7 +685,7 @@ const isSuggestionsOpen = ref(false)
 const aiItems = computed(() =>
   items.value.map(item => ({
     id: item.id,
-    // Der ANZEIGENAME und nicht `name`: Ein Link-Eintrag heisst lokal "", und
+    // Der ANZEIGENAME und nicht `name`: Ein Link-Eintrag heißt lokal "", und
     // die AI bekäme sonst eine namenlose Position vorgesetzt. Nebeneffekt und
     // Absicht zugleich: Schlägt sie genau den Anzeigenamen vor, zählt das im
     // Diff als unverändert.
@@ -698,7 +698,7 @@ const aiItems = computed(() =>
 const activeItemNames = computed(() => items.value.map(item => listItemDisplayName(item)))
 
 /**
- * Wendet die angehakten Änderungen der Diff-Vorschau an — ausschliesslich
+ * Wendet die angehakten Änderungen der Diff-Vorschau an — ausschließlich
  * über die bestehenden Schreibwege: Neues über `createItem` (vergibt Id,
  * Position und Sortierschlüssel), alles andere über `upsertItem` mit
  * `toItemDraft`, das nur die setzbaren Felder durchlässt. Ein Eintrag, den
@@ -938,7 +938,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
           />
         </div>
 
-        <!-- Sentinel am Ende der OFFENEN Gruppe: sichtbar heisst "der Nutzer
+        <!-- Sentinel am Ende der OFFENEN Gruppe: sichtbar heißt "der Nutzer
              sieht den Landeplatz fremder Neuzugänge". Der IntersectionObserver
              darauf steuert Hinweis-Chip und Auto-Reset. -->
         <div
@@ -1299,7 +1299,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
       <!-- Mengenkachel für den nächsten Eintrag — dieselbe Optik wie die
            Kachel in der Zeile. Der Tap öffnet die Mengensteuerung als
            kleines Popover über der Leiste; ein Ziffern-Tap wählt und
-           schliesst in einem Griff. -->
+           schließt in einem Griff. -->
       <UPopover
         v-model:open="isQuantityPickerOpen"
         :content="{ side: 'top', align: 'end', sideOffset: 8 }"
@@ -1354,7 +1354,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
             <!-- Als Zahlenfeld 3x3 statt einer Reihe aus neun: Quadratische
                  Felder in einer Reihe sind zusammen 24.5rem breit und werden
                  auf einem Handy schlicht abgeschnitten. Ein Ziffernblock ist
-                 ausserdem die vertrautere Form. -->
+                 außerdem die vertrautere Form. -->
             <div class="grid grid-cols-3 justify-items-center gap-2">
               <button
                 v-for="digit in 9"

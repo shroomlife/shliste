@@ -229,14 +229,14 @@ export interface ShlisteDb extends DBSchema {
 }
 
 /**
- * Legt Stores und Indizes an. Läuft ausschliesslich in der
+ * Legt Stores und Indizes an. Läuft ausschließlich in der
  * `upgradeneeded`-Transaktion von `openDB`.
  *
  * IDEMPOTENT über `objectStoreNames`: Jeder Store entsteht nur, wenn er
  * fehlt. So trägt dieselbe Funktion die Neuanlage (alte Version 0) und jedes
  * Upgrade (etwa 1 → 2), ohne Bestandsdaten anzufassen — ein vorhandener
  * Store wird nie neu erzeugt und damit nie geleert. Auf einer Version-1-
- * Datenbank legt der Lauf ausschliesslich `history_entries` an.
+ * Datenbank legt der Lauf ausschließlich `history_entries` an.
  *
  * Die Übernahme der alten localStorage-Daten ist kein Schema-Upgrade,
  * sondern ein einmaliger Datenimport (siehe `hasMigrated` in `sync_meta`).
@@ -360,7 +360,7 @@ type UpgradeTransaction = IDBPTransaction<ShlisteDb, StoreNames<ShlisteDb>[], 'v
  * überflüssig — nach diesem Lauf hat jede Zeile alle Schlüssel.
  *
  * Nur bei einem echten Upgrade (`oldVersion > 0`): Eine frisch angelegte
- * Datenbank hat keine Zeilen, über die sich laufen liesse.
+ * Datenbank hat keine Zeilen, über die sich laufen ließe.
  */
 export async function backfillLinkFields(oldVersion: number, transaction: UpgradeTransaction): Promise<void> {
   if (oldVersion === 0 || oldVersion >= 3) return

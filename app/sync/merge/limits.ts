@@ -67,7 +67,7 @@ export const SYNC_FIELD_LIMITS = {
   HISTORY_DESCRIPTION: 500,
   /**
    * HistoryEntry.snapshotJson — die gelöschte Zeile als JSON für die
-   * Wiederherstellung. Grosszügig, weil ein Rezeptschritt mit aiExplanation
+   * Wiederherstellung. Großzügig, weil ein Rezeptschritt mit aiExplanation
    * (bis 50k) plus JSON-Overhead hineinpassen muss.
    */
   HISTORY_SNAPSHOT: 100_000,

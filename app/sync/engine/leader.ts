@@ -15,7 +15,7 @@
  *
  * WARUM WEB LOCKS UND KEIN EIGENER APPARAT
  *
- * `navigator.locks` gibt die Sperre beim Schliessen des Tabs von selbst frei —
+ * `navigator.locks` gibt die Sperre beim Schließen des Tabs von selbst frei —
  * auch beim Absturz, auch beim harten Beenden. Eine selbstgebaute Sperre über
  * IndexedDB oder localStorage bräuchte dafür ein Wasserzeichen, einen
  * Zeitgeber, der es erneuert, und eine Regel, ab wann eine fremde Sperre als
@@ -23,13 +23,13 @@
  *
  * WAS PASSIERT, WENN DIE SPERRE BELEGT IST — ZWEI ANTWORTEN
  *
- * Für Zeitgeber und Ereignisse: nichts. `ifAvailable` heisst, der Aufruf kehrt
+ * Für Zeitgeber und Ereignisse: nichts. `ifAvailable` heißt, der Aufruf kehrt
  * sofort zurück, statt sich anzustellen. Eine Warteschlange aus Zeitgebern
  * entlüde sich beim Freiwerden auf einmal und führe denselben Lauf mehrfach.
  *
  * Für eine ausdrückliche Handlung des Nutzers: anstellen. Wer auf "Jetzt
  * abgleichen" drückt oder einen Konflikt entscheidet, hat genau einen Wunsch
- * geäussert — den still fallenzulassen, weil ein anderer Tab gerade arbeitet,
+ * geäußert — den still fallenzulassen, weil ein anderer Tab gerade arbeitet,
  * sieht aus wie eine kaputte App. Ein Tastendruck ist eine Warteschlange von
  * eins, und der Knopf ist so lange in seinem Ladezustand.
  */
@@ -99,7 +99,7 @@ export async function runAsLeader<T>(
     : { mode: 'exclusive' as const, ifAvailable: true as const }
 
   await locks.request(SYNC_LOCK_NAME, anfrage, async (lock) => {
-    // `null` heisst: Die Sperre ist belegt, ein anderer Tab arbeitet gerade.
+    // `null` heißt: Die Sperre ist belegt, ein anderer Tab arbeitet gerade.
     // Beim Anstellen kann das nicht vorkommen, die Prüfung kostet aber nichts.
     if (lock === null) return
     ergebnis = { ran: true, value: await arbeit() }

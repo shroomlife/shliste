@@ -85,7 +85,7 @@ function readText(value: unknown): string {
  * Die alte Fassung speicherte Zeitpunkte als ISO-Zeichenkette, `null` oder gar
  * nicht. Alles, was sich nicht als Datum lesen lässt, wird zu "jetzt": Ein
  * erfundener Zeitpunkt in der Vergangenheit wäre schlimmer, weil das
- * feldgenaue Last-Write-Wins ihn gegen den Serverstand antreten liesse.
+ * feldgenaue Last-Write-Wins ihn gegen den Serverstand antreten ließe.
  */
 export function toTimestamp(value: unknown, fallback: IsoUtc): IsoUtc {
   if (isIsoUtc(value)) return value
@@ -104,7 +104,7 @@ export function toTimestamp(value: unknown, fallback: IsoUtc): IsoUtc {
  * Die Vorgängerin legte Zufallsfarben als `rgba(r, g, b, 0.2)` ab — der
  * Alpha-Wert war die Lasur, die heute die Oberfläche selbst legt
  * (`color-mix`, 20 Prozent). Bliebe er stehen, käme die Lasur zweimal und die
- * Karte wäre fast weiss. Deshalb wird der Farbton übernommen und die
+ * Karte wäre fast weiß. Deshalb wird der Farbton übernommen und die
  * Durchsichtigkeit verworfen.
  */
 export function toHexColor(value: unknown, fallback: string): string {

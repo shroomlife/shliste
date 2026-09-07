@@ -5,7 +5,7 @@
  * entwertet das Refresh-Token samt Session-Familie (idempotent). Das
  * kurzlebige Session-JWT läuft danach binnen einer Stunde von selbst aus.
  * Legacy-Sessions ohne Refresh-Token kennen weiterhin keinen Widerruf —
- * dort heisst Abmelden wie bisher: Der Browser gibt das Token her und kann
+ * dort heißt Abmelden wie bisher: Der Browser gibt das Token her und kann
  * es nicht zurückholen, weil er es wegen httpOnly nie zu Gesicht bekommen hat.
  *
  * Der Widerruf ist BEST EFFORT: Eine gerade nicht erreichbare API darf das

@@ -18,8 +18,8 @@ function open(): Promise<IDBPDatabase<ShlisteDb>> {
       // Der Datennachtrag läuft in DERSELBEN versionchange-Transaktion weiter
       // und wird deshalb bewusst nicht abgewartet: `openDB` löst erst auf,
       // wenn diese Transaktion vollständig durch ist. Die Schleife kettet
-      // ausschliesslich IndexedDB-Anfragen aneinander, die Transaktion kann
-      // also zwischendurch nicht von selbst schliessen.
+      // ausschließlich IndexedDB-Anfragen aneinander, die Transaktion kann
+      // also zwischendurch nicht von selbst schließen.
       //
       // DER ABBRUCH IM FEHLERFALL IST DER EIGENTLICHE PUNKT. Scheitert eine
       // IndexedDB-Anfrage, bricht die Transaktion ohnehin ab. Ein gewöhnlicher
@@ -48,16 +48,16 @@ function open(): Promise<IDBPDatabase<ShlisteDb>> {
     blocked() {
       // Umgekehrter Fall zu blocking(): Ein anderer, älterer Tab hält die
       // Datenbank und blockiert UNSEREN Versionswechsel. Dessen blocking()
-      // schliesst gleich von selbst — hier nur sichtbar machen, warum das
+      // schließt gleich von selbst — hier nur sichtbar machen, warum das
       // Öffnen gerade wartet. Die openDB-Promise löst auf, sobald es frei ist.
       console.warn('[db] Warte auf einen anderen Tab, der die Datenbank noch mit alter Version offen hält.')
     },
 
     blocking() {
       // Ein anderer Tab will auf eine neuere Version migrieren und wird von
-      // dieser offenen Verbindung blockiert. Wir schliessen sofort, sonst
-      // hängt der andere Tab bis zum Schliessen dieses Tabs. Ein Fehler ist
-      // hier bedeutungslos: dann gibt es nichts mehr zu schliessen.
+      // dieser offenen Verbindung blockiert. Wir schließen sofort, sonst
+      // hängt der andere Tab bis zum Schließen dieses Tabs. Ein Fehler ist
+      // hier bedeutungslos: dann gibt es nichts mehr zu schließen.
       void closeDb().catch(() => undefined)
     },
 
@@ -107,7 +107,7 @@ export function getDb(): Promise<IDBPDatabase<ShlisteDb>> {
 }
 
 /**
- * Schliesst die Verbindung, falls eine offen ist. Der nächste `getDb()`
+ * Schließt die Verbindung, falls eine offen ist. Der nächste `getDb()`
  * öffnet neu. Gebraucht beim Versionswechsel in einem anderen Tab und beim
  * Zurücksetzen der lokalen Daten.
  */

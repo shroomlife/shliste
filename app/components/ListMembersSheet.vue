@@ -9,7 +9,7 @@ import type { ListMember } from '#shared/types/domain'
  * wird, verbietet der Server ohnehin — die Oberfläche zeigt nur nicht an, was
  * ohne Berechtigung ins Leere liefe.
  *
- * `email: null` bei einem Mitglied heisst "Adresse nicht sichtbar" und NICHT
+ * `email: null` bei einem Mitglied heißt "Adresse nicht sichtbar" und NICHT
  * "kein Konto": Die Adresse bekommt allein der Eigentümer zu sehen. Diese
  * Unterscheidung darf die Anzeige nicht verwischen, sonst liest sich ein
  * vollwertiges Mitglied wie eine offene Einladung.

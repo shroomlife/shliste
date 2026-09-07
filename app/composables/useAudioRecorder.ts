@@ -32,7 +32,7 @@ export function formatRecordingDuration(seconds: number): string {
 const MIME_CANDIDATES = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'] as const
 
 function fileNameFor(mimeType: string): string {
-  // `audio/mp4` ist ein reiner Audio-Container — als Datei heisst das m4a.
+  // `audio/mp4` ist ein reiner Audio-Container — als Datei heißt das m4a.
   if (mimeType.startsWith('audio/mp4')) return 'recording.m4a'
   return 'recording.webm'
 }
@@ -78,7 +78,7 @@ export function useAudioRecorder() {
   }
 
   /**
-   * Startet die Aufnahme. `false` heisst: nicht möglich — die Begründung
+   * Startet die Aufnahme. `false` heißt: nicht möglich — die Begründung
    * steht dann in `error` (verweigerte Berechtigung, kein Mikrofon, kein
    * MediaRecorder-Support).
    */

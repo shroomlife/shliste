@@ -6,14 +6,14 @@
  * Clients erzeugen Farben für dieselben Daten, und eine abweichende Palette
  * wäre im geteilten Bestand sofort sichtbar.
  *
- * Die Summe der drei Kanäle wird auf 100 bis 700 begrenzt. Das schliesst
- * nahezu schwarze und nahezu weisse Werte aus, die als Lasur entweder gar
+ * Die Summe der drei Kanäle wird auf 100 bis 700 begrenzt. Das schließt
+ * nahezu schwarze und nahezu weiße Werte aus, die als Lasur entweder gar
  * nicht oder als schmutziger Schleier erscheinen würden.
  */
 
-/** Untere Schranke der Kanalsumme (schliesst zu dunkle Werte aus) */
+/** Untere Schranke der Kanalsumme (schließt zu dunkle Werte aus) */
 const MIN_CHANNEL_SUM = 100
-/** Obere Schranke der Kanalsumme (schliesst zu helle Werte aus) */
+/** Obere Schranke der Kanalsumme (schließt zu helle Werte aus) */
 const MAX_CHANNEL_SUM = 700
 
 function toHex(value: number): string {
@@ -23,7 +23,7 @@ function toHex(value: number): string {
 /**
  * Liefert eine zufällige Farbe als `#RRGGBB`.
  *
- * Die Schleife verwirft Werte ausserhalb der Schranken, statt sie
+ * Die Schleife verwirft Werte außerhalb der Schranken, statt sie
  * zurechtzurechnen — genau wie die Android-Fassung. Ein Zurechtrechnen würde
  * die Verteilung an den Rändern verzerren und Farben häufen.
  */

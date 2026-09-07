@@ -1,7 +1,7 @@
 /**
  * Netzwerkstatus des Browsers.
  *
- * Bewusst kein blosses `navigator.onLine`: Das meldet nur, ob eine Verbindung
+ * Bewusst kein bloßes `navigator.onLine`: Das meldet nur, ob eine Verbindung
  * zum lokalen Netz besteht, nicht ob das Internet erreichbar ist. Ein WLAN im
  * Supermarkt ohne Durchgang meldet damit fälschlich "online". Deshalb lässt
  * sich der Wert zusätzlich korrigieren, sobald ein echter Aufruf an die eigene

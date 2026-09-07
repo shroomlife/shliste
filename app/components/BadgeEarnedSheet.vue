@@ -9,7 +9,7 @@ import type { IsoUtc } from '#shared/types/domain'
  * existieren:
  *
  * 1. Das Sheet (`open`): erstes Fertigkochen eines Rezepts. Goldpalette
- *    (#B8860B / #DAA520 / #FFD700 / #FFE88D), Rezeptname gross, Datum,
+ *    (#B8860B / #DAA520 / #FFD700 / #FFE88D), Rezeptname groß, Datum,
  *    Knopf "Toll!".
  * 2. Die kurze Feier (`celebrateTick`): das Rezept trägt schon eine
  *    Auszeichnung und wurde erneut fertig gekocht — drei Sekunden Konfetti
@@ -129,7 +129,7 @@ onBeforeUnmount(() => {
   --gold-light: #ffe88d;
 }
 
-/* Verlaufskante über background-clip: zwei Hintergründe, der äussere ist der
+/* Verlaufskante über background-clip: zwei Hintergründe, der äußere ist der
    Goldverlauf, der innere die Fläche — ergibt einen Goldrahmen ohne Pseudo-
    Element und funktioniert in beiden Themes. */
 .badge-earned__plate {

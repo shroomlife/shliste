@@ -7,8 +7,8 @@
  * klassische Handy-Klon-Signal ist.
  *
  * Fläche und Schrift folgen dem Android-Vorbild: Markenfarbe, Radius 16px,
- * Text in 20px fett. Die weisse Schrift auf #E064B2 misst 3,16:1 — das
- * genügt WCAG AA, weil 20px fett als grosse Schrift gilt (dort 3:1).
+ * Text in 20px fett. Die weiße Schrift auf #E064B2 misst 3,16:1 — das
+ * genügt WCAG AA, weil 20px fett als große Schrift gilt (dort 3:1).
  *
  * Der Abstand nach unten: 6rem = 72px fixe Bottom-Nav (h-18) plus 24px Luft,
  * dazu die Safe-Area (iOS-Homebar) — die Bar wächst um denselben Betrag,

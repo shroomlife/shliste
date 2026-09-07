@@ -61,7 +61,7 @@ describe('changedFields', () => {
     ])
   })
 
-  test('lässt die ID immer aussen vor', () => {
+  test('lässt die ID immer außen vor', () => {
     // Die ID ist unveränderlich; ein Zeitstempel darauf hätte keine Bedeutung.
     expect(changedFields(undefined, draft)).not.toContain('id')
     expect(changedFields(storedRow({ id: 'other-id' }), draft)).toEqual([])

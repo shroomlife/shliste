@@ -4,7 +4,7 @@
  *
  * Die Formen sind absichtlich chaotisch getestet: Android-Apps füllen die drei
  * Felder nach Gutdünken. Chrome schickt die Adresse in `url`, viele Apps
- * packen sie mitten in einen Fliesstext in `text`, manche schicken nur einen
+ * packen sie mitten in einen Fließtext in `text`, manche schicken nur einen
  * Betreff in `title`. Dieselbe Reihenfolge gilt im Android-Client
  * (`ShareReceiveExtractor`).
  */
@@ -42,7 +42,7 @@ describe('extractSharedLink', () => {
     expect(result?.title).toBe('Ofenkartoffeln')
   })
 
-  test('ohne url wird der Fliesstext durchsucht', () => {
+  test('ohne url wird der Fließtext durchsucht', () => {
     const result = extractSharedLink({ text: 'Schau mal: https://kochwelt.de/rezept — lecker!' })
     expect(result?.url).toBe('https://kochwelt.de/rezept')
   })

@@ -49,7 +49,7 @@ export const BACKOFF_JITTER_RATIO = 0.25
  * Ab so vielen Fehlversuchen in Folge gilt der Stream als unzuverlässig.
  *
  * Ein einzelner Abbruch ist Alltag: Netzwechsel, Proxy-Timeout, oder der
- * Server schliesst die älteste Verbindung, sobald ein Konto mehr als fünf
+ * Server schließt die älteste Verbindung, sobald ein Konto mehr als fünf
  * offen hat. Erst mehrere Fehlschläge ohne einen einzigen erfolgreichen
  * Verbindungsaufbau bedeuten, dass Echtzeit gerade nicht funktioniert und der
  * Aufrufer auf Abfrage im Minutentakt umstellen sollte.
@@ -70,7 +70,7 @@ export const HEARTBEAT_INTERVAL_MS = 15_000
  *
  * Vier ausgefallene Herzschläge, und die Zahl ist mit Bedacht nicht drei: Der
  * Server SCHWEIGT SELBST bis zu drei Takte lang absichtlich. Staut sich der
- * Puffer einer Verbindung, schiebt er den Herzschlag nicht nach und schliesst
+ * Puffer einer Verbindung, schiebt er den Herzschlag nicht nach und schließt
  * sie erst nach dem dritten solchen Takt (`SSE_MAX_STALLED_HEARTBEATS` in
  * `event-bus.ts`). Mit derselben Frist liefen beide Seiten in ein
  * Kopf-an-Kopf-Rennen, und wer zuerst zuschlägt, entschiede der Zufall.
@@ -137,7 +137,7 @@ export interface RealtimeConnectionOptions {
    * EventSource meldet `open`, sobald die Antwortkopfzeilen da sind; ob je ein
    * Byte Nutzlast folgt, sagt das nicht. Genau diese Unterscheidung führt die
    * Verbindung intern längst (`proven`, hält Wartezeit und Fehlerzähler
-   * zurück) — sie war nur nach aussen nicht sichtbar, und deshalb hat die
+   * zurück) — sie war nur nach außen nicht sichtbar, und deshalb hat die
    * Ebene darüber ihre Minuten-Reserve schon bei `open` abgeschaltet.
    */
   onProven?: () => void
@@ -176,7 +176,7 @@ export interface StreamId {
 /**
  * Zerlegt eine Redis-Stream-Id der Form `{epochMillis}-{sequence}`.
  *
- * `null` heisst "nicht deutbar". Beide Teile müssen sichere Ganzzahlen sein,
+ * `null` heißt "nicht deutbar". Beide Teile müssen sichere Ganzzahlen sein,
  * sonst wäre der Vergleich darunter wertlos.
  */
 export function parseStreamId(id: string): StreamId | null {
@@ -187,7 +187,7 @@ export function parseStreamId(id: string): StreamId | null {
   const sequencePart = id.slice(dash + 1)
 
   // Number() schluckt Leerraum, Vorzeichen und Exponentialschreibweise. Ein
-  // Stream-Teil besteht ausschliesslich aus Ziffern.
+  // Stream-Teil besteht ausschließlich aus Ziffern.
   if (!/^\d+$/.test(millisPart) || !/^\d+$/.test(sequencePart)) return null
 
   const millis = Number(millisPart)
@@ -201,12 +201,12 @@ export function parseStreamId(id: string): StreamId | null {
  * Ist `candidate` jünger als `last`?
  *
  * ZEICHENVERGLEICH REICHT NICHT: Die Zahlen haben keine feste Länge. `'10-0'`
- * ist als Zeichenkette kleiner als `'9-0'`, als Stream-Id aber grösser.
+ * ist als Zeichenkette kleiner als `'9-0'`, als Stream-Id aber größer.
  *
  * Nicht deutbare Ids gelten als jünger. Die Deduplizierung ist eine
  * Optimierung gegen das Überlappungsfenster zwischen Nachlieferung und
  * Live-Zustellung; im Zweifel wird ein Ereignis lieber doppelt verarbeitet als
- * verschluckt. Doppelt heisst hier nur: ein zweiter, folgenloser Delta-Abruf.
+ * verschluckt. Doppelt heißt hier nur: ein zweiter, folgenloser Delta-Abruf.
  */
 export function isNewerEventId(candidate: string, last: string | null): boolean {
   if (last === null) return true
@@ -242,7 +242,7 @@ export function backoffDelayMs(base: number, random: () => number = Math.random)
  * Baut die Stream-Adresse.
  *
  * Beide Werte werden kodiert: Das Ticket ist zwar hexadezimal und der Cursor
- * ein Zahlenpaar, aber beides kommt von aussen und gehört deshalb nicht
+ * ein Zahlenpaar, aber beides kommt von außen und gehört deshalb nicht
  * ungeprüft in eine Adresse.
  */
 export function buildStreamUrl(apiBase: string, ticket: string, lastEventId: string | null): string {
@@ -256,7 +256,7 @@ export function buildStreamUrl(apiBase: string, ticket: string, lastEventId: str
  * Erzeugt eine Verbindung. Sie ist zunächst untätig, erst `start()` verbindet.
  *
  * Der Aufrufer bekommt bewusst kein `EventSource` in die Hand: Wer die
- * Verbindung von aussen anfassen kann, kann auch deren eingebauten Reconnect
+ * Verbindung von außen anfassen kann, kann auch deren eingebauten Reconnect
  * wieder anwerfen.
  */
 export function createRealtimeConnection(options: RealtimeConnectionOptions): RealtimeConnection {
@@ -276,7 +276,7 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
    * Nummer des laufenden Verbindungsversuchs.
    *
    * Zwischen Ticket-Abruf und `new EventSource` liegt ein `await`. Ein `stop()`
-   * in genau diesem Fenster bliebe sonst folgenlos und liesse eine ungewollte
+   * in genau diesem Fenster bliebe sonst folgenlos und ließe eine ungewollte
    * Verbindung zurück. Jeder Versuch merkt sich seine Nummer und bricht ab,
    * sobald sie überholt wurde.
    */
@@ -308,7 +308,7 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
    * gar nicht sieht: Was hier ankommt, ist ein Herzschlag oder ein echtes
    * Ereignis, also etwas, das der Server NACH dem Aufbau geschickt hat.
    * (Android braucht dafür eine Zeitschranke, weil es den Rohstrom liest und
-   * die Begrüssungszeile mitzählen würde — SyncEventSource.kt.)
+   * die Begrüßungszeile mitzählen würde — SyncEventSource.kt.)
    */
   let proven = false
 
@@ -345,7 +345,7 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
   /**
    * Die Frist ist abgelaufen: Die Leitung ist verstummt.
    *
-   * Behandelt wie jeder andere Ausfall, einschliesslich Fehlerzähler. Eine
+   * Behandelt wie jeder andere Ausfall, einschließlich Fehlerzähler. Eine
    * Verbindung, die keine Herzschläge mehr liefert, ist nicht weniger kaputt
    * als eine, die mit einem Fehler abbricht — sie sagt es nur nicht.
    */
@@ -357,7 +357,7 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
   /**
    * Ein Rahmen ist eingetroffen, Herzschlag oder echtes Ereignis.
    *
-   * Er beweist zweierlei: Die Leitung lebt (Frist neu), und der Strom fliesst
+   * Er beweist zweierlei: Die Leitung lebt (Frist neu), und der Strom fließt
    * wirklich — erst damit dürfen Wartezeit und Fehlerzähler zurück.
    */
   function handleFrame(): void {
@@ -391,7 +391,7 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
   function closeSource(): void {
     clearLivenessTimer()
     if (source === null) return
-    // Erst die Rückrufe lösen, dann schliessen: ein bereits eingereihtes
+    // Erst die Rückrufe lösen, dann schließen: ein bereits eingereihtes
     // Ereignis würde sonst noch zugestellt und den Zustand weiterdrehen.
     source.onopen = null
     source.onmessage = null
@@ -418,7 +418,7 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
     handleFrame()
 
     // Kommentarzeilen (`: connected`) reicht der Browser gar nicht durch, und
-    // der Herzschlag hat einen eigenen Namen. Hier landen ausschliesslich
+    // der Herzschlag hat einen eigenen Namen. Hier landen ausschließlich
     // echte Ereignisse.
     const id = event.lastEventId
     if (id.length > 0) {
@@ -441,7 +441,7 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
       // Nach einer Unterbrechung liefert der Server ab dem Cursor nach, aber
       // nur begrenzt (100 Ereignisse, und der Stream selbst hält rund 1000).
       // Nach langer Pause oder ganz ohne Cursor bleibt deshalb eine Lücke, die
-      // nur ein vollständiger Abgleich schliesst. Der Zeitpunkt ist Absicht:
+      // nur ein vollständiger Abgleich schließt. Der Zeitpunkt ist Absicht:
       // beim Abbruch selbst ist ohnehin kein Netz da, um etwas zu holen. Gilt
       // ebenso beim Fortsetzen nach einer gewollten Pause.
       options.onEvent(SYNC_NEEDED)
@@ -495,7 +495,7 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
       ticket = await options.requestTicket()
     }
     catch {
-      // Kein Ticket heisst: keine Sitzung, kein Netz, oder die BFF ist gerade
+      // Kein Ticket heißt: keine Sitzung, kein Netz, oder die BFF ist gerade
       // nicht erreichbar. Alle drei sind vorübergehend behandelbar.
       if (!wanted || mine !== attempt) return
       handleFailure()

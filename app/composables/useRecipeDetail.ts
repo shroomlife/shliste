@@ -8,7 +8,7 @@
  * Ohne Konto nutzbar. Die Daten liegen in IndexedDB; der Abgleich schreibt in
  * dieselbe Datenbank zurück, danach genügt hier ein erneutes `load()`.
  *
- * Der Gesprächsverlauf (`recipe_chat_messages`) bleibt aussen vor: Er hat
+ * Der Gesprächsverlauf (`recipe_chat_messages`) bleibt außen vor: Er hat
  * seine eigene Schicht (`useRecipeChat`) mit eigenem, append-only Schreibweg.
  */
 import type { IsoUtc, RecipeIngredient, RecipeStep } from '../../shared/types/domain'
@@ -117,11 +117,11 @@ export function useRecipeDetail() {
   /**
    * Die frisch verdiente Auszeichnung — das Signal an die Detailseite, die
    * Zeremonie zu zeigen (`BadgeEarnedSheet`). Bewusst KEIN Toast: Ein fertig
-   * gekochtes Rezept ist der grösste Moment dieser App und verdient mehr als
+   * gekochtes Rezept ist der größte Moment dieser App und verdient mehr als
    * eine Randnotiz, die nach vier Sekunden verschwindet.
    *
    * Absichtlich nicht readonly herausgegeben: Die Seite setzt es beim
-   * Schliessen des Sheets auf `null` zurück — sonst stünde die Zeremonie beim
+   * Schließen des Sheets auf `null` zurück — sonst stünde die Zeremonie beim
    * nächsten Öffnen des Rezepts wieder da.
    */
   const lastAwardedBadge = useState<{ recipeName: string, earnedAt: IsoUtc } | null>(

@@ -8,7 +8,7 @@
  *
  * - /ai/suggest meldet Fehler auch mit HTTP 200 im Feld `error`
  * - andere Routen melden Fehler als HTTP-Status mit `{error}`-Body
- * - der Server rechnet bis zu 300 Sekunden — deshalb das grosse Timeout,
+ * - der Server rechnet bis zu 300 Sekunden — deshalb das große Timeout,
  *   und deshalb nimmt jede Funktion ein AbortSignal fürs Abbrechen entgegen
  *
  * Bewusst generisch gehalten: Das Rezept-Paket kann `postAi` mit seinen
@@ -30,7 +30,7 @@ import {
 import type { CurrentRecipePayload } from './recipeDiff'
 
 /**
- * Grosszügiger als die 300 Sekunden des Servers, damit im Normalfall immer
+ * Großzügiger als die 300 Sekunden des Servers, damit im Normalfall immer
  * der Server die Frist setzt und der Client nur das Sicherheitsnetz ist.
  */
 const AI_TIMEOUT_MS = 310_000
@@ -49,7 +49,7 @@ export type AiRequestBody = Record<string, unknown> | FormData
 function messageForStatus(status: number): string {
   switch (status) {
     case 401: return 'Bitte melde dich an, um die AI-Funktionen zu nutzen.'
-    case 413: return 'Die Datei ist zu gross.'
+    case 413: return 'Die Datei ist zu groß.'
     case 429: return 'Zu viele Anfragen — bitte warte einen Moment.'
     default: return 'Die AI-Anfrage ist fehlgeschlagen. Bitte versuche es erneut.'
   }
@@ -158,7 +158,7 @@ export interface AudioUpload {
   blob: Blob
   /**
    * Der Dateiname ist PFLICHT: Seine Endung bestimmt, welches Format das
-   * Transkriptionsmodell annimmt. Ohne Namen hiesse die Datei "blob" ohne
+   * Transkriptionsmodell annimmt. Ohne Namen hieße die Datei "blob" ohne
    * Endung, und die Transkription scheitert.
    */
   fileName: string

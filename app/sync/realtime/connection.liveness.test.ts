@@ -13,7 +13,7 @@
 import { afterEach, beforeEach, describe, expect, jest, mock, test } from 'bun:test'
 
 // Ohne diesen Ersatz würde `getLastEventId()` auf IndexedDB warten, das es
-// ausserhalb eines Browsers nicht gibt — der Aufruf löste sich nie auf und der
+// außerhalb eines Browsers nicht gibt — der Aufruf löste sich nie auf und der
 // Verbindungsaufbau käme nie über sein erstes `await` hinaus.
 let gespeicherterCursor: string | null = null
 mock.module('~/db/repositories', () => ({
@@ -37,7 +37,7 @@ let letzteQuelle: FakeEventSource | null = null
 let gebauteQuellen = 0
 
 /**
- * Ein `EventSource`, das nichts tut, bis ein Test es anstösst.
+ * Ein `EventSource`, das nichts tut, bis ein Test es anstößt.
  *
  * Bewusst kein automatisches `open`: Der Zeitpunkt des Verbindungsaufbaus ist
  * in mehreren Zusicherungen genau das, worauf es ankommt.
@@ -68,7 +68,7 @@ class FakeEventSource {
     this.closed = true
   }
 
-  // --- Anstösse für die Tests ---
+  // --- Anstöße für die Tests ---
 
   emitOpen(): void {
     this.onopen?.()
@@ -102,7 +102,7 @@ interface Aufbau {
   seqs: number[]
   /** Jede Meldung von `onDegraded`, in der Reihenfolge des Auftretens. */
   degraded: number[]
-  /** Wie oft `onProven` gemeldet hat — der Beweis, dass wirklich etwas fliesst. */
+  /** Wie oft `onProven` gemeldet hat — der Beweis, dass wirklich etwas fließt. */
   proven: number
   stop: () => void
 }
@@ -147,7 +147,7 @@ function aufbauen(): Aufbau {
 /**
  * Einmal aufbauen, wahlweise einen Rahmen liefern, dann verstummen lassen.
  *
- * Die grosszügige zweite Wartezeit deckt jede Stufe des Backoff ab — der Test
+ * Die großzügige zweite Wartezeit deckt jede Stufe des Backoff ab — der Test
  * interessiert sich für die Eskalation, nicht für die genaue Wartezeit.
  */
 async function eineRunde(mitRahmen: boolean): Promise<void> {
@@ -265,7 +265,7 @@ describe('Totmann-Schalter', () => {
     for (let runde = 0; runde < DEGRADED_AFTER_FAILURES + 1; runde++) await eineRunde(true)
     await flush()
 
-    // Ein Strom, der liefert und dann abreisst, ist Alltag — Netzwechsel,
+    // Ein Strom, der liefert und dann abreißt, ist Alltag — Netzwechsel,
     // Serverneustart. Das darf sich nicht zu "Echtzeit geht nicht" aufsummieren.
     expect(degraded).toEqual([])
     stop()
@@ -287,14 +287,14 @@ describe('Totmann-Schalter', () => {
   })
 })
 
-describe('Bewiesen ist erst, was auch fliesst', () => {
-  test('ein blosses open beweist NICHTS', async () => {
+describe('Bewiesen ist erst, was auch fließt', () => {
+  test('ein bloßes open beweist NICHTS', async () => {
     /*
      * DER EIGENTLICHE FALL. Eine EventSource meldet `open`, sobald die
      * Antwortkopfzeilen da sind — ob je ein Byte Nutzlast folgt, sagt das
      * nicht. Vorher hat `useRealtime` genau daraufhin den degradierten Zustand
      * aufgehoben, und `useSync` hat die Minuten-Reserve abgeschaltet. Eine
-     * offene, aber stumme Leitung liess den Tab damit bis zur
+     * offene, aber stumme Leitung ließ den Tab damit bis zur
      * 60-Sekunden-Frist ohne jeden Weg an neue Daten.
      */
     const aufbau = aufbauen()

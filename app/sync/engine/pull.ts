@@ -114,7 +114,7 @@ export interface PullResponse {
   /**
    * Es gibt weitere Seiten. Der nächste Abruf schickt diesen Wert zurück.
    *
-   * `null` heisst "fertig". Ein Server ohne dieses Feld verhält sich wie
+   * `null` heißt "fertig". Ein Server ohne dieses Feld verhält sich wie
    * bisher: `truncated` allein, und dann bleibt der Cursor stehen.
    */
   nextPageToken: string | null
@@ -290,7 +290,7 @@ function badgeValues(row: Badge): Record<string, unknown> {
 /**
  * Die lokale Zeile in der Form, die das Merge erwartet.
  *
- * `null` heisst "gibt es lokal nicht" — dann übernimmt `mergePulledEntity` die
+ * `null` heißt "gibt es lokal nicht" — dann übernimmt `mergePulledEntity` die
  * Serverzeile unverändert. Eine saubere lokale Zeile hat nichts beizutragen
  * und wird dort ebenfalls überschrieben (Begründung steht in `field-lww.ts`).
  */
@@ -612,7 +612,7 @@ export async function applyPulledRows(store: PullStore, rows: PulledRows): Promi
 }
 
 /**
- * Holt die Antwort des Servers. `since === null` heisst voller Pull.
+ * Holt die Antwort des Servers. `since === null` heißt voller Pull.
  *
  * `pageToken` setzt eine gekappte Antwort fort (siehe `lib/pull-page.ts` der
  * API). Ohne ihn beginnt der Server von vorn.

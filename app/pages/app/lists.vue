@@ -235,7 +235,7 @@ async function submitDialog(): Promise<void> {
     <AppSheet
       v-model:open="isDialogOpen"
       title="Neue Liste"
-      description="Wie soll die Liste heissen?"
+      description="Wie soll die Liste heißen?"
     >
       <UInput
         v-model="newListName"

@@ -10,7 +10,7 @@
  * WARUM DER DOM ZURÜCKGESETZT WIRD: Sortable verschiebt beim Ablegen echte
  * DOM-Knoten. Vue rendert dieselbe Liste aus seinen Daten. Blieben beide
  * Änderungen stehen, stünde die Zeile doppelt verschoben da. Deshalb wird die
- * Bewegung im DOM sofort rückgängig gemacht und ausschliesslich über die Daten
+ * Bewegung im DOM sofort rückgängig gemacht und ausschließlich über die Daten
  * neu gerendert — die Daten bleiben die einzige Wahrheit.
  *
  * Nur im Browser: Sortable braucht echte Knoten. Auf dem Server passiert

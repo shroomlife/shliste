@@ -16,7 +16,7 @@
  *
  * Das Skript von Google wird erst geladen, wenn ein Ziel-Element auftaucht,
  * und nie auf dem Server: Es taugt dort nicht (es braucht `document`), und
- * eine App, die man ohne Konto benutzt, soll für einen blossen Besuch keine
+ * eine App, die man ohne Konto benutzt, soll für einen bloßen Besuch keine
  * fremde Verbindung öffnen.
  *
  * Das ID-Token wird hier nur entgegengenommen und weitergereicht. Geprüft
@@ -168,7 +168,7 @@ export interface UseGoogleSignInButton {
  *
  * `onCredential` bekommt das rohe ID-Token und tauscht es beim Aufrufer gegen
  * eine Sitzung; Fehlerbehandlung und Ladezustand bleiben Sache der Komponente,
- * weil nur sie weiss, wie sie beides anzeigen will.
+ * weil nur sie weiß, wie sie beides anzeigen will.
  */
 export function useGoogleSignInButton(
   host: Readonly<Ref<HTMLElement | null | undefined>>,
@@ -222,7 +222,7 @@ export function useGoogleSignInButton(
     }
     catch (error) {
       console.warn('[useGoogleSignInButton] Googles Anmeldeknopf konnte nicht gezeichnet werden:', error)
-      renderError.value = 'Der Anmeldeknopf von Google liess sich nicht laden. Prüfe die Verbindung und versuche es noch einmal.'
+      renderError.value = 'Der Anmeldeknopf von Google ließ sich nicht laden. Prüfe die Verbindung und versuche es noch einmal.'
     }
   }
 

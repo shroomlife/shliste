@@ -2,7 +2,7 @@
  * Domänenmodell — exakt am Contract von api.shliste.app ausgerichtet.
  *
  * Wichtig gegenüber der alten Web-App:
- * - Schlüssel heisst `id`, nicht `uuid`
+ * - Schlüssel heißt `id`, nicht `uuid`
  * - Items liegen in einer eigenen Tabelle, nicht eingebettet in der Liste
  * - Rezeptschritte sind Zeilen mit eigenen Feldern, kein string[]
  * - Zeitstempel sind ISO-UTC mit GENAU drei Millisekundenstellen
@@ -67,7 +67,7 @@ export type LinkImageKind = 'preview' | 'icon'
  * sofort selbst — sonst stünde der Titel der alten Seite unter der neuen
  * Adresse, bis der Server nachzieht.
  *
- * NUR EIN TYP UND KEINE KONSTANTE: Diese Datei enthält ausschliesslich Typen
+ * NUR EIN TYP UND KEINE KONSTANTE: Diese Datei enthält ausschließlich Typen
  * und wird deshalb beim Übersetzen restlos wegradiert. Ein Laufzeitwert darin
  * erzeugte einen echten Import über die Grenze von `app/` nach `shared/`, und
  * genau daran ist der Produktionsbuild gescheitert. Die Liste als Werte steht
@@ -167,7 +167,7 @@ export type HistoryParentType = 'list' | 'recipe'
 
 /**
  * Was der Eintrag festhält. Bisher nur Löschungen — der Verlauf zeigt
- * ausschliesslich, was sich wiederherstellen lässt.
+ * ausschließlich, was sich wiederherstellen lässt.
  */
 export type HistoryActionType = 'deleted'
 
@@ -179,7 +179,7 @@ export type HistoryEntityType = 'list_item' | 'recipe_ingredient' | 'recipe_step
  *
  * Append-only wie RecipeChatMessage, deshalb ohne updatedAt/deletedAt/
  * fieldTimestamps: Ein Eintrag wird geschrieben und nie geändert. `createdBy`
- * ist die Server-User-UUID des Verursachers und kommt ausschliesslich per
+ * ist die Server-User-UUID des Verursachers und kommt ausschließlich per
  * Pull — lokal erzeugte Einträge tragen `null` ("von mir"), der Server
  * stempelt den Wert beim Push selbst.
  *
@@ -209,7 +209,7 @@ export interface ListMember {
   /** UUID des Nutzers, nicht die interne Ganzzahl-ID */
   userId: string
   /**
-   * Nur für den Eigentümer der Liste gefüllt. `null` heisst
+   * Nur für den Eigentümer der Liste gefüllt. `null` heißt
    * "Adresse nicht sichtbar" und NICHT "kein Konto".
    */
   email: string | null

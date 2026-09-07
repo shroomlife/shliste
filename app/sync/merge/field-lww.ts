@@ -1,7 +1,7 @@
 /**
  * Field-Level Last-Write-Wins (LWW) + Add-Wins — Pull-Richtung für die Web-PWA.
  *
- * QUELLE: `api.shliste.app/src/lib/field-lww.ts`. Dort steht die massgebliche
+ * QUELLE: `api.shliste.app/src/lib/field-lww.ts`. Dort steht die maßgebliche
  * Semantik, diese Datei ist eine Portierung davon. Gegenprobe:
  * `android-app/app/src/main/java/com/shroomlife/shliste/sync/FieldTimestampManager.kt`.
  *
@@ -17,7 +17,7 @@
  * lexikografisch über die ISO-Strings. Grund: Javas `Instant.toString()`
  * (Android) lässt `.000` weg ("2026-07-16T10:15:00Z"), JS `toISOString()`
  * schreibt immer "2026-07-16T10:15:00.000Z". Als Strings verglichen wäre
- * "…00Z" grösser als "…00.000Z", obwohl beide denselben Zeitpunkt bezeichnen.
+ * "…00Z" größer als "…00.000Z", obwohl beide denselben Zeitpunkt bezeichnen.
  */
 import type { FieldTimestamps } from '../../../shared/types/domain'
 
@@ -131,7 +131,7 @@ export interface MergeResult {
  * hielte.
  *
  * `-Infinity` für fehlende und kaputte Werte erledigt die Sonderfälle von
- * selbst: Ein fehlender lokaler Zeitstempel ist nie strikt grösser und
+ * selbst: Ein fehlender lokaler Zeitstempel ist nie strikt größer und
  * verliert; ein gültiger lokaler Wert schlägt einen fehlenden Serverwert;
  * fehlen beide, ist es ein Gleichstand und der Server gewinnt.
  *
@@ -213,11 +213,11 @@ export function applyAddWins(
 
   // Restore von deletedAt.
   // Der Marker braucht einen nicht-leeren Zeitstempel: Ohne ihn ist unbekannt,
-  // wann gelöscht wurde, und "danach bearbeitet" liesse sich nicht belegen.
+  // wann gelöscht wurde, und "danach bearbeitet" ließe sich nicht belegen.
   //
   // Hier lief Android bis zum 20.08.2026 auseinander: `applyAddWins` prüfte dort
-  // nur auf `!= null`, liess den leeren String durch und stellte die Zeile
-  // wieder her, während API und Web sie gelöscht liessen. Behoben, und seither
+  // nur auf `!= null`, ließ den leeren String durch und stellte die Zeile
+  // wieder her, während API und Web sie gelöscht ließen. Behoben, und seither
   // durch den Fixture-Fall "gelöschte Zeile ohne deletedAt-Zeitstempel bleibt
   // gelöscht" abgesichert, der in allen drei Repos läuft. Nicht wieder auf eine
   // reine null-Prüfung zurückbauen.
@@ -253,7 +253,7 @@ export interface ServerRow {
 
 export interface PullMergeResult {
   /**
-   * ACHTUNG für den Aufrufer: Im Merge-Zweig enthält `values` ausschliesslich
+   * ACHTUNG für den Aufrufer: Im Merge-Zweig enthält `values` ausschließlich
    * die Felder aus `MUTABLE_FIELDS` — `id`, `listId`, `createdAt` und alles
    * andere Unveränderliche steht NICHT darin. Die Zeile wird aus der
    * Serverzeile plus diesen Werten zusammengesetzt, genau wie im

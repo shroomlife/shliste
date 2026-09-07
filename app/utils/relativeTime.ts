@@ -8,7 +8,7 @@
  */
 const dateFormat = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
-/** `null` und Unlesbares heissen "nie" — der Fall "noch nie abgeglichen". */
+/** `null` und Unlesbares heißen "nie" — der Fall "noch nie abgeglichen". */
 export function formatRelativeTime(iso: string | null): string {
   if (iso === null) return 'nie'
   const parsed = new Date(iso)

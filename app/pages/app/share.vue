@@ -87,7 +87,7 @@ watch(() => route.query, () => {
 /**
  * Liest den geteilten Inhalt aus dem Abfrageteil und räumt ihn danach weg.
  *
- * Ein leerer Abfrageteil heisst „diese Seite wurde nicht gerade beschickt" —
+ * Ein leerer Abfrageteil heißt „diese Seite wurde nicht gerade beschickt" —
  * dann bleibt stehen, was schon im Zustand liegt (etwa nach einem Zurück aus
  * einem KI-Blatt).
  *
@@ -186,7 +186,7 @@ async function addToNewList(): Promise<void> {
 }
 
 /**
- * Die KI-Wege stehen nur mit Adresse zur Wahl — aus einem blossen Text lässt
+ * Die KI-Wege stehen nur mit Adresse zur Wahl — aus einem bloßen Text lässt
  * sich weder eine Liste noch ein Rezept holen.
  */
 function startAiList(): void {
@@ -263,7 +263,7 @@ async function cancel(): Promise<void> {
       </p>
     </header>
 
-    <!-- Leerzustand: Es kam nichts an, mit dem sich etwas anfangen liesse.
+    <!-- Leerzustand: Es kam nichts an, mit dem sich etwas anfangen ließe.
          Auch der Fall „Seite neu geladen", denn dann ist der Abfrageteil
          längst weg. -->
     <div
@@ -422,7 +422,7 @@ async function cancel(): Promise<void> {
         </ul>
       </div>
 
-      <!-- Die KI-Wege nur mit Adresse: Aus einem blossen Text lässt sich
+      <!-- Die KI-Wege nur mit Adresse: Aus einem bloßen Text lässt sich
            weder eine Liste noch ein Rezept holen. -->
       <div
         v-if="sharedUrl"

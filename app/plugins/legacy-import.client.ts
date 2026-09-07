@@ -30,7 +30,7 @@ function readLegacyDocument(key: string): unknown {
   }
   catch {
     // Beschädigtes JSON: Der Rest der Übernahme soll trotzdem laufen.
-    console.warn(`[Import] ${key} liess sich nicht lesen und wird übersprungen.`)
+    console.warn(`[Import] ${key} ließ sich nicht lesen und wird übersprungen.`)
     return null
   }
 }

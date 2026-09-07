@@ -9,7 +9,7 @@
  * hat sein Interesse bereits gezeigt; das ist der Moment für ein Angebot, nicht
  * für eine Absage.
  *
- * Die Aufzählung nennt ausschliesslich Funktionen, die es wirklich gibt und
+ * Die Aufzählung nennt ausschließlich Funktionen, die es wirklich gibt und
  * die man in dieser App auch findet. Nichts Angekündigtes, nichts Erfundenes.
  *
  * Und der Schlusssatz bleibt ehrlich: Die App ist ohne Konto vollständig
@@ -122,7 +122,7 @@ const funktionen = [
       </ul>
 
       <!-- Der ehrliche Teil. Ein Angebot, das den Verzicht verschweigt, wäre
-           ein Verkauf: Ohne Konto fehlt nichts ausser der AI. -->
+           ein Verkauf: Ohne Konto fehlt nichts außer der AI. -->
       <p
         class="rounded-xl px-4 py-3 text-[1rem]"
         style="background: var(--md-surface-low); color: var(--md-on-surface-variant)"

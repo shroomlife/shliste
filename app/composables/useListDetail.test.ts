@@ -93,7 +93,7 @@ describe('groupByChecked', () => {
     expect(groups.done.map(item => item.id)).toEqual(['b'])
   })
 
-  test('liefert bei ausschliesslich erledigten Einträgen eine leere offene Gruppe', () => {
+  test('liefert bei ausschließlich erledigten Einträgen eine leere offene Gruppe', () => {
     const groups = groupByChecked([makeItem({ checked: true })])
 
     expect(groups.open).toHaveLength(0)

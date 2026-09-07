@@ -179,7 +179,7 @@ describe('capText', () => {
     expect(capText('x'.repeat(600), SYNC_FIELD_LIMITS.NAME)).toHaveLength(SYNC_FIELD_LIMITS.NAME)
   })
 
-  test('zerreisst kein Surrogatpaar', () => {
+  test('zerreißt kein Surrogatpaar', () => {
     // Ein halbes Emoji ist kein gültiger Codepoint und würde beim
     // UTF-8-Kodieren still zu "?" degradieren.
     const text = `ab${'\u{1F600}'}cd`
@@ -223,7 +223,7 @@ describe('sanitize: der Link einer Zeile überlebt jeden Durchlauf', () => {
    * Sanitizer läuft vor JEDEM Push über JEDE schmutzige Zeile — nicht nur
    * über frisch eingegebene. Prüfte er die Adresse inhaltlich und verwürfe
    * sie bei Zweifeln, verschwände ein längst gespeicherter, gültiger Link an
-   * einer Zeile, die aus einem ganz anderen Grund schmutzig ist (etwa bloss
+   * einer Zeile, die aus einem ganz anderen Grund schmutzig ist (etwa bloß
    * abgehakt) — still, ohne Fehler, und für alle Mitglieder einer geteilten
    * Liste.
    *
@@ -328,7 +328,7 @@ describe('sanitize', () => {
   })
 
   test('lässt Zeitstempel und fieldTimestamps in Ruhe', () => {
-    // Sie hier zu verschieben hiesse, eine LWW-Entscheidung zu ändern, ohne
+    // Sie hier zu verschieben hieße, eine LWW-Entscheidung zu ändern, ohne
     // dass sich inhaltlich etwas geändert hat.
     const fieldTimestamps = { name: NOW }
     const row = makeListItem({ name: 'n'.repeat(600), fieldTimestamps, deletedAt: NOW })

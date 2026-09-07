@@ -38,7 +38,7 @@ describe('buildSignatureMessage', () => {
       .toBe(`GET|/sync/pull|${TIMESTAMP}|${EMPTY_BODY_HASH}`)
   })
 
-  test('die Methode wird in Grossbuchstaben geschrieben', () => {
+  test('die Methode wird in Großbuchstaben geschrieben', () => {
     expect(buildSignatureMessage('post', '/sync/push', TIMESTAMP, EMPTY_BODY_HASH))
       .toBe(`POST|/sync/push|${TIMESTAMP}|${EMPTY_BODY_HASH}`)
   })

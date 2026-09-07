@@ -10,7 +10,7 @@
  * Geöffnet wird das Blatt vom Sync-Runner (useSync.ts) über
  * `useSessionExpiredSheet()`; hierher gehört nur, was das Blatt selbst tut:
  * Googles Knopf zeichnen, das ID-Token gegen eine neue Sitzung tauschen,
- * danach schliessen und sofort abgleichen — die aufgelaufenen lokalen
+ * danach schließen und sofort abgleichen — die aufgelaufenen lokalen
  * Änderungen sollen nicht auf den nächsten Anlass warten.
  *
  * Dismissbar mit Absicht: Wer gerade keine Zeit für den Login hat, arbeitet
@@ -61,7 +61,7 @@ async function completeSignIn(idToken: string): Promise<void> {
 }
 
 // Meldet sich der Nutzer anderswo neu an (etwa über den Anmelden-Knopf im
-// Layout), ist dieses Blatt erledigt und schliesst sich von selbst.
+// Layout), ist dieses Blatt erledigt und schließt sich von selbst.
 watch(isSignedIn, (signedIn) => {
   if (signedIn) open.value = false
 })

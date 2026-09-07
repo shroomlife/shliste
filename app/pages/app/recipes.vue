@@ -227,7 +227,7 @@ async function submitDialog(): Promise<void> {
     <AppSheet
       v-model:open="isDialogOpen"
       title="Neues Rezept"
-      description="Wie soll das Rezept heissen?"
+      description="Wie soll das Rezept heißen?"
     >
       <UInput
         v-model="newRecipeName"

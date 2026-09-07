@@ -2,8 +2,8 @@
  * Was beim Teilen bei uns ankommt — und was davon brauchbar ist.
  *
  * Ein Share-Ziel bekommt drei Felder (`title`, `text`, `url`), und die Apps
- * da draussen füllen sie nach Gutdünken: Chrome legt die Adresse ordentlich
- * in `url`, viele Apps schicken sie mitten in einem Fliesstext in `text`,
+ * da draußen füllen sie nach Gutdünken: Chrome legt die Adresse ordentlich
+ * in `url`, viele Apps schicken sie mitten in einem Fließtext in `text`,
  * manche nur einen Betreff. Deshalb wird in dieser Reihenfolge gesucht:
  * `url` → `text` → `title`, jeweils der ERSTE Treffer.
  *
@@ -67,7 +67,7 @@ function findUrl(candidates: readonly string[]): string | null {
 /**
  * Liest einen Teilen-Vorgang aus.
  *
- * `null` heisst „nichts Brauchbares dabei" — die Seite zeigt dann ihren
+ * `null` heißt „nichts Brauchbares dabei" — die Seite zeigt dann ihren
  * Leerzustand statt einer Auswahl, die ins Leere liefe. Das ist der Fall bei
  * lauter Leerzeichen und bei einem Betreff ohne alles, denn ein Betreff
  * allein ergibt keinen Eintrag.

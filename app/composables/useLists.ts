@@ -152,7 +152,7 @@ export function useLists() {
    *
    * Ordnungswert und Sortierschlüssel werden je Eintrag WEITERGEZÄHLT statt
    * einmal berechnet: Würden alle aus demselben Ausgangsbestand abgeleitet,
-   * bekämen fünf Zutaten denselben Platz und stünden anschliessend in
+   * bekämen fünf Zutaten denselben Platz und stünden anschließend in
    * beliebiger Reihenfolge da.
    *
    * @returns die tatsächlich angelegten Zeilen. Die Anzahl steht als

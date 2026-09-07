@@ -120,7 +120,7 @@ const sourceUrlValue = ref('')
  * DERSELBE WACHPOSTEN WIE AN DER LINK-KACHEL (siehe `linkUrl` in
  * `ListItemRow.vue`), und aus demselben Grund: `sourceUrl` ist ein
  * SYNCHRONISIERTES Feld. Der Abgleich liest es als beliebige Zeichenkette und
- * kappt nur die Länge — geprüft wird es ausschliesslich dort, wo ein Mensch
+ * kappt nur die Länge — geprüft wird es ausschließlich dort, wo ein Mensch
  * es hier eintippt. Ein anderer Schreiber könnte also `javascript:…`
  * hineinlegen, und ohne diese Prüfung stünde das als anklickbarer Link da.
  */
@@ -341,7 +341,7 @@ async function restoreFromHistory(entry: HistoryEntryRow): Promise<void> {
 
 /* ------------------------------------------------------------------ *
  * Badge-Zeremonie — `awardBadgeIfFirstTime` meldet die frische Auszeichnung
- * über `lastAwardedBadge`, diese Seite zeigt dazu das Sheet. Beim Schliessen
+ * über `lastAwardedBadge`, diese Seite zeigt dazu das Sheet. Beim Schließen
  * geht das Signal zurück auf null, sonst stünde die Zeremonie beim nächsten
  * Öffnen des Rezepts wieder da. Die Wiederholungs-Feier (`celebrateTick`)
  * läuft direkt in die Komponente durch.
@@ -350,10 +350,10 @@ async function restoreFromHistory(entry: HistoryEntryRow): Promise<void> {
 const isBadgeSheetOpen = ref(false)
 
 /**
- * Anzeige-Kopie der Zeremonie: Beim Schliessen wird der geteilte Zustand
+ * Anzeige-Kopie der Zeremonie: Beim Schließen wird der geteilte Zustand
  * sofort genullt (sonst stünde das Blatt beim nächsten Öffnen des Rezepts
  * wieder da) — die Kopie hier bleibt stehen, damit der Inhalt während der
- * Schliess-Animation nicht vor den Augen verschwindet.
+ * Schließ-Animation nicht vor den Augen verschwindet.
  */
 const badgeForSheet = ref<{ recipeName: string, earnedAt: IsoUtc } | null>(null)
 
@@ -413,8 +413,8 @@ async function confirmDelete(): Promise<void> {
  * dieser Grenze würde die Lesespalte schmaler als der Chat daneben, und damit
  * wäre der Chat kein Gewinn mehr, sondern ein Dieb.
  *
- * In Media Queries zählt `rem` immer die ANFÄNGLICHE Schriftgrösse des
- * Browsers, nicht die skalierte aus `:root`. Wer seinen Browser grösser
+ * In Media Queries zählt `rem` immer die ANFÄNGLICHE Schriftgröße des
+ * Browsers, nicht die skalierte aus `:root`. Wer seinen Browser größer
  * eingestellt hat, bekommt die dritte Spalte also entsprechend später — genau
  * richtig, denn bei ihm ist auch alles andere breiter.
  */
@@ -472,7 +472,7 @@ const recipeImageText = computed(() =>
 const currentStepId = computed(() => steps.value.find(step => !step.isChecked)?.id ?? null)
 
 /**
- * Wendet die angehakten Änderungen der Diff-Vorschau an — ausschliesslich
+ * Wendet die angehakten Änderungen der Diff-Vorschau an — ausschließlich
  * über die bestehenden Schreibwege von useRecipeDetail. Eine Zeile, die der
  * Sync zwischenzeitlich entfernt hat, wird still übersprungen.
  */
@@ -808,9 +808,9 @@ function onImageGenerated(imageRef: string): void {
          weiter oben schon als Fehler steht.
 
          Jetzt trägt der Deckel die SPUR und nicht mehr der Inhalt darin, und
-         die überzählige Breite geht an die Panels aussen. Die haben etwas
+         die überzählige Breite geht an die Panels außen. Die haben etwas
          davon: mehr Zutaten pro Blick, breitere Chat-Blasen. Die Zubereitung
-         behält ihre Lesebreite, egal wie gross der Schirm ist.
+         behält ihre Lesebreite, egal wie groß der Schirm ist.
 
          Die 48rem sind eine Lesebreite, keine Layoutzahl: Bei 1.375rem Zain
          ergaben die früheren 56.25rem rund 90 Zeichen pro Zeile, deutlich über
@@ -829,9 +829,9 @@ function onImageGenerated(imageRef: string): void {
              verschwand er ersatzlos, und ein Rezept ohne Bild sah nicht aus
              wie "hier könnte eins sein", sondern wie ein Fehler im Layout.
 
-             Und er steht FEST: Das Bild liegt ausserhalb des scrollenden
+             Und er steht FEST: Das Bild liegt außerhalb des scrollenden
              Rumpfs, damit es beim Blättern durch eine lange Zutatenliste
-             bleibt, statt nach drei Zeilen wegzurutschen. Ausserhalb statt
+             bleibt, statt nach drei Zeilen wegzurutschen. Außerhalb statt
              `sticky`, weil klebender Inhalt in einem Scrollbereich sonst
              Rundungen und Hintergrund von Hand nachbauen muss, um das
              darunter Durchlaufende zu verdecken. -->
@@ -921,7 +921,7 @@ function onImageGenerated(imageRef: string): void {
             </div>
 
             <!-- Auf Mobil bleibt das Feld im Fluss; auf dem Desktop steht es
-                 unten im Panel-Fuss, wie die Eingabezeile einer Liste. -->
+                 unten im Panel-Fuß, wie die Eingabezeile einer Liste. -->
             <UInput
               v-if="!isSortMode"
               v-model="newIngredient"
@@ -934,8 +934,8 @@ function onImageGenerated(imageRef: string): void {
               @keyup.enter="submitIngredient"
             />
 
-            <!-- DER WEG IN DEN EINKAUF, MOBILE FASSUNG. Er sass zuerst nur im
-                 Panel-Fuss der Werkbank, und der beginnt erst ab 1280px zu
+            <!-- DER WEG IN DEN EINKAUF, MOBILE FASSUNG. Er saß zuerst nur im
+                 Panel-Fuß der Werkbank, und der beginnt erst ab 1280px zu
                  existieren — auf jedem Handy war die Funktion damit unsichtbar.
                  Ausgerechnet dort wird sie am ehesten gebraucht: Man steht vor
                  dem Rezept und will einkaufen gehen. -->
@@ -1001,7 +1001,7 @@ function onImageGenerated(imageRef: string): void {
           </div>
         </div>
 
-        <!-- Panel-Fuss: steht fest, egal wie lang die Zutatenliste wird. Der
+        <!-- Panel-Fuß: steht fest, egal wie lang die Zutatenliste wird. Der
              Weg in den Einkauf war vorher ein kleiner Geisterknopf im
              Sektionskopf — also am ANFANG einer Liste, die man erst lesen
              will, und optisch kaum vorhanden. Hier ist er das, was er ist:
@@ -1039,15 +1039,15 @@ function onImageGenerated(imageRef: string): void {
       </div>
 
       <!-- Die Arbeitsspalte ist ebenfalls ein Panel: Kopf mit Fortschritt,
-           scrollender Rumpf, fester Fuss mit dem Eingabefeld.
+           scrollender Rumpf, fester Fuß mit dem Eingabefeld.
 
            Die Lesebreite steckt in der RASTERSPUR (siehe oben), nicht mehr
-           hier im Inhalt. Ein Deckel im Inhalt liess das Panel weiter wachsen
+           hier im Inhalt. Ein Deckel im Inhalt ließ das Panel weiter wachsen
            und legte den Überschuss als leere Fläche daneben. -->
       <div class="contents xl:flex xl:h-full xl:min-h-0 xl:w-full xl:min-w-0 xl:flex-col">
         <!-- Fortschritt steht auf dem Desktop fest über der Arbeitsspalte. -->
         <!-- Feste Kopfhöhe, damit die Trennlinie hier und die der Chat-Spalte
-             auf EINER Linie liegen. Mit blosser Polsterung entscheidet sonst
+             auf EINER Linie liegen. Mit bloßer Polsterung entscheidet sonst
              der Inhalt über die Höhe, und direkt neben einem senkrechten
              Trenner fällt ein Versatz von zwanzig Pixeln sofort auf. -->
         <div
@@ -1275,7 +1275,7 @@ function onImageGenerated(imageRef: string): void {
           </div>
         </div>
 
-        <!-- Panel-Fuss der Arbeitsspalte, Gegenstück zur Werkbank: Das
+        <!-- Panel-Fuß der Arbeitsspalte, Gegenstück zur Werkbank: Das
              Eingabefeld steht fest unten statt am Ende einer Liste, die man
              erst hinunterscrollen muss. Genau so macht es auch eine Liste.
 
@@ -1310,10 +1310,10 @@ function onImageGenerated(imageRef: string): void {
 
                  `items-end` dreht den Beistellplatz von Nuxt UI nach unten —
                  voreingestellt klebt er oben, was neben zwei Zeilen Text
-                 seltsam schwebt. Die Grösse `sm` ist nicht geschätzt: Nuxt UI
-                 räumt bei `trailing` in Grösse `lg` genau `pe-10` frei, und
+                 seltsam schwebt. Die Größe `sm` ist nicht geschätzt: Nuxt UI
+                 räumt bei `trailing` in Größe `lg` genau `pe-10` frei, und
                  0.75rem Abstand plus ein 1.75rem breiter `sm`-Knopf ergeben
-                 exakt diese 2.5rem. Ein grösserer Knopf liefe unter den Text. -->
+                 exakt diese 2.5rem. Ein größerer Knopf liefe unter den Text. -->
             <template #trailing>
               <UButton
                 icon="i-lucide-plus"

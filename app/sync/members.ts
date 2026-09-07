@@ -11,7 +11,7 @@
  * Mitglieds bekommt auch nur er zu sehen. Diese Datei ruft auf und engt
  * Antworten ein; die Regeln stehen in `api.shliste.app/src/routes/sync/members.ts`.
  *
- * `email: null` in einer Mitgliedschaft heisst deshalb "Adresse nicht
+ * `email: null` in einer Mitgliedschaft heißt deshalb "Adresse nicht
  * sichtbar" und NICHT "kein Konto" — ein Unterschied, den die Oberfläche
  * niemals verwischen darf.
  */
@@ -30,7 +30,7 @@ export interface EmailInvite {
 export interface ListMembership {
   members: ListMember[]
   /**
-   * Offene Einladungen an Adressen. Sieht ausschliesslich der Eigentümer —
+   * Offene Einladungen an Adressen. Sieht ausschließlich der Eigentümer —
    * für Mitglieder wäre das eine Kontaktliste fremder Personen, und der
    * Server liefert ihnen deshalb eine leere Liste.
    */

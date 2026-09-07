@@ -120,7 +120,7 @@ export function isHttpUrl(value: string): boolean {
  * JEDER Schreibstelle, nicht nur an frisch getippten Eingaben — eine strenge
  * Prüfung würde eine längst gespeicherte, gültige Adresse beim nächsten
  * Schreibvorgang stillschweigend löschen. „Kein innerer Leerraum" ist
- * ausschliesslich eine Regel der Eingabezeile (`detectLinkInput`).
+ * ausschließlich eine Regel der Eingabezeile (`detectLinkInput`).
  */
 export function validHttpUrlOrNull(raw: string | null | undefined): string | null {
   if (raw === null || raw === undefined) return null
@@ -140,7 +140,7 @@ export function validHttpUrlOrNull(raw: string | null | undefined): string | nul
  *
  * NUR für Eingabefelder, in die Menschen von Hand tippen (die beiden
  * KI-Blätter und die `www.`-Erkennung der Eingabezeile). Ein Wert, der aus
- * dem Abgleich kommt, wird nie ergänzt — dort heisst „kein Schema" schlicht
+ * dem Abgleich kommt, wird nie ergänzt — dort heißt „kein Schema" schlicht
  * „keine Adresse".
  *
  * Ein bereits vorhandenes Schema bleibt stehen, auch ein fremdes: `ftp://x`
@@ -160,7 +160,7 @@ export function withHttpsPrefix(raw: string): string {
  * Nur das führende `www.` fällt weg — `shop.rewe.de` bleibt vollständig
  * stehen, weil die Subdomain dort etwas bedeutet.
  *
- * Ein leerer String heisst „kein lesbarer Host". Die Anzeige fällt dann auf
+ * Ein leerer String heißt „kein lesbarer Host". Die Anzeige fällt dann auf
  * die Adresse selbst zurück (siehe `listItemDisplay.ts`).
  */
 export function hostOf(url: string | null | undefined): string {

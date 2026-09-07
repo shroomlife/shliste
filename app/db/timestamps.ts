@@ -4,7 +4,7 @@
  * Warum eine eigene Datei statt `new Date().toISOString()` an der Aufrufstelle:
  * Das Format ist Teil des API-Vertrags, nicht Geschmackssache. Alles läuft
  * durch `toIso()`, damit es genau eine Stelle gibt, an der das Format
- * garantiert wird — und genau eine Stelle, an der ein Verstoss auffällt.
+ * garantiert wird — und genau eine Stelle, an der ein Verstoß auffällt.
  *
  * Importe sind bewusst relativ: die Unit-Tests laufen unter `bun test` ohne
  * Nuxt und ohne dessen `~`-Alias-Auflösung.
@@ -30,7 +30,7 @@ export function isIsoUtc(value: unknown): value is IsoUtc {
  * Wandelt ein Date in das API-Format.
  *
  * `Date#toISOString()` liefert die drei Millisekundenstellen nur für Jahre
- * zwischen 1000 und 9999; ausserhalb davon schaltet es auf die erweiterte
+ * zwischen 1000 und 9999; außerhalb davon schaltet es auf die erweiterte
  * Schreibweise mit Vorzeichen um (±YYYYYY). Deshalb wird das Ergebnis geprüft
  * und im Zweifel sofort geworfen: ein kaputter Zeitstempel in der Datenbank
  * fällt sonst erst Tage später beim Push auf und ist dann nicht mehr
@@ -76,7 +76,7 @@ export function fromIso(value: IsoUtc): Date {
 /**
  * Vergleicht zwei Zeitstempel chronologisch.
  *
- * Da das Format feste Breite hat, immer in UTC vorliegt und von gross nach
+ * Da das Format feste Breite hat, immer in UTC vorliegt und von groß nach
  * klein aufgebaut ist, stimmt die Zeichenordnung exakt mit der Zeitordnung
  * überein. Das spart bei jedem Vergleich zwei `Date`-Objekte — und die
  * Sortierungen laufen bei jedem Rendern der Listenansicht.

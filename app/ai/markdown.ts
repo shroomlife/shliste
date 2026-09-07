@@ -13,7 +13,7 @@
  * 2. `marked` säubert nichts. Die eigene Dokumentation sagt es wörtlich:
  *    "Marked does not sanitize the output HTML", empfohlen wird DOMPurify
  *    obendrauf. Für drei Auszeichnungen wären das zwei Abhängigkeiten und ein
- *    `v-html`, in das Modellausgabe fliesst.
+ *    `v-html`, in das Modellausgabe fließt.
  * 3. Diese Fassung liefert DATEN, keine HTML-Zeichenkette. Was daraus wird,
  *    baut die Ansicht als echte Knoten. Damit gibt es gar keinen Weg, auf dem
  *    fremdes Markup in die Seite käme — kein `v-html`, keine Lücke.

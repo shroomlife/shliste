@@ -4,7 +4,7 @@
  * Der Browser verbindet sich mit `EventSource` direkt zum Stream der API, weil
  * EventSource keine Header setzen kann — weder Authorization noch die
  * HMAC-Header. Statt dessen trägt die Stream-URL ein Einmal-Ticket, das
- * ausschliesslich die vollauthentifizierte Route POST /sync/realtime/ticket
+ * ausschließlich die vollauthentifizierte Route POST /sync/realtime/ticket
  * ausgibt. Genau die wird hier signiert aufgerufen.
  *
  * Das Ticket ist kurzlebig und einmal einlösbar; es in einer URL zu führen ist

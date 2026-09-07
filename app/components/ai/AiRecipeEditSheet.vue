@@ -52,7 +52,7 @@ const selectedSteps = ref<Set<number>>(new Set())
 
 const recorder = useAudioRecorder()
 
-/** Bricht die laufende Anfrage ab; lebt ausserhalb von Vue, keine Ansicht liest ihn. */
+/** Bricht die laufende Anfrage ab; lebt außerhalb von Vue, keine Ansicht liest ihn. */
 let controller: AbortController | null = null
 
 const sheetTitle = computed(() => (phase.value === 'preview' ? 'Vorschau' : 'AI-Bearbeitung'))
@@ -249,7 +249,7 @@ function applySelection(): void {
   open.value = false
 }
 
-/** Beim Schliessen alles zurücksetzen — auch eine noch laufende Anfrage. */
+/** Beim Schließen alles zurücksetzen — auch eine noch laufende Anfrage. */
 watch(open, (isOpen) => {
   if (isOpen) return
   controller?.abort()

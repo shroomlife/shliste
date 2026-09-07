@@ -2,7 +2,7 @@
  * Das Ereignisformat des Echtzeit-Streams von api.shliste.app.
  *
  * Die Ereignisse sind HINWEISE, keine Nutzdaten: Sie sagen "an dieser Liste hat
- * sich etwas geändert", nicht was. Die Daten holt der Aufrufer anschliessend
+ * sich etwas geändert", nicht was. Die Daten holt der Aufrufer anschließend
  * über den normalen Sync-Weg. Deshalb darf ein Ereignis auch verloren gehen,
  * ohne dass Daten fehlen; es verzögert nur den Abgleich bis zum nächsten
  * Ereignis oder Zeitgeber.
@@ -54,7 +54,7 @@ export interface ItemChangedEvent extends WithChangeSeq {
    * sortiert. Ohne dieses Feld erfuhr der Client das nur über ein zusätzliches
    * `list_changed` — und weil das Coalescing `list_changed` gewinnen lässt,
    * landete jedes Abhaken im Listen-Delta, das die Liste MIT ALLEN Items
-   * zurückgibt. Bei der grössten Liste in Produktion sind das 312 Einträge
+   * zurückgibt. Bei der größten Liste in Produktion sind das 312 Einträge
    * statt einem.
    *
    * `null`, wenn der Server das Feld nicht schickt (ältere API).
@@ -155,7 +155,7 @@ function readSeq(value: unknown): number | null {
 /**
  * Engt den `itemIds`-String auf eine Liste von Ids ein.
  *
- * Der Wert ist doppelt verpackt: JSON im JSON. Er kommt von aussen und wird
+ * Der Wert ist doppelt verpackt: JSON im JSON. Er kommt von außen und wird
  * deshalb geprüft statt gecastet. Alles, was kein String-Array ist, ergibt
  * `null` und nicht ein halb gefülltes Ergebnis.
  */
@@ -176,7 +176,7 @@ function parseItemIds(value: unknown): string[] | null {
   for (const entry of decoded) {
     const id = readNonEmptyString(entry)
     // Ein einzelner kaputter Eintrag macht die ganze Liste unbrauchbar: Wer
-    // weiss, welche Ids sonst noch fehlen. Lieber gar keine Ids melden.
+    // weiß, welche Ids sonst noch fehlen. Lieber gar keine Ids melden.
     if (id === null) return null
     ids.push(id)
   }
@@ -186,7 +186,7 @@ function parseItemIds(value: unknown): string[] | null {
 /**
  * Deutet die `data`-Zeile eines Ereignisses.
  *
- * `null` heisst "nicht deutbar" und nicht "kein Ereignis". Der Aufrufer soll
+ * `null` heißt "nicht deutbar" und nicht "kein Ereignis". Der Aufrufer soll
  * daraus `SYNC_NEEDED` machen: Dass der Server etwas geschickt hat, ist der
  * Beweis, dass sich etwas geändert hat. Nur das Was ist unklar, und ein
  * vollständiger Abgleich ist die sichere Deutung. Genau so verhält sich auch
@@ -221,7 +221,7 @@ export function parseRealtimeEvent(raw: string): RealtimeEvent | null {
       // Ohne deutbare Ids bleibt die sichere Obermenge: Die Liste hat sich
       // geändert. Ein `item_changed` mit leerem Array wäre die schlechtere
       // Wahl, weil es sich nicht von "nichts hat sich geändert" unterscheiden
-      // liesse und die Bündelung es als leere Menge weiterreichen würde.
+      // ließe und die Bündelung es als leere Menge weiterreichen würde.
       if (itemIds === null) return { type: 'list_changed', listId, seq }
 
       return { type: 'item_changed', listId, itemIds, listUpdatedAt: readIsoOrNull(decoded.listUpdatedAt), seq }

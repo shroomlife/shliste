@@ -601,7 +601,7 @@ describe('parseServerStatus', () => {
   })
 
   test('fehlende Teil-Hashes ergeben null, nicht sechs leere Strings', () => {
-    // Der Unterschied zählt: `null` heisst "der Server hat nichts gesagt" und
+    // Der Unterschied zählt: `null` heißt "der Server hat nichts gesagt" und
     // führt zu "unbekannt". Sechs leere Strings hiessen "alles weicht ab".
     expect(parseServerStatus(FILLED_SERVER).contentHashParts).toBeNull()
   })

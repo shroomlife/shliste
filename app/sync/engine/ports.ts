@@ -34,7 +34,7 @@ import type { DirtyStoreName } from '../../db/repositories'
  * `TransactionInactiveError`. Der Rückgabetyp hält das fest, damit es nicht
  * beim ersten Umbau verlorengeht.
  *
- * `null` heisst "nichts schreiben".
+ * `null` heißt "nichts schreiben".
  */
 export type RowMerge<TRow> = (local: TRow | undefined) => TRow | null
 
@@ -171,15 +171,15 @@ export interface LocalDataCounts {
 /**
  * Was die Konfliktauflösung zusätzlich braucht.
  *
- * Beide Eingriffe sind gross und selten, deshalb stehen sie hier und nicht im
- * gewöhnlichen Ablauf: Sie laufen ausschliesslich auf eine ausdrückliche
+ * Beide Eingriffe sind groß und selten, deshalb stehen sie hier und nicht im
+ * gewöhnlichen Ablauf: Sie laufen ausschließlich auf eine ausdrückliche
  * Entscheidung des Nutzers hin.
  */
 export interface ConflictStore {
   /**
    * Nimmt das Push-Flag von allen lokal gelöschten Zeilen und meldet, wie
    * viele es waren. Für "zusammenführen": Eine offline getroffene Löschung
-   * darf den Serverbestand nicht mitreissen.
+   * darf den Serverbestand nicht mitreißen.
    */
   clearDirtyOnDeleted: () => Promise<number>
   /**

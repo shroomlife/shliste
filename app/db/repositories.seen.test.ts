@@ -5,7 +5,7 @@
  * Geprüft wird das reine Prädikat `isUnseenForeignChange` — es entscheidet,
  * welche Einträge auf der Übersicht als "ungesehen fremd geändert" zählen.
  * Die IndexedDB-Verdrahtung (`markListSeen`, `countUnseenForeignChanges`)
- * bleibt aussen vor, wie bei allen Nachbartests dieser Schicht.
+ * bleibt außen vor, wie bei allen Nachbartests dieser Schicht.
  */
 import { describe, expect, test } from 'bun:test'
 import { isUnseenForeignChange } from './repositories'
@@ -31,7 +31,7 @@ describe('isUnseenForeignChange', () => {
   })
 
   test('exakt auf dem Wasserzeichen gilt als gesehen', () => {
-    // Beim Öffnen wird `seenAt` auf jetzt gesetzt — alles bis einschliesslich
+    // Beim Öffnen wird `seenAt` auf jetzt gesetzt — alles bis einschließlich
     // dieses Moments hatte man vor sich. Erst strikt Neueres zählt wieder.
     expect(isUnseenForeignChange(foreignItem(SEEN), OWN_USER, SEEN)).toBe(false)
   })

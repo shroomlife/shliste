@@ -2,13 +2,13 @@
 /**
  * App-Shell, Design-Richtung A ("Material treu").
  *
- * Die Umformung von Android auf Desktop, nicht das blosse Skalieren:
- * - Bottom-Nav (Touch) wird auf grossen Schirmen zur schmalen Icon-Rail
+ * Die Umformung von Android auf Desktop, nicht das bloße Skalieren:
+ * - Bottom-Nav (Touch) wird auf großen Schirmen zur schmalen Icon-Rail
  * - der schwebende Knopf wandert in den Kopf des Index, weil ein Kreis unten
  *   rechts auf 1600 Pixel das klassische Handy-Klon-Signal ist
  * - auf Mobil bleibt beides so, wie es Android macht
  *
- * Hier und nur hier läuft der Abgleich an: Das Layout umschliesst den ganzen
+ * Hier und nur hier läuft der Abgleich an: Das Layout umschließt den ganzen
  * App-Bereich und lebt genau so lange wie er. Ein zweiter Aufruf an anderer
  * Stelle öffnete eine zweite Echtzeit-Verbindung.
  */
@@ -21,7 +21,7 @@ useSyncRunner()
 
 /**
  * Die Frage "welcher Stand gilt?" öffnet sich von selbst, sobald sie entsteht,
- * lässt sich aber schliessen. Sie bleibt danach im Zustand stehen und ist über
+ * lässt sich aber schließen. Sie bleibt danach im Zustand stehen und ist über
  * die Abgleich-Anzeige wieder erreichbar.
  */
 const isConflictOpen = ref(false)

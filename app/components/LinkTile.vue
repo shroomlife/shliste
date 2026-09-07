@@ -8,7 +8,7 @@ import type { LinkImageKind } from '#shared/types/domain'
  * DREI DARSTELLUNGEN, EINE GRÖSSE:
  * - `preview`: das Bild der Seite, formatfüllend beschnitten (`object-cover`).
  * - `icon`: das Favicon, klein und mittig auf getöntem Grund. Ein Favicon ist
- *   oft 32 Pixel gross und würde formatfüllend zu Matsch.
+ *   oft 32 Pixel groß und würde formatfüllend zu Matsch.
  * - sonst: ein Kettensymbol. Das ist der Normalfall in den ersten Sekunden
  *   nach dem Teilen, denn der Server reichert erst nach dem Push an.
  *
@@ -87,7 +87,7 @@ const shown = computed<LinkImageKind | 'fallback'>(() => {
     </span>
 
     <!-- Der ↗-Badge in Flächenfarbe: In hellem Erscheinungsbild ist das
-         Weiss, in dunklem der dunkle Grund — wie `surface` in der
+         Weiß, in dunklem der dunkle Grund — wie `surface` in der
          Android-App. Eine feste Farbe würde in einem der beiden Modi
          verschwinden. -->
     <span

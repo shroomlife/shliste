@@ -1,7 +1,7 @@
 /**
  * Von Echtzeit-Ereignissen zu Datenabrufen.
  *
- * Hier schliesst sich der Kreis: `app/sync/realtime/` hält die Verbindung und
+ * Hier schließt sich der Kreis: `app/sync/realtime/` hält die Verbindung und
  * bündelt die Hinweise, diese Datei entscheidet, was daraufhin geholt wird.
  * Die Trennung ist Absicht — die Verbindung soll nichts von Datenbanken wissen
  * und der Abgleich nichts von `EventSource`.
@@ -37,7 +37,7 @@ export interface RealtimePlan {
   removals: string[]
   /** Gezielte Abrufe, in der Reihenfolge des ersten Auftretens. */
   deltas: DeltaTarget[]
-  /** Mindestens ein Ereignis liess sich nicht auf ein Delta abbilden. */
+  /** Mindestens ein Ereignis ließ sich nicht auf ein Delta abbilden. */
   needsFullSync: boolean
 }
 
@@ -91,7 +91,7 @@ export function planRealtimeActions(events: Iterable<RealtimeEvent>): RealtimePl
            *
            * Genau dieser Wert macht das begleitende `list_changed` entbehrlich:
            * Ohne ihn gewinnt es im Coalescing, und der Listen-Delta liefert die
-           * Liste MIT ALLEN Items — 312 statt einem bei der grössten Liste in
+           * Liste MIT ALLEN Items — 312 statt einem bei der größten Liste in
            * Produktion.
            */
           listUpdatedAt: event.listUpdatedAt
@@ -164,7 +164,7 @@ export function createRealtimeSync(deps: RealtimeSyncDeps): RealtimeSync {
       : await store.isListDirty(target.listId)
 
   /**
-   * Der schreibende Teil — läuft ausschliesslich unter der Tab-Sperre.
+   * Der schreibende Teil — läuft ausschließlich unter der Tab-Sperre.
    *
    * Gibt zurück, ob etwas geschrieben wurde und ob danach noch ein voller Lauf
    * fällig ist. Der volle Lauf selbst passiert AUSSERHALB: Er geht über
@@ -268,7 +268,7 @@ export function createRealtimeSync(deps: RealtimeSyncDeps): RealtimeSync {
 /**
  * Die höchste Änderungsnummer eines Ereignisbündels, oder `null`.
  *
- * `null` heisst "keines der Ereignisse trug eine" — bei einer älteren API der
+ * `null` heißt "keines der Ereignisse trug eine" — bei einer älteren API der
  * Normalfall. Dann bleibt der gespeicherte Stand stehen und der Herzschlag
  * verhält sich wie vor dieser Mechanik.
  */

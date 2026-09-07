@@ -58,7 +58,7 @@ import {
 import { compareIso, isAtOrBefore, isIsoUtc, nowIso } from './timestamps'
 
 /**
- * Was der Aufrufer beim Schreiben liefert: alle Domänenfelder ausser den
+ * Was der Aufrufer beim Schreiben liefert: alle Domänenfelder außer den
  * dreien, die diese Schicht selbst führt. Sie sind bewusst nicht setzbar —
  * ein von Hand gesetztes `updatedAt` würde das Last-Write-Wins verfälschen.
  */
@@ -235,7 +235,7 @@ export interface ManualOrder {
  * Der Vergleich der Sortierschlüssel läuft über `<` und nicht über
  * `localeCompare`: Die Schlüssel sind Base-62-Bruchindizes, deren Ordnung
  * genau die Zeichenordnung ist. Eine sprachabhängige Kollation würde
- * Gross- und Kleinbuchstaben zusammenziehen und die Reihenfolge zerstören.
+ * Groß- und Kleinbuchstaben zusammenziehen und die Reihenfolge zerstören.
  *
  * Zeilen ohne Schlüssel kommen ans Ende: Sie wurden nie von Hand einsortiert
  * (oder der Schlüssel war ungültig und wurde bewusst als `null` gespeichert)
@@ -267,7 +267,7 @@ export function compareByManualOrder(a: ManualOrder, b: ManualOrder): number {
  * Anlegen) oder die eigene UUID. Ohne eigenes Konto gibt es keinen Abgleich und
  * damit keine Fremden — dann zählt nichts.
  *
- * `seenAt === null` heisst "noch nie geöffnet" und zählt deshalb alles Fremde.
+ * `seenAt === null` heißt "noch nie geöffnet" und zählt deshalb alles Fremde.
  * Das ist der Fall einer gerade angenommenen Einladung: Da ist tatsächlich der
  * gesamte Inhalt neu.
  */
@@ -727,7 +727,7 @@ export async function markListSeen(listId: string): Promise<void> {
 
   // Lesen und Schreiben in EINER Transaktion: Läuft parallel ein Pull, darf
   // dieses Zurückschreiben dessen frische Zeile nicht mit der alten Kopie
-  // überdecken — es soll ausschliesslich `seenAt` setzen.
+  // überdecken — es soll ausschließlich `seenAt` setzen.
   const tx = db.transaction('lists', 'readwrite')
   const store = tx.objectStore('lists')
   const row = await store.get(listId)
@@ -742,7 +742,7 @@ export async function markListSeen(listId: string): Promise<void> {
  * Zählt die Einträge dieser Liste, die jemand anderes geändert hat, seit sie
  * zuletzt geöffnet war — die Zahl auf der Karte der Übersicht.
  *
- * Entfernte (`removed`) und gelöschte Zeilen bleiben aussen vor: Ein Hinweis
+ * Entfernte (`removed`) und gelöschte Zeilen bleiben außen vor: Ein Hinweis
  * auf etwas, das es nicht mehr gibt, führt nur in eine leere Ansicht
  * (dieselbe Regel wie `getUnseenForeignChanges` im ShlisteDao).
  */
@@ -895,7 +895,7 @@ export async function countDirtyItemsForList(listId: string): Promise<number> {
  * Wahr, wenn am Rezept selbst oder an seinen Zutaten, Schritten oder
  * Chat-Nachrichten etwas ungepusht ist.
  *
- * Auszeichnungen bleiben bewusst aussen vor: Sie hängen zwar an einem Rezept,
+ * Auszeichnungen bleiben bewusst außen vor: Sie hängen zwar an einem Rezept,
  * sind aber verdiente Erfolge und kein Bestandteil des Rezeptinhalts. Ihr
  * Zustand darf das Rezept nicht als "ungespeichert" erscheinen lassen.
  */
@@ -1148,7 +1148,7 @@ export async function setLastSyncedAt(value: IsoUtc | null): Promise<void> {
   await writeMeta('lastSyncedAt', value)
 }
 
-/** Wer war zuletzt angemeldet? `null` heisst "noch nie" oder "abgemeldet". */
+/** Wer war zuletzt angemeldet? `null` heißt "noch nie" oder "abgemeldet". */
 export async function getLastSignedInUserId(): Promise<string | null> {
   return readMeta('lastSignedInUserId', isNonEmptyString)
 }
@@ -1215,7 +1215,7 @@ export async function setSelfHealSuccess(hash: string, at: number): Promise<void
 /**
  * Bis zu welcher Änderungsnummer des Servers dieses Gerät auf dem Stand ist.
  *
- * `null` heisst "noch nie gesehen" und NICHT `0`: Der erste Herzschlag nach
+ * `null` heißt "noch nie gesehen" und NICHT `0`: Der erste Herzschlag nach
  * einer frischen Installation soll keinen Abgleich auslösen, nur weil das Konto
  * schon bei einer Zahl über null steht.
  */
@@ -1252,7 +1252,7 @@ export async function advanceLastChangeSeq(seq: number): Promise<void> {
 
   // Nur IndexedDB-Operationen im Rumpf: Die Transaktion committet, sobald die
   // Microtask-Queue leerläuft — ein `await` auf irgendetwas anderes würde sie
-  // schliessen, bevor das `put` sie erreicht.
+  // schließen, bevor das `put` sie erreicht.
   const raw: unknown = await store.get('lastChangeSeq')
   const bisher = isFiniteNumber(raw) ? raw : null
   if (bisher === null || seq > bisher) await store.put(seq, 'lastChangeSeq')
@@ -1280,7 +1280,7 @@ export async function advanceLastChangeSeq(seq: number): Promise<void> {
 // früher ein zweiter Satz `put*Row` und dazu die Begründung, ein gemeinsamer
 // Helfer bräuchte einen Cast, weil `idb` Storename und Wertetyp aneinander
 // bindet. Das stimmt nicht: Über einen Generic auf die Storenamen bleibt die
-// Bindung erhalten, castfrei. Getrenntes Lesen und Schreiben war ausserdem
+// Bindung erhalten, castfrei. Getrenntes Lesen und Schreiben war außerdem
 // genau der Weg, auf dem eine gerade getippte Eingabe verschwinden konnte.
 // ---------------------------------------------------------------------------
 
@@ -1306,7 +1306,7 @@ export type RowStoreName
  * Der Abgleich las bisher eine Zeile, rechnete, und schrieb sie danach über
  * einen zweiten, getrennten Aufruf zurück. Zwischen beiden liegt mindestens ein
  * `await`, und damit ein Fenster, in dem die Oberfläche oder ein zweiter Tab
- * eine neuere lokale Änderung schreiben kann. Der anschliessende Schreibvorgang
+ * eine neuere lokale Änderung schreiben kann. Der anschließende Schreibvorgang
  * des Abgleichs beruht dann auf dem ALTEN Stand und überschreibt sie — samt
  * `dirty`-Flag. Die Eingabe ist damit nicht nur weg, sie wird auch nie
  * hochgeladen. Nichts davon erzeugt einen Fehler.
@@ -1323,7 +1323,7 @@ export type RowStoreName
  * `merge` muss deshalb vollständig synchron sein. Das ist möglich, weil
  * `mergePulledEntity` synchron ist; die Signatur hält es fest.
  *
- * `null` aus `merge` heisst "nichts schreiben" — für den Fall, dass die
+ * `null` aus `merge` heißt "nichts schreiben" — für den Fall, dass die
  * Serverzeile nichts Neues bringt.
  */
 export async function mutateRow<N extends RowStoreName>(

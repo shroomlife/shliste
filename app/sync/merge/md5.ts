@@ -5,7 +5,7 @@
  * den Datenbestand rechnet der Server mit Postgres' eingebautem `md5()`, und
  * Android mit `MessageDigest.getInstance("MD5")`. Damit ein Vergleich
  * überhaupt möglich ist, muss diese Seite dasselbe rechnen — und die Web-API
- * `crypto.subtle` kennt ausschliesslich SHA-1 und SHA-2. MD5 gibt es dort
+ * `crypto.subtle` kennt ausschließlich SHA-1 und SHA-2. MD5 gibt es dort
  * nicht, und zwar absichtlich nicht.
  *
  * WARUM NICHT STATTDESSEN AUF SHA-256 UMSTELLEN: Ginge — Postgres 18 läuft in
@@ -18,7 +18,7 @@
  * DIES IST KEINE SICHERHEITSFUNKTION. MD5 dient hier als Fingerabdruck zum
  * Erkennen von Abweichungen, nicht als Schutz gegen jemanden, der absichtlich
  * Kollisionen baut. Für Signaturen und Sitzungen nutzt dieses Projekt
- * ausschliesslich SHA-256 (siehe `server/utils/apiSignature.ts`).
+ * ausschließlich SHA-256 (siehe `server/utils/apiSignature.ts`).
  *
  * Geprüft wird gegen zwei unabhängige Quellen: die veröffentlichten Testwerte
  * aus RFC 1321 und Werte, die aus der echten Postgres-Instanz stammen — siehe

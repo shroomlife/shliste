@@ -113,7 +113,7 @@ describe('runAsLeader', () => {
   })
 
   test('fragt exklusiv und ohne Anstehen an', async () => {
-    // Die beiden Optionen sind die ganze Semantik. Ein `mode: "shared"` liesse
+    // Die beiden Optionen sind die ganze Semantik. Ein `mode: "shared"` ließe
     // beide Tabs gleichzeitig durch, ein fehlendes `ifAvailable` stellte sie an.
     let optionen: unknown = null
     const locks: LockManagerLike = {

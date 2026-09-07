@@ -2,7 +2,7 @@
  * Anmeldung: Google-ID-Token gegen eine Session der API eintauschen.
  *
  * Der Browser besorgt sich per Google Identity Services ein ID-Token und
- * schickt es hierher. Geprüft wird es ausschliesslich von der API (Signatur,
+ * schickt es hierher. Geprüft wird es ausschließlich von der API (Signatur,
  * Aussteller und aud gegen GOOGLE_CLIENT_ID) — diese Schicht leitet es nur
  * signiert weiter und verwahrt danach das Ergebnis.
  *
@@ -54,7 +54,7 @@ export default defineEventHandler(async (event): Promise<UserProfile> => {
 
   persistSession(event, session.sessionToken, session.profile, session.refresh ?? undefined)
 
-  // Ausschliesslich das Anzeigeprofil. Session- und Refresh-Token bleiben in
+  // Ausschließlich das Anzeigeprofil. Session- und Refresh-Token bleiben in
   // httpOnly-Cookies und tauchen in keiner Antwort an den Browser auf — sonst
   // stünden sie sofort wieder im Zugriff von JavaScript und wären nichts mehr wert.
   return session.profile

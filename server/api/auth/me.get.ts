@@ -10,7 +10,7 @@
  * Profil, und jeder Sync antwortet 401.
  *
  * Das Lebenszeichen ist `GET /sync/session` — die billigste Route der API:
- * sie tut nichts ausser den userAuth-Guard zu durchlaufen. Das frühere
+ * sie tut nichts außer den userAuth-Guard zu durchlaufen. Das frühere
  * `/sync/status` zählte bei jedem Aufruf Listen und Rezepte des Kontos (W9).
  *
  * Zwei Grundsätze dieser Route (Audit W1 + W2):
@@ -55,7 +55,7 @@ interface ClientConfig {
 interface SessionState {
   authenticated: boolean
   /**
-   * Ob die Session gerade gegen die API bestätigt wurde. `false` heisst
+   * Ob die Session gerade gegen die API bestätigt wurde. `false` heißt
    * "nicht widerlegt", nicht "ungültig" — die App darf dann offline weiterarbeiten.
    */
   verified: boolean
@@ -76,7 +76,7 @@ export default defineEventHandler(async (event): Promise<SessionState> => {
 
   // Beschafft ein verwendbares Token und refresht dabei still, falls das
   // JWT (fast) abgelaufen ist. `refreshDenied` unterscheidet das endgültige
-  // Aus vom blossen "gerade nicht beschaffbar".
+  // Aus vom bloßen "gerade nicht beschaffbar".
   const { sessionToken, refreshDenied } = await resolveSessionToken(event)
 
   if (sessionToken === null) {

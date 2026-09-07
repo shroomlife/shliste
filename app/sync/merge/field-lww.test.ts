@@ -330,7 +330,7 @@ describe('applyAddWins', () => {
 
   test('ein Marker ohne Zeitstempel wird nicht zurückgenommen', () => {
     // Ohne Zeitstempel ist unbekannt, wann gelöscht wurde; "danach bearbeitet"
-    // liesse sich nicht belegen. Diese Bedingung entspricht Zeichen für Zeichen
+    // ließe sich nicht belegen. Diese Bedingung entspricht Zeichen für Zeichen
     // der API-Fassung.
     const values: Record<string, unknown> = { name: 'neu', deletedAt: '2026-07-16T10:00:00.000Z' }
     const timestamps: FieldTimestamps = { name: '2026-07-16T11:00:00.000Z' }

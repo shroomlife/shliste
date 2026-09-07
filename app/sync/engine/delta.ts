@@ -190,7 +190,7 @@ export async function runDelta(
  *    (die Zustellung ist nicht geordnet) und würde die Reihenfolge der
  *    Übersicht zurückdrehen.
  *
- * Der Server macht dasselbe: Er setzt bei einer Item-Änderung ausschliesslich
+ * Der Server macht dasselbe: Er setzt bei einer Item-Änderung ausschließlich
  * `updatedAt` der Liste und lässt die Feldstempel unberührt (`push.ts` der
  * API). Beide Seiten kommen damit auf denselben Wert.
  */

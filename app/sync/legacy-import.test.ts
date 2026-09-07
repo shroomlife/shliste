@@ -30,7 +30,7 @@ describe('toHexColor', () => {
   test('rgba verliert seine Durchsichtigkeit', () => {
     // Die alte Fassung speicherte 20 Prozent Deckkraft mit ab. Heute legt die
     // Oberfläche die Lasur selbst — bliebe der Alpha-Wert stehen, käme sie
-    // zweimal und die Karte wäre fast weiss.
+    // zweimal und die Karte wäre fast weiß.
     expect(toHexColor('rgba(185, 217, 233, 0.2)', COLOR)).toBe('#B9D9E9')
   })
 
@@ -61,14 +61,14 @@ describe('toTimestamp', () => {
   })
 
   test('ein Datum ohne Millisekunden wird auf die Form gebracht', () => {
-    // Die API prüft per Regex auf genau drei Stellen; ein Verstoss bedeutet
+    // Die API prüft per Regex auf genau drei Stellen; ein Verstoß bedeutet
     // 422 auf den ganzen Push.
     expect(toTimestamp('2025-03-01T12:00:00Z', NOW)).toBe('2025-03-01T12:00:00.000Z')
   })
 
   test('fehlt der Zeitpunkt, gilt der Ersatz', () => {
     // Und nicht etwa die Epoche: Ein erfundener Zeitpunkt weit in der
-    // Vergangenheit liesse die Zeile beim Last-Write-Wins immer verlieren.
+    // Vergangenheit ließe die Zeile beim Last-Write-Wins immer verlieren.
     expect(toTimestamp(null, NOW)).toBe(NOW)
     expect(toTimestamp('gestern', NOW)).toBe(NOW)
     expect(toTimestamp(undefined, NOW)).toBe(NOW)

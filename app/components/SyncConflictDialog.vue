@@ -7,8 +7,8 @@ import type { ConflictStrategy } from '../sync/engine/sync'
  *
  * DER FALL: Auf diesem Gerät liegen Daten und auf dem Server auch, und es
  * lässt sich nicht beweisen, dass es dieselben sind. Automatisch
- * zusammenzuführen hiesse, fremde Daten mit eigenen zu vermischen; automatisch
- * zu überschreiben hiesse, welche zu verlieren. Beides darf eine App nicht von
+ * zusammenzuführen hieße, fremde Daten mit eigenen zu vermischen; automatisch
+ * zu überschreiben hieße, welche zu verlieren. Beides darf eine App nicht von
  * sich aus tun.
  *
  * Die drei Wege sind dieselben wie in der Android-App, damit die Entscheidung
@@ -37,7 +37,7 @@ function choose(strategy: ConflictStrategy): void {
   emit('resolve', strategy)
 }
 
-// Nach dem Schliessen wieder freigeben, damit eine spätere Frage erneut
+// Nach dem Schließen wieder freigeben, damit eine spätere Frage erneut
 // beantwortbar ist.
 watch(isOpen, (open) => {
   if (!open) chosen.value = null

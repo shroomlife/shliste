@@ -3,7 +3,7 @@
  *
  * IMMER ÜBER DIE EIGENE BFF, NIE DIREKT ZU api.shliste.app: Jede Anfrage an
  * die API muss mit dem APP_SECRET signiert sein, und dieses Geheimnis liegt
- * ausschliesslich im Nitro-Server (siehe `nuxt.config.ts`, `runtimeConfig`).
+ * ausschließlich im Nitro-Server (siehe `nuxt.config.ts`, `runtimeConfig`).
  * Der Browser kennt es nicht und darf es nie kennen. `server/api/sync/
  * [...path].ts` signiert und hängt das Session-JWT aus dem httpOnly-Cookie an
  * — deshalb braucht diese Datei weder Token noch Header dafür.
@@ -35,7 +35,7 @@ export const SYNC_ENDPOINTS = {
  * Die Signatur von `fetch`, so weit die Engine sie braucht.
  *
  * Als Parameter durchgereicht statt global benutzt, damit die Tests ohne Netz
- * laufen: Ein globales `fetch` liesse sich nur durch Monkey-Patching ersetzen,
+ * laufen: Ein globales `fetch` ließe sich nur durch Monkey-Patching ersetzen,
  * und das wirkt auf alle parallel laufenden Tests.
  */
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
@@ -93,7 +93,7 @@ export async function requestJson(path: string, options: RequestOptions = {}): P
     throw await errorFromResponse(response)
   }
 
-  // 204 hat definitionsgemäss keinen Rumpf; `json()` würde daran scheitern.
+  // 204 hat definitionsgemäß keinen Rumpf; `json()` würde daran scheitern.
   if (response.status === 204) {
     return null
   }

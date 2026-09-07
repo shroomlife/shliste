@@ -3,7 +3,7 @@
  *
  * WARUM ÜBERHAUPT: Alles, was über das Netz kommt, ist `unknown`. Ein Cast
  * darauf wäre eine Behauptung ohne Beleg — und der erste Fehler fiele dann
- * irgendwo tief in der Datenbank auf, wo niemand mehr weiss, aus welchem Feld
+ * irgendwo tief in der Datenbank auf, wo niemand mehr weiß, aus welchem Feld
  * er stammt. Diese Helfer prüfen an der Kante und liefern `null`, wenn ein
  * Wert nicht dem Vertrag entspricht.
  *
@@ -55,8 +55,8 @@ export function readNumberOr(source: Record<string, unknown>, key: string, fallb
  * Dasselbe, aber mit `null` statt eines Ersatzwertes.
  *
  * Für Felder, bei denen "fehlt" etwas ANDERES bedeutet als jede Zahl — die
- * Änderungsnummer etwa: `0` heisst "das Konto hatte noch nie eine Änderung",
- * `null` heisst "dieser Server kennt das Feld nicht". Ein Ersatzwert würde die
+ * Änderungsnummer etwa: `0` heißt "das Konto hatte noch nie eine Änderung",
+ * `null` heißt "dieser Server kennt das Feld nicht". Ein Ersatzwert würde die
  * beiden Fälle zusammenwerfen.
  */
 export function readNumber(source: Record<string, unknown>, key: string): number | null {

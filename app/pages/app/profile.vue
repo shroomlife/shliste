@@ -41,7 +41,7 @@ interface ServerStatus {
   images: number
 }
 
-/** `null` heisst: noch nicht geladen oder nicht erreichbar. */
+/** `null` heißt: noch nicht geladen oder nicht erreichbar. */
 const serverStatus = ref<ServerStatus | null>(null)
 const serverReachable = ref<boolean | null>(null)
 

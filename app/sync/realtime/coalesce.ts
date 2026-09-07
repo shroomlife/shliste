@@ -3,7 +3,7 @@
  *
  * WARUM ÜBERHAUPT BÜNDELN: Ein einziger Push eines anderen Geräts erzeugt
  * leicht ein Dutzend Ereignisse (jedes geänderte Item, dazu die Liste selbst).
- * Ohne Bündelung würde jedes davon einen eigenen Delta-Abruf anstossen. Ein
+ * Ohne Bündelung würde jedes davon einen eigenen Delta-Abruf anstoßen. Ein
  * kurzes Sammelfenster macht daraus einen Abruf je betroffener Liste.
  *
  * Das Fenster ist bewusst kurz: 300 Millisekunden sind kürzer als die Zeit, in
@@ -47,7 +47,7 @@ export function coalesceKeyFor(event: RealtimeEvent): string {
   }
 }
 
-/** Die grössere der beiden Nummern, `null` nur wenn beide fehlen. */
+/** Die größere der beiden Nummern, `null` nur wenn beide fehlen. */
 function hoechste(a: number | null, b: number | null): number | null {
   if (a === null) return b
   if (b === null) return a

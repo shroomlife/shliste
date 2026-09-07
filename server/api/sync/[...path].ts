@@ -10,7 +10,7 @@
  * trotzdem wirkungslos, weil seine einzige Aufgabe (nur echte Clients kommen
  * durch) ausgehebelt wäre.
  *
- * Erlaubt ist deshalb ausschliesslich, was die PWA tatsächlich aufruft, und
+ * Erlaubt ist deshalb ausschließlich, was die PWA tatsächlich aufruft, und
  * zwar als Paar aus Pfad UND Methode. Alles andere: 404 — nicht 403, denn was
  * diese Schicht nicht anbietet, existiert für den Aufrufer schlicht nicht.
  *
@@ -56,7 +56,7 @@ function isAllowed(method: ApiMethod, path: string): boolean {
 
 export default defineEventHandler(async (event): Promise<unknown> => {
   // Zuerst die Allowlist, erst danach die Session: was diese Schicht nicht
-  // anbietet, existiert für jeden Aufrufer gleichermassen nicht. Ein 401 an
+  // anbietet, existiert für jeden Aufrufer gleichermaßen nicht. Ein 401 an
   // dieser Stelle würde verraten, dass es den Pfad gäbe, wenn man nur angemeldet wäre.
   const method = event.method
   if (method !== 'GET' && method !== 'POST') {

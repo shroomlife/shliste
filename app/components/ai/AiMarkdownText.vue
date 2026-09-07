@@ -7,7 +7,7 @@
  *
  * Hier wird aus den geparsten Blöcken ein echter Knotenbaum. Kein `v-html`:
  * Der Text stammt von einem Sprachmodell, und dessen Ausgabe als Markup in die
- * Seite zu giessen wäre genau der Weg, den man nicht offen lässt.
+ * Seite zu gießen wäre genau der Weg, den man nicht offen lässt.
  *
  * Aufzählungen bekommen einen hängenden Einzug, keine führenden Leerzeichen
  * wie in Android. Dort ist es ein einzelner Textblock, hier gibt es Zeilen —

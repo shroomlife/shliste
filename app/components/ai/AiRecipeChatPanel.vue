@@ -2,7 +2,7 @@
 /**
  * Der Rezept-Chat selbst — Verlauf, Eingabe, Mikrofon, Fehler-Bubble.
  *
- * Diese Komponente ist absichtlich behälterlos: Sie weiss nicht, ob sie in
+ * Diese Komponente ist absichtlich behälterlos: Sie weiß nicht, ob sie in
  * einem Blatt steckt oder als Spalte neben der Zubereitung steht. Beides gibt
  * es (siehe `variant`), und beides soll denselben Chat zeigen und nicht zwei
  * Nachbauten, die sich mit der Zeit auseinanderentwickeln.
@@ -30,7 +30,7 @@ const { recipeId, recipe, active, variant = 'sheet' } = defineProps<{
   /** Das Rezept in der Anfrage-Form (Mengen bereits ganzzahlig). */
   recipe: ChatRecipePayload
   /**
-   * Ist der Chat gerade sichtbar? Im Blatt heisst das "geöffnet", in der
+   * Ist der Chat gerade sichtbar? Im Blatt heißt das "geöffnet", in der
    * Spalte schlicht "vorhanden". Steuert Laden, Abbrechen und Aufräumen.
    */
   active: boolean
@@ -273,20 +273,20 @@ function retry(): void {
       >Aufnahme läuft · {{ formatRecordingDuration(recorder.durationSeconds.value) }}</span>
     </div>
 
-    <!-- Eingabe. In der Spalte ist sie ein Panel-Fuss mit Trennlinie, wie die
+    <!-- Eingabe. In der Spalte ist sie ein Panel-Fuß mit Trennlinie, wie die
          Eingabezeile der Zubereitung und der Werkbank daneben — drei Spalten,
          derselbe Bauplan. Die Bedienelemente sind dort eine Nummer kleiner:
-         `xl` ist die Grösse für den Daumen im Blatt, am Schreibtisch würde sie
+         `xl` ist die Größe für den Daumen im Blatt, am Schreibtisch würde sie
          die schmale Spalte auffressen.
 
          DIE 7.5rem DER SPALTE SIND GELIEHEN, nicht neu erfunden: Genau so hoch
-         sind die Füsse der Zutaten- und der Zubereitungsspalte (siehe die
+         sind die Füße der Zutaten- und der Zubereitungsspalte (siehe die
          Rechnung in `pages/app/recipes/[id].vue`). Alle drei Trennlinien
-         liegen damit auf EINER Waagerechten. Vorher war dieser Fuss 4.5rem
-         hoch und seine Linie sass drei Zentimeter tiefer als die daneben.
+         liegen damit auf EINER Waagerechten. Vorher war dieser Fuß 4.5rem
+         hoch und seine Linie saß drei Zentimeter tiefer als die daneben.
 
          Gefüllt wird die Höhe nicht mit Luft, sondern mit einem mehrzeiligen
-         Feld: Eine Frage ans Rezept ist selten vier Wörter lang, und ein Fuss
+         Feld: Eine Frage ans Rezept ist selten vier Wörter lang, und ein Fuß
          mit 3rem Leerraum über einer einzelnen Zeile sähe aus wie ein Fehler.
          Im Blatt bleibt es die einzeilige Variante — dort tippt ein Daumen,
          und der Platz gehört dem Verlauf. -->

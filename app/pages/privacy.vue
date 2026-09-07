@@ -30,7 +30,7 @@ useSeoMeta({ title: 'Datenschutz ~ shliste', robots: 'noindex' })
       Ohne Anmeldung
     </h2>
     <p class="mt-2 text-[1.125rem]">
-      Ohne Anmeldung bleiben deine Listen ausschliesslich auf deinem Gerät. Es werden keine
+      Ohne Anmeldung bleiben deine Listen ausschließlich auf deinem Gerät. Es werden keine
       Inhalte an einen Server übertragen.
     </p>
 
@@ -49,7 +49,7 @@ useSeoMeta({ title: 'Datenschutz ~ shliste', robots: 'noindex' })
     </h2>
     <p class="mt-2 text-[1.125rem]">
       Teilst du eine Liste, sehen die eingeladenen Personen deren Inhalt sowie deinen Anzeigenamen
-      und dein Profilbild. Deine E-Mail-Adresse ist ausschliesslich für den Eigentümer der Liste
+      und dein Profilbild. Deine E-Mail-Adresse ist ausschließlich für den Eigentümer der Liste
       sichtbar.
     </p>
 

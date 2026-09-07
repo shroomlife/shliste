@@ -3,7 +3,7 @@ import type { List } from '#shared/types/domain'
 
 /**
  * Listenkarte, Design-Richtung A — Anatomie wie Androids ListCard.kt samt
- * Overview.kt: grosser Titel, Sonderzustands-Symbole rechts daneben,
+ * Overview.kt: großer Titel, Sonderzustands-Symbole rechts daneben,
  * darunter die Zähler-Zeile mit optionalem Fortschrittsbalken.
  *
  * Die Listenfarbe wird als 20-Prozent-Lasur gelegt, nicht voll gesättigt —
@@ -83,7 +83,7 @@ const unseenLabel = computed(() =>
       <span class="min-w-0 grow truncate text-[1.375rem] leading-7 font-bold">{{ list.name }}</span>
       <!-- Geteilt und geheim sind dieselbe Art von Aussage: "mit dieser Liste
            stimmt etwas Besonderes". Deshalb stehen sie am selben Platz RECHTS
-           des Namens, in derselben Grösse und derselben Tönung — wie in
+           des Namens, in derselben Größe und derselben Tönung — wie in
            ListCard.kt (36dp, primary).
 
            `role="img"` samt Beschriftung ist nicht schmückend: Ohne beides

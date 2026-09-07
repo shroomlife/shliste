@@ -4,7 +4,7 @@
  * Schwerpunkt ist die Blockbildung: Sie ist die Stelle, an der ein Fehler
  * still bleibt. Landet ein Kind vor seinem Elternteil, verwirft der Server es
  * (`skipped.listItems++`), antwortet trotzdem mit 200, und der Client löscht
- * anschliessend die Dirty-Flags — die Zeile ist dann dauerhaft weg, ohne dass
+ * anschließend die Dirty-Flags — die Zeile ist dann dauerhaft weg, ohne dass
  * irgendwo ein Fehler auftaucht. Deshalb prüft jeder Blocktest zusätzlich die
  * drei Grundeigenschaften über `expectSoundBlocks`: Grenzen eingehalten,
  * nichts verloren, nichts doppelt.

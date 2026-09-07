@@ -5,14 +5,14 @@
  * (disableAutoSelect) zurück.
  *
  * Die App funktioniert ohne Konto vollständig. Dieser Knopf schaltet
- * ausschliesslich Abgleich und Teilen frei; er hält nichts auf und sperrt
+ * ausschließlich Abgleich und Teilen frei; er hält nichts auf und sperrt
  * nichts. Scheitert hier etwas, bleibt die App genau so benutzbar wie vorher.
  *
  * WARUM EIN DIALOG UND NICHT DER KNOPF DIREKT: Googles eigener Knopf
  * (`renderButton`) muss gezeichnet werden und braucht dafür Platz — die
  * Icon-Rail ist 84 Pixel breit, die Kopfzeile auf dem Handy kaum mehr.
  * Deshalb öffnet unser Knopf einen Dialog, und darin steht Googles Knopf in
- * voller Grösse. Warum überhaupt `renderButton` statt One Tap, wie das Skript
+ * voller Größe. Warum überhaupt `renderButton` statt One Tap, wie das Skript
  * geladen wird und was FedCM damit zu tun hat, steht gesammelt im Composable
  * `useGoogleSignInButton` — dieselbe Logik zeichnet auch den Knopf im Blatt
  * „Anmeldung abgelaufen" (SessionExpiredSheet.vue).

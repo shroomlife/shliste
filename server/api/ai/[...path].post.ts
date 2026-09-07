@@ -28,7 +28,7 @@ import { checkSession } from '../../utils/sessionCheck'
  *
  * `readRawBody` hält den kompletten Body im Speicher; die 5/10-MB-Grenzen der
  * API greifen erst NACH dem Puffern hier. Ohne eigene Schranke wäre diese
- * Route ein billiger Speicherhebel. 12 MB deckt das grösste legitime Paket
+ * Route ein billiger Speicherhebel. 12 MB deckt das größte legitime Paket
  * (10-MB-Bild plus multipart-Rahmen), JSON-Anfragen sind winzig.
  */
 const MAX_JSON_BODY_BYTES = 1_000_000
@@ -57,7 +57,7 @@ const ALLOWED_AI_ROUTES: ReadonlySet<string> = new Set([
 
 export default defineEventHandler(async (event): Promise<unknown> => {
   // Zuerst die Allowlist, erst danach die Session — was diese Schicht nicht
-  // anbietet, existiert für jeden Aufrufer gleichermassen nicht (Begründung
+  // anbietet, existiert für jeden Aufrufer gleichermaßen nicht (Begründung
   // im Sync-Proxy).
   const path = getRouterParam(event, 'path') ?? ''
   if (!ALLOWED_AI_ROUTES.has(path)) {
@@ -71,7 +71,7 @@ export default defineEventHandler(async (event): Promise<unknown> => {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized', message: 'Nicht angemeldet.' })
   }
 
-  // Grössen-Schranke VOR dem Puffern (Begründung an den Konstanten). Browser
+  // Größen-Schranke VOR dem Puffern (Begründung an den Konstanten). Browser
   // senden Content-Length immer; wer ihn weglässt, bekommt 411 statt eines
   // unbegrenzten Streams.
   const incomingContentType = getHeader(event, 'content-type') ?? ''
@@ -86,10 +86,10 @@ export default defineEventHandler(async (event): Promise<unknown> => {
   }
 
   // Die eigentliche Prüfung des Cookies: Der rohe Wert beweist nichts, ein
-  // beliebiger HTTP-Client kann ihn erfinden. Ob die Sitzung GILT, weiss nur
+  // beliebiger HTTP-Client kann ihn erfinden. Ob die Sitzung GILT, weiß nur
   // die API — kurz gecacht, damit nicht jeder AI-Aufruf doppelt kostet.
   //
-  // DREIWERTIG (Audit W1): Nur ein echtes 401 der API heisst „Sitzung
+  // DREIWERTIG (Audit W1): Nur ein echtes 401 der API heißt „Sitzung
   // abgelaufen". Ist die API gerade nicht erreichbar (Netz, 5xx, 429), ist
   // die Anmeldung des Nutzers völlig in Ordnung — dann 503 statt eines
   // falschen 401, das die Oberfläche als „ausgeloggt" deuten würde. Fail

@@ -7,7 +7,7 @@
  *   hält selbst nichts am Laufen.
  * - `useSyncRunner()` ist die LAUFENDE Seite: Verbindung, Zeitgeber,
  *   Ereignisbehandlung. GENAU EINMAL aufrufen, im App-Layout. Ein zweiter
- *   Aufruf öffnete eine zweite Echtzeit-Verbindung, und der Server schliesst
+ *   Aufruf öffnete eine zweite Echtzeit-Verbindung, und der Server schließt
  *   ab der sechsten Verbindung eines Kontos die jeweils älteste.
  *
  * OHNE KONTO PASSIERT HIER NICHTS. Die App ist vollständig ohne Anmeldung
@@ -75,7 +75,7 @@ export const FALLBACK_POLL_MS = 60_000
 export const MUTATION_DEBOUNCE_MS = 500
 
 /**
- * Abstand des regelmässigen Sicherheitsabgleichs — auch bei gesund
+ * Abstand des regelmäßigen Sicherheitsabgleichs — auch bei gesund
  * aussehender Echtzeit-Verbindung.
  *
  * WARUM ES IHN BRAUCHT: Die Ersatz-Abfrage oben springt erst an, wenn die
@@ -85,12 +85,12 @@ export const MUTATION_DEBOUNCE_MS = 500
  * sie erst beim nächsten Verbindungsaufbau nach. Ein sichtbarer Tab könnte so
  * beliebig lange veraltet dastehen, ohne dass irgendetwas danach aussieht.
  *
- * WARUM AUSGERECHNET FÜNFZEHN MINUTEN: Dieselbe Grössenordnung wie der
+ * WARUM AUSGERECHNET FÜNFZEHN MINUTEN: Dieselbe Größenordnung wie der
  * periodische Job der Android-App, und aus demselben Grund. Das hier ist kein
  * Ersatz für die Echtzeit, sondern das Netz darunter — Änderungen kommen im
  * Normalfall in Sekunden an. Ein Tab, der den ganzen Tag offen steht, kostet
  * damit vier Abfragen je Stunde statt sechzig bei einem Minutentakt; kürzer
- * wäre Aufwand ohne spürbaren Gewinn, deutlich länger liesse einen stillen
+ * wäre Aufwand ohne spürbaren Gewinn, deutlich länger ließe einen stillen
  * Ausfall über eine ganze Arbeitssitzung stehen.
  *
  * Sparsam gehalten: Der Zeitgeber löst nur bei sichtbarem Tab und bestehender
@@ -122,7 +122,7 @@ let zuletztGemeldeteSeq: number | null = null
  *
  * Als eigenes Composable statt eines nackten String-Schlüssels an zwei
  * Stellen: Der Runner öffnet das Blatt, wenn die Engine `authRequired`
- * meldet, die Komponente zeigt und schliesst es — beide greifen über diese
+ * meldet, die Komponente zeigt und schließt es — beide greifen über diese
  * eine Funktion auf denselben `useState` zu, ein Tippfehler im Schlüssel
  * kann sie nicht auseinanderlaufen lassen.
  */
@@ -140,7 +140,7 @@ export interface UseSync {
    *
    * Als `computed` und nicht als `readonly()`: Letzteres macht auch die
    * enthaltenen Listen unveränderlich, und der Typ passt dann nicht mehr zu
-   * `SyncSnapshot` — lesbar ist beides gleichermassen.
+   * `SyncSnapshot` — lesbar ist beides gleichermaßen.
    */
   snapshot: ComputedRef<SyncSnapshot>
   /** Für `SyncStatus.vue`. */
@@ -177,7 +177,7 @@ export interface UseSync {
    */
   resolveConflict: (strategy: ConflictStrategy) => Promise<void>
   /**
-   * Meldet, dass die lokale Datenbank von aussen geändert wurde.
+   * Meldet, dass die lokale Datenbank von außen geändert wurde.
    *
    * Für Schreibvorgänge, die nicht aus einer Ansicht kommen — heute die
    * Übernahme der alten Daten beim ersten Start. Ohne dieses Signal stünden
@@ -203,8 +203,8 @@ export function useSync(): UseSync {
     /*
      * DIE ANSICHTEN LESEN IN BEIDEN FÄLLEN NEU.
      *
-     * `ran: false` hiess früher nur "in diesem Tab läuft schon einer", und
-     * dessen Ergebnis kam über das Abonnement. Seit der Tab-Sperre heisst es
+     * `ran: false` hieß früher nur "in diesem Tab läuft schon einer", und
+     * dessen Ergebnis kam über das Abonnement. Seit der Tab-Sperre heißt es
      * auch: "ein ANDERER Tab arbeitet gerade" — und dessen Abonnement erreicht
      * uns nicht, es gibt keinen BroadcastChannel. Ohne dieses Signal blieben
      * die Ansichten auf einem Stand stehen, den die Datenbank längst nicht mehr
@@ -261,7 +261,7 @@ export function useSync(): UseSync {
  * - Netz wieder da — Ungesendetes soll nicht auf die nächste Handlung warten
  * - Echtzeit-Ereignis — der eigentliche Zweck des ganzen Umbaus
  * - Ersatz-Abfrage, solange der Strom nicht steht
- * - regelmässiger Abgleich alle fünfzehn Minuten, auch wenn der Strom gesund
+ * - regelmäßiger Abgleich alle fünfzehn Minuten, auch wenn der Strom gesund
  *   aussieht (siehe `RECONCILE_INTERVAL_MS`)
  */
 export function useSyncRunner(): void {
@@ -344,7 +344,7 @@ export function useSyncRunner(): void {
 
     console.warn(`[Sync] Inhalts-Abweichung → voller Serverabgleich. Bereich(e): ${benannt}`)
 
-    // Cursor zurücksetzen heisst: der nächste Abruf holt alles. Das ist hier
+    // Cursor zurücksetzen heißt: der nächste Abruf holt alles. Das ist hier
     // NICHT destruktiv — ein voller Abruf verwirft nichts, sondern führt
     // zusammen, und Zeilen mit offenen Änderungen bleiben unangetastet.
     await setLastSyncedAt(null)
@@ -353,7 +353,7 @@ export function useSyncRunner(): void {
      * DEN VERSUCH ZUERST VERMERKEN, DAS ERGEBNIS DANACH.
      *
      * Die beiden Marken bedeuten Verschiedenes, und genau das löst zwei
-     * Fehler auf, die sich sonst gegenseitig ausschliessen:
+     * Fehler auf, die sich sonst gegenseitig ausschließen:
      *
      * - Der Zeitstempel zählt VERSUCHE. Er steht vor dem Lauf, damit ein
      *   dauerhaft scheiternder Abgleich nicht bei jedem Anlass erneut einen
@@ -385,7 +385,7 @@ export function useSyncRunner(): void {
     }
 
     /*
-     * `ran: true` heisst nur "dieser Lauf gehörte mir", nicht "er hat
+     * `ran: true` heißt nur "dieser Lauf gehörte mir", nicht "er hat
      * geklappt": Ein Fehler im Zyklus wird gefangen und landet als Phase im
      * Zustand, der Rückgabewert bleibt derselbe.
      */
@@ -482,7 +482,7 @@ export function useSyncRunner(): void {
      * Serverseite. Fällt Redis aus, bleibt die Leitung offen und schlägt
      * weiter, liefert aber kein einziges Ereignis mehr; der Tab sähe eine
      * kerngesunde Verbindung und wäre trotzdem blind. Bisher fiel das erst
-     * beim planmässigen Abgleich auf — nach bis zu 15 Minuten. Jetzt nach
+     * beim planmäßigen Abgleich auf — nach bis zu 15 Minuten. Jetzt nach
      * höchstens einem Herzschlag.
      */
     onChangeSeq: (seq) => {
@@ -523,7 +523,7 @@ export function useSyncRunner(): void {
     /*
      * Kleiner als der eigene Stand ist KEIN Grund zum Nichtstun.
      *
-     * Der Zähler wächst je Nutzer monoton — ausser der Server wurde aus einer
+     * Der Zähler wächst je Nutzer monoton — außer der Server wurde aus einer
      * Sicherung wiederhergestellt. Dann hält dieses Gerät eine Zahl, die es
      * nicht mehr gibt, und der Vergleich meldete für genau so viele Änderungen
      * keine Lücke, wie zurückgedreht wurden. Ein Abgleich schreibt den Stand
@@ -566,7 +566,7 @@ export function useSyncRunner(): void {
   }
 
   /**
-   * Der regelmässige Abgleich, der auch ohne jeden Anlass läuft.
+   * Der regelmäßige Abgleich, der auch ohne jeden Anlass läuft.
    *
    * Die beiden Bedingungen im Zeitgeber sind der Sparsamkeit wegen da: Ein
    * Tab im Hintergrund hat niemandem etwas anzuzeigen, und ohne Sitzung liefe
@@ -591,7 +591,7 @@ export function useSyncRunner(): void {
   }
 
   onMounted(() => {
-    // Der Zustand der Engine lebt ausserhalb von Vue (siehe `state.ts`) und
+    // Der Zustand der Engine lebt außerhalb von Vue (siehe `state.ts`) und
     // wird hier gespiegelt. Die Richtung der Abhängigkeit zeigt damit von der
     // Oberfläche zur Engine, nicht umgekehrt.
     const unsubscribe = syncState.subscribe((next) => {

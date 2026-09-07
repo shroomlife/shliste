@@ -2,7 +2,7 @@
  * Snapshots der Lösch-Historie: schreiben im Vereinigungs-Format, lesen tolerant.
  *
  * DER INTEROP-PUNKT DIESES FEATURES: `snapshotJson` liest der Client, der
- * wiederherstellt — und der weiss nicht, wer gelöscht hat. Android
+ * wiederherstellt — und der weiß nicht, wer gelöscht hat. Android
  * serialisiert seine UI-Datenklassen (`uuid` und `order`, Vorgabewerte
  * fehlen im JSON, weil kotlinx sie nicht mitschreibt) und LIEST auch
  * strikt in genau diese Klassen zurück. Deshalb schreibt die PWA die
@@ -45,7 +45,7 @@ function snapshotQuantity(value: number): number {
  *
  * `url` ist dabei, die drei Server-Spiegel nicht: Der Link gehört zum
  * Eintrag und soll die Wiederherstellung überleben, Titel und Vorschaubild
- * holt der Server danach von selbst wieder. Sie hier mitzuschreiben hiesse,
+ * holt der Server danach von selbst wieder. Sie hier mitzuschreiben hieße,
  * einen Serverzustand einzufrieren, der bis zur Wiederherstellung längst
  * veraltet sein kann.
  *
@@ -130,7 +130,7 @@ function readSnapshotId(source: Record<string, unknown>): string | null {
 
 /**
  * Menge mit Vorgabewert 1 — kotlinx lässt Felder auf ihrem Default im JSON
- * weg, ein fehlendes `quantity` heisst also "eins". Unsinn (NaN, Unendlich,
+ * weg, ein fehlendes `quantity` heißt also "eins". Unsinn (NaN, Unendlich,
  * Brüche, Null und Negatives) wird auf eine gültige Menge gezogen, denn die
  * Neuanlage einer Zeile mit Menge 0 wäre keiner.
  */
