@@ -136,7 +136,8 @@ function navAriaLabel(destination: Destination): string | undefined {
         <NuxtLink
           to="/app/profile"
           class="state-layer flex size-10 items-center justify-center rounded-full"
-          aria-label="Mein Profil"
+          :aria-label="isSignedIn ? 'Mein Profil' : 'Profil und Anmeldung'"
+          :title="isSignedIn ? 'Mein Profil' : 'Profil und Anmeldung'"
         >
           <img
             v-if="profile?.photoUrl"
@@ -152,10 +153,6 @@ function navAriaLabel(destination: Destination): string | undefined {
             style="color: var(--md-primary)"
           />
         </NuxtLink>
-        <AuthButton
-          v-if="!isSignedIn"
-          compact
-        />
       </div>
     </nav>
 
@@ -191,7 +188,8 @@ function navAriaLabel(destination: Destination): string | undefined {
       <NuxtLink
         to="/app/profile"
         class="state-layer flex size-10 items-center justify-center rounded-full"
-        aria-label="Mein Profil"
+        :aria-label="isSignedIn ? 'Mein Profil' : 'Profil und Anmeldung'"
+        :title="isSignedIn ? 'Mein Profil' : 'Profil und Anmeldung'"
       >
         <img
           v-if="profile?.photoUrl"
@@ -207,7 +205,6 @@ function navAriaLabel(destination: Destination): string | undefined {
           style="color: var(--md-primary)"
         />
       </NuxtLink>
-      <AuthButton v-if="!isSignedIn" />
     </div>
 
     <!-- Banner und Inhalt teilen sich eine Spalte, damit ein einziger

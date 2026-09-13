@@ -15,8 +15,9 @@ import { requestImageToList, requestUrlToList, requestVoiceToList } from '~/ai/t
 import type { AiCreateMode, AiResult } from '~/ai/transport'
 import { formatRecordingDuration } from '~/composables/useAudioRecorder'
 
-const { mode, initialUrl = null } = defineProps<{
+const { mode, initialUrl = null, reviewBeforeSave = false } = defineProps<{
   mode: AiCreateMode
+  reviewBeforeSave?: boolean
   /**
    * Eine Adresse, mit der das Link-Feld beim Öffnen vorbefüllt wird — der
    * Weg vom Teilen-Empfang hierher. Sonst müsste man dieselbe Adresse, die
@@ -65,7 +66,9 @@ const SHEET_TEXTS: Record<AiCreateMode, { title: string, description: string, ph
   },
 }
 
-const texts = computed(() => SHEET_TEXTS[mode])
+const texts = computed(() => reviewBeforeSave && mode === 'url'
+  ? { ...SHEET_TEXTS.url, title: 'Einträge aus Link', description: 'Die AI liest den Link aus. Danach prüfst du die Einträge und wählst die Liste.' }
+  : SHEET_TEXTS[mode])
 
 function begin(): AbortController {
   errorMessage.value = null
@@ -345,7 +348,7 @@ onUnmounted(revokePreview)
           :disabled="url.trim().length === 0"
           @click="submitUrl"
         >
-          Liste erstellen
+          {{ reviewBeforeSave ? 'Einträge auslesen und prüfen' : 'Liste erstellen' }}
         </UButton>
       </div>
     </div>

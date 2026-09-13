@@ -37,6 +37,9 @@ import type {
 } from '../../shared/types/domain'
 import { linkMirrorsFor, type LinkMirrors } from '../sync/merge/link-mirrors'
 import { sanitize } from '../sync/merge/limits'
+import { nextSortKey } from '../sync/merge/reorder'
+import { randomListColor } from '../utils/color'
+import { validHttpUrlOrNull } from '../utils/url'
 import { getDb } from './client'
 import {
   CLEAN,
@@ -379,6 +382,78 @@ export async function upsertItem(input: ListItemDraft): Promise<ListItemRow> {
   await tx.store.put(row)
   await tx.done
   return row
+}
+
+/** Ergänzt eine bestätigte Importauswahl atomar, ohne bestehende Inhalte zu ändern. */
+export async function appendImportedItems(
+  listId: string,
+  items: readonly { name: string, quantity: number }[],
+): Promise<number> {
+  await writeImportedList(listId, items)
+  return items.length
+}
+
+/** Neue Link-Importliste samt Quelle und Einträgen: ein gemeinsamer Commit. */
+export async function createImportedList(generated: {
+  name: string
+  sourceUrl: string | null
+  items: readonly { name: string, quantity: number }[]
+}): Promise<ListRow> {
+  const name = generated.name.trim()
+  if (name.length === 0) throw new Error('Die neue Liste braucht einen Namen.')
+  const draft: Draft<List> = {
+    id: crypto.randomUUID(), name, color: randomListColor(), secret: false,
+    lastSuggestedItems: '', sourceUrl: validHttpUrlOrNull(generated.sourceUrl),
+    ownerUserId: null, deletedAt: null,
+  }
+  return writeImportedList(draft.id, generated.items, draft)
+}
+
+async function writeImportedList(
+  listId: string,
+  items: readonly { name: string, quantity: number }[],
+  newList?: Draft<List>,
+): Promise<ListRow> {
+  const db = await getDb()
+  const tx = db.transaction(['lists', 'list_items'], 'readwrite')
+  try {
+    const parent = newList === undefined
+      ? await tx.objectStore('lists').get(listId)
+      : { ...newList, ...buildRowMeta(undefined, changedFields(undefined, newList), nowIso()), seenAt: null }
+    if (parent === undefined || parent.deletedAt !== null || parent.secret) {
+      throw new Error('Diese Liste ist nicht mehr verfügbar. Bitte wähle eine andere Liste.')
+    }
+    if (newList !== undefined) await tx.objectStore('lists').add(parent)
+    const store = tx.objectStore('list_items')
+    const existing = await store.index('by-listId').getAll(listId)
+    let orderIndex = existing.reduce((max, item) => Math.max(max, item.orderIndex), -1) + 1
+    for (const item of items) {
+      if (item.name.trim().length === 0 || !Number.isFinite(item.quantity)) {
+        throw new Error('Ein Eintrag ist ungültig. Bitte prüfe die Auswahl.')
+      }
+      const draft: ListItemDraft = {
+        id: crypto.randomUUID(), listId, name: item.name.trim(), quantity: Math.max(1, Math.round(item.quantity)),
+        checked: false, removed: false, orderIndex: orderIndex++, sortKey: nextSortKey(existing),
+        url: null, createdBy: null, modifiedBy: null, deletedAt: null,
+      }
+      const row: ListItemRow = {
+        ...draft, ...linkFieldsAfterWrite(undefined, null),
+        ...buildRowMeta(undefined, changedFields(undefined, draft), nowIso()),
+      }
+      await store.add(row)
+      existing.push(row)
+    }
+    await tx.done
+    return parent
+  }
+  catch (error) {
+    try {
+      tx.abort()
+    }
+    catch { /* Bereits durch IndexedDB abgebrochen. */ }
+    await tx.done.catch(() => undefined)
+    throw error
+  }
 }
 
 export async function upsertRecipe(input: Draft<Recipe>): Promise<RecipeRow> {

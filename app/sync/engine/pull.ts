@@ -147,6 +147,42 @@ export function parsePullResponse(value: unknown): PullResponse {
   }
 }
 
+/** Ein toleranter Parser darf keine übergangene Zeile als empfangen quittieren.
+ * Vor Schreibvorgängen prüfen; optionale Felder alter Server dürfen fehlen. */
+function requireCompletePage(raw: unknown, parsed: PullResponse): void {
+  const invalid = (): never => {
+    throw new Error('Die Sync-Antwort ist unvollständig oder ungültig. Der letzte bestätigte Stand bleibt erhalten.')
+  }
+  if (!isRecord(raw)) return invalid()
+
+  function checkArray(source: Record<string, unknown>, key: string, count: number): void {
+    const value = source[key]
+    if (value === undefined) return
+    if (!Array.isArray(value) || value.length !== count) invalid()
+  }
+
+  for (const key of ['lists', 'recipes', 'badges', 'historyEntries', 'pendingInvites', 'revokedListIds'] as const) {
+    checkArray(raw, key, parsed[key].length)
+  }
+  const lists = readArray(raw, 'lists')
+  parsed.lists.forEach((list, index) => {
+    const original = lists[index]
+    if (!isRecord(original)) return invalid()
+    checkArray(original, 'items', list.items.length)
+    checkArray(original, 'members', list.members.length)
+  })
+  const recipes = readArray(raw, 'recipes')
+  parsed.recipes.forEach((recipe, index) => {
+    const original = recipes[index]
+    if (!isRecord(original)) return invalid()
+    checkArray(original, 'ingredients', recipe.ingredients.length)
+    checkArray(original, 'steps', recipe.steps.length)
+    checkArray(original, 'chatMessages', recipe.chatMessages.length)
+  })
+  if (raw['truncated'] != null && typeof raw['truncated'] !== 'boolean') invalid()
+  if (raw['nextPageToken'] != null && parsed.nextPageToken === null) invalid()
+}
+
 /**
  * Engt eine Liste samt ihrer Positionen und Mitglieder ein.
  *
@@ -682,7 +718,9 @@ export async function runPull(
   const pendingInvites: PendingInvite[] = []
 
   do {
-    const response = parsePullResponse(await fetchPull(since, pageToken))
+    const raw = await fetchPull(since, pageToken)
+    const response = parsePullResponse(raw)
+    requireCompletePage(raw, response)
     letzte = response
     seiten += 1
 

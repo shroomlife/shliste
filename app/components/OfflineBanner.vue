@@ -6,18 +6,15 @@
  * Bewusst ohne Props: Der Netzwerkzustand ist einer für die ganze App
  * (`useNetworkStatus`), und das Layout mountet die Leiste genau einmal.
  *
- * Zwei Botschaften, weil zwei Wahrheiten: Wer angemeldet ist, dem wird
- * nachsynchronisiert; wer nicht, dessen Daten leben ohnehin nur hier. Beide
- * Sätze nehmen dem Moment die Sorge, statt einen Fehler zu behaupten.
+ * Ohne Anmeldung gibt es keinen Serverabgleich. Lokale Nutzung braucht
+ * deshalb keinen globalen Offline-Hinweis; Netzwerkaktionen erklären ihren
+ * Bedarf dort, wo sie aufgerufen werden.
  */
 const { isOnline } = useNetworkStatus()
 const { isSignedIn } = useAuth()
 
-const message = computed(() =>
-  isSignedIn.value
-    ? 'Offline. Änderungen gehen raus, sobald du wieder Netz hast'
-    : 'Offline. Deine Listen funktionieren weiter',
-)
+const visible = computed(() => isSignedIn.value && !isOnline.value)
+const message = 'Keine Verbindung. Der Abgleich wird fortgesetzt, sobald du wieder online bist.'
 </script>
 
 <template>
@@ -26,7 +23,7 @@ const message = computed(() =>
        Angesagt wird stattdessen über die unsichtbare Statuszeile darunter. -->
   <div
     class="offline-banner"
-    :class="{ 'offline-banner--visible': !isOnline }"
+    :class="{ 'offline-banner--visible': visible }"
     aria-hidden="true"
   >
     <div class="offline-banner__clip">
@@ -46,7 +43,7 @@ const message = computed(() =>
   <span
     class="sr-only"
     role="status"
-  >{{ isOnline ? '' : message }}</span>
+  >{{ visible ? message : '' }}</span>
 </template>
 
 <style scoped>

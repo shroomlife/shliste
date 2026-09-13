@@ -646,12 +646,16 @@ async function restoreFromHistory(entry: HistoryEntryRow): Promise<void> {
  * wäre auf einem Einkaufszettel unbrauchbar. Die Regel dahinter ist bewusst
  * eng und in `link-fixtures.json` für alle drei Plattformen festgenagelt.
  */
-function addItem(): void {
+function addItem(asLink = false): void {
   const raw = newItemName.value.trim()
   if (raw.length === 0) return
 
   const quantity = newItemQuantity.value
   const detected = detectLinkInput(raw)
+  if (detected !== null && !asLink) {
+    isLinkChoiceOpen.value = true
+    return
+  }
 
   // Sofort leeren statt erst nach dem Schreiben: Der nächste Artikel soll ohne
   // Wartezeit tippbar sein, und ein zweites Enter darf nicht denselben Eintrag
@@ -666,6 +670,35 @@ function addItem(): void {
     if (row !== null) await scrollToItem(row.id)
     return row
   }))
+}
+
+// Erkennen ist rein lokal. Erst eine bewusste Auswahl öffnet den Import;
+// auch dort startet die Anfrage erst nach „Einträge auslesen und prüfen“.
+const detectedInputLink = computed(() => detectLinkInput(newItemName.value))
+const isLinkChoiceOpen = ref(false)
+const isLinkImportOpen = ref(false)
+const importUrl = ref<string | null>(null)
+const importListId = ref<string | null>(null)
+function saveInputLink(): void {
+  isLinkChoiceOpen.value = false
+  addItem(true)
+}
+function importInputLink(): void {
+  isLinkChoiceOpen.value = false
+  if (!isSignedIn.value) {
+    isAiUpsellOpen.value = true
+    return
+  }
+  importUrl.value = detectedInputLink.value?.url ?? null
+  importListId.value = listId.value
+  isLinkImportOpen.value = true
+}
+function onLinkImported(): void {
+  if (importListId.value === listId.value && detectedInputLink.value?.url === importUrl.value) {
+    newItemName.value = ''
+    newItemQuantity.value = QUANTITY_MIN
+  }
+  void loadList()
 }
 
 /* ------------------------------------------------------------------ *
@@ -1224,6 +1257,50 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
     <!-- Fremde Einträge geteilter Listen zeigen den Mitgliedsnamen — dieselbe
          Auflösung wie "bearbeitet von" an den Zeilen. -->
     <AiUpsellSheet v-model:open="isAiUpsellOpen" />
+    <AppSheet
+      v-model:open="isLinkChoiceOpen"
+      title="Was möchtest du mit dem Link machen?"
+      description="Speichere die Adresse oder übernimm einzelne Einträge daraus."
+    >
+      <div class="flex flex-col gap-3">
+        <p
+          class="truncate text-sm"
+          style="color: var(--md-on-surface-variant)"
+        >
+          {{ detectedInputLink?.url }}
+        </p>
+        <UButton
+          icon="i-lucide-link"
+          color="neutral"
+          variant="subtle"
+          size="xl"
+          class="justify-start rounded-xl"
+          @click="saveInputLink"
+        >
+          Link in dieser Liste speichern
+        </UButton>
+        <UButton
+          icon="i-lucide-list-plus"
+          size="xl"
+          class="justify-start rounded-xl"
+          @click="importInputLink"
+        >
+          Einträge aus Link übernehmen
+        </UButton>
+        <p
+          class="text-sm"
+          style="color: var(--md-on-surface-variant)"
+        >
+          Mit AI: erst prüfen, dann zu einer vorhandenen oder neuen Liste hinzufügen.
+        </p>
+      </div>
+    </AppSheet>
+    <AiLinkImportSheet
+      v-model:open="isLinkImportOpen"
+      :initial-url="importUrl"
+      :initial-list-id="importListId"
+      @saved="onLinkImported"
+    />
 
     <HistorySheet
       v-if="!isLocked"
@@ -1286,14 +1363,14 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
            haben. Die Namenslänge deckelt ohnehin der Sanitizer vor dem Push. -->
       <UInput
         v-model="newItemName"
-        placeholder="Artikel hinzufügen"
-        icon="i-lucide-plus"
+        placeholder="Artikel oder Link hinzufügen"
+        :icon="detectedInputLink ? 'i-lucide-link' : 'i-lucide-plus'"
         size="xl"
         class="grow"
         enterkeyhint="done"
         :maxlength="ITEM_INPUT_MAXLENGTH"
         :ui="{ root: 'w-full' }"
-        @keyup.enter="addItem"
+        @keyup.enter="addItem()"
       />
 
       <!-- Mengenkachel für den nächsten Eintrag — dieselbe Optik wie die
@@ -1377,6 +1454,15 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
 
       <!-- Direkter Griff zu den AI-Vorschlägen; braucht Einträge und ein Konto -->
       <UButton
+        v-if="detectedInputLink"
+        icon="i-lucide-arrow-right"
+        size="xl"
+        class="shrink-0 rounded-xl"
+        aria-label="Link verwenden: Optionen öffnen"
+        @click="addItem()"
+      />
+      <UButton
+        v-else
         icon="i-lucide-sparkles"
         color="neutral"
         variant="subtle"

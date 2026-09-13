@@ -11,6 +11,12 @@ import { detectLinkInput } from './linkDetection'
 import { validHttpUrlOrNull } from './url'
 
 describe('detectLinkInput', () => {
+  test('gewöhnliche Artikel und gemischter eingefügter Text öffnen keinen Link-Import', () => {
+    for (const input of ['Dr. Oetker', 'ca. 500g Mehl', 'rewe.de', 'Milch https://example.org', 'https://example.org\nBrot', 'javascript:alert(1)', 'https://user:pass@example.org']) {
+      expect(detectLinkInput(input)).toBeNull()
+    }
+  })
+
   test('ein Treffer liefert die Adresse in einem Objekt', () => {
     // Ein Objekt statt eines nackten Strings, damit „kein Link" (null) sich
     // nicht mit „leerer Link" verwechseln lässt.

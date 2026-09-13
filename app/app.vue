@@ -14,5 +14,6 @@ import { de } from '@nuxt/ui/locale'
 
     <!-- Außerhalb des Layouts: Eine neue Fassung der App betrifft jede Seite,
          auch die öffentlichen. -->
+    <PwaUpdateNotice />
   </UApp>
 </template>

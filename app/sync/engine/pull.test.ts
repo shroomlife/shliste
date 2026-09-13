@@ -317,6 +317,32 @@ describe('parsePullResponse', () => {
  * ------------------------------------------------------------------ */
 
 describe('runPull — Cursor', () => {
+  test('quittiert keine beim Parsen verworfene Zeile und schreibt auch die gültige nicht vorab', async () => {
+    const store = fakePullStore({ cursor: OLD })
+    await expect(runPull(store, () => Promise.resolve(pullBody({
+      lists: [serverList(), { id: 'kaputt' }],
+    })))).rejects.toThrow('Sync-Antwort')
+    expect(store.cursor).toBe(OLD)
+    expect(store.lists.size).toBe(0)
+  })
+
+  test('ein unlesbares Kind darf nicht dauerhaft aus dem Delta-Fenster fallen', async () => {
+    const store = fakePullStore({ cursor: OLD })
+    await expect(runPull(store, () => Promise.resolve(pullBody({
+      lists: [serverList({ items: [{ id: 'kaputtes-kind' }] })],
+    })))).rejects.toThrow('Sync-Antwort')
+    expect(store.cursor).toBe(OLD)
+    expect(store.lists.size).toBe(0)
+  })
+
+  test('eine falsche Menge oder Fortsetzung wird nicht als leere vollständige Seite bestätigt', async () => {
+    for (const fields of [{ lists: 'ungültig' }, { lists: null }, { recipes: null }, { nextPageToken: 42 }, { truncated: 'true' }]) {
+      const store = fakePullStore({ cursor: OLD })
+      await expect(runPull(store, () => Promise.resolve(pullBody(fields)))).rejects.toThrow('Sync-Antwort')
+      expect(store.cursor).toBe(OLD)
+    }
+  })
+
   test('fragt mit dem gespeicherten Wasserzeichen', async () => {
     const store = fakePullStore({ cursor: OLD })
     let asked: IsoUtc | null | undefined
@@ -748,14 +774,15 @@ describe('runPull — entzogene Listen', () => {
     expect(outcome.revokedLists).toBe(0)
   })
 
-  test('unbrauchbare Einträge fallen weg, die übrigen wirken', async () => {
-    const store = fakePullStore({ lists: [localList()] })
+  test('unbrauchbare Entzüge brechen vor Datenänderung und Cursorbestätigung ab', async () => {
+    const store = fakePullStore({ lists: [localList()], cursor: OLD })
 
-    await runPull(store, () => Promise.resolve(pullBody({
+    await expect(runPull(store, () => Promise.resolve(pullBody({
       revokedListIds: ['', 42, null, 'l1'],
-    })))
+    })))).rejects.toThrow('Sync-Antwort')
 
-    expect(store.removed).toEqual(['l1'])
+    expect(store.removed).toEqual([])
+    expect(store.cursor).toBe(OLD)
   })
 
   test('eine unbekannte Liste zu entfernen bleibt folgenlos', async () => {

@@ -45,6 +45,7 @@ const isAiUpsellOpen = ref(false)
 
 const aiMode = ref<AiCreateMode>('voice')
 const isAiCreateOpen = ref(false)
+const isLinkImportOpen = ref(false)
 
 function openChooser(): void {
   isChooserOpen.value = true
@@ -69,7 +70,8 @@ function startAiCreate(mode: AiCreateMode): void {
   }
 
   aiMode.value = mode
-  isAiCreateOpen.value = true
+  if (mode === 'url') isLinkImportOpen.value = true
+  else isAiCreateOpen.value = true
 }
 
 function onAiListCreated(result: GeneratedList): void {
@@ -319,6 +321,7 @@ async function submitDialog(): Promise<void> {
     </AppSheet>
 
     <AiUpsellSheet v-model:open="isAiUpsellOpen" />
+    <AiLinkImportSheet v-model:open="isLinkImportOpen" />
 
     <AiCreateListSheet
       v-model:open="isAiCreateOpen"

@@ -85,7 +85,11 @@ export default defineNuxtConfig({
     // (server/middleware/signed-in-redirect.ts) käme nie zum Zug. Mit SWR
     // läuft die Middleware zuerst, Anonyme bekommen weiter die gecachte
     // Antwort. Empirisch am Produktionsbuild verifiziert, nicht vermutet.
-    '/': { swr: 3600 },
+    // Im Dev-Server darf altes HTML nicht mit neuem HMR-Code gemischt werden.
+    '/': { swr: process.env.NODE_ENV === 'development' ? false : 3600 },
+    '/rezepte': { prerender: true },
+    '/gemeinsam-einkaufen': { prerender: true },
+    '/so-funktionierts': { prerender: true },
     '/imprint': { prerender: true },
     '/privacy': { prerender: true },
     // Die alten deutschen Adressen sind seit Jahren im Umlauf und in
@@ -171,17 +175,14 @@ export default defineNuxtConfig({
    * verspricht, nicht tragbar ist. Workbox erzeugt das Manifest beim Build
    * aus den echten Ausgabedateien.
    *
-   * `autoUpdate` statt `prompt` (Entscheidung vom 25.08.2026): Neue
-   * Fassungen rollen ohne Nachfrage aus — skipWaiting und clientsClaim
-   * setzt das Plugin damit selbst, und beim Übernehmen der neuen Fassung
-   * lädt die Seite automatisch neu. Das Neuladen ist verkraftbar, weil alle
-   * Daten in IndexedDB liegen: Ungesendete Änderungen bleiben schmutzig und
-   * gehen beim nächsten Abgleich hinaus. periodicSyncForUpdates sorgt dafür,
-   * dass auch eine dauerhaft offene, nie neu geladene Instanz (installierte
-   * App) die neue Fassung binnen einer Stunde bekommt.
+   * Neue Fassungen werden im Hintergrund geladen, aber erst nach bewusster
+   * Bestätigung aktiviert. Gespeicherte Daten liegen in IndexedDB; offene
+   * Eingaben und KI-Vorschauen dagegen noch nicht. Ein automatisches Neuladen
+   * würde diese Entwürfe verlieren. PwaUpdateNotice bietet einen ruhigen
+   * Hinweis, periodicSyncForUpdates entdeckt auch bei langer Nutzung Updates.
    */
   pwa: {
-    registerType: 'autoUpdate',
+    registerType: 'prompt',
 
     client: {
       // Sekunden — stündlicher Blick auf den Server, ob es eine neue Fassung gibt.
@@ -191,7 +192,7 @@ export default defineNuxtConfig({
     manifest: {
       name: 'shliste ~ Deine smarte Einkaufsliste',
       short_name: 'shliste',
-      description: 'Einkaufslisten und Rezepte, die auf allen Geräten gleich sind — auch ohne Netz.',
+      description: 'Listen und Rezepte für deinen Alltag. Gespeicherte Listen offline bearbeiten; mit Anmeldung und Verbindung zwischen Geräten abgleichen.',
       lang: 'de',
       // Die installierte App startet direkt im Listenbereich und nicht auf der
       // Werbeseite: Wer sie installiert hat, ist überzeugt.

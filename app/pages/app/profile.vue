@@ -206,7 +206,7 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
               class="truncate text-[1rem]"
               style="color: var(--md-on-surface-variant)"
             >
-              {{ isSignedIn ? profile?.email : 'Melde dich an, um zu synchronisieren' }}
+              {{ isSignedIn ? profile?.email : 'Du nutzt shliste auf diesem Gerät' }}
             </p>
           </div>
           <UButton
@@ -294,7 +294,10 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
       </section>
 
       <!-- Einladungen -->
-      <section class="px-5 pt-8">
+      <section
+        v-if="isSignedIn"
+        class="px-5 pt-8"
+      >
         <h2 class="flex items-center gap-2 text-[1.375rem] font-bold">
           <UIcon
             name="i-lucide-users"
@@ -318,9 +321,33 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
           </p>
         </div>
       </section>
+      <section
+        v-else
+        class="px-5 pt-8"
+        aria-labelledby="local-storage-title"
+      >
+        <h2
+          id="local-storage-title"
+          class="text-[1.375rem] font-bold"
+        >
+          Auf diesem Gerät gespeichert
+        </h2>
+        <p
+          class="mt-3 text-[1rem]"
+          style="color: var(--md-on-surface-variant)"
+        >
+          Deine Listen und Rezepte bleiben in diesem Browser. Mit einer Anmeldung kannst du sie zwischen deinen Geräten abgleichen und Listen teilen.
+        </p>
+        <p class="mt-3 text-[1rem] tabular-nums">
+          {{ localCounts?.lists ?? '–' }} {{ localCounts?.lists === 1 ? 'Liste' : 'Listen' }} · {{ localCounts?.recipes ?? '–' }} {{ localCounts?.recipes === 1 ? 'Rezept' : 'Rezepte' }}
+        </p>
+      </section>
 
       <!-- Synchronisation -->
-      <section class="px-5 pt-8">
+      <section
+        v-if="isSignedIn"
+        class="px-5 pt-8"
+      >
         <h2 class="flex items-center gap-2 text-[1.375rem] font-bold">
           <UIcon
             name="i-lucide-refresh-cw"

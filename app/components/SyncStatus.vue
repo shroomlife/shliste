@@ -3,8 +3,8 @@
  * Sync-Anzeige in der Rail. Farben und Bedeutungen stammen aus
  * SemanticColors.kt der Android-App, damit beide Clients dasselbe aussagen.
  *
- * Solange die Sync-Schicht noch nicht steht, meldet die Anzeige ehrlich
- * "offline" statt einen Erfolg vorzutäuschen.
+ * Nur für angemeldete Konten anzeigen. Lokale Nutzung ohne Konto ist kein
+ * Offline- oder Fehlerzustand; dafür zeigt das Profil den lokalen Bestand.
  */
 export type SyncState = 'synced' | 'syncing' | 'pending' | 'error' | 'offline'
 

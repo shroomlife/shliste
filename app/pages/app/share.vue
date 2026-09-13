@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { GeneratedList } from '~/ai/contract'
 import type { GeneratedRecipe } from '~/ai/recipeContract'
 import type { SharedPayload } from '~/utils/shareTarget'
 
@@ -29,7 +28,7 @@ useHead({ title: 'Geteilt mit shliste' })
 
 const route = useRoute()
 const { entries, reload: reloadLists, createList, addItemsToList } = useLists()
-const { createListFromAi, createRecipeFromAi } = useAiCreate()
+const { createRecipeFromAi } = useAiCreate()
 const { scheduleSync } = useSync()
 const { isSignedIn } = useAuth()
 const { mark } = useRecentlyChanged()
@@ -205,22 +204,9 @@ function startAiRecipe(): void {
   isAiRecipeOpen.value = true
 }
 
-function onAiListCreated(result: GeneratedList): void {
-  // Der Inhalt wird erst nach dem Erfolg verworfen: Scheitert das Anlegen,
-  // soll die Seite noch dieselbe Auswahl anbieten können.
-  void createListFromAi(result)
-    .then(() => {
-      payload.value = null
-    })
-    .catch((error: unknown) => {
-      console.error('[Teilen] Anlegen der AI-Liste fehlgeschlagen:', error)
-      toast.add({
-        title: 'Liste konnte nicht angelegt werden',
-        description: 'Bitte versuche es erneut.',
-        icon: 'i-lucide-triangle-alert',
-        color: 'error',
-      })
-    })
+function onAiListSaved(): void {
+  // Erst der bestätigte Datenbank-Commit verbraucht den geteilten Inhalt.
+  payload.value = null
 }
 
 function onAiRecipeCreated(result: GeneratedRecipe): void {
@@ -445,11 +431,11 @@ async function cancel(): Promise<void> {
             style="color: var(--md-primary)"
           />
           <span class="flex min-w-0 flex-col">
-            <span class="text-[1rem] font-bold">Neue Liste per KI</span>
+            <span class="text-[1rem] font-bold">Einträge per KI übernehmen</span>
             <span
               class="text-[0.875rem]"
               style="color: var(--md-on-surface-variant)"
-            >Die Seite auslesen und als Liste anlegen</span>
+            >Erst prüfen, dann eine vorhandene oder neue Liste wählen</span>
           </span>
         </button>
 
@@ -488,11 +474,10 @@ async function cancel(): Promise<void> {
 
     <AiUpsellSheet v-model:open="isAiUpsellOpen" />
 
-    <AiCreateListSheet
+    <AiLinkImportSheet
       v-model:open="isAiListOpen"
-      mode="url"
       :initial-url="sharedUrl"
-      @created="onAiListCreated"
+      @saved="onAiListSaved"
     />
 
     <AiRecipeCreateSheet
