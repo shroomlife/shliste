@@ -1,3 +1,4 @@
+import { attachBffProof } from '../../utils/bffProof'
 /**
  * Signierender Proxy zu den AI-Routen der API.
  *
@@ -135,6 +136,7 @@ export default defineEventHandler(async (event): Promise<unknown> => {
     .digest('hex')
 
   const headers: Record<string, string> = {
+    'authorization': `Bearer ${sessionToken}`,
     'x-auth-timestamp': String(timestamp),
     'x-auth-signature': signature,
     'x-auth-body-hash': bodyHash,
@@ -153,6 +155,15 @@ export default defineEventHandler(async (event): Promise<unknown> => {
   if (clientIp !== undefined) {
     headers['x-shliste-client-ip'] = clientIp
   }
+
+  const requestId = getHeader(event, 'idempotency-key')
+  if (requestId !== undefined) {
+    if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(requestId)) {
+      throw createError({ statusCode: 400, message: 'Ungültige Anforderungs-ID.' })
+    }
+    headers['idempotency-key'] = requestId
+  }
+  attachBffProof('POST', url, headers)
 
   let response: FetchResponse<unknown>
 

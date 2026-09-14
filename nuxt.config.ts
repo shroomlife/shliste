@@ -68,6 +68,7 @@ export default defineNuxtConfig({
     // für jeden Besucher lesbar, unabhängig davon ob das Repo public ist.
     apiBase: process.env.NUXT_API_BASE || 'https://api.shliste.app',
     appSecret: process.env.NUXT_APP_SECRET || '',
+    bffSecret: process.env.NUXT_BFF_SECRET || '',
 
     public: {
       // Nur für die direkte SSE-Verbindung des Browsers zum Stream-Endpunkt.

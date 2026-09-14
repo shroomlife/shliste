@@ -1,3 +1,5 @@
+import { requestDeadline } from './requestDeadline'
+import { aiServiceError } from './serviceError'
 /**
  * Der Weg vom Browser zu den AI-Routen — immer über die eigene BFF
  * (`server/api/ai/[...path].post.ts`), die signiert und die Session prüft.
@@ -56,24 +58,6 @@ function messageForStatus(status: number): string {
 }
 
 /**
- * Verknüpft das Abbruchsignal des Aufrufers mit dem Timeout.
- *
- * Nötig, weil ofetch sein `timeout` IGNORIERT, sobald ein eigenes `signal`
- * mitkommt (Guard `!context.options.signal && context.options.timeout` in
- * ofetch) — ohne diese Verknüpfung liefe eine hängende Anfrage ewig. Auf
- * Browsern ohne `AbortSignal.any` bleibt das Nutzersignal allein; die Frist
- * setzt dann der Server (300s).
- */
-function withTimeout(signal: AbortSignal | undefined): AbortSignal | undefined {
-  if (typeof AbortSignal.any !== 'function' || typeof AbortSignal.timeout !== 'function') {
-    return signal
-  }
-
-  const timeout = AbortSignal.timeout(AI_TIMEOUT_MS)
-  return signal !== undefined ? AbortSignal.any([signal, timeout]) : timeout
-}
-
-/**
  * War es das Timeout? ofetch verpackt den ursprünglichen Fehler in einen
  * FetchError und hängt das Original in die `cause`-Kette — deshalb wird die
  * Kette durchlaufen statt nur die oberste Schicht zu prüfen.
@@ -96,13 +80,16 @@ function isTimeoutError(cause: unknown): boolean {
  * wird hier nie ein Content-Type von Hand gesetzt.
  */
 export async function postAi(path: string, body: AiRequestBody, signal?: AbortSignal): Promise<AiResult<unknown>> {
+  const requestId = crypto.randomUUID()
+  const deadline = requestDeadline(AI_TIMEOUT_MS, signal)
   let response: FetchResponse<unknown>
 
   try {
     response = await $fetch.raw<unknown>(`/api/ai/${path}`, {
       method: 'POST',
+      headers: { 'Idempotency-Key': requestId },
       body,
-      signal: withTimeout(signal),
+      signal: deadline.signal,
       // Statuscodes werden unten selbst ausgewertet: Auch Fehlerantworten
       // tragen eine JSON-Meldung, die angezeigt werden soll.
       ignoreResponseError: true,
@@ -117,16 +104,20 @@ export async function postAi(path: string, body: AiRequestBody, signal?: AbortSi
       return failure('Abgebrochen.', true)
     }
     if (isTimeoutError(cause)) {
-      return failure('Die AI-Anfrage hat zu lange gedauert. Bitte versuche es erneut.')
+      return failure('Die KI-Anfrage hat zu lange gedauert. Ihr Ausgang ist unklar; sie wird nicht automatisch wiederholt.')
     }
-    return failure('Keine Verbindung zum Server. Bitte prüfe dein Netz und versuche es erneut.')
+    return failure('Die Verbindung zum Server wurde unterbrochen. Der Ausgang der Anfrage ist unklar; deine Eingaben bleiben erhalten.')
+  }
+
+  finally {
+    deadline.dispose()
   }
 
   const payload: unknown = response._data
 
   // Das Fehlerfeld hat Vorrang vor dem Status: /ai/suggest liefert Fehler
   // mit HTTP 200, andere Routen liefern zum Fehlerstatus eine Meldung dazu.
-  const error = readAiError(payload)
+  const error = aiServiceError(payload) ?? readAiError(payload)
   if (error !== null) return failure(error)
 
   if (!response.ok) return failure(messageForStatus(response.status))

@@ -1,3 +1,4 @@
+import { attachBffProof } from './bffProof'
 /**
  * Der einzige Weg von dieser App zu api.shliste.app.
  *
@@ -74,6 +75,8 @@ export async function apiFetch(path: string, options: ApiFetchOptions = {}): Pro
   if (clientIp !== undefined) {
     headers['x-shliste-client-ip'] = clientIp
   }
+
+  attachBffProof(method, url, headers)
 
   let response: FetchResponse<unknown>
 
@@ -153,6 +156,8 @@ export async function apiFetchRaw(path: string, options: ApiFetchOptions = {}): 
   if (clientIp !== undefined) {
     headers['x-shliste-client-ip'] = clientIp
   }
+
+  attachBffProof(method, url, headers)
 
   let response: FetchResponse<ArrayBuffer>
 

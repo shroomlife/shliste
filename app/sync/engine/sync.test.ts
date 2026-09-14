@@ -454,6 +454,35 @@ describe('createSyncEngine — Push und Pull', () => {
     expect(state.get().pendingCount).toBe(2)
   })
 
+  test('unvollständiger Pull ist auch ohne offene Uploads kein Erfolg', async () => {
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/pull': () => ({ ...PULL_OK, truncated: true }),
+    })
+    const state = createSyncStateStore()
+    state.set({ lastSyncedAt: TS })
+    const store = fakeSyncStore()
+
+    await createSyncEngine({ store, state, request }).sync()
+
+    expect(state.get().phase).toBe('pending')
+    expect(state.get().message).toContain('nicht vollständig')
+    expect(state.get().pendingCount).toBe(0)
+    expect(state.get().lastSyncedAt).toBe(TS)
+    expect(store.cursor).toBeNull()
+  })
+
+  test('fehlende Abschlusszeit bestätigt keinen erfolgreichen Pull', async () => {
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/pull': () => ({ ...PULL_OK, serverTime: null }),
+    })
+    const state = createSyncStateStore()
+    await createSyncEngine({ store: fakeSyncStore(), state, request }).sync()
+    expect(state.get().phase).toBe('pending')
+    expect(state.get().lastSyncedAt).toBeNull()
+  })
+
   test('das Wasserzeichen geht als since wieder hinaus', async () => {
     const request = fakeRequest({
       '/api/auth/me': () => SESSION,

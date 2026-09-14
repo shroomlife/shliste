@@ -343,14 +343,17 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
     pushError: SyncError | null,
   ): Promise<void> => {
     const pendingCount = await store.countPending()
+    const pullIncomplete = pull !== null && (pull.truncated || !pull.cursorAdvanced)
 
     const phase: SyncPhase = pushError !== null
       ? phaseFromError(pushError)
-      : pendingCount > 0 ? 'pending' : 'idle'
+      : pendingCount > 0 || pullIncomplete ? 'pending' : 'idle'
 
     state.set({
       phase,
-      message: pushError === null ? null : describeSyncError(pushError),
+      message: pushError !== null
+        ? describeSyncError(pushError)
+        : pullIncomplete ? 'Der Abgleich ist noch nicht vollständig. Weitere Änderungen werden geladen.' : null,
       retryAfterMs: pushError?.retryAfterMs ?? null,
       pendingCount,
       notSyncedCount,
