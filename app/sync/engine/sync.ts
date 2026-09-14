@@ -11,15 +11,8 @@
  *     sonst                               -> Marker setzen und ziehen
  *   sonst: pushen (fehlertolerant), dann ziehen
  *
- * DER MUTEX VERWIRFT, ER STAUT NICHT. Ein zweiter Aufruf während eines
- * laufenden Abgleichs gibt `{ ran: false, reason: 'busy' }` zurück und tut
- * nichts. Begründung: Einreihen hieße, denselben Lauf gleich noch einmal zu
- * fahren — der laufende hat alles mitgenommen, was zum Zeitpunkt seines
- * Snapshots schmutzig war, und alles Spätere bleibt schmutzig und kommt beim
- * nächsten Lauf ohnehin mit. Ein gestauter Lauf brächte also keine neuen
- * Daten, kostete aber eine zweite Runde Netzverkehr und ließe sich beliebig
- * aufstapeln (jeder Tastendruck eine Runde). Der Rückgabewert ist wichtig:
- * Ohne ihn läse ein Aufrufer den Erfolg eines FREMDEN Laufs als seinen eigenen.
+ * Lokale Änderungen tragen eine dauerhafte Generation. Unter der Tab-Sperre
+ * wird nachgeladen, solange während des Laufs neue Arbeit dazugekommen ist.
  */
 import type { IsoUtc } from '../../../shared/types/domain'
 import { describeSyncError, toSyncError, type SyncError } from './errors'
@@ -27,7 +20,7 @@ import { isRecord, readBooleanOr, readIso, readNumberOr, readString } from './js
 import type { ConflictStore, SyncStore } from './ports'
 import type { ContentHashes, ContentHashParts } from '../merge/content-hash'
 import { computeContentHashes } from '../merge/content-hash'
-import { getAllForContentHash } from '~/db/repositories'
+import { getAllForContentHash, getWorkGeneration, completeWorkGeneration, getSelfHealMarker, setSelfHealAttempt, setSelfHealSuccess, setLastSyncedAt } from '~/db/repositories'
 import { runPull, type PullOutcome } from './pull'
 import { runMigrate, runPush, type NoticeSink, type PushOutcome, type PushPayload } from './push'
 import { localStore } from './store'
@@ -41,6 +34,7 @@ import {
 } from './state'
 import { requestJson, SYNC_ENDPOINTS, type RequestOptions } from './transport'
 import { runAsLeader } from './leader'
+import { evaluateIntegrity } from './integrity'
 
 /* ------------------------------------------------------------------ *
  * Antworten, die nur hier gebraucht werden
@@ -151,6 +145,14 @@ export interface SyncEngineDeps {
    */
   computeLocalContentHashes?: () => Promise<ContentHashes | null>
   onNotice?: NoticeSink
+  onMoreWork?: () => void
+  integrity?: {
+    resetCursor: () => Promise<void>
+    marker: () => Promise<{ hash: string | null, at: number }>
+    attempt: (at: number) => Promise<void>
+    success: (hash: string, at: number) => Promise<void>
+  }
+  work?: { read: () => Promise<number>, complete: (generation: number, accountId: string) => Promise<void> }
 }
 
 export type SyncOutcome
@@ -213,6 +215,10 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
   const { store, state, request = requestJson, computeLocalContentHashes, onNotice } = deps
 
   let running = false
+  let repairedThisRun = false
+  let cycleAccountId: string | null = null
+  let cyclePhase: SyncPhase | undefined
+  let confirmedAt: IsoUtc | null = null
 
   /** Schickt einen Push-Block. */
   const sendPush = (payload: PushPayload): Promise<unknown> =>
@@ -302,7 +308,11 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
   }
 
   const runCycle = async (): Promise<void> => {
+    cyclePhase = undefined
+    confirmedAt = null
+    cycleAccountId = null
     const session = parseSessionState(await request(SYNC_ENDPOINTS.session))
+    cycleAccountId = session.userId
     if (!session.authenticated) {
       state.set({
         phase: 'authRequired',
@@ -342,18 +352,46 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
     notSyncedCount: number,
     pushError: SyncError | null,
   ): Promise<void> => {
-    const pendingCount = await store.countPending()
+    let pendingCount = await store.countPending()
+    let verificationMessage: string | null = null
+    if (pushError === null && pendingCount === 0 && !pull?.truncated
+      && (pull === null || pull.cursorAdvanced) && deps.integrity && computeLocalContentHashes) {
+      const status = parseServerStatus(await request(SYNC_ENDPOINTS.status))
+      const local = await computeLocalContentHashes()
+      pendingCount = await store.countPending()
+      const marker = await deps.integrity.marker()
+      const verdict = evaluateIntegrity({ serverHash: status.contentHashV2, localHash: local?.v2 ?? null,
+        pendingChanges: pendingCount, lastHealedHash: marker.hash, lastHealedAt: marker.at, now: Date.now() })
+      if (verdict.kind === 'heal' && !repairedThisRun) {
+        repairedThisRun = true
+        await deps.integrity.attempt(Date.now())
+        // Unter derselben Web-Sperre. Vollabruf führt zusammen und löscht keine lokalen Daten.
+        await deps.integrity.resetCursor()
+        await finish(await runPull(store, fetchPull), notSyncedCount, null)
+        return
+      }
+      if (verdict.kind === 'in-sync' && repairedThisRun && status.contentHashV2 !== null) {
+        await deps.integrity.success(status.contentHashV2, Date.now())
+      }
+      if (verdict.kind !== 'in-sync' && verdict.kind !== 'pending') {
+        verificationMessage = verdict.kind === 'unknown'
+          ? 'Der aktuelle Stand konnte noch nicht bestätigt werden.'
+          : 'Die Stände unterscheiden sich noch. Deine lokalen Änderungen bleiben erhalten.'
+      }
+    }
     const pullIncomplete = pull !== null && (pull.truncated || !pull.cursorAdvanced)
 
     const phase: SyncPhase = pushError !== null
       ? phaseFromError(pushError)
-      : pendingCount > 0 || pullIncomplete ? 'pending' : 'idle'
+      : pendingCount > 0 || notSyncedCount > 0 || pullIncomplete || verificationMessage !== null ? 'pending' : 'idle'
 
+    cyclePhase = phase
+    confirmedAt = phase === 'idle' && pull?.cursorAdvanced === true ? pull.serverTime : null
     state.set({
-      phase,
+      phase: phase === 'idle' ? 'syncing' : phase,
       message: pushError !== null
         ? describeSyncError(pushError)
-        : pullIncomplete ? 'Der Abgleich ist noch nicht vollständig. Weitere Änderungen werden geladen.' : null,
+        : verificationMessage ?? (pullIncomplete ? 'Der Abgleich ist noch nicht vollständig. Weitere Änderungen werden geladen.' : null),
       retryAfterMs: pushError?.retryAfterMs ?? null,
       pendingCount,
       notSyncedCount,
@@ -362,15 +400,18 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
       // gezogen hat, weiß nichts über Einladungen und dürfte die zuletzt
       // bekannten nicht wegwerfen.
       ...(pull === null ? {} : { pendingInvites: pull.pendingInvites }),
-      ...(pull?.cursorAdvanced === true ? { lastSyncedAt: pull.serverTime } : {}),
     })
   }
 
   const sync = async (options: SyncRunOptions = {}): Promise<SyncOutcome> => {
+    let lastStartedGeneration: number | undefined
     // Die Prüfung und das Setzen liegen im selben synchronen Abschnitt — ohne
     // ein `await` dazwischen kann kein zweiter Aufruf hineinrutschen.
     if (running) return { ran: false, reason: 'busy' }
     running = true
+    repairedThisRun = false
+    cyclePhase = undefined
+    confirmedAt = null
 
     /*
      * Der Mutex oben deckt nur DIESEN Tab ab: Er ist eine Variable im
@@ -389,7 +430,25 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
         state.set({ phase: 'syncing', message: null, retryAfterMs: null })
 
         try {
-          await runCycle()
+          // Begrenzter Drain: Fehler bleiben dauerhaft offen und erzeugen keine Netzschleife.
+          for (let cycle = 0; cycle < 8; cycle += 1) {
+            const generation = await deps.work?.read()
+            lastStartedGeneration = generation
+            await runCycle()
+            const phase = cyclePhase ?? state.get().phase
+            if (phase !== 'idle' && phase !== 'pending') break
+            if (generation !== undefined && phase === 'idle') {
+              const currentSession = parseSessionState(await request(SYNC_ENDPOINTS.session))
+              if (!currentSession.authenticated || cycleAccountId === null || currentSession.userId !== cycleAccountId) {
+                state.set({ phase: 'error', message: 'Die Anmeldung hat sich während des Abgleichs geändert. Der Abschluss wurde nicht bestätigt.' })
+                break
+              }
+              await deps.work?.complete(generation, cycleAccountId)
+            }
+            const next = await deps.work?.read()
+            if (generation === undefined || next === generation) break
+            state.set({ phase: 'pending', message: 'Neue Änderungen warten auf den nächsten Abgleich.' })
+          }
         }
         catch (cause) {
           const error = toSyncError(cause)
@@ -403,6 +462,25 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
       }, { mode: options.userInitiated === true ? 'waitForTurn' : 'skipIfBusy' })
 
       if (!ergebnis.ran) return { ran: false, reason: 'busy' }
+
+      // Abschlussbeobachtung nach Freigabe der Tab-Sperre.
+      // Der lokale Mutex bleibt bis zum Abschluss bestehen. Ein verlorenes
+      // Debounce-Signal im Abschlussfenster wird durch die dauerhafte Generation sichtbar.
+      if (deps.work && lastStartedGeneration !== undefined
+        && (state.get().phase === 'syncing' || state.get().phase === 'pending')) {
+        try {
+          if (await deps.work.read() > lastStartedGeneration) {
+            state.set({ phase: 'pending', message: 'Neue lokale Arbeit wird weiter abgeglichen.' })
+            deps.onMoreWork?.()
+          }
+        }
+        catch {
+          state.set({ phase: 'pending', message: 'Offene Arbeit wird beim nächsten Start erneut geprüft.' })
+        }
+      }
+      if (state.get().phase === 'syncing' && cyclePhase === 'idle') {
+        state.set({ phase: 'idle', ...(confirmedAt === null ? {} : { lastSyncedAt: confirmedAt }) })
+      }
     }
     catch (cause) {
       /*
@@ -445,6 +523,9 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
   const resolveConflict = async (strategy: ConflictStrategy): Promise<SyncOutcome> => {
     if (running) return { ran: false, reason: 'busy' }
     running = true
+    repairedThisRun = false
+    cyclePhase = undefined
+    confirmedAt = null
 
     state.set({ phase: 'syncing', message: null, retryAfterMs: null, conflict: null })
 
@@ -470,6 +551,9 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
       running = false
     }
 
+    if (state.get().phase === 'syncing' && cyclePhase === 'idle') {
+      state.set({ phase: 'idle', ...(confirmedAt === null ? {} : { lastSyncedAt: confirmedAt }) })
+    }
     return { ran: true, snapshot: state.get() }
   }
 
@@ -565,5 +649,14 @@ async function computeLocalContentHashes(): Promise<ContentHashes | null> {
 export const syncEngine: SyncEngine = createSyncEngine({
   store: localStore,
   state: syncState,
+  onMoreWork: () => {
+    setTimeout(() => {
+      void syncEngine.sync().catch(() => {
+        syncState.set({ phase: 'pending', message: 'Der Abgleich wird beim nächsten Start fortgesetzt.' })
+      })
+    }, 0)
+  },
   computeLocalContentHashes,
+  work: { read: getWorkGeneration, complete: completeWorkGeneration },
+  integrity: { resetCursor: () => setLastSyncedAt(null), marker: getSelfHealMarker, attempt: setSelfHealAttempt, success: setSelfHealSuccess },
 })

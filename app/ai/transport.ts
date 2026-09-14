@@ -10,13 +10,12 @@ import { aiServiceError } from './serviceError'
  *
  * - /ai/suggest meldet Fehler auch mit HTTP 200 im Feld `error`
  * - andere Routen melden Fehler als HTTP-Status mit `{error}`-Body
- * - der Server rechnet bis zu 300 Sekunden — deshalb das große Timeout,
+ * - die Browserfrist endet nach der Ausführungs- und BFF-Frist,
  *   und deshalb nimmt jede Funktion ein AbortSignal fürs Abbrechen entgegen
  *
  * Bewusst generisch gehalten: Das Rezept-Paket kann `postAi` mit seinen
  * eigenen Routen und Parsern genauso benutzen.
  */
-import type { FetchResponse } from 'ofetch'
 import type { EditedList, GeneratedList } from './contract'
 import { parseEditedList, parseGeneratedList, parseSuggestions, readAiError } from './contract'
 import type { CurrentListPayload } from './diff'
@@ -31,11 +30,18 @@ import {
 } from './recipeContract'
 import type { CurrentRecipePayload } from './recipeDiff'
 
-/**
- * Großzügiger als die 300 Sekunden des Servers, damit im Normalfall immer
- * der Server die Frist setzt und der Client nur das Sicherheitsnetz ist.
- */
-const AI_TIMEOUT_MS = 310_000
+/** API 60 s, BFF 75 s, Browser 90 s. Die echte Proxy-Kette bleibt Release-Abnahme. */
+const AI_TIMEOUT_MS = 90_000
+const AI_STATUS_TIMEOUT_MS = 10_000
+
+export type AiFetch = (path: string, options: {
+  method: 'GET' | 'POST'
+  headers?: Record<string, string>
+  body?: AiRequestBody
+  signal: AbortSignal
+  ignoreResponseError: true
+  retry: false
+}) => Promise<{ ok: boolean, status: number, _data?: unknown }>
 
 export type AiResult<T>
   = | { ok: true, value: T }
@@ -79,13 +85,13 @@ function isTimeoutError(cause: unknown): boolean {
  * setzt der Browser den multipart-Content-Type samt Boundary selbst — deshalb
  * wird hier nie ein Content-Type von Hand gesetzt.
  */
-export async function postAi(path: string, body: AiRequestBody, signal?: AbortSignal): Promise<AiResult<unknown>> {
+export async function postAi(path: string, body: AiRequestBody, signal?: AbortSignal, fetcher: AiFetch = (url, options) => $fetch.raw(url, options)): Promise<AiResult<unknown>> {
   const requestId = crypto.randomUUID()
   const deadline = requestDeadline(AI_TIMEOUT_MS, signal)
-  let response: FetchResponse<unknown>
+  let response: Awaited<ReturnType<AiFetch>>
 
   try {
-    response = await $fetch.raw<unknown>(`/api/ai/${path}`, {
+    response = await fetcher(`/api/ai/${path}`, {
       method: 'POST',
       headers: { 'Idempotency-Key': requestId },
       body,
@@ -103,16 +109,17 @@ export async function postAi(path: string, body: AiRequestBody, signal?: AbortSi
     if (signal?.aborted === true) {
       return failure('Abgebrochen.', true)
     }
-    if (isTimeoutError(cause)) {
-      return failure('Die KI-Anfrage hat zu lange gedauert. Ihr Ausgang ist unklar; sie wird nicht automatisch wiederholt.')
-    }
-    return failure('Die Verbindung zum Server wurde unterbrochen. Der Ausgang der Anfrage ist unklar; deine Eingaben bleiben erhalten.')
+    return reconcileUncertainRequest(requestId, fetcher, signal, isTimeoutError(cause))
   }
 
   finally {
     deadline.dispose()
   }
 
+  // Ein Gateway-Abbruch kann nach der Zulassung auftreten: nur lesen, nie erneut POSTen.
+  if (response.status === 502 || response.status === 504) {
+    return reconcileUncertainRequest(requestId, fetcher, signal, false)
+  }
   const payload: unknown = response._data
 
   // Das Fehlerfeld hat Vorrang vor dem Status: /ai/suggest liefert Fehler
@@ -123,6 +130,28 @@ export async function postAi(path: string, body: AiRequestBody, signal?: AbortSi
   if (!response.ok) return failure(messageForStatus(response.status))
 
   return { ok: true, value: payload }
+}
+
+/** Ein lesender Abgleich derselben ID; ein fertiger Status ist noch kein geliefertes Ergebnis. */
+async function reconcileUncertainRequest(requestId: string, fetcher: AiFetch, signal: AbortSignal | undefined, timedOut: boolean): Promise<AiResult<never>> {
+  const deadline = requestDeadline(AI_STATUS_TIMEOUT_MS, signal)
+  try {
+    const response = await fetcher(`/api/ai/requests/${requestId}`, {
+      method: 'GET', signal: deadline.signal, ignoreResponseError: true, retry: false,
+    })
+    const payload = response._data
+    if (response.ok && typeof payload === 'object' && payload !== null
+      && 'requestId' in payload && payload.requestId === requestId && 'state' in payload) {
+      if (payload.state === 'running') return failure('Dein KI-Auftrag wird noch verarbeitet. Deine Eingaben bleiben erhalten; der Auftrag wird nicht erneut gestartet.')
+      if (payload.state === 'finished') return failure('Der KI-Auftrag ist beendet, aber seine Antwort ist nicht angekommen. Ein Ergebnis konnte nicht übernommen werden; der Auftrag wird nicht automatisch wiederholt.')
+    }
+  }
+  catch { /* Der Statusabgleich darf keinen zweiten kostenpflichtigen Auftrag auslösen. */ }
+  finally { deadline.dispose() }
+  if (signal?.aborted) return failure('Abgebrochen.', true)
+  return failure(timedOut
+    ? 'Die KI-Anfrage hat zu lange gedauert. Ihr Ausgang ist unklar; sie wird nicht automatisch wiederholt.'
+    : 'Die Verbindung zum Server wurde unterbrochen. Der Ausgang der Anfrage ist unklar; deine Eingaben bleiben erhalten.')
 }
 
 /**

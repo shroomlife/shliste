@@ -661,3 +661,190 @@ describe('parseSessionState', () => {
     expect(parseSessionState('kaputt').userId).toBeNull()
   })
 })
+
+describe('dauerhafte Arbeitsgeneration', () => {
+  test('Änderung während Pull wird unter derselben Sperre nachgeladen', async () => {
+    let generation = 1
+    let pulls = 0
+    const completed: number[] = []
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/pull': () => {
+        pulls += 1
+        if (pulls === 1) generation += 1
+        return PULL_OK
+      },
+    })
+    const engine = createSyncEngine({ store: fakeSyncStore(), state: createSyncStateStore(), request,
+      work: { read: async () => generation, complete: async (value) => { completed.push(value) } },
+    })
+    await engine.sync()
+    expect(pulls).toBe(2)
+    expect(completed).toEqual([1, 2])
+  })
+
+  test('Netzfehler bestätigt keine Generation und startet keine Fehlerschleife', async () => {
+    const completed: number[] = []
+    let attempts = 0
+    const engine = createSyncEngine({ store: fakeSyncStore(), state: createSyncStateStore(),
+      request: async () => {
+        attempts += 1
+        throw new Error('offline')
+      },
+      work: { read: async () => 3, complete: async (value) => { completed.push(value) } },
+    })
+    await engine.sync()
+    expect(attempts).toBe(1)
+    expect(completed).toEqual([])
+  })
+
+  test('dauernde Änderungen begrenzen einen Arbeitslauf ohne neuere Generation zu bestätigen', async () => {
+    let generation = 0
+    const completed: number[] = []
+    const request = fakeRequest({ '/api/auth/me': () => SESSION,
+      '/api/sync/pull': () => {
+        generation += 1
+        return PULL_OK
+      },
+    })
+    const engine = createSyncEngine({ store: fakeSyncStore(), state: createSyncStateStore(), request,
+      work: { read: async () => generation, complete: async (value) => { completed.push(value) } },
+    })
+    await engine.sync()
+    expect(generation).toBe(8)
+    expect(completed.at(-1)).toBe(7)
+  })
+})
+
+describe('aktuelle Abschlussverifikation', () => {
+  for (const heals of [true, false]) {
+    test(`voller Merge wird einmal versucht, Erfolg nur nach Hashvergleich: ${heals}`, async () => {
+      let pulls = 0
+      let attempts = 0
+      const successes: string[] = []
+      const store = fakeSyncStore()
+      const state = createSyncStateStore()
+      state.set({ lastSyncedAt: TS })
+      const engine = createSyncEngine({ store, state,
+        request: fakeRequest({ '/api/auth/me': () => SESSION,
+          '/api/sync/status': () => ({ ...FILLED_SERVER, contentHashV2: 'server' }),
+          '/api/sync/pull': () => {
+            pulls += 1
+            return PULL_OK
+          },
+        }),
+        computeLocalContentHashes: async () => ({ v2: heals && pulls > 1 ? 'server' : 'local',
+          parts: { lists: '', listItems: '', recipes: '', recipeIngredients: '', recipeSteps: '', badges: '' },
+        }),
+        integrity: {
+          resetCursor: async () => { store.cursor = null },
+          marker: async () => ({ hash: null, at: 0 }),
+          attempt: async () => { attempts += 1 },
+          success: async (hash) => { successes.push(hash) },
+        },
+      })
+      await engine.sync()
+      expect(pulls).toBe(2)
+      expect(attempts).toBe(1)
+      expect(store.wiped).toBe(0)
+      expect(state.get().phase).toBe(heals ? 'idle' : 'pending')
+      expect(state.get().lastSyncedAt).toBe(heals ? SERVER_TIME : TS)
+      expect(successes).toEqual(heals ? ['server'] : [])
+    })
+  }
+
+  test('unbekannter aktueller Hash kann historischen Erfolg nicht ersetzen', async () => {
+    const state = createSyncStateStore()
+    state.set({ lastSyncedAt: TS })
+    let attempts = 0
+    await createSyncEngine({ store: fakeSyncStore(), state,
+      request: fakeRequest({ '/api/auth/me': () => SESSION, '/api/sync/pull': () => PULL_OK,
+        '/api/sync/status': () => EMPTY_SERVER }),
+      computeLocalContentHashes: async () => null,
+      integrity: { resetCursor: async () => {}, marker: async () => ({ hash: 'old', at: 0 }),
+        attempt: async () => { attempts += 1 }, success: async () => {} },
+    }).sync()
+    expect(state.get().phase).toBe('pending')
+    expect(state.get().lastSyncedAt).toBe(TS)
+    expect(attempts).toBe(0)
+  })
+})
+
+test('Kontowechsel vor Abschluss bestaetigt keine Generation', async () => {
+  let sessions = 0
+  const completed: number[] = []
+  const state = createSyncStateStore()
+  await createSyncEngine({ store: fakeSyncStore(), state,
+    request: fakeRequest({ '/api/auth/me': () => {
+      sessions += 1
+      return sessions === 1 ? SESSION : { ...SESSION, profile: { userId: 'other' } }
+    }, '/api/sync/pull': () => PULL_OK }),
+    work: { read: async () => 2, complete: async (generation) => { completed.push(generation) } },
+  }).sync()
+  expect(completed).toEqual([])
+  expect(state.get().phase).toBe('error')
+})
+
+test('abgewiesene Zeilen sind kein vollstaendig bestaetigter Abschluss', async () => {
+  const state = createSyncStateStore()
+  const store = fakeSyncStore({ hasMigrated: false, local: { lists: 1, recipes: 0 }, dirty: { lists: [dirtyList('one')] } })
+  await createSyncEngine({ store, state, request: fakeRequest({
+    '/api/auth/me': () => SESSION,
+    '/api/sync/status': () => EMPTY_SERVER,
+    '/api/sync/migrate': () => ({ ...MIGRATE_OK, skippedIds: { lists: ['one'] } }),
+  }) }).sync()
+  expect(state.get().notSyncedCount).toBe(1)
+  expect(state.get().phase).toBe('pending')
+})
+
+test('kein sichtbarer Erfolg vor der abschliessenden Kontopruefung', async () => {
+  const state = createSyncStateStore()
+  state.set({ lastSyncedAt: TS })
+  let release: () => void = () => {}
+  const gate = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  let reached: () => void = () => {}
+  const checking = new Promise<void>((resolve) => {
+    reached = resolve
+  })
+  let sessions = 0
+  const engine = createSyncEngine({ store: fakeSyncStore(), state,
+    request: fakeRequest({ '/api/auth/me': async () => {
+      sessions += 1
+      if (sessions === 2) {
+        reached()
+        await gate
+      }
+      return SESSION
+    }, '/api/sync/pull': () => PULL_OK }),
+    work: { read: async () => 1, complete: async () => {} },
+  })
+  const pending = engine.sync()
+  await checking
+  expect(state.get().phase).toBe('syncing')
+  expect(state.get().lastSyncedAt).toBe(TS)
+  release()
+  await pending
+  expect(state.get().phase).toBe('idle')
+})
+
+test('Anmeldung faellt im zweiten Drain-Zyklus weg: kein alter Zykluserfolg', async () => {
+  let sessions = 0
+  let generation = 0
+  const completed: number[] = []
+  const state = createSyncStateStore()
+  const engine = createSyncEngine({ store: fakeSyncStore(), state,
+    request: fakeRequest({ '/api/auth/me': () => {
+      sessions += 1
+      return sessions <= 2 ? SESSION : { authenticated: false }
+    }, '/api/sync/pull': () => {
+      generation += 1
+      return PULL_OK
+    } }),
+    work: { read: async () => generation, complete: async (value) => { completed.push(value) } },
+  })
+  await engine.sync()
+  expect(state.get().phase).toBe('authRequired')
+  expect(completed).toEqual([0])
+})

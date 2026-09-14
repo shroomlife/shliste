@@ -155,6 +155,9 @@ export interface SyncMetaMap {
    * gälte der erste Herzschlag als Lücke und löste einen überflüssigen
    * Abgleich aus — bei jedem Seitenaufruf.
    */
+  workGeneration: number
+  completedWorkGeneration: number
+  completedWorkAccountId: string
   lastChangeSeq: number
 }
 

@@ -8,10 +8,8 @@ import { attachBffProof } from '../../utils/bffProof'
  *
  * Zwei Unterschiede zum Sync-Proxy, beide begründet:
  *
- * 1. Die AI-Routen kennen keinen Bearer — die API bindet AI-Aufrufe nicht an
- *    ein Konto. Die Session wird hier TROTZDEM verlangt: Jeder Aufruf kostet
- *    drüben OpenAI-Budget, und ein anonym nutzbarer Proxy würde dieses Budget
- *    für jeden Besucher des Internets öffnen.
+ * 1. Die Benutzersitzung wird an die API weitergegeben. Sie bindet den
+ *    kostenpflichtigen Auftrag an sein Konto und dessen Kontingente.
  * 2. Der Body wird als ROHE BYTES gelesen und weitergereicht, nicht als
  *    UTF-8-String. Die Voice- und Bild-Routen senden multipart/form-data,
  *    und Binärdaten überleben einen Umweg über einen String nicht. Der
@@ -166,6 +164,14 @@ export default defineEventHandler(async (event): Promise<unknown> => {
   attachBffProof('POST', url, headers)
 
   let response: FetchResponse<unknown>
+  const controller = new AbortController()
+  const abort = () => controller.abort()
+  const timer = setTimeout(() => controller.abort(new DOMException('AI proxy deadline', 'TimeoutError')), 75_000)
+  const close = () => {
+    if (!event.node.res.writableFinished) abort()
+  }
+  event.node.res.once('close', close)
+  if (event.node.res.destroyed) abort()
 
   try {
     response = await $fetch.raw<unknown>(url.toString(), {
@@ -179,6 +185,7 @@ export default defineEventHandler(async (event): Promise<unknown> => {
       // Zeitstempel (±30s Fenster), und ein wiederholter AI-Aufruf würde
       // doppeltes Budget kosten.
       retry: false,
+      signal: controller.signal,
     })
   }
   catch (cause) {
@@ -190,6 +197,11 @@ export default defineEventHandler(async (event): Promise<unknown> => {
       message: 'api.shliste.app ist nicht erreichbar.',
       cause,
     })
+  }
+
+  finally {
+    clearTimeout(timer)
+    event.node.res.off('close', close)
   }
 
   // Status und Nutzlast unverfälscht zurückgeben. Kein createError bei !ok:

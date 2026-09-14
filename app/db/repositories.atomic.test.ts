@@ -93,7 +93,7 @@ function fakeDb() {
 
 mock.module('./client', () => ({ getDb: () => Promise.resolve(fakeDb()) }))
 
-const { advanceLastChangeSeq, mutateRow } = await import('./repositories')
+const { advanceLastChangeSeq, mutateRow, upsertList } = await import('./repositories')
 
 function reset(): void {
   transaktionen.length = 0
@@ -244,4 +244,22 @@ describe('advanceLastChangeSeq', () => {
 
     expect(daten.get('lastChangeSeq')).toBe(4)
   })
+})
+
+test('lokales Schreiben und Arbeitsgeneration liegen in derselben Transaktion', async () => {
+  reset()
+  const { createdAt: _created, updatedAt: _updated, fieldTimestamps: _fields, dirty: _dirty, ...draft } = liste()
+  await upsertList(draft)
+  expect(daten.get('workGeneration')).toBe(1)
+  expect(transaktionen).toEqual([[
+    'open:lists,sync_meta:readwrite', 'get:a', 'put:a', 'get:workGeneration', 'put:workGeneration',
+  ]])
+})
+
+test('unverÄnderte Liste erzeugt keine neue Arbeitsgeneration', async () => {
+  reset()
+  const { createdAt: _created, updatedAt: _updated, fieldTimestamps: _fields, dirty: _dirty, ...draft } = liste()
+  await upsertList(draft)
+  await upsertList(draft)
+  expect(daten.get('workGeneration')).toBe(1)
 })
