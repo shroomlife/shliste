@@ -1,3 +1,4 @@
+import { attachBffProof } from '../../utils/bffProof'
 /**
  * Signierender Proxy zu den AI-Routen der API.
  *
@@ -7,10 +8,8 @@
  *
  * Zwei Unterschiede zum Sync-Proxy, beide begründet:
  *
- * 1. Die AI-Routen kennen keinen Bearer — die API bindet AI-Aufrufe nicht an
- *    ein Konto. Die Session wird hier TROTZDEM verlangt: Jeder Aufruf kostet
- *    drüben OpenAI-Budget, und ein anonym nutzbarer Proxy würde dieses Budget
- *    für jeden Besucher des Internets öffnen.
+ * 1. Die Benutzersitzung wird an die API weitergegeben. Sie bindet den
+ *    kostenpflichtigen Auftrag an sein Konto und dessen Kontingente.
  * 2. Der Body wird als ROHE BYTES gelesen und weitergereicht, nicht als
  *    UTF-8-String. Die Voice- und Bild-Routen senden multipart/form-data,
  *    und Binärdaten überleben einen Umweg über einen String nicht. Der
@@ -28,11 +27,12 @@ import { checkSession } from '../../utils/sessionCheck'
  *
  * `readRawBody` hält den kompletten Body im Speicher; die 5/10-MB-Grenzen der
  * API greifen erst NACH dem Puffern hier. Ohne eigene Schranke wäre diese
- * Route ein billiger Speicherhebel. 12 MB deckt das größte legitime Paket
- * (10-MB-Bild plus multipart-Rahmen), JSON-Anfragen sind winzig.
+ * Route ein billiger Speicherhebel. 20 MB ist die Gesamtgrenze der API je
+ * Anfrage (`requestContentHash`): bis zu fünf Bilder je Import, die der
+ * Browser vorher auf 1920 Pixel verkleinert hat. JSON-Anfragen sind winzig.
  */
 const MAX_JSON_BODY_BYTES = 1_000_000
-const MAX_MULTIPART_BODY_BYTES = 12_000_000
+const MAX_MULTIPART_BODY_BYTES = 20_000_000
 
 /**
  * Die AI-Routen, die diese PWA tatsächlich aufruft — alle POST.
@@ -135,6 +135,7 @@ export default defineEventHandler(async (event): Promise<unknown> => {
     .digest('hex')
 
   const headers: Record<string, string> = {
+    'authorization': `Bearer ${sessionToken}`,
     'x-auth-timestamp': String(timestamp),
     'x-auth-signature': signature,
     'x-auth-body-hash': bodyHash,
@@ -154,7 +155,24 @@ export default defineEventHandler(async (event): Promise<unknown> => {
     headers['x-shliste-client-ip'] = clientIp
   }
 
+  const requestId = getHeader(event, 'idempotency-key')
+  if (requestId !== undefined) {
+    if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(requestId)) {
+      throw createError({ statusCode: 400, message: 'Ungültige Anforderungs-ID.' })
+    }
+    headers['idempotency-key'] = requestId
+  }
+  attachBffProof('POST', url, headers)
+
   let response: FetchResponse<unknown>
+  const controller = new AbortController()
+  const abort = () => controller.abort()
+  const timer = setTimeout(() => controller.abort(new DOMException('AI proxy deadline', 'TimeoutError')), 75_000)
+  const close = () => {
+    if (!event.node.res.writableFinished) abort()
+  }
+  event.node.res.once('close', close)
+  if (event.node.res.destroyed) abort()
 
   try {
     response = await $fetch.raw<unknown>(url.toString(), {
@@ -168,6 +186,7 @@ export default defineEventHandler(async (event): Promise<unknown> => {
       // Zeitstempel (±30s Fenster), und ein wiederholter AI-Aufruf würde
       // doppeltes Budget kosten.
       retry: false,
+      signal: controller.signal,
     })
   }
   catch (cause) {
@@ -179,6 +198,11 @@ export default defineEventHandler(async (event): Promise<unknown> => {
       message: 'api.shliste.app ist nicht erreichbar.',
       cause,
     })
+  }
+
+  finally {
+    clearTimeout(timer)
+    event.node.res.off('close', close)
   }
 
   // Status und Nutzlast unverfälscht zurückgeben. Kein createError bei !ok:

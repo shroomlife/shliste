@@ -13,6 +13,7 @@ import type { GeneratedList } from '~/ai/contract'
 import { IMAGE_TO_LIST_PHRASES, URL_TO_LIST_PHRASES, VOICE_TO_LIST_PHRASES } from '~/ai/phrases'
 import { requestImageToList, requestUrlToList, requestVoiceToList } from '~/ai/transport'
 import type { AiCreateMode, AiResult } from '~/ai/transport'
+import { MAX_IMAGE_COUNT, useAiImageSelection } from '~/composables/useAiImageSelection'
 import { formatRecordingDuration } from '~/composables/useAudioRecorder'
 
 const { mode, initialUrl = null, reviewBeforeSave = false } = defineProps<{
@@ -37,16 +38,22 @@ const recorder = useAudioRecorder()
 
 const url = ref('')
 
-const imageFile = ref<File | null>(null)
-const imagePreview = ref<string | null>(null)
 const imageDescription = ref('')
 const fileInput = useTemplateRef<HTMLInputElement>('fileInput')
+// Grenzen und Verkleinern der Bilder liegen im Composable, gespiegelt an /ai/image-to-list.
+const {
+  images,
+  files: imageFiles,
+  isFull: imagesFull,
+  preparing: preparingImages,
+  addFromInput: addImagesFromInput,
+  removeImage,
+  clear: clearImages,
+} = useAiImageSelection((message) => {
+  errorMessage.value = message
+})
 
 let controller: AbortController | null = null
-
-/** Grenzen der API-Route /ai/image-to-list. */
-const ALLOWED_IMAGE_TYPES: ReadonlySet<string> = new Set(['image/jpeg', 'image/png', 'image/webp'])
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
 const SHEET_TEXTS: Record<AiCreateMode, { title: string, description: string, phrases: readonly string[] }> = {
   voice: {
@@ -56,7 +63,7 @@ const SHEET_TEXTS: Record<AiCreateMode, { title: string, description: string, ph
   },
   photo: {
     title: 'Liste per Foto',
-    description: 'Fotografiere einen Einkaufszettel. Die AI liest ihn aus.',
+    description: 'Fotografiere einen Einkaufszettel, bis zu fünf Bilder. Die AI liest sie aus.',
     phrases: IMAGE_TO_LIST_PHRASES,
   },
   url: {
@@ -119,44 +126,13 @@ async function toggleRecording(): Promise<void> {
  * Foto
  * ------------------------------------------------------------------ */
 
-function revokePreview(): void {
-  if (imagePreview.value !== null) {
-    URL.revokeObjectURL(imagePreview.value)
-    imagePreview.value = null
-  }
-}
-
-function onFileSelected(event: Event): void {
-  const input = event.target
-  if (!(input instanceof HTMLInputElement)) return
-
-  const file = input.files?.[0]
-  // Dieselbe Datei erneut wählbar machen.
-  input.value = ''
-  if (file === undefined) return
-
-  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
-    errorMessage.value = 'Dieses Bildformat wird nicht unterstützt. Bitte wähle ein Bild als JPEG, PNG oder WebP.'
-    return
-  }
-  if (file.size > MAX_IMAGE_BYTES) {
-    errorMessage.value = 'Das Bild ist zu groß. Höchstens 10 MB sind möglich.'
-    return
-  }
-
-  errorMessage.value = null
-  revokePreview()
-  imageFile.value = file
-  imagePreview.value = URL.createObjectURL(file)
-}
-
 async function submitImage(): Promise<void> {
-  const file = imageFile.value
-  if (file === null || phase.value === 'loading') return
+  const files = imageFiles.value
+  if (files.length === 0 || preparingImages.value || phase.value === 'loading') return
 
   const description = imageDescription.value.trim()
   const active = begin()
-  finish(await requestImageToList(file, description.length > 0 ? description : null, active.signal))
+  finish(await requestImageToList(files, description.length > 0 ? description : null, active.signal))
 }
 
 /* ------------------------------------------------------------------ *
@@ -204,12 +180,9 @@ watch(open, (isOpen) => {
   phase.value = 'input'
   errorMessage.value = null
   url.value = ''
-  imageFile.value = null
   imageDescription.value = ''
-  revokePreview()
+  clearImages()
 })
-
-onUnmounted(revokePreview)
 </script>
 
 <template>
@@ -284,17 +257,38 @@ onUnmounted(revokePreview)
         <input
           ref="fileInput"
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp"
+          multiple
           class="hidden"
-          @change="onFileSelected"
+          @change="addImagesFromInput"
         >
 
-        <img
-          v-if="imagePreview !== null"
-          :src="imagePreview"
-          alt="Ausgewähltes Bild"
-          class="max-h-56 w-full rounded-xl object-cover"
+        <!-- Vorschaustreifen: Reihenfolge ist Auswahlreihenfolge. -->
+        <ul
+          v-if="images.length > 0"
+          class="flex gap-2 overflow-x-auto py-1"
+          aria-label="Ausgewählte Bilder"
         >
+          <li
+            v-for="(image, index) in images"
+            :key="image.preview"
+            class="relative shrink-0"
+          >
+            <img
+              :src="image.preview"
+              :alt="`Bild ${index + 1} von ${images.length}`"
+              class="size-24 rounded-xl object-cover"
+            >
+            <UButton
+              icon="i-lucide-x"
+              color="neutral"
+              size="xs"
+              class="absolute -right-1.5 -top-1.5 rounded-full"
+              :aria-label="`Bild ${index + 1} entfernen`"
+              @click="removeImage(index)"
+            />
+          </li>
+        </ul>
 
         <UButton
           icon="i-lucide-image"
@@ -302,9 +296,11 @@ onUnmounted(revokePreview)
           variant="subtle"
           size="xl"
           class="justify-center rounded-xl font-bold"
+          :disabled="imagesFull"
+          :loading="preparingImages"
           @click="fileInput?.click()"
         >
-          {{ imageFile === null ? 'Foto auswählen' : 'Anderes Foto wählen' }}
+          {{ images.length === 0 ? 'Fotos auswählen' : `Weitere Fotos hinzufügen (${images.length} von ${MAX_IMAGE_COUNT})` }}
         </UButton>
 
         <UInput
@@ -318,7 +314,7 @@ onUnmounted(revokePreview)
           icon="i-lucide-sparkles"
           size="xl"
           class="justify-center rounded-xl font-bold"
-          :disabled="imageFile === null"
+          :disabled="images.length === 0 || preparingImages"
           @click="submitImage"
         >
           Analysieren

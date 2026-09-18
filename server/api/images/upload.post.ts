@@ -1,3 +1,4 @@
+import { attachBffProof } from '../../utils/bffProof'
 /**
  * Signierender Proxy für den Rezeptbild-Upload (POST /sync/images/upload).
  *
@@ -83,6 +84,8 @@ export default defineEventHandler(async (event): Promise<unknown> => {
   if (clientIp !== undefined) {
     headers['x-shliste-client-ip'] = clientIp
   }
+
+  attachBffProof('POST', url, headers)
 
   let response: FetchResponse<unknown>
 

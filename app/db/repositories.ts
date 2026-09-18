@@ -20,6 +20,7 @@
  * normales Update, das `deletedAt` setzt, und läuft über dieselbe
  * Upsert-Funktion wie jede andere Änderung.
  */
+import type { IDBPTransaction } from 'idb'
 import type {
   Badge,
   FieldTimestamps,
@@ -324,8 +325,8 @@ export async function upsertList(input: Draft<List>): Promise<ListRow> {
   // gelesenen Zeile bewahrt — ein `markListSeen` zwischen einem freien
   // get und put ginge sonst still verloren (dieselbe Begründung, aus der
   // markListSeen und mutateRow transaktional gebaut sind).
-  const tx = db.transaction('lists', 'readwrite')
-  const previous = await tx.store.get(input.id)
+  const tx = db.transaction(['lists', 'sync_meta'], 'readwrite')
+  const previous = await tx.objectStore('lists').get(input.id)
   const changed = changedFields(previous, input)
 
   // Ein Schreibvorgang ohne inhaltliche Änderung würde die Zeile grundlos
@@ -338,7 +339,8 @@ export async function upsertList(input: Draft<List>): Promise<ListRow> {
   // `seenAt` ist rein lokal und steht nicht im Draft — ohne diese Zeile
   // würde jedes Umbenennen das Gesehen-Wasserzeichen der Liste verwerfen.
   const row: ListRow = { ...input, ...buildRowMeta(previous, changed, nowIso()), seenAt: previous?.seenAt ?? null }
-  await tx.store.put(row)
+  await tx.objectStore('lists').put(row)
+  await advanceWorkGeneration(tx)
   await tx.done
   return row
 }
@@ -363,8 +365,8 @@ export async function upsertList(input: Draft<List>): Promise<ListRow> {
  */
 export async function upsertItem(input: ListItemDraft): Promise<ListItemRow> {
   const db = await getDb()
-  const tx = db.transaction('list_items', 'readwrite')
-  const previous = await tx.store.get(input.id)
+  const tx = db.transaction(['list_items', 'sync_meta'], 'readwrite')
+  const previous = await tx.objectStore('list_items').get(input.id)
   const changed = changedFields(previous, input)
 
   // Ein Schreibvorgang ohne inhaltliche Änderung würde die Zeile grundlos
@@ -379,7 +381,8 @@ export async function upsertItem(input: ListItemDraft): Promise<ListItemRow> {
     ...linkFieldsAfterWrite(previous, input.url),
     ...buildRowMeta(previous, changed, nowIso()),
   }
-  await tx.store.put(row)
+  await tx.objectStore('list_items').put(row)
+  await advanceWorkGeneration(tx)
   await tx.done
   return row
 }
@@ -415,7 +418,7 @@ async function writeImportedList(
   newList?: Draft<List>,
 ): Promise<ListRow> {
   const db = await getDb()
-  const tx = db.transaction(['lists', 'list_items'], 'readwrite')
+  const tx = db.transaction(['lists', 'list_items', 'sync_meta'], 'readwrite')
   try {
     const parent = newList === undefined
       ? await tx.objectStore('lists').get(listId)
@@ -443,6 +446,7 @@ async function writeImportedList(
       await store.add(row)
       existing.push(row)
     }
+    await advanceWorkGeneration(tx)
     await tx.done
     return parent
   }
@@ -458,7 +462,8 @@ async function writeImportedList(
 
 export async function upsertRecipe(input: Draft<Recipe>): Promise<RecipeRow> {
   const db = await getDb()
-  const previous = await db.get('recipes', input.id)
+  const tx = db.transaction(['recipes', 'sync_meta'], 'readwrite')
+  const previous = await tx.objectStore('recipes').get(input.id)
   const changed = changedFields(previous, input)
 
   if (previous !== undefined && changed.length === 0) {
@@ -466,13 +471,16 @@ export async function upsertRecipe(input: Draft<Recipe>): Promise<RecipeRow> {
   }
 
   const row: RecipeRow = { ...input, ...buildRowMeta(previous, changed, nowIso()) }
-  await db.put('recipes', row)
+  await tx.objectStore('recipes').put(row)
+  await advanceWorkGeneration(tx)
+  await tx.done
   return row
 }
 
 export async function upsertIngredient(input: Draft<RecipeIngredient>): Promise<RecipeIngredientRow> {
   const db = await getDb()
-  const previous = await db.get('recipe_ingredients', input.id)
+  const tx = db.transaction(['recipe_ingredients', 'sync_meta'], 'readwrite')
+  const previous = await tx.objectStore('recipe_ingredients').get(input.id)
   const changed = changedFields(previous, input)
 
   if (previous !== undefined && changed.length === 0) {
@@ -480,13 +488,16 @@ export async function upsertIngredient(input: Draft<RecipeIngredient>): Promise<
   }
 
   const row: RecipeIngredientRow = { ...input, ...buildRowMeta(previous, changed, nowIso()) }
-  await db.put('recipe_ingredients', row)
+  await tx.objectStore('recipe_ingredients').put(row)
+  await advanceWorkGeneration(tx)
+  await tx.done
   return row
 }
 
 export async function upsertStep(input: Draft<RecipeStep>): Promise<RecipeStepRow> {
   const db = await getDb()
-  const previous = await db.get('recipe_steps', input.id)
+  const tx = db.transaction(['recipe_steps', 'sync_meta'], 'readwrite')
+  const previous = await tx.objectStore('recipe_steps').get(input.id)
   const changed = changedFields(previous, input)
 
   if (previous !== undefined && changed.length === 0) {
@@ -494,13 +505,16 @@ export async function upsertStep(input: Draft<RecipeStep>): Promise<RecipeStepRo
   }
 
   const row: RecipeStepRow = { ...input, ...buildRowMeta(previous, changed, nowIso()) }
-  await db.put('recipe_steps', row)
+  await tx.objectStore('recipe_steps').put(row)
+  await advanceWorkGeneration(tx)
+  await tx.done
   return row
 }
 
 export async function upsertBadge(input: Draft<Badge>): Promise<BadgeRow> {
   const db = await getDb()
-  const previous = await db.get('badges', input.id)
+  const tx = db.transaction(['badges', 'sync_meta'], 'readwrite')
+  const previous = await tx.objectStore('badges').get(input.id)
   const changed = changedFields(previous, input)
 
   if (previous !== undefined && changed.length === 0) {
@@ -508,7 +522,9 @@ export async function upsertBadge(input: Draft<Badge>): Promise<BadgeRow> {
   }
 
   const row: BadgeRow = { ...input, ...buildRowMeta(previous, changed, nowIso()) }
-  await db.put('badges', row)
+  await tx.objectStore('badges').put(row)
+  await advanceWorkGeneration(tx)
+  await tx.done
   return row
 }
 
@@ -520,8 +536,11 @@ export async function upsertBadge(input: Draft<Badge>): Promise<BadgeRow> {
  */
 export async function appendChatMessage(message: RecipeChatMessage): Promise<RecipeChatMessageRow> {
   const db = await getDb()
+  const tx = db.transaction(['recipe_chat_messages', 'sync_meta'], 'readwrite')
   const row: RecipeChatMessageRow = { ...message, dirty: DIRTY }
-  await db.put('recipe_chat_messages', row)
+  await tx.objectStore('recipe_chat_messages').put(row)
+  await advanceWorkGeneration(tx)
+  await tx.done
   return row
 }
 
@@ -538,8 +557,11 @@ export async function appendChatMessage(message: RecipeChatMessage): Promise<Rec
  */
 export async function appendHistoryEntry(entry: HistoryEntry): Promise<HistoryEntryRow> {
   const db = await getDb()
+  const tx = db.transaction(['history_entries', 'sync_meta'], 'readwrite')
   const row: HistoryEntryRow = { ...sanitize('historyEntry', entry), dirty: DIRTY }
-  await db.put('history_entries', row)
+  await tx.objectStore('history_entries').put(row)
+  await advanceWorkGeneration(tx)
+  await tx.done
   await trimHistoryForParent(entry.parentId)
   return row
 }
@@ -1178,7 +1200,7 @@ export async function insertLegacyRows(rows: {
   steps: readonly RecipeStep[]
 }): Promise<number> {
   const db = await getDb()
-  const tx = db.transaction(['lists', 'list_items', 'recipes', 'recipe_ingredients', 'recipe_steps'], 'readwrite')
+  const tx = db.transaction(['lists', 'list_items', 'recipes', 'recipe_ingredients', 'recipe_steps', 'sync_meta'], 'readwrite')
 
   let written = 0
   const write = async (store: 'lists' | 'list_items' | 'recipes' | 'recipe_ingredients' | 'recipe_steps', row: object): Promise<void> => {
@@ -1201,6 +1223,7 @@ export async function insertLegacyRows(rows: {
   for (const row of rows.ingredients) await write('recipe_ingredients', row)
   for (const row of rows.steps) await write('recipe_steps', row)
 
+  await advanceWorkGeneration(tx)
   await tx.done
   return written
 }
@@ -1439,4 +1462,32 @@ export async function readBadgeRow(id: string): Promise<BadgeRow | undefined> {
 
 export async function readChatMessageRow(id: string): Promise<RecipeChatMessageRow | undefined> {
   return (await getDb()).get('recipe_chat_messages', id)
+}
+
+/** Generation und Änderung teilen denselben Commit; ein Absturz verliert keinen Weckruf. */
+async function advanceWorkGeneration<N extends import('idb').StoreNames<ShlisteDb>>(
+  tx: IDBPTransaction<ShlisteDb, (N | 'sync_meta')[], 'readwrite'>,
+): Promise<void> {
+  const meta = tx.objectStore('sync_meta')
+  const previous = await meta.get('workGeneration')
+  const generation = typeof previous === 'number' ? previous : 0
+  if (!Number.isSafeInteger(generation) || generation >= Number.MAX_SAFE_INTEGER) {
+    tx.abort()
+    throw new Error('Ungültige Sync-Arbeitsgeneration')
+  }
+  await meta.put(generation + 1, 'workGeneration')
+}
+
+export async function getWorkGeneration(): Promise<number> {
+  return (await readMeta('workGeneration', isFiniteNumber)) ?? 0
+}
+
+export async function completeWorkGeneration(generation: number, accountId: string): Promise<void> {
+  const db = await getDb()
+  const tx = db.transaction('sync_meta', 'readwrite')
+  const previous = await tx.store.get('completedWorkGeneration')
+  const account = await tx.store.get('completedWorkAccountId')
+  await tx.store.put(Math.max(account === accountId && typeof previous === 'number' ? previous : 0, generation), 'completedWorkGeneration')
+  await tx.store.put(accountId, 'completedWorkAccountId')
+  await tx.done
 }

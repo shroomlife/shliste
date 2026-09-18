@@ -1,3 +1,5 @@
+import { requestDeadline } from './requestDeadline'
+import { aiServiceError } from './serviceError'
 /**
  * Der Weg vom Browser zu den AI-Routen — immer über die eigene BFF
  * (`server/api/ai/[...path].post.ts`), die signiert und die Session prüft.
@@ -8,13 +10,12 @@
  *
  * - /ai/suggest meldet Fehler auch mit HTTP 200 im Feld `error`
  * - andere Routen melden Fehler als HTTP-Status mit `{error}`-Body
- * - der Server rechnet bis zu 300 Sekunden — deshalb das große Timeout,
+ * - die Browserfrist endet nach der Ausführungs- und BFF-Frist,
  *   und deshalb nimmt jede Funktion ein AbortSignal fürs Abbrechen entgegen
  *
  * Bewusst generisch gehalten: Das Rezept-Paket kann `postAi` mit seinen
  * eigenen Routen und Parsern genauso benutzen.
  */
-import type { FetchResponse } from 'ofetch'
 import type { EditedList, GeneratedList } from './contract'
 import { parseEditedList, parseGeneratedList, parseSuggestions, readAiError } from './contract'
 import type { CurrentListPayload } from './diff'
@@ -29,11 +30,18 @@ import {
 } from './recipeContract'
 import type { CurrentRecipePayload } from './recipeDiff'
 
-/**
- * Großzügiger als die 300 Sekunden des Servers, damit im Normalfall immer
- * der Server die Frist setzt und der Client nur das Sicherheitsnetz ist.
- */
-const AI_TIMEOUT_MS = 310_000
+/** API 60 s, BFF 75 s, Browser 90 s. Die echte Proxy-Kette bleibt Release-Abnahme. */
+const AI_TIMEOUT_MS = 90_000
+const AI_STATUS_TIMEOUT_MS = 10_000
+
+export type AiFetch = (path: string, options: {
+  method: 'GET' | 'POST'
+  headers?: Record<string, string>
+  body?: AiRequestBody
+  signal: AbortSignal
+  ignoreResponseError: true
+  retry: false
+}) => Promise<{ ok: boolean, status: number, _data?: unknown }>
 
 export type AiResult<T>
   = | { ok: true, value: T }
@@ -53,24 +61,6 @@ function messageForStatus(status: number): string {
     case 429: return 'Zu viele Anfragen — bitte warte einen Moment.'
     default: return 'Die AI-Anfrage ist fehlgeschlagen. Bitte versuche es erneut.'
   }
-}
-
-/**
- * Verknüpft das Abbruchsignal des Aufrufers mit dem Timeout.
- *
- * Nötig, weil ofetch sein `timeout` IGNORIERT, sobald ein eigenes `signal`
- * mitkommt (Guard `!context.options.signal && context.options.timeout` in
- * ofetch) — ohne diese Verknüpfung liefe eine hängende Anfrage ewig. Auf
- * Browsern ohne `AbortSignal.any` bleibt das Nutzersignal allein; die Frist
- * setzt dann der Server (300s).
- */
-function withTimeout(signal: AbortSignal | undefined): AbortSignal | undefined {
-  if (typeof AbortSignal.any !== 'function' || typeof AbortSignal.timeout !== 'function') {
-    return signal
-  }
-
-  const timeout = AbortSignal.timeout(AI_TIMEOUT_MS)
-  return signal !== undefined ? AbortSignal.any([signal, timeout]) : timeout
 }
 
 /**
@@ -95,14 +85,17 @@ function isTimeoutError(cause: unknown): boolean {
  * setzt der Browser den multipart-Content-Type samt Boundary selbst — deshalb
  * wird hier nie ein Content-Type von Hand gesetzt.
  */
-export async function postAi(path: string, body: AiRequestBody, signal?: AbortSignal): Promise<AiResult<unknown>> {
-  let response: FetchResponse<unknown>
+export async function postAi(path: string, body: AiRequestBody, signal?: AbortSignal, fetcher: AiFetch = (url, options) => $fetch.raw(url, options)): Promise<AiResult<unknown>> {
+  const requestId = crypto.randomUUID()
+  const deadline = requestDeadline(AI_TIMEOUT_MS, signal)
+  let response: Awaited<ReturnType<AiFetch>>
 
   try {
-    response = await $fetch.raw<unknown>(`/api/ai/${path}`, {
+    response = await fetcher(`/api/ai/${path}`, {
       method: 'POST',
+      headers: { 'Idempotency-Key': requestId },
       body,
-      signal: withTimeout(signal),
+      signal: deadline.signal,
       // Statuscodes werden unten selbst ausgewertet: Auch Fehlerantworten
       // tragen eine JSON-Meldung, die angezeigt werden soll.
       ignoreResponseError: true,
@@ -116,22 +109,49 @@ export async function postAi(path: string, body: AiRequestBody, signal?: AbortSi
     if (signal?.aborted === true) {
       return failure('Abgebrochen.', true)
     }
-    if (isTimeoutError(cause)) {
-      return failure('Die AI-Anfrage hat zu lange gedauert. Bitte versuche es erneut.')
-    }
-    return failure('Keine Verbindung zum Server. Bitte prüfe dein Netz und versuche es erneut.')
+    return reconcileUncertainRequest(requestId, fetcher, signal, isTimeoutError(cause))
   }
 
+  finally {
+    deadline.dispose()
+  }
+
+  // Ein Gateway-Abbruch kann nach der Zulassung auftreten: nur lesen, nie erneut POSTen.
+  if (response.status === 502 || response.status === 504) {
+    return reconcileUncertainRequest(requestId, fetcher, signal, false)
+  }
   const payload: unknown = response._data
 
   // Das Fehlerfeld hat Vorrang vor dem Status: /ai/suggest liefert Fehler
   // mit HTTP 200, andere Routen liefern zum Fehlerstatus eine Meldung dazu.
-  const error = readAiError(payload)
+  const error = aiServiceError(payload) ?? readAiError(payload)
   if (error !== null) return failure(error)
 
   if (!response.ok) return failure(messageForStatus(response.status))
 
   return { ok: true, value: payload }
+}
+
+/** Ein lesender Abgleich derselben ID; ein fertiger Status ist noch kein geliefertes Ergebnis. */
+async function reconcileUncertainRequest(requestId: string, fetcher: AiFetch, signal: AbortSignal | undefined, timedOut: boolean): Promise<AiResult<never>> {
+  const deadline = requestDeadline(AI_STATUS_TIMEOUT_MS, signal)
+  try {
+    const response = await fetcher(`/api/ai/requests/${requestId}`, {
+      method: 'GET', signal: deadline.signal, ignoreResponseError: true, retry: false,
+    })
+    const payload = response._data
+    if (response.ok && typeof payload === 'object' && payload !== null
+      && 'requestId' in payload && payload.requestId === requestId && 'state' in payload) {
+      if (payload.state === 'running') return failure('Dein KI-Auftrag wird noch verarbeitet. Deine Eingaben bleiben erhalten; der Auftrag wird nicht erneut gestartet.')
+      if (payload.state === 'finished') return failure('Der KI-Auftrag ist beendet, aber seine Antwort ist nicht angekommen. Ein Ergebnis konnte nicht übernommen werden; der Auftrag wird nicht automatisch wiederholt.')
+    }
+  }
+  catch { /* Der Statusabgleich darf keinen zweiten kostenpflichtigen Auftrag auslösen. */ }
+  finally { deadline.dispose() }
+  if (signal?.aborted) return failure('Abgebrochen.', true)
+  return failure(timedOut
+    ? 'Die KI-Anfrage hat zu lange gedauert. Ihr Ausgang ist unklar; sie wird nicht automatisch wiederholt.'
+    : 'Die Verbindung zum Server wurde unterbrochen. Der Ausgang der Anfrage ist unklar; deine Eingaben bleiben erhalten.')
 }
 
 /**
@@ -217,17 +237,27 @@ export function requestUrlToList(url: string, signal?: AbortSignal): Promise<AiR
   return postAndParse('url-to-list', { url }, parseGeneratedList, signal)
 }
 
-export function requestImageToList(
-  file: File,
-  description: string | null,
-  signal?: AbortSignal,
-): Promise<AiResult<GeneratedList>> {
+/**
+ * Das multipart-Paket der Bild-Routen: jedes Bild als eigener Eintrag im
+ * Feld `file`, in Auswahlreihenfolge. Die API nimmt 1 bis 5 davon und liest
+ * ein einzelnes Feld genauso wie fünf (Elysia `t.Files`). Eigene Funktion,
+ * damit die Form ohne Netz prüfbar ist.
+ */
+export function buildImageForm(files: readonly File[], description: string | null): FormData {
   const form = new FormData()
-  form.append('file', file, file.name)
+  for (const file of files) form.append('file', file, file.name)
   if (description !== null && description.trim().length > 0) {
     form.append('text', description.trim())
   }
-  return postAndParse('image-to-list', form, parseGeneratedList, signal)
+  return form
+}
+
+export function requestImageToList(
+  files: readonly File[],
+  description: string | null,
+  signal?: AbortSignal,
+): Promise<AiResult<GeneratedList>> {
+  return postAndParse('image-to-list', buildImageForm(files, description), parseGeneratedList, signal)
 }
 
 /* ------------------------------------------------------------------ *
@@ -245,16 +275,11 @@ export function requestUrlToRecipe(url: string, signal?: AbortSignal): Promise<A
 }
 
 export function requestImageToRecipe(
-  file: File,
+  files: readonly File[],
   description: string | null,
   signal?: AbortSignal,
 ): Promise<AiResult<GeneratedRecipe>> {
-  const form = new FormData()
-  form.append('file', file, file.name)
-  if (description !== null && description.trim().length > 0) {
-    form.append('text', description.trim())
-  }
-  return postAndParse('image-to-recipe', form, parseGeneratedRecipe, signal)
+  return postAndParse('image-to-recipe', buildImageForm(files, description), parseGeneratedRecipe, signal)
 }
 
 export interface EditRecipePayload {

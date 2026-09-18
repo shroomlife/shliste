@@ -18,6 +18,7 @@ mock.module('./client', () => ({
       let aborted = false
       return {
         objectStore(name: string) {
+          if (name === 'sync_meta') return { get: async () => 0, put: async () => undefined }
           if (name === 'lists') return {
             get: async (id: string) => {
               calls.push(`parent:${id}`)
@@ -70,7 +71,7 @@ test('ergänzt nur die ausgewählte Liste atomar mit Sync-Metadaten und Reihenfo
   expect(committed.every(row => row.listId === 'selected-list' && row.dirty === 1 && row.fieldTimestamps?.name)).toBe(true)
   expect(parent.name).toBe('Mein Einkauf')
   expect(parent.sourceUrl).toBe('https://original.example')
-  expect(calls.slice(-3)).toEqual(['lists,list_items:readwrite', 'parent:selected-list', 'items:selected-list'])
+  expect(calls.slice(-3)).toEqual(['lists,list_items,sync_meta:readwrite', 'parent:selected-list', 'items:selected-list'])
 })
 
 test('entfernte und gesperrte Ziele erhalten keine Einträge', async () => {

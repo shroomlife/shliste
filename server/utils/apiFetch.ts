@@ -1,3 +1,4 @@
+import { attachBffProof } from './bffProof'
 /**
  * Der einzige Weg von dieser App zu api.shliste.app.
  *
@@ -13,6 +14,7 @@ import { signRequest } from './apiSignature'
 export type ApiMethod = 'GET' | 'POST'
 
 export interface ApiFetchOptions {
+  timeoutMs?: number
   method?: ApiMethod
   /**
    * Bereits serialisierter Body. Genau dieser String wird gehasht UND gesendet —
@@ -75,6 +77,8 @@ export async function apiFetch(path: string, options: ApiFetchOptions = {}): Pro
     headers['x-shliste-client-ip'] = clientIp
   }
 
+  attachBffProof(method, url, headers)
+
   let response: FetchResponse<unknown>
 
   try {
@@ -85,6 +89,7 @@ export async function apiFetch(path: string, options: ApiFetchOptions = {}): Pro
       // Statuscodes werden unten selbst ausgewertet, damit ein 401 der API als
       // 401 beim Client ankommt und nicht als geworfener Fetch-Fehler im 500 endet.
       ignoreResponseError: true,
+      timeout: options.timeoutMs,
       // Kein automatischer zweiter Versuch: die Signatur trägt einen Zeitstempel
       // (±30s Fenster) und ein wiederholtes /sync/push wäre ein doppelter Schreibvorgang.
       retry: false,
@@ -154,6 +159,8 @@ export async function apiFetchRaw(path: string, options: ApiFetchOptions = {}): 
     headers['x-shliste-client-ip'] = clientIp
   }
 
+  attachBffProof(method, url, headers)
+
   let response: FetchResponse<ArrayBuffer>
 
   try {
@@ -163,6 +170,7 @@ export async function apiFetchRaw(path: string, options: ApiFetchOptions = {}): 
       body: rawBody,
       responseType: 'arrayBuffer',
       ignoreResponseError: true,
+      timeout: options.timeoutMs,
       retry: false,
     })
   }
