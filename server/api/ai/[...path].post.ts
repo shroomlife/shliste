@@ -27,11 +27,12 @@ import { checkSession } from '../../utils/sessionCheck'
  *
  * `readRawBody` hält den kompletten Body im Speicher; die 5/10-MB-Grenzen der
  * API greifen erst NACH dem Puffern hier. Ohne eigene Schranke wäre diese
- * Route ein billiger Speicherhebel. 12 MB deckt das größte legitime Paket
- * (10-MB-Bild plus multipart-Rahmen), JSON-Anfragen sind winzig.
+ * Route ein billiger Speicherhebel. 20 MB ist die Gesamtgrenze der API je
+ * Anfrage (`requestContentHash`): bis zu fünf Bilder je Import, die der
+ * Browser vorher auf 1920 Pixel verkleinert hat. JSON-Anfragen sind winzig.
  */
 const MAX_JSON_BODY_BYTES = 1_000_000
-const MAX_MULTIPART_BODY_BYTES = 12_000_000
+const MAX_MULTIPART_BODY_BYTES = 20_000_000
 
 /**
  * Die AI-Routen, die diese PWA tatsächlich aufruft — alle POST.

@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test'
-import { postAi, type AiFetch } from './transport'
+import { buildImageForm, postAi, type AiFetch } from './transport'
 
 for (const state of ['running', 'finished', 'unknown']) {
   test(`Transportabbruch liest einmal dieselbe ID, niemals einen zweiten POST: ${state}`, async () => {
@@ -48,4 +48,19 @@ test('ausdruecklicher Abbruch startet keinen Statusverkehr', async () => {
   }
   expect(await postAi('suggest', {}, controller.signal, fetcher)).toEqual({ ok: false, error: 'Abgebrochen.', aborted: true })
   expect(calls).toBe(1)
+})
+
+test('the image form carries every file under the same field, in selection order', () => {
+  const first = new File(['a'], 'seite-1.jpg', { type: 'image/jpeg' })
+  const second = new File(['b'], 'seite-2.jpg', { type: 'image/jpeg' })
+  const third = new File(['c'], 'seite-3.jpg', { type: 'image/jpeg' })
+
+  const form = buildImageForm([first, second, third], '  Doppelseite  ')
+
+  const files = form.getAll('file')
+  expect(files.map(entry => entry instanceof File ? entry.name : null)).toEqual(['seite-1.jpg', 'seite-2.jpg', 'seite-3.jpg'])
+  expect(form.get('text')).toBe('Doppelseite')
+
+  // Eine leere Beschreibung wird gar nicht erst mitgeschickt.
+  expect(buildImageForm([first], '   ').has('text')).toBe(false)
 })

@@ -237,17 +237,27 @@ export function requestUrlToList(url: string, signal?: AbortSignal): Promise<AiR
   return postAndParse('url-to-list', { url }, parseGeneratedList, signal)
 }
 
-export function requestImageToList(
-  file: File,
-  description: string | null,
-  signal?: AbortSignal,
-): Promise<AiResult<GeneratedList>> {
+/**
+ * Das multipart-Paket der Bild-Routen: jedes Bild als eigener Eintrag im
+ * Feld `file`, in Auswahlreihenfolge. Die API nimmt 1 bis 5 davon und liest
+ * ein einzelnes Feld genauso wie fünf (Elysia `t.Files`). Eigene Funktion,
+ * damit die Form ohne Netz prüfbar ist.
+ */
+export function buildImageForm(files: readonly File[], description: string | null): FormData {
   const form = new FormData()
-  form.append('file', file, file.name)
+  for (const file of files) form.append('file', file, file.name)
   if (description !== null && description.trim().length > 0) {
     form.append('text', description.trim())
   }
-  return postAndParse('image-to-list', form, parseGeneratedList, signal)
+  return form
+}
+
+export function requestImageToList(
+  files: readonly File[],
+  description: string | null,
+  signal?: AbortSignal,
+): Promise<AiResult<GeneratedList>> {
+  return postAndParse('image-to-list', buildImageForm(files, description), parseGeneratedList, signal)
 }
 
 /* ------------------------------------------------------------------ *
@@ -265,16 +275,11 @@ export function requestUrlToRecipe(url: string, signal?: AbortSignal): Promise<A
 }
 
 export function requestImageToRecipe(
-  file: File,
+  files: readonly File[],
   description: string | null,
   signal?: AbortSignal,
 ): Promise<AiResult<GeneratedRecipe>> {
-  const form = new FormData()
-  form.append('file', file, file.name)
-  if (description !== null && description.trim().length > 0) {
-    form.append('text', description.trim())
-  }
-  return postAndParse('image-to-recipe', form, parseGeneratedRecipe, signal)
+  return postAndParse('image-to-recipe', buildImageForm(files, description), parseGeneratedRecipe, signal)
 }
 
 export interface EditRecipePayload {
