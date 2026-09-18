@@ -18,8 +18,11 @@ import { downscaleImage } from '~/utils/downscaleImage'
 
 export const MAX_IMAGE_COUNT = 5
 const ALLOWED_IMAGE_TYPES: ReadonlySet<string> = new Set(['image/jpeg', 'image/png', 'image/webp'])
+// Je Datei: Elysia liest "10m" als 10 MiB. Je Anfrage: API (`MAX_REQUEST_FILE_BYTES`)
+// und BFF prüfen 20.000.000 Byte, nicht 20 MiB; dieselbe Zahl, sonst passiert ein
+// Import hier und scheitert erst am Server.
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024
-const MAX_REQUEST_BYTES = 20 * 1024 * 1024
+const MAX_REQUEST_BYTES = 20_000_000
 
 export interface SelectedImage {
   file: File
