@@ -341,7 +341,7 @@ export function useSyncRunner(): void {
       // Eintrag — und sie geschah bisher lautlos. Listen- und Eintrags-Ids
       // sind beide UUIDs und liegen deshalb gefahrlos im selben Vorrat.
       for (const event of events) {
-        if (event.type === 'item_changed') mark(event.itemIds)
+        if (event.type === 'item_changed') mark([...event.itemIds, event.listId])
         if (event.type === 'list_changed') mark([event.listId])
       }
 

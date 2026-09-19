@@ -829,17 +829,18 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
     style="background: var(--md-surface)"
   >
     <!-- Kopf in der Listenfarbe. Ändert ein anderes Mitglied Name oder Farbe,
-         leuchtet er kurz auf — derselbe Moment wie bei einer Zeile, nur als
-         Schicht darüber, damit die Listenfarbe darunter stehen bleibt.
+         leuchtet er kurz auf — derselbe Moment wie bei einer Zeile, in der
+         Listenfarbe statt in primary.
 
          Als Verlauf statt flacher Tönung: Android legt die 20-Prozent-Lasur
          als vertikalen Farbverlauf über den Kartenkopf, nach unten auslaufend
          (DefaultCard.kt). Derselbe Wiedererkennungsmoment gehört ins Web. -->
     <header
       class="flex shrink-0 flex-col gap-2.5 px-5 py-5 lg:px-7"
-      :class="isRecent(listId) && 'delta-flash-overlay'"
+      :class="isRecent(listId) && 'delta-flash'"
       :style="{
         '--list-color': list?.color ?? 'var(--md-primary)',
+        '--md-delta-color': 'var(--list-color)',
         'backgroundImage': 'linear-gradient(to bottom, color-mix(in srgb, var(--list-color) 20%, transparent), transparent)',
       }"
     >
