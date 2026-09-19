@@ -32,9 +32,9 @@ import type { ListItem } from '#shared/types/domain'
  * Screenreader kaputt.
  *
  * `justChanged` löst den einen orchestrierten Bewegungsmoment der App aus:
- * eine Zeile, die gerade ein anderes Gerät geändert hat, leuchtet kurz auf
- * und trägt links eine Akzentleiste. Die Spezifikation dazu steht in
- * SemanticColors.deltaFlashSurface.
+ * eine Zeile, die gerade ein anderes Gerät geändert hat, wird kurz getönt,
+ * und ein Lichtschimmer läuft einmal darüber. Die Utility `delta-flash` in
+ * main.css beschreibt beides; Android macht dasselbe in `Modifier.deltaFlash`.
  *
  * Barrierefreiheit: Alle Knöpfe halten mindestens 44 Pixel Zeilenhöhe, damit
  * sie auch am Handy sicher zu treffen sind (WCAG 2.2 SC 2.5.8).

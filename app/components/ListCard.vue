@@ -71,9 +71,10 @@ const unseenLabel = computed(() =>
   <NuxtLink
     :to="`/app/lists/${list.id}`"
     class="state-layer flex flex-col gap-1.5 rounded-lg p-4 shadow-sm transition-shadow"
-    :class="justChanged && 'delta-flash-overlay'"
+    :class="justChanged && 'delta-flash'"
     :style="{
       '--list-color': list.color,
+      '--md-delta-color': list.color,
       'backgroundColor': 'var(--md-surface)',
       'backgroundImage': 'linear-gradient(to bottom, color-mix(in srgb, var(--list-color) 20%, transparent), transparent)',
       ...(active ? { boxShadow: `inset 0 0 0 2px ${list.color}` } : {}),

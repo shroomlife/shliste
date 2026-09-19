@@ -167,9 +167,17 @@
   --md-sync-success: #2E7D32;
   --md-sync-warning: #EF6C00;
 
-  /* Delta-Flash: Anteil, um den der Zeilenhintergrund Richtung primary
-     interpoliert wird, wenn ein anderes Gerät die Zeile geändert hat. */
+  /* Delta-Flash, wenn ein anderes Gerät eine Fläche geändert hat: Farbträger
+     (Vorgabe primary, Karte und Detailkopf setzen ihre Listenfarbe ein),
+     Anteil der Tönung und Anteil derselben Farbe im Lichtstreifen.
+
+     Der Streifen trägt die Farbe und nicht Weiß: Auf `--md-surface` (#FDFDFD)
+     ist ein weißer Streifen rechnerisch unsichtbar — 65 Prozent Weiß auf
+     beinahe Weiß sind ein Farbschritt von einer Einheit je Kanal. Gemessen
+     nachgerechnet, nicht geschätzt. */
+  --md-delta-color: var(--md-primary);
   --md-delta-peak: 12%;
+  --md-delta-sheen: 45%;
 }
 
 .dark {
@@ -224,7 +232,9 @@
   --md-sync-success: #81C784;
   --md-sync-warning: #FFB74D;
 
+  /* Auf #1E1E1E trägt schon ein schwächerer Streifen weit genug. */
   --md-delta-peak: 20%;
+  --md-delta-sheen: 30%;
 }
 
 body {
@@ -421,62 +431,84 @@ body {
 }
 
 /*
- * Der eine orchestrierte Bewegungsmoment: eine Zeile, die gerade von einem
- * anderen Gerät geändert wurde. Akzentleiste links plus Hintergrund, der
- * Richtung primary interpoliert und wieder zurückfällt. Spezifikation aus
- * SemanticColors.deltaFlashSurface.
+ * Der eine orchestrierte Bewegungsmoment: eine Fläche, die gerade ein anderes
+ * Gerät geändert hat. Zwei Schichten, beide in `--md-delta-color`: eine
+ * Tönung des Hintergrunds, die über zwei Sekunden zurückfällt, und ein
+ * Lichtschimmer, der einmal schräg über die Fläche läuft. Dieselbe Bewegung
+ * wie `Modifier.deltaFlash` in der Android-App.
+ *
+ * EINE Utility für Zeile, Karte und Detailkopf. Die Tönung läuft über
+ * `background-color`, und die liegt UNTER einem `background-image` — die
+ * Listenfarb-Lasur von Karte und Kopf bleibt also stehen. Die frühere zweite
+ * Utility für "Flächen mit eigener Farbe" ist damit überflüssig.
+ *
+ * Der Schimmer liegt auf `::before`, nicht auf `::after`: Die Karte trägt
+ * bereits `state-layer`, und das baut sein Hover auf `::after`. Zwei
+ * Utilities auf demselben Pseudo-Element gewinnen nach Reihenfolge in der
+ * gebauten CSS, nicht nach Absicht. Genau so kam die Tönung vorher in
+ * on-surface statt in primary an, und die Karte blitzte dunkelgrau.
+ *
+ * Er wandert über `background-position` statt `transform`: So braucht die
+ * Fläche kein `overflow: hidden`, das die Fokusringe der Knöpfe darin
+ * abschnitte. Das Bild ist dreimal so breit wie die Fläche und der Streifen
+ * sitzt in seiner Mitte, also bei anderthalb Flächenbreiten. Bei `100%` liegt
+ * das Bild um zwei Breiten nach links verschoben, der Streifen steht damit
+ * LINKS außerhalb; bei `0%` steht er rechts außerhalb. Die Animation läuft
+ * deshalb von 100 nach 0, und der Streifen von links nach rechts.
  */
-@keyframes delta-flash {
-  from { background-color: color-mix(in srgb, var(--md-primary) var(--md-delta-peak), var(--md-surface)); }
+@keyframes delta-flash-tint {
+  from { background-color: color-mix(in srgb, var(--md-delta-color) var(--md-delta-peak), var(--md-surface)); }
   to   { background-color: var(--md-surface); }
 }
 
+@keyframes delta-flash-sheen {
+  from { background-position: 100% 0; }
+  to   { background-position: 0% 0; }
+}
+
 @utility delta-flash {
-  animation: delta-flash 2s ease-out both;
-  box-shadow: inset 3px 0 0 0 var(--md-primary);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .delta-flash { animation: none; }
-}
-
-/*
- * Dasselbe Aufleuchten für Flächen, die schon eine eigene Farbe tragen — der
- * Kopf der Detailansicht liegt in der Listenfarbe. `delta-flash` ersetzt die
- * Hintergrundfarbe und würde die Tönung während der zwei Sekunden
- * überschreiben; hier liegt der Puls stattdessen als eigene Schicht darüber
- * und verschwindet, die Fläche darunter bleibt unangetastet.
- *
- * Gleiche Dauer, gleiche Spitzenfarbe, gleiche Akzentleiste wie bei den
- * Zeilen: Es ist derselbe Moment, nur an einer anderen Stelle.
- */
-@keyframes delta-flash-overlay {
-  from { opacity: 1; }
-  to   { opacity: 0; }
-}
-
-@utility delta-flash-overlay {
   position: relative;
-  box-shadow: inset 3px 0 0 0 var(--md-primary);
+  animation: delta-flash-tint 2s ease-out both;
 
-  &::after {
+  &::before {
     content: '';
     position: absolute;
     inset: 0;
+    border-radius: inherit;
     pointer-events: none;
-    background-color: color-mix(in srgb, var(--md-primary) var(--md-delta-peak), transparent);
-    animation: delta-flash-overlay 2s ease-out both;
+    background-image: linear-gradient(
+      105deg,
+      transparent 44%,
+      color-mix(in srgb, var(--md-delta-color) var(--md-delta-sheen), transparent) 50%,
+      transparent 56%
+    );
+    background-size: 300% 100%;
+    background-repeat: no-repeat;
+    animation: delta-flash-sheen 1.1s cubic-bezier(0.4, 0, 0.2, 1) both;
   }
 }
 
 /*
- * Ohne Bewegung bleibt auch hier nichts stehen: `animation: none` allein
- * ließe die Schicht bei voller Deckkraft liegen, also genau die Fläche, die
- * sonst wegblendet. Das Ergebnis entspricht dem der Zeilen — keine Bewegung
- * und keine Farbänderung.
+ * Ohne Bewegung bleibt der Hinweis, nur ruhig: eine Akzentleiste am linken
+ * Rand, solange die Markierung steht. Sie einfach wegzulassen wäre der
+ * schwerere Fehler — die Aussage "das hat gerade jemand anderes geändert"
+ * hinge dann allein an Bewegung, und genau die ist hier abbestellt (WCAG 2.2,
+ * 1.4.1 Use of Color sinngemäß: keine Information nur über einen Kanal).
+ *
+ * Als `box-shadow` auf derselben Schicht statt als Tönung der Fläche: Karte
+ * und Zeile setzen ihre Hintergrundfarbe als Inline-Style, und der schlägt
+ * jede Regel aus dieser Datei. Eine laufende Animation gewinnt gegen Inline
+ * (eigene Kaskadenebene), eine ruhende Deklaration nicht. Das Pseudo-Element
+ * ist von Inline-Styles unerreichbar und erbt die Rundung.
  */
 @media (prefers-reduced-motion: reduce) {
-  .delta-flash-overlay::after { animation: none; opacity: 0; }
+  .delta-flash { animation: none; }
+
+  .delta-flash::before {
+    background-image: none;
+    box-shadow: inset 3px 0 0 0 var(--md-delta-color);
+    animation: none;
+  }
 }
 
 /*
