@@ -94,7 +94,11 @@ export function useRealtime(options: UseRealtimeOptions): UseRealtime {
   })
 
   const connection = createRealtimeConnection({
-    apiBase: toValue(options.apiBase),
+    // Als Getter durchgereicht statt hier aufgelöst: Beim Aufbau steht nur der
+    // eingebackene Platzhalter, der echte Wert kommt Sekunden später vom
+    // eigenen Server. Ein `toValue()` an dieser Stelle hätte den Platzhalter
+    // für alle künftigen Verbindungsversuche festgeschrieben.
+    apiBase: () => toValue(options.apiBase),
     requestTicket,
     onEvent: (event) => {
       coalescer.push(event)
