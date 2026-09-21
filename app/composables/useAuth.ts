@@ -37,6 +37,24 @@ export function useAuth() {
   const isLoading = useState<boolean>('auth-loading', () => false)
 
   /**
+   * Wurde die Sitzungsfrage schon einmal VERBINDLICH beantwortet?
+   *
+   * `authenticated` beginnt bei `false`, und das ist ein Startwert, keine
+   * Auskunft. Scheitert der erste Aufruf — beim Kaltstart der installierten
+   * App ohne Netz ist das der Regelfall, die Hülle kommt aus dem Cache und
+   * `/api/**` nicht —, dann bliebe dieser Startwert stehen und würde ab da als
+   * Tatsache gelten: kein Abgleich, kein Strom, und der Anmeldeknopf gesperrt,
+   * weil auch `clientConfig` noch auf seinen Platzhaltern sitzt. Es gäbe
+   * keinen Weg zurück, denn jeder Pfad, der die Frage neu stellen könnte,
+   * verlangt selbst eine Anmeldung.
+   *
+   * Dieses Flag trennt deshalb "nicht angemeldet" von "noch nicht gefragt".
+   * Wer den Unterschied braucht, liest es; `plugins/session.client.ts` fragt
+   * weiter, solange es `false` ist.
+   */
+  const isSessionKnown = useState<boolean>('auth-session-known', () => false)
+
+  /**
    * Werte, die der Server liefert, weil die Seite sie nicht kennen kann.
    *
    * Der App-Bereich wird vorgerendert; dabei backt Nuxt `runtimeConfig.public`
@@ -67,6 +85,7 @@ export function useAuth() {
       authenticated.value = session.authenticated
       profile.value = session.profile
       clientConfig.value = session.config
+      isSessionKnown.value = true
     }
     catch (error) {
       // Ein gescheiterter Aufruf ist kein Beweis für "abgemeldet": Der Endpunkt
@@ -98,6 +117,9 @@ export function useAuth() {
       })
       profile.value = signedIn
       authenticated.value = true
+      // Eine geglückte Anmeldung beantwortet die Frage genauso verbindlich wie
+      // `/api/auth/me` — auch wenn der Startaufruf nie durchkam.
+      isSessionKnown.value = true
       return signedIn
     }
     finally {
@@ -146,6 +168,7 @@ export function useAuth() {
     profile: readonly(profile),
     clientConfig: readonly(clientConfig),
     isSignedIn,
+    isSessionKnown: readonly(isSessionKnown),
     isLoading: readonly(isLoading),
     loadSession,
     signIn,
