@@ -122,8 +122,17 @@ export function readChangeSeq(data: string): number | null {
 export type RealtimeStatus = 'idle' | 'connecting' | 'open' | 'reconnecting'
 
 export interface RealtimeConnectionOptions {
-  /** Basisadresse der API, z.B. https://api.shliste.app */
-  apiBase: string
+  /**
+   * Basisadresse der API, z.B. https://api.shliste.app.
+   *
+   * Als Funktion und nicht als Zeichenkette: Der Wert kommt zur Laufzeit vom
+   * eigenen Server (`/api/auth/me`) und steht beim Aufbau dieser Verbindung
+   * noch nicht fest — dort steht nur der eingebackene Platzhalter. Einmal
+   * festgehalten, hätte jeder spätere Verbindungsversuch ihn weiterbenutzt.
+   * Deshalb wird er bei JEDEM Verbindungsaufbau frisch gelesen, genau wie das
+   * Ticket eine Zeile weiter.
+   */
+  apiBase: () => string
   /** Holt ein frisches Einmal-Ticket. Wird vor JEDEM Verbindungsaufbau gerufen. */
   requestTicket: () => Promise<string>
   /** Ein empfangenes, entdupliziertes Ereignis. */
@@ -504,7 +513,7 @@ export function createRealtimeConnection(options: RealtimeConnectionOptions): Re
 
     if (!wanted || mine !== attempt) return
 
-    const next = new EventSource(buildStreamUrl(options.apiBase, ticket, lastEventId))
+    const next = new EventSource(buildStreamUrl(options.apiBase(), ticket, lastEventId))
     source = next
     next.onopen = handleOpen
     next.onmessage = handleMessage

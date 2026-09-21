@@ -29,7 +29,7 @@ useHead({ title: 'Geteilt mit shliste' })
 const route = useRoute()
 const { entries, reload: reloadLists, createList, addItemsToList } = useLists()
 const { createRecipeFromAi } = useAiCreate()
-const { scheduleSync } = useSync()
+const { scheduleSync, dataVersion } = useSync()
 const { isSignedIn } = useAuth()
 const { mark } = useRecentlyChanged()
 const toast = useToast()
@@ -81,6 +81,20 @@ onMounted(() => {
  */
 watch(() => route.query, () => {
   void readSharedPayload()
+})
+
+/**
+ * Der Abgleich schreibt in dieselbe lokale Datenbank — und genau hier kommt er
+ * regelmäßig ZU SPÄT für das einmalige Lesen beim Mounten: Das Teilen startet
+ * die App kalt, und der erste Abruf läuft erst, wenn die Sitzung steht. Auf
+ * einer frischen Installation stand deshalb „Zu einer Liste hinzufügen" ohne
+ * eine einzige Liste da, während die Listen Sekunden später in der Datenbank
+ * lagen. Dieselbe Verdrahtung wie in der Übersicht.
+ */
+watch(dataVersion, () => {
+  void reloadLists().catch((error: unknown) => {
+    console.warn('[Teilen] Listen konnten nicht nachgeladen werden:', error)
+  })
 })
 
 /**

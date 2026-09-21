@@ -131,7 +131,7 @@ function aufbauen(): Aufbau {
     stop: (): void => {},
   }
   const connection = createRealtimeConnection({
-    apiBase: 'https://api.shliste.app',
+    apiBase: () => 'https://api.shliste.app',
     requestTicket: () => Promise.resolve('t'.repeat(64)),
     onEvent: event => events.push(event.type),
     onDegraded: failures => degraded.push(failures),

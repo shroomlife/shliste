@@ -25,7 +25,7 @@
  */
 const { compact = false } = defineProps<{ compact?: boolean }>()
 
-const { clientConfig, isSignedIn, signIn } = useAuth()
+const { clientConfig, isSignedIn, isSessionKnown, signIn } = useAuth()
 const toast = useToast()
 
 // NICHT aus `runtimeConfig.public`: Der App-Bereich wird vorgerendert, und
@@ -34,6 +34,21 @@ const toast = useToast()
 // in Produktion hängen geblieben. Der Wert kommt jetzt vom Server (siehe
 // server/api/auth/me.get.ts).
 const hasClientId = computed(() => clientConfig.value.googleClientId.length > 0)
+
+/**
+ * Warum der Knopf gerade nicht geht — die beiden Gründe sind NICHT derselbe.
+ *
+ * Ein leerer Wert heißt "nicht eingerichtet" nur dann, wenn der Server
+ * überhaupt geantwortet hat. Solange die Antwort aussteht, steht hier bloß der
+ * Platzhalter, und "Anmelden ist auf diesem Server nicht eingerichtet" wäre
+ * eine falsche Aussage — ausgerechnet an der Stelle, die zurück in die
+ * Anmeldung führt.
+ */
+const blockedReason = computed<string | null>(() => {
+  if (hasClientId.value) return null
+  if (!isSessionKnown.value) return 'Verbindung zum Server steht noch aus. Gleich noch einmal versuchen.'
+  return 'Anmelden ist auf diesem Server nicht eingerichtet.'
+})
 
 /** Der Anmeldedialog mit Googles Knopf darin. */
 const isDialogOpen = ref(false)
@@ -98,9 +113,7 @@ function reportFailure(title: string, error: unknown): void {
       :aria-label="compact ? 'Anmelden' : undefined"
       class="rounded-xl font-bold"
       :disabled="!hasClientId"
-      :title="hasClientId
-        ? 'Mit Google anmelden, um zwischen Geräten abzugleichen'
-        : 'Anmelden ist auf diesem Server nicht eingerichtet.'"
+      :title="blockedReason ?? 'Mit Google anmelden, um zwischen Geräten abzugleichen'"
       @click="isDialogOpen = true"
     >
       <span v-if="!compact">Anmelden</span>

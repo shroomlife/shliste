@@ -1,4 +1,4 @@
-import type { ListItemRow, ListRow } from '../db/schema'
+import type { ListItemRow, ListMemberRow, ListRow } from '../db/schema'
 import { getItemsForList, getListsForView, getMembersForList, isUnseenForeignChange, upsertItem, upsertList } from '../db/repositories'
 import { clampQuantity, isValidItemContent, nextOrderIndex } from './useListDetail'
 import { nextSortKey } from '../sync/merge/reorder'
@@ -15,15 +15,7 @@ export interface ListWithCounts {
   list: ListRow
   openCount: number
   doneCount: number
-  /**
-   * Liest hier jemand anderes mit?
-   *
-   * Nur angenommene Mitgliedschaften zählen, und das eigene Konto zählt nicht
-   * mit — es steht selbst in der Mitgliederliste. Wer eingeladen ist, aber noch
-   * nicht bestätigt hat, sieht von der Liste nichts; ihn mitzuzählen würde
-   * behaupten, die Liste sei bereits geteilt. Dieselbe Regel wie
-   * `otherAcceptedMemberCount` in der Android-App.
-   */
+  /** Liest hier jemand anderes mit? Die Regel steht in `isSharedWithOthers`. */
   isShared: boolean
   /**
    * Wie viele Einträge jemand anderes geändert hat, seit die Liste zuletzt
@@ -40,13 +32,84 @@ export interface ListWithCounts {
   isRecentlyChanged: boolean
 }
 
+/** Eine Mitgliedschaft, reduziert auf das, was die Geteilt-Regel liest. */
+type MemberIdentity = Pick<ListMemberRow, 'userId' | 'status'>
+
+/** Die Änderungsspur eines Eintrags — mehr braucht die Fremd-Zählung nicht. */
+type ItemChange = Pick<ListItemRow, 'modifiedBy' | 'updatedAt'>
+
 /**
- * Was `reload()` je Liste ablegt. `isRecentlyChanged` fehlt bewusst: Das
- * Aufleuchten erlischt nach zwei Sekunden von selbst, ein beim Laden
- * eingefrorener Wert würde also stehen bleiben, bis zufällig jemand neu lädt.
- * Es wird deshalb erst beim Lesen angereichert (siehe `entries` unten).
+ * Was `reload()` je Liste ablegt: ausschließlich Tatsachen, die NICHT davon
+ * abhängen, wer gerade angemeldet ist und was gerade aufleuchtet.
+ *
+ * WARUM DIE TRENNUNG: Beim Start wird die Sitzung asynchron geholt, die Listen
+ * werden sofort gelesen — das Profil ist beim ersten `reload()` also
+ * verlässlich noch nicht da. Ein hier eingefrorenes `isShared` wäre die
+ * Antwort auf "wer bin ich", bevor sie beantwortet war, und bliebe stehen, bis
+ * zufällig ein Abgleich neu lesen lässt. Genauso beim Ab- und Anmelden.
+ * Alles Identitätsabhängige entsteht deshalb erst beim Lesen, siehe
+ * `deriveListEntry`.
  */
-type StoredListEntry = Omit<ListWithCounts, 'isRecentlyChanged'>
+export interface StoredListEntry {
+  list: ListRow
+  openCount: number
+  doneCount: number
+  members: readonly MemberIdentity[]
+  changes: readonly ItemChange[]
+}
+
+/**
+ * Liest hier jemand anderes mit?
+ *
+ * DIE EINE REGEL für "diese Liste ist geteilt" — Gegenstück zu
+ * `otherAcceptedMemberCount` in Androids SharedBadge.kt.
+ *
+ * OHNE BEKANNTE EIGENE IDENTITÄT IST NICHTS GETEILT. Das eigene Konto steht
+ * selbst als angenommenes Mitglied in jeder Liste; die API legt es beim ersten
+ * Push als `owner` an. Fehlt `ownUserId`, wäre `member.userId !== ownUserId`
+ * deshalb für JEDES Mitglied wahr — auch für einen selbst, und jede Liste
+ * trüge das Geteilt-Symbol. Lieber einen Moment lang kein Symbol als einen
+ * Moment lang ein falsches: Das Symbol ist eine Aussage darüber, wer
+ * mitliest.
+ *
+ * Offene Einladungen zählen nicht. Wer noch nicht bestätigt hat, sieht von der
+ * Liste nichts; ihn mitzuzählen würde eine Freigabe behaupten, die es noch
+ * nicht gibt. Beide Ausschlüsse stehen in `useLists.test.ts` fest — auf
+ * Android sind sie jeweils schon einmal verlorengegangen.
+ */
+export function isSharedWithOthers(
+  members: readonly MemberIdentity[],
+  ownUserId: string | null,
+): boolean {
+  if (ownUserId === null) return false
+  return members.some(member => member.status === 'accepted' && member.userId !== ownUserId)
+}
+
+/**
+ * Reichert einen gespeicherten Eintrag um alles an, was von der aktuellen
+ * Anmeldung und vom Aufleuchten abhängt.
+ *
+ * Getrennt vom Lesen der Datenbank, weil es eine ANDERE Frage beantwortet:
+ * `reload()` holt Tatsachen, die für jeden gleich sind; hier entscheidet, wer
+ * gerade angemeldet ist. Als reine Funktion, damit genau diese Trennung
+ * prüfbar ist, ohne die Oberfläche zu starten.
+ */
+export function deriveListEntry(
+  entry: StoredListEntry,
+  ownUserId: string | null,
+  isRecentlyChanged: boolean,
+): ListWithCounts {
+  return {
+    list: entry.list,
+    openCount: entry.openCount,
+    doneCount: entry.doneCount,
+    isShared: isSharedWithOthers(entry.members, ownUserId),
+    unseenCount: entry.changes.filter(change =>
+      isUnseenForeignChange(change, ownUserId, entry.list.seenAt ?? null),
+    ).length,
+    isRecentlyChanged,
+  }
+}
 
 /**
  * Listenübersicht aus der lokalen Datenbank.
@@ -68,23 +131,21 @@ export function useLists() {
 
   /**
    * Die Einträge der Übersicht. Ein `computed` statt des rohen Zustands, damit
-   * `isRecentlyChanged` lebt: Es hängt am Zeitgeber von `useRecentlyChanged`
-   * und muss von selbst wieder erlöschen — ohne dass die Übersicht dafür die
-   * Datenbank neu liest.
+   * alles Flüchtige lebt, ohne dass die Übersicht dafür die Datenbank neu
+   * liest: Das Aufleuchten erlischt nach zwei Sekunden von selbst, und die
+   * Anmeldung trifft beim Start erst nach dem ersten `reload()` ein.
    */
-  const entries = computed<ListWithCounts[]>(() =>
-    stored.value.map(entry => ({ ...entry, isRecentlyChanged: isRecent.value(entry.list.id) })),
-  )
+  const entries = computed<ListWithCounts[]>(() => {
+    const ownUserId = profile.value?.userId ?? null
+    return stored.value.map(entry =>
+      deriveListEntry(entry, ownUserId, isRecent.value(entry.list.id)),
+    )
+  })
 
   async function reload(): Promise<void> {
     // IndexedDB gibt es nur im Browser. Auf dem Server bleibt die Liste leer,
     // was für den App-Bereich folgenlos ist (routeRules: ssr false).
     if (import.meta.server) return
-
-    // Einmal vor der Schleife gelesen: Wer angemeldet ist, ändert sich während
-    // eines Durchlaufs nicht, und je Liste danach zu fragen wäre dieselbe
-    // Antwort mehrfach.
-    const currentUserId = profile.value?.userId ?? null
 
     isLoading.value = true
     try {
@@ -102,16 +163,12 @@ export function useLists() {
             list,
             openCount: items.filter(item => !item.checked).length,
             doneCount: items.filter(item => item.checked).length,
-            isShared: members.some(
-              member => member.status === 'accepted' && member.userId !== currentUserId,
-            ),
-            // Über die ohnehin gelesenen Items gezählt statt über einen
-            // zweiten Datenbankgang (`countUnseenForeignChanges` liest
-            // dieselben Zeilen noch einmal — für Aufrufer, die die Items
-            // nicht schon in der Hand haben).
-            unseenCount: items.filter(item =>
-              isUnseenForeignChange(item, currentUserId, list.seenAt ?? null),
-            ).length,
+            members: members.map(({ userId, status }) => ({ userId, status })),
+            // Aus den ohnehin gelesenen Items statt aus einem zweiten
+            // Datenbankgang (`countUnseenForeignChanges` liest dieselben
+            // Zeilen noch einmal — für Aufrufer, die sie nicht schon in der
+            // Hand haben). Nur die beiden Felder, die die Zählung liest.
+            changes: items.map(({ modifiedBy, updatedAt }) => ({ modifiedBy, updatedAt })),
           }
         }),
       )

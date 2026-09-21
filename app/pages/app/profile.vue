@@ -59,7 +59,7 @@ function parseServerStatus(value: unknown): ServerStatus | null {
 }
 
 async function loadServerStatus(): Promise<void> {
-  if (!isSignedIn.value) return
+  if (import.meta.server || !isSignedIn.value) return
   try {
     serverStatus.value = parseServerStatus(await requestJson(SYNC_ENDPOINTS.status))
     serverReachable.value = serverStatus.value !== null
@@ -71,8 +71,24 @@ async function loadServerStatus(): Promise<void> {
 
 onMounted(() => {
   void reloadLocal()
-  void loadServerStatus()
 })
+
+/**
+ * Der Serverstand hängt an der Anmeldung — und die trifft beim Start erst NACH
+ * dem Mounten ein: `plugins/session.client.ts` holt die Sitzung ohne `await`,
+ * `isSignedIn` ist also im `onMounted` verlässlich noch `false`. Von dort
+ * aufgerufen brach `loadServerStatus()` deshalb bei jedem direkten Aufruf
+ * dieser Seite ab (Neuladen, Lesezeichen, Kaltstart der PWA) und setzte nie
+ * wieder an: Die Server-Spalte blieb dauerhaft „–", die Verbindung ewig auf
+ * „Prüfe…", obwohl der Server erreichbar war.
+ *
+ * Als Beobachter statt als einmalige Frage, mit `immediate` für den Fall, dass
+ * die Sitzung beim Betreten der Seite längst steht. Dieselbe Verdrahtung wie
+ * beim Abgleich selbst (`watch(isSignedIn, …)` in `useSync.ts`).
+ */
+watch(isSignedIn, (signedIn) => {
+  if (signedIn) void loadServerStatus()
+}, { immediate: true })
 
 watch(dataVersion, () => {
   void reloadLocal()
