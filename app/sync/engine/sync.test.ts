@@ -969,3 +969,102 @@ describe('Kontowechsel', () => {
     expect(store.besitzMarke).toBeNull()
   })
 })
+
+/* ------------------------------------------------------------------ *
+ * Die Drosselung der Integritätsprüfung
+ * ------------------------------------------------------------------ */
+
+/**
+ * Der teuerste Vorgang im Ruhezustand — sechs `md5(string_agg(...))` über den
+ * gesamten Bestand auf dem Server, sechs vollständig gelesene IndexedDB-Stores
+ * im Hauptthread hier. Er lief nach JEDEM Abgleich, also alle 15 Minuten, auch
+ * wenn nichts passiert war. Die Heilung, die er füttert, darf höchstens einmal
+ * je 12 Stunden zuschlagen: 96 Messungen am Tag für höchstens zwei Handlungen.
+ */
+describe('Integritätsprüfung wird nur mit Anlass gefahren', () => {
+  function pruefEngine(store: FakeSyncStore, request: SyncRequest) {
+    return createSyncEngine({
+      store,
+      state: createSyncStateStore(),
+      request,
+      computeLocalContentHashes: async () => ({
+        v2: 'gleich',
+        parts: { lists: '', listItems: '', recipes: '', recipeIngredients: '', recipeSteps: '', badges: '' },
+      }),
+      integrity: {
+        resetCursor: async () => {},
+        marker: async () => ({ hash: null, at: 0 }),
+        attempt: async () => {},
+        success: async () => {},
+      },
+    })
+  }
+
+  test('der erste Lauf prüft — vorher weiss niemand etwas', async () => {
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/status': () => ({ ...FILLED_SERVER, contentHashV2: 'gleich' }),
+      '/api/sync/pull': () => PULL_OK,
+    })
+
+    await pruefEngine(fakeSyncStore(), request).sync()
+
+    expect(called(request, '/api/sync/status')).toBe(true)
+  })
+
+  test('ein zweiter Lauf ohne Anlass prüft NICHT noch einmal', async () => {
+    // Der eigentliche Gewinn: der Ruhezustand.
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/status': () => ({ ...FILLED_SERVER, contentHashV2: 'gleich' }),
+      '/api/sync/pull': () => PULL_OK,
+    })
+    const engine = pruefEngine(fakeSyncStore(), request)
+
+    await engine.sync()
+    const nachErstem = request.calls.filter(call => call === '/api/sync/status').length
+    await engine.sync()
+
+    expect(request.calls.filter(call => call === '/api/sync/status')).toHaveLength(nachErstem)
+  })
+
+  test('kam etwas herunter, wird wieder geprüft', async () => {
+    // Neue Daten sind der Anlass, für den die Prüfung gedacht ist.
+    let ersterLauf = true
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/status': () => ({ ...FILLED_SERVER, contentHashV2: 'gleich' }),
+      '/api/sync/pull': () => {
+        if (ersterLauf) {
+          ersterLauf = false
+          return PULL_OK
+        }
+        return { ...PULL_OK, badges: [{ id: 'b1', recipeId: 'r1', earnedAt: TS, createdAt: TS, updatedAt: TS, deletedAt: null, fieldTimestamps: null }] }
+      },
+    })
+    const engine = pruefEngine(fakeSyncStore(), request)
+
+    await engine.sync()
+    const nachErstem = request.calls.filter(call => call === '/api/sync/status').length
+    await engine.sync()
+
+    expect(request.calls.filter(call => call === '/api/sync/status').length).toBeGreaterThan(nachErstem)
+  })
+
+  test('ein Mensch, der auf "jetzt abgleichen" drückt, bekommt die Prüfung', async () => {
+    // Wer ausdrücklich fragt, soll eine ehrliche Antwort bekommen, nicht die
+    // von vor einer halben Stunde.
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/status': () => ({ ...FILLED_SERVER, contentHashV2: 'gleich' }),
+      '/api/sync/pull': () => PULL_OK,
+    })
+    const engine = pruefEngine(fakeSyncStore(), request)
+
+    await engine.sync()
+    const nachErstem = request.calls.filter(call => call === '/api/sync/status').length
+    await engine.sync({ userInitiated: true })
+
+    expect(request.calls.filter(call => call === '/api/sync/status').length).toBeGreaterThan(nachErstem)
+  })
+})
