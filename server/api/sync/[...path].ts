@@ -22,6 +22,21 @@ import { apiFetch, isSessionExpiredError } from '../../utils/apiFetch'
 import { getFreshSessionToken } from '../../utils/sessionRefresh'
 
 /**
+ * Frist für die zweite Strecke, Browser → BFF → API.
+ *
+ * ABSICHTLICH KÜRZER ALS DIE DES BROWSERS (`REQUEST_TIMEOUT_MS`, 30 s): Die
+ * innere Frist soll zuerst greifen, damit der Aufrufer einen ordentlichen
+ * Fehler bekommt statt eines abgeschnittenen Aufrufs. Ohne eine Frist hier
+ * überlebte die zweite Strecke die erste — der Browser gäbe auf, und die BFF
+ * hinge weiter an einer Verbindung, von der niemand mehr etwas hat.
+ *
+ * Hier stehen keine Ströme: Der Echtzeit-Kanal läuft am BFF vorbei direkt zur
+ * API. Alles, was durch diesen Proxy geht, ist eine gewöhnliche Anfrage mit
+ * einer Antwort.
+ */
+const UPSTREAM_TIMEOUT_MS = 25_000
+
+/**
  * Feste Paare aus Methode und Pfad (Pfad relativ zu `/sync`).
  * Ein Set statt einer Liste: der Abgleich ist ein exakter Treffer, kein Muster.
  */
@@ -89,7 +104,7 @@ export default defineEventHandler(async (event): Promise<unknown> => {
   const clientIp = resolveVisitorIp(event)
 
   try {
-    return await apiFetch(upstreamPath, { method, rawBody, sessionToken, clientIp })
+    return await apiFetch(upstreamPath, { method, rawBody, sessionToken, clientIp, timeoutMs: UPSTREAM_TIMEOUT_MS })
   }
   catch (error) {
     // 401 trotz frischem Token: Die Session wurde serverseitig entwertet
@@ -106,7 +121,7 @@ export default defineEventHandler(async (event): Promise<unknown> => {
     // Legacy ohne Refresh-Cookie) ist der 401 die richtige Antwort.
     if (retryToken === null || retryToken === sessionToken) throw error
 
-    return await apiFetch(upstreamPath, { method, rawBody, sessionToken: retryToken, clientIp })
+    return await apiFetch(upstreamPath, { method, rawBody, sessionToken: retryToken, clientIp, timeoutMs: UPSTREAM_TIMEOUT_MS })
   }
 })
 

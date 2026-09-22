@@ -44,9 +44,39 @@ export interface RequestOptions {
   method?: 'GET' | 'POST'
   /** Wird hier serialisiert. Die BFF reicht die Bytes unverändert weiter. */
   body?: unknown
+  /**
+   * Eigenes Abbruchsignal. Wird KEINES übergeben, gilt `REQUEST_TIMEOUT_MS`.
+   *
+   * Wer eines übergibt, übernimmt damit auch die Frist — dann gibt es keine
+   * zweite von hier, sonst hätte der Aufrufer zwei Uhren, von denen er nur
+   * eine kennt.
+   */
   signal?: AbortSignal
   fetchImpl?: FetchLike
 }
+
+/**
+ * Nach so langer Stille gilt eine Anfrage als tot.
+ *
+ * WARUM ES DIE FRIST GEBEN MUSS: Browser-`fetch` bringt von sich aus keine mit.
+ * Eine halb offene Leitung — Deckel zugeklappt, WLAN verlassen, NAT-Timeout —
+ * meldet weder Fehler noch Ende, sie verstummt nur. Die Anfrage hing dann
+ * unbegrenzt, und das war hier besonders teuer: Die Engine hält währenddessen
+ * die TAB-ÜBERGREIFENDE Sperre (`leader.ts`). Jeder weitere Auslöser in JEDEM
+ * Tab lief ins Leere, die Anzeige stand auf "wird abgeglichen", und die
+ * Erholung hing daran, wann der TCP-Stack von selbst aufgibt. Das konnte
+ * Minuten dauern und war der einzige Zustand im ganzen Abgleich, der sich
+ * nicht von selbst heilte.
+ *
+ * Der Echtzeit-Strom hat für dieselbe Lage längst einen Totmann-Schalter
+ * (`LIVENESS_TIMEOUT_MS`). Der Anfrageweg hatte keinen.
+ *
+ * 30 Sekunden sind grosszügig gegenüber allem, was hier normal ist, und immer
+ * noch weit unter dem, was ein Mensch als "hängt" empfindet. Ein Abbruch
+ * landet über `toSyncError` als gewöhnlicher Netzfehler und heilt beim
+ * nächsten Auslöser.
+ */
+export const REQUEST_TIMEOUT_MS = 30_000
 
 /**
  * `fetch` ist an das globale Objekt gebunden. Eine freistehende Referenz
@@ -81,7 +111,7 @@ export async function requestJson(path: string, options: RequestOptions = {}): P
       // 401, und der Standardwert von `credentials` ist nichts, worauf man
       // sich über Browser-Generationen hinweg verlassen sollte.
       credentials: 'same-origin',
-      signal,
+      signal: signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     })
   }
   catch (cause) {
