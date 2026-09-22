@@ -35,6 +35,7 @@ import {
 import { requestJson, SYNC_ENDPOINTS, type RequestOptions } from './transport'
 import { runAsLeader } from './leader'
 import { evaluateIntegrity } from './integrity'
+import { describeClockSkew, judgeClockSkew } from './clock-skew'
 
 /* ------------------------------------------------------------------ *
  * Antworten, die nur hier gebraucht werden
@@ -464,6 +465,27 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
     }
     const pullIncomplete = pull !== null && (pull.truncated || !pull.cursorAdvanced)
 
+    /*
+     * GEHT DIE UHR DIESES GERÄTS FALSCH?
+     *
+     * Der Abgleich entscheidet feldweise nach Zeitstempeln, und die kommen vom
+     * Gerät. Eine nachgehende Uhr ist deshalb kein Schönheitsfehler: Der Push
+     * wird mit 200 quittiert, der eigene Wert setzt sich aber nicht durch, und
+     * der Mensch sieht seinen Text beim nächsten Abgleich zurückspringen —
+     * ohne jede Erklärung. Android sagt an dieser Stelle seit Langem etwas, im
+     * Browser passierte es stumm, obwohl die Serverzeit jeder Antwort beiliegt.
+     *
+     * Die Meldung ÄNDERT DIE PHASE NICHT. Eine schiefe Uhr ist kein
+     * unvollständiger Abgleich, und ein dauerhaft "ausstehend" wäre eine
+     * falsche Aussage über die Daten. Sie belegt nur die Textzeile, und auch
+     * das nur, wenn dort sonst nichts Dringenderes steht.
+     */
+    const uhrUrteil = judgeClockSkew(
+      pull?.serverTime === null || pull?.serverTime === undefined ? null : Date.parse(pull.serverTime),
+      Date.now(),
+    )
+    const uhrHinweis = describeClockSkew(uhrUrteil)
+
     const phase: SyncPhase = pushError !== null
       ? phaseFromError(pushError)
       : pendingCount > 0 || notSyncedCount > 0 || pullIncomplete || verificationMessage !== null ? 'pending' : 'idle'
@@ -474,7 +496,7 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
       phase: phase === 'idle' ? 'syncing' : phase,
       message: pushError !== null
         ? describeSyncError(pushError)
-        : verificationMessage ?? (pullIncomplete ? 'Der Abgleich ist noch nicht vollständig. Weitere Änderungen werden geladen.' : null),
+        : verificationMessage ?? (pullIncomplete ? 'Der Abgleich ist noch nicht vollständig. Weitere Änderungen werden geladen.' : uhrHinweis),
       retryAfterMs: pushError?.retryAfterMs ?? null,
       pendingCount,
       notSyncedCount,

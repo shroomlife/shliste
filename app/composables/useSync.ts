@@ -405,6 +405,28 @@ export function useSyncRunner(): void {
      */
     zuletztGemeldeteSeq = seq
     await requestSync()
+
+    /*
+     * EIN GESCHEITERTER LAUF DARF DIE BREMSE NICHT ERBEN.
+     *
+     * Die Dämpfung oben ist richtig — sie verhindert, dass eine gekappte
+     * Antwort alle 15 Sekunden einen vollen Abgleich auslöst. Sie dämpfte aber
+     * auch den FEHLERFALL mit, und dort ist sie genau verkehrt: `requestSync`
+     * wirft nicht, sondern schreibt den Fehler in den Zustand. Ein bei Nummer N
+     * gescheiterter Lauf wurde bei Nummer N deshalb nie wiederholt, und wenn
+     * sich serverseitig nichts mehr änderte, war der nächste Versuch erst der
+     * Zeitgeber — bis zu 15 Minuten später.
+     *
+     * Die Marke zurückzunehmen macht aus diesen 15 Minuten 15 Sekunden: Der
+     * nächste Herzschlag trägt dieselbe Zahl und darf es dann noch einmal
+     * versuchen. Bleibt es beim Fehler, greift die Dämpfung über den Zustand
+     * ohnehin nicht mehr als einmal je Herzschlag — und das ist derselbe Takt,
+     * in dem der Strom ohnehin lebt.
+     */
+    const phase = snapshot.value.phase
+    if (phase !== 'idle' && phase !== 'pending' && phase !== 'syncing') {
+      zuletztGemeldeteSeq = null
+    }
   }
 
   watchEffect(() => {

@@ -313,3 +313,47 @@ describe('isOwnedByOther', () => {
     expect(isOwnedByOther({ ownerUserId: OTHER }, ME)).toBe(true)
   })
 })
+
+/**
+ * Feldstempel dürfen nie rückwärts laufen.
+ *
+ * Der Stempel kommt von der Uhr DIESES Geräts, und die kann zurückspringen —
+ * eine NTP-Korrektur reicht. Der Push vergleicht `eingehend >= vorhanden`: Ein
+ * kleinerer Stempel verliert also gegen den eigenen früheren, der Server
+ * antwortet mit einem Konflikt, der Client übernimmt den alten Wert und das
+ * Dirty-Flag fällt. Die Änderung ist endgültig weg — sie taucht in keiner
+ * weiteren Antwort je wieder auf. Ein einzelnes Gerät reicht dafür aus.
+ */
+describe('mergeFieldTimestamps läuft monoton', () => {
+  const FRUEHER = '2026-09-22T10:00:00.000Z' as const
+  const SPAETER = '2026-09-22T10:03:00.000Z' as const
+
+  test('ein neuerer Stempel wird übernommen', () => {
+    const merged = mergeFieldTimestamps({ name: FRUEHER }, ['name'], SPAETER)
+    expect(merged['name']).toBe(SPAETER)
+  })
+
+  test('eine zurückgesprungene Uhr frisst die Änderung nicht mehr', () => {
+    // Genau der Fall: erst 10:03 gestempelt, dann korrigiert die Uhr auf 10:00.
+    const merged = mergeFieldTimestamps({ name: SPAETER }, ['name'], FRUEHER)
+
+    expect(Date.parse(merged['name'] ?? '')).toBeGreaterThan(Date.parse(SPAETER))
+  })
+
+  test('derselbe Stempel zweimal rückt eine Millisekunde weiter', () => {
+    // Zwei Änderungen in derselben Millisekunde: Die zweite muss gewinnen.
+    const merged = mergeFieldTimestamps({ name: SPAETER }, ['name'], SPAETER)
+
+    expect(Date.parse(merged['name'] ?? '')).toBe(Date.parse(SPAETER) + 1)
+  })
+
+  test('ein Feld ohne Vorgänger bekommt den Stempel unverändert', () => {
+    const merged = mergeFieldTimestamps(null, ['name'], FRUEHER)
+    expect(merged['name']).toBe(FRUEHER)
+  })
+
+  test('andere Felder bleiben unangetastet', () => {
+    const merged = mergeFieldTimestamps({ name: SPAETER, quantity: FRUEHER }, ['name'], FRUEHER)
+    expect(merged['quantity']).toBe(FRUEHER)
+  })
+})
