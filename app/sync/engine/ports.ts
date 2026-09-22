@@ -193,11 +193,22 @@ export interface SessionStore {
   readHasMigrated: () => Promise<boolean>
   writeHasMigrated: (value: boolean) => Promise<void>
   /**
-   * Wer war zuletzt angemeldet? Meldet sich derselbe Nutzer erneut an, sind
-   * die lokalen Daten seine eigenen und dürfen ohne Rückfrage zusammengeführt
-   * werden.
+   * WEM GEHÖRT DER BESTAND, DER HIER LIEGT? `null` heisst "noch nie
+   * abgeglichen". Meldet sich dasselbe Konto erneut an, sind die lokalen Daten
+   * seine eigenen und dürfen ohne Rückfrage zusammengeführt werden.
    */
   readLastSignedInUserId: () => Promise<string | null>
+  /**
+   * Setzt die Besitzmarke. Wird NACH einem erfolgreichen Abgleich gerufen —
+   * erst dann ist bewiesen, dass der Bestand zu diesem Konto gehört.
+   */
+  writeLastSignedInUserId: (userId: string) => Promise<void>
+  /**
+   * Vergisst alles, was dieses Gerät über das vorherige Konto wusste, und
+   * lässt die Daten stehen. Danach läuft der Erstabgleich und stellt die
+   * Besitzfrage (siehe `forgetPreviousAccountMarkers` im Repository).
+   */
+  forgetPreviousAccount: () => Promise<void>
   /** Zähler für den Vergleich mit `GET /sync/status`. */
   countLocalData: () => Promise<LocalDataCounts>
   /** Anzahl der Zeilen, die noch auf ihren Push warten. */

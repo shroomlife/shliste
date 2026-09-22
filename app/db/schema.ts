@@ -129,6 +129,25 @@ export interface SyncMetaMap {
    */
   legacyImported: boolean
   lastSyncedAt: IsoUtc
+  /**
+   * WEM GEHÖRT DER BESTAND, DER HIER LIEGT?
+   *
+   * Nicht "wer hat sich zuletzt abgemeldet" — das war die frühere Lesart, und
+   * sie hat nie funktioniert: Geschrieben wurde die Marke gar nicht, und selbst
+   * wenn, wäre sie im häufigsten Fall leer geblieben. Läuft eine Sitzung ab,
+   * gibt es kein Abmelden, in dem jemand etwas hätte hinterlegen können.
+   *
+   * Gesetzt wird sie deshalb nach jedem ERFOLGREICHEN Abgleich: Erst dann ist
+   * bewiesen, dass der lokale Bestand zu diesem Konto gehört. Vorher wäre es
+   * eine Behauptung, und zwar eine gefährliche — sie würde die Besitzfrage
+   * beantworten, bevor sie gestellt wurde.
+   *
+   * Woran sie hängt: `hasMigrated` ist eine Aussage über das GERÄT und
+   * überlebt jedes Abmelden. Ohne diese Marke daneben konnte die App einen
+   * Kontowechsel deshalb gar nicht bemerken.
+   *
+   * Dieselbe Bedeutung wie `lastSignedInUserId` in der Android-App.
+   */
   lastSignedInUserId: string
   lastEventId: string
   /**

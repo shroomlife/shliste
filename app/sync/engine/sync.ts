@@ -322,6 +322,34 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
       return
     }
 
+    /*
+     * GEHÖRT DER BESTAND HIER ÜBERHAUPT DIESEM KONTO?
+     *
+     * Diese Frage MUSS vor `readHasMigrated()` stehen. `hasMigrated` ist eine
+     * Aussage über das GERÄT ("hier lief schon einmal ein Erstabgleich") und
+     * wird nie zurückgesetzt. Sobald es einmal `true` war, sprang jeder Lauf
+     * direkt in Push und Pull — der Erstabgleich mit seiner Besitzfrage war
+     * unerreichbar, und ein Kontowechsel fiel deshalb niemandem auf.
+     *
+     * Was daraus folgte, in aufsteigender Bosheit: Das neue Konto sah die
+     * Listen des alten in der Übersicht. Fasste es eine an, lehnte der Server
+     * sie ab, und die Anzeige meldete dauerhaft ungesendete Zeilen, die kein
+     * Bedienschritt auflöste. Und das Wasserzeichen des alten Kontos blieb
+     * stehen, weshalb der erste Abruf des neuen INKREMENTELL ab diesem fremden
+     * Stand lief: Alles Ältere kam nie an, und die Selbstheilung, die das
+     * auffangen würde, ist genau dann gesperrt, wenn lokal etwas offen ist.
+     *
+     * Beide Werte müssen gesetzt sein. Eine fehlende Marke heisst "noch nie
+     * abgeglichen" und ist kein Wechsel — auf einem Bestandsgerät steht sie
+     * beim ersten Lauf nach diesem Umbau leer, und dann soll alles bleiben,
+     * wie es ist. Der Lauf schreibt sie am Ende, ab dann greift die Prüfung.
+     */
+    const bisherigerBesitzer = await store.readLastSignedInUserId()
+    if (bisherigerBesitzer !== null && session.userId !== null && bisherigerBesitzer !== session.userId) {
+      onNotice?.('Auf diesem Gerät lagen Daten eines anderen Kontos. Der Abgleich beginnt von vorn.')
+      await store.forgetPreviousAccount()
+    }
+
     let push: { outcome: PushOutcome | null, error: SyncError | null } = { outcome: null, error: null }
 
     if (await store.readHasMigrated()) {
@@ -437,6 +465,23 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
             await runCycle()
             const phase = cyclePhase ?? state.get().phase
             if (phase !== 'idle' && phase !== 'pending') break
+
+            /*
+             * DER LAUF IST DURCH — ab jetzt ist bewiesen, dass der Bestand auf
+             * diesem Gerät zu diesem Konto gehört. Genau das hält die Marke
+             * fest, und genau deshalb steht sie HIER und nicht beim Anmelden:
+             * Vorher wäre sie eine Behauptung, und sie würde die Besitzfrage
+             * beantworten, bevor der Erstabgleich sie überhaupt stellen konnte.
+             *
+             * `pending` zählt als durch: Ungesendete Zeilen sagen etwas über
+             * den Fortschritt, nicht über den Besitz.
+             *
+             * Beim Abmelden zu schreiben — wie Android es bis heute tat —
+             * reicht nicht: Läuft die Sitzung ab, gibt es kein Abmelden, in dem
+             * jemand etwas hätte hinterlegen können. Genau der Fall ist der
+             * häufigste.
+             */
+            if (cycleAccountId !== null) await store.writeLastSignedInUserId(cycleAccountId)
             if (generation !== undefined && phase === 'idle') {
               const currentSession = parseSessionState(await request(SYNC_ENDPOINTS.session))
               if (!currentSession.authenticated || cycleAccountId === null || currentSession.userId !== cycleAccountId) {
