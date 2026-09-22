@@ -144,8 +144,33 @@ export function mergeFieldTimestamps(
   stamp: IsoUtc,
 ): FieldTimestamps {
   const merged: FieldTimestamps = { ...previous }
+  const neu = Date.parse(stamp)
+
   for (const field of fields) {
-    merged[field] = stamp
+    /*
+     * NIEMALS RÜCKWÄRTS. Der Stempel kommt von der Uhr dieses Geräts, und die
+     * kann zurückspringen — eine NTP-Korrektur reicht.
+     *
+     * Was dann passierte: Ein Eintrag wird eine Minute vor der Korrektur
+     * umbenannt (Stempel 10:03), direkt danach erneut (Stempel jetzt 10:00).
+     * Der Push vergleicht `eingehend >= vorhanden`, also 10:00 gegen 10:03, und
+     * VERLIERT. Der Server antwortet mit einem Konflikt, der Client übernimmt
+     * den alten Namen, das Dirty-Flag fällt. Die zweite Umbenennung ist weg,
+     * und zwar endgültig — sie taucht in keiner weiteren Antwort je wieder auf.
+     * Für den Menschen sieht es aus, als hätte ein anderes Gerät gewonnen,
+     * obwohl gar keines beteiligt war.
+     *
+     * Eine Millisekunde weiter statt des Rückschritts: Der Stempel bleibt
+     * monoton, die eigene Änderung gewinnt gegen die eigene frühere, und wer
+     * VERGLEICHT, merkt von dieser Regel nichts — sie betrifft nur, was dieses
+     * Gerät STEMPELT. Der Vertrag mit Server und Android bleibt unberührt.
+     */
+    const bisher = merged[field]
+    const bisherMs = bisher === undefined ? Number.NEGATIVE_INFINITY : Date.parse(bisher)
+
+    merged[field] = Number.isFinite(bisherMs) && Number.isFinite(neu) && neu <= bisherMs
+      ? new Date(bisherMs + 1).toISOString() as IsoUtc
+      : stamp
   }
   return merged
 }

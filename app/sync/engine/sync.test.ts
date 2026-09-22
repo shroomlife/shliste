@@ -1068,3 +1068,70 @@ describe('Integritätsprüfung wird nur mit Anlass gefahren', () => {
     expect(request.calls.filter(call => call === '/api/sync/status').length).toBeGreaterThan(nachErstem)
   })
 })
+
+/* ------------------------------------------------------------------ *
+ * Die Uhren-Warnung erreicht den Menschen
+ * ------------------------------------------------------------------ */
+
+describe('schiefe Uhr', () => {
+  /** Eine Serverzeit, die um `minuten` von der Gerätezeit abweicht. */
+  function serverZeit(minuten: number): string {
+    return new Date(Date.now() + minuten * 60_000).toISOString()
+  }
+
+  test('eine nachgehende Uhr wird benannt statt verschwiegen', async () => {
+    // Der gefährliche Fall: Der Push wird mit 200 quittiert, der eigene Wert
+    // setzt sich trotzdem nicht durch. Vorher passierte das im Browser stumm.
+    const state = createSyncStateStore()
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/push': () => PUSH_OK,
+      '/api/sync/pull': () => ({ ...PULL_OK, serverTime: serverZeit(9) }),
+    })
+
+    await createSyncEngine({ store: fakeSyncStore(), state, request }).sync()
+
+    expect(state.get().message).toContain('geht 9 Minuten nach')
+  })
+
+  test('eine vorgehende Uhr warnt vor dem Verlust FREMDER Änderungen', async () => {
+    const state = createSyncStateStore()
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/push': () => PUSH_OK,
+      '/api/sync/pull': () => ({ ...PULL_OK, serverTime: serverZeit(-9) }),
+    })
+
+    await createSyncEngine({ store: fakeSyncStore(), state, request }).sync()
+
+    expect(state.get().message).toContain('von anderen Geräten')
+  })
+
+  test('eine gesunde Uhr sagt nichts', async () => {
+    const state = createSyncStateStore()
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/push': () => PUSH_OK,
+      '/api/sync/pull': () => ({ ...PULL_OK, serverTime: serverZeit(0) }),
+    })
+
+    await createSyncEngine({ store: fakeSyncStore(), state, request }).sync()
+
+    expect(state.get().message).toBeNull()
+  })
+
+  test('die Warnung macht aus einem fertigen Abgleich keinen unfertigen', async () => {
+    // Eine schiefe Uhr ist kein unvollständiger Abgleich. Ein dauerhaftes
+    // "ausstehend" wäre eine falsche Aussage über die Daten.
+    const state = createSyncStateStore()
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/push': () => PUSH_OK,
+      '/api/sync/pull': () => ({ ...PULL_OK, serverTime: serverZeit(9) }),
+    })
+
+    await createSyncEngine({ store: fakeSyncStore(), state, request }).sync()
+
+    expect(state.get().phase).not.toBe('pending')
+  })
+})
