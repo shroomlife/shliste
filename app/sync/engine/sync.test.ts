@@ -71,6 +71,10 @@ interface FakeSyncStore extends SyncStore, ConflictStore {
   wiped: number
   /** Listen, die der Pull als entzogen gemeldet und entfernt hat. */
   removed: string[]
+  /** Die zuletzt geschriebene Besitzmarke — `null`, solange keine geschrieben wurde. */
+  besitzMarke: string | null
+  /** Wie oft die Marken des vorherigen Kontos verworfen wurden. */
+  vergessen: number
 }
 
 function fakeSyncStore(options: {
@@ -98,6 +102,8 @@ function fakeSyncStore(options: {
     clearedDeleted: 0,
     wiped: 0,
     removed: [],
+    besitzMarke: options.lastSignedInUserId ?? null,
+    vergessen: 0,
     readDirty: () => Promise.resolve({ ...emptyDirty(), ...options.dirty }),
     clearDirty: () => Promise.resolve(),
     putPulledHistoryEntry: () => Promise.resolve(),
@@ -116,7 +122,18 @@ function fakeSyncStore(options: {
       store.hasMigrated = value
       return Promise.resolve()
     },
-    readLastSignedInUserId: () => Promise.resolve(options.lastSignedInUserId ?? null),
+    readLastSignedInUserId: () => Promise.resolve(store.besitzMarke),
+    writeLastSignedInUserId: (userId: string) => {
+      store.besitzMarke = userId
+      return Promise.resolve()
+    },
+    forgetPreviousAccount: () => {
+      store.vergessen += 1
+      // Wie im Repository: die Gerätemarken fallen, die Daten bleiben stehen.
+      store.hasMigrated = false
+      store.cursor = null
+      return Promise.resolve()
+    },
     countLocalData: () => Promise.resolve(options.local ?? { lists: 0, recipes: 0 }),
     countPending: () => Promise.resolve(store.pending),
     clearDirtyOnDeleted: () => {
@@ -847,4 +864,207 @@ test('Anmeldung faellt im zweiten Drain-Zyklus weg: kein alter Zykluserfolg', as
   await engine.sync()
   expect(state.get().phase).toBe('authRequired')
   expect(completed).toEqual([0])
+})
+
+/* ------------------------------------------------------------------ *
+ * Kontowechsel auf demselben Gerät
+ * ------------------------------------------------------------------ */
+
+/**
+ * Der vollständige Ablauf, nicht nur die Bedingung.
+ *
+ * WAS VORHER PASSIERTE: `hasMigrated` ist eine Aussage über das GERÄT und wird
+ * nie zurückgesetzt. Sobald es einmal `true` war, sprang jeder Lauf direkt in
+ * Push und Pull — der Erstabgleich mit seiner Besitzfrage war unerreichbar.
+ * Ein anderes Konto sah die Listen des vorherigen, konnte sie nicht speichern
+ * (der Server lehnt sie ab, die Anzeige meldete dauerhaft offene Zeilen), und
+ * der erste Abruf lief INKREMENTELL ab dem Wasserzeichen des fremden Kontos:
+ * Alles Ältere kam nie an.
+ */
+describe('Kontowechsel', () => {
+  const ANDERES_KONTO = { authenticated: true, verified: true, profile: { userId: 'u2' } }
+
+  test('derselbe Nutzer kehrt zurück: es wird nichts verworfen und nichts gefragt', async () => {
+    // Der häufigste Fall überhaupt — Sitzung abgelaufen, neu angemeldet.
+    const store = fakeSyncStore({ hasMigrated: true, lastSignedInUserId: 'u1' })
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/push': () => PUSH_OK,
+      '/api/sync/pull': () => PULL_OK,
+    })
+
+    await createSyncEngine({ store, state: createSyncStateStore(), request }).sync()
+
+    expect(store.vergessen).toBe(0)
+    expect(store.hasMigrated).toBe(true)
+    expect(called(request, '/api/sync/status')).toBe(false)
+  })
+
+  test('ein anderes Konto lässt die Gerätemarken fallen', async () => {
+    const store = fakeSyncStore({ hasMigrated: true, lastSignedInUserId: 'u1' })
+    const request = fakeRequest({
+      '/api/auth/me': () => ANDERES_KONTO,
+      '/api/sync/status': () => EMPTY_SERVER,
+      '/api/sync/migrate': () => MIGRATE_OK,
+      '/api/sync/push': () => PUSH_OK,
+      '/api/sync/pull': () => PULL_OK,
+    })
+
+    await createSyncEngine({ store, state: createSyncStateStore(), request }).sync()
+
+    expect(store.vergessen).toBe(1)
+    // Der Erstabgleich läuft wieder — genau er stellt die Besitzfrage.
+    expect(called(request, '/api/sync/status')).toBe(true)
+  })
+
+  test('ein Bestandsgerät ohne Marke wird nicht angefasst', async () => {
+    // Beim ersten Lauf nach diesem Umbau steht die Marke überall leer. Eine
+    // fehlende Marke heisst "noch nie abgeglichen" und ist kein Wechsel —
+    // sonst verlöre jedes Gerät einmalig seinen Stand.
+    const store = fakeSyncStore({ hasMigrated: true, lastSignedInUserId: null })
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/push': () => PUSH_OK,
+      '/api/sync/pull': () => PULL_OK,
+    })
+
+    await createSyncEngine({ store, state: createSyncStateStore(), request }).sync()
+
+    expect(store.vergessen).toBe(0)
+    expect(store.hasMigrated).toBe(true)
+  })
+
+  test('nach dem Lauf steht die Marke, und der nächste Lauf ist ruhig', async () => {
+    // Die Selbstheilung: Ein Bestandsgerät bekommt seine Marke beim ersten
+    // Lauf, ab dann greift die Prüfung.
+    const store = fakeSyncStore({ hasMigrated: true, lastSignedInUserId: null })
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/push': () => PUSH_OK,
+      '/api/sync/pull': () => PULL_OK,
+    })
+    const engine = createSyncEngine({ store, state: createSyncStateStore(), request })
+
+    await engine.sync()
+    expect(store.besitzMarke).toBe('u1')
+
+    await engine.sync()
+    expect(store.vergessen).toBe(0)
+  })
+
+  test('ein gescheiterter Lauf schreibt keine Besitzmarke', async () => {
+    // Sie ist ein BEWEIS, keine Absichtserklärung: Wer nicht durchgekommen ist,
+    // hat nicht gezeigt, dass der Bestand hier diesem Konto gehört.
+    const store = fakeSyncStore({ hasMigrated: true, lastSignedInUserId: null })
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/push': () => PUSH_OK,
+      '/api/sync/pull': () => {
+        throw new TypeError('Failed to fetch')
+      },
+    })
+
+    await createSyncEngine({ store, state: createSyncStateStore(), request }).sync()
+
+    expect(store.besitzMarke).toBeNull()
+  })
+})
+
+/* ------------------------------------------------------------------ *
+ * Die Drosselung der Integritätsprüfung
+ * ------------------------------------------------------------------ */
+
+/**
+ * Der teuerste Vorgang im Ruhezustand — sechs `md5(string_agg(...))` über den
+ * gesamten Bestand auf dem Server, sechs vollständig gelesene IndexedDB-Stores
+ * im Hauptthread hier. Er lief nach JEDEM Abgleich, also alle 15 Minuten, auch
+ * wenn nichts passiert war. Die Heilung, die er füttert, darf höchstens einmal
+ * je 12 Stunden zuschlagen: 96 Messungen am Tag für höchstens zwei Handlungen.
+ */
+describe('Integritätsprüfung wird nur mit Anlass gefahren', () => {
+  function pruefEngine(store: FakeSyncStore, request: SyncRequest) {
+    return createSyncEngine({
+      store,
+      state: createSyncStateStore(),
+      request,
+      computeLocalContentHashes: async () => ({
+        v2: 'gleich',
+        parts: { lists: '', listItems: '', recipes: '', recipeIngredients: '', recipeSteps: '', badges: '' },
+      }),
+      integrity: {
+        resetCursor: async () => {},
+        marker: async () => ({ hash: null, at: 0 }),
+        attempt: async () => {},
+        success: async () => {},
+      },
+    })
+  }
+
+  test('der erste Lauf prüft — vorher weiss niemand etwas', async () => {
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/status': () => ({ ...FILLED_SERVER, contentHashV2: 'gleich' }),
+      '/api/sync/pull': () => PULL_OK,
+    })
+
+    await pruefEngine(fakeSyncStore(), request).sync()
+
+    expect(called(request, '/api/sync/status')).toBe(true)
+  })
+
+  test('ein zweiter Lauf ohne Anlass prüft NICHT noch einmal', async () => {
+    // Der eigentliche Gewinn: der Ruhezustand.
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/status': () => ({ ...FILLED_SERVER, contentHashV2: 'gleich' }),
+      '/api/sync/pull': () => PULL_OK,
+    })
+    const engine = pruefEngine(fakeSyncStore(), request)
+
+    await engine.sync()
+    const nachErstem = request.calls.filter(call => call === '/api/sync/status').length
+    await engine.sync()
+
+    expect(request.calls.filter(call => call === '/api/sync/status')).toHaveLength(nachErstem)
+  })
+
+  test('kam etwas herunter, wird wieder geprüft', async () => {
+    // Neue Daten sind der Anlass, für den die Prüfung gedacht ist.
+    let ersterLauf = true
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/status': () => ({ ...FILLED_SERVER, contentHashV2: 'gleich' }),
+      '/api/sync/pull': () => {
+        if (ersterLauf) {
+          ersterLauf = false
+          return PULL_OK
+        }
+        return { ...PULL_OK, badges: [{ id: 'b1', recipeId: 'r1', earnedAt: TS, createdAt: TS, updatedAt: TS, deletedAt: null, fieldTimestamps: null }] }
+      },
+    })
+    const engine = pruefEngine(fakeSyncStore(), request)
+
+    await engine.sync()
+    const nachErstem = request.calls.filter(call => call === '/api/sync/status').length
+    await engine.sync()
+
+    expect(request.calls.filter(call => call === '/api/sync/status').length).toBeGreaterThan(nachErstem)
+  })
+
+  test('ein Mensch, der auf "jetzt abgleichen" drückt, bekommt die Prüfung', async () => {
+    // Wer ausdrücklich fragt, soll eine ehrliche Antwort bekommen, nicht die
+    // von vor einer halben Stunde.
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/status': () => ({ ...FILLED_SERVER, contentHashV2: 'gleich' }),
+      '/api/sync/pull': () => PULL_OK,
+    })
+    const engine = pruefEngine(fakeSyncStore(), request)
+
+    await engine.sync()
+    const nachErstem = request.calls.filter(call => call === '/api/sync/status').length
+    await engine.sync({ userInitiated: true })
+
+    expect(request.calls.filter(call => call === '/api/sync/status').length).toBeGreaterThan(nachErstem)
+  })
 })

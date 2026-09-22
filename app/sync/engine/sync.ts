@@ -125,6 +125,15 @@ export function parseSessionState(value: unknown): SessionState {
  * Die Engine
  * ------------------------------------------------------------------ */
 
+/**
+ * Mindestabstand zweier Integritätsprüfungen ohne besonderen Anlass.
+ *
+ * Eine Stunde statt einer Viertelstunde: Die Heilung dahinter ist auf einmal
+ * je zwölf Stunden gedeckelt. Häufiger zu messen ändert nichts an dem, was am
+ * Ende passieren darf — es kostet nur.
+ */
+export const INTEGRITY_MIN_INTERVAL_MS = 60 * 60 * 1_000
+
 export type SyncRequest = (path: string, options?: RequestOptions) => Promise<unknown>
 
 export interface SyncEngineDeps {
@@ -219,6 +228,12 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
   let cycleAccountId: string | null = null
   let cyclePhase: SyncPhase | undefined
   let confirmedAt: IsoUtc | null = null
+
+  /** Hat ein Mensch diesen Lauf angestossen? Dann wird nicht gespart. */
+  let cycleUserInitiated = false
+
+  /** Wann zuletzt die Integrität geprüft wurde. `0` heisst "noch nie". */
+  let lastIntegrityCheckAt = 0
 
   /** Schickt einen Push-Block. */
   const sendPush = (payload: PushPayload): Promise<unknown> =>
@@ -322,6 +337,34 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
       return
     }
 
+    /*
+     * GEHÖRT DER BESTAND HIER ÜBERHAUPT DIESEM KONTO?
+     *
+     * Diese Frage MUSS vor `readHasMigrated()` stehen. `hasMigrated` ist eine
+     * Aussage über das GERÄT ("hier lief schon einmal ein Erstabgleich") und
+     * wird nie zurückgesetzt. Sobald es einmal `true` war, sprang jeder Lauf
+     * direkt in Push und Pull — der Erstabgleich mit seiner Besitzfrage war
+     * unerreichbar, und ein Kontowechsel fiel deshalb niemandem auf.
+     *
+     * Was daraus folgte, in aufsteigender Bosheit: Das neue Konto sah die
+     * Listen des alten in der Übersicht. Fasste es eine an, lehnte der Server
+     * sie ab, und die Anzeige meldete dauerhaft ungesendete Zeilen, die kein
+     * Bedienschritt auflöste. Und das Wasserzeichen des alten Kontos blieb
+     * stehen, weshalb der erste Abruf des neuen INKREMENTELL ab diesem fremden
+     * Stand lief: Alles Ältere kam nie an, und die Selbstheilung, die das
+     * auffangen würde, ist genau dann gesperrt, wenn lokal etwas offen ist.
+     *
+     * Beide Werte müssen gesetzt sein. Eine fehlende Marke heisst "noch nie
+     * abgeglichen" und ist kein Wechsel — auf einem Bestandsgerät steht sie
+     * beim ersten Lauf nach diesem Umbau leer, und dann soll alles bleiben,
+     * wie es ist. Der Lauf schreibt sie am Ende, ab dann greift die Prüfung.
+     */
+    const bisherigerBesitzer = await store.readLastSignedInUserId()
+    if (bisherigerBesitzer !== null && session.userId !== null && bisherigerBesitzer !== session.userId) {
+      onNotice?.('Auf diesem Gerät lagen Daten eines anderen Kontos. Der Abgleich beginnt von vorn.')
+      await store.forgetPreviousAccount()
+    }
+
     let push: { outcome: PushOutcome | null, error: SyncError | null } = { outcome: null, error: null }
 
     if (await store.readHasMigrated()) {
@@ -351,11 +394,51 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
     pull: PullOutcome | null,
     notSyncedCount: number,
     pushError: SyncError | null,
+    /**
+     * Prüfen, egal wie kurz die letzte Prüfung her ist.
+     *
+     * Gesetzt vom Heilungslauf unten: Der zieht alles neu und ruft `finish`
+     * ein zweites Mal — und genau dieser Durchgang MUSS vergleichen, sonst
+     * bliebe die Heilung unbestätigt und liefe beim nächsten Anlass erneut.
+     */
+    erzwingePruefung = false,
   ): Promise<void> => {
     let pendingCount = await store.countPending()
     let verificationMessage: string | null = null
-    if (pushError === null && pendingCount === 0 && !pull?.truncated
+    /*
+     * LOHNT DIE PRÜFUNG ÜBERHAUPT GERADE?
+     *
+     * Sie ist der mit Abstand teuerste Vorgang im Ruhezustand: Der Server baut
+     * dafür sechs `md5(string_agg(...))` über den GESAMTEN Bestand des Kontos,
+     * und dieses Gerät liest sechs IndexedDB-Stores vollständig aus, sortiert
+     * sie und hasht sie — im Hauptthread, ohne Worker. Auf einem Konto mit
+     * 24.000 Einträgen ist das beidseitig spürbar.
+     *
+     * Bisher lief sie nach JEDEM Abgleich, also alle 15 Minuten, auch wenn
+     * nichts passiert war. Das Missverhältnis ist der Punkt: Die Heilung, die
+     * sie füttert, darf ohnehin höchstens einmal je 12 Stunden zuschlagen
+     * (`MIN_HEAL_INTERVAL_MS`). Gemessen wurde 96-mal am Tag, gehandelt
+     * höchstens zweimal. Und der Herzschlag hat über die Änderungsnummer
+     * fünfzehn Sekunden vorher schon gesagt, dass sich nichts geändert hat.
+     *
+     * DIE ZUSAGE BLEIBT UNVERÄNDERT: Die Prüfung ist das Netz gegen eine ALTE
+     * Abweichung, an der der Cursor längst vorbei ist. Ein Netz, das stündlich
+     * gespannt wird, fängt dasselbe wie eines, das viertelstündlich gespannt
+     * wird — die Heilung dahinter kann gar nicht öfter greifen.
+     *
+     * Drei Anlässe lassen sie laufen: Es kam etwas herunter, ein Mensch hat den
+     * Lauf angestossen, oder die letzte Prüfung ist über eine Stunde her.
+     */
+    const kamEtwasAn = pull !== null
+      && (pull.lists + pull.recipes + pull.badges + pull.revokedLists) > 0
+    const lohntPruefung = erzwingePruefung
+      || kamEtwasAn
+      || cycleUserInitiated
+      || Date.now() - lastIntegrityCheckAt >= INTEGRITY_MIN_INTERVAL_MS
+
+    if (lohntPruefung && pushError === null && pendingCount === 0 && !pull?.truncated
       && (pull === null || pull.cursorAdvanced) && deps.integrity && computeLocalContentHashes) {
+      lastIntegrityCheckAt = Date.now()
       const status = parseServerStatus(await request(SYNC_ENDPOINTS.status))
       const local = await computeLocalContentHashes()
       pendingCount = await store.countPending()
@@ -367,7 +450,7 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
         await deps.integrity.attempt(Date.now())
         // Unter derselben Web-Sperre. Vollabruf führt zusammen und löscht keine lokalen Daten.
         await deps.integrity.resetCursor()
-        await finish(await runPull(store, fetchPull), notSyncedCount, null)
+        await finish(await runPull(store, fetchPull), notSyncedCount, null, true)
         return
       }
       if (verdict.kind === 'in-sync' && repairedThisRun && status.contentHashV2 !== null) {
@@ -411,6 +494,7 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
     running = true
     repairedThisRun = false
     cyclePhase = undefined
+    cycleUserInitiated = options.userInitiated === true
     confirmedAt = null
 
     /*
@@ -437,6 +521,23 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
             await runCycle()
             const phase = cyclePhase ?? state.get().phase
             if (phase !== 'idle' && phase !== 'pending') break
+
+            /*
+             * DER LAUF IST DURCH — ab jetzt ist bewiesen, dass der Bestand auf
+             * diesem Gerät zu diesem Konto gehört. Genau das hält die Marke
+             * fest, und genau deshalb steht sie HIER und nicht beim Anmelden:
+             * Vorher wäre sie eine Behauptung, und sie würde die Besitzfrage
+             * beantworten, bevor der Erstabgleich sie überhaupt stellen konnte.
+             *
+             * `pending` zählt als durch: Ungesendete Zeilen sagen etwas über
+             * den Fortschritt, nicht über den Besitz.
+             *
+             * Beim Abmelden zu schreiben — wie Android es bis heute tat —
+             * reicht nicht: Läuft die Sitzung ab, gibt es kein Abmelden, in dem
+             * jemand etwas hätte hinterlegen können. Genau der Fall ist der
+             * häufigste.
+             */
+            if (cycleAccountId !== null) await store.writeLastSignedInUserId(cycleAccountId)
             if (generation !== undefined && phase === 'idle') {
               const currentSession = parseSessionState(await request(SYNC_ENDPOINTS.session))
               if (!currentSession.authenticated || cycleAccountId === null || currentSession.userId !== cycleAccountId) {
@@ -525,6 +626,8 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
     running = true
     repairedThisRun = false
     cyclePhase = undefined
+    // Ein Mensch steht hier direkt davor und hat gerade entschieden.
+    cycleUserInitiated = true
     confirmedAt = null
 
     state.set({ phase: 'syncing', message: null, retryAfterMs: null, conflict: null })

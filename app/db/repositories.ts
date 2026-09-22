@@ -1176,6 +1176,50 @@ export async function wipeSyncedData(): Promise<void> {
   await tx.done
 }
 
+/**
+ * Alles vergessen, was dieses Gerät über das VORHERIGE Konto wusste — und
+ * zwar nur das. Die Daten bleiben.
+ *
+ * WOFÜR: Meldet sich ein anderes Konto an, gehört der lokale Bestand nicht
+ * mehr zu dem, was der Server liefert. `hasMigrated` ist aber eine Aussage
+ * über das Gerät, nicht über ein Konto, und wird nie zurückgesetzt — der
+ * Abgleich sprang deshalb gleich in Push und Pull und stellte die Besitzfrage
+ * nie. Schlimmer noch: Das Wasserzeichen des vorigen Kontos blieb stehen, und
+ * der erste Abruf des neuen lief INKREMENTELL ab diesem fremden Stand. Alles,
+ * was älter war, kam nie an. Für den Menschen: "Ich melde mich am Rechner
+ * meines Partners an, und die Hälfte meiner Listen fehlt."
+ *
+ * WARUM DIE DATEN BLEIBEN: Was hier liegt, kann trotzdem wertvoll sein — und
+ * die Entscheidung darüber gehört dem Menschen, nicht dieser Funktion. Nach
+ * dem Zurücksetzen läuft der Erstabgleich, und der fragt (siehe `runFirstSync`
+ * in `sync/engine/sync.ts`). Löschen würde diese Frage vorwegnehmen.
+ *
+ * `lastSignedInUserId` bleibt ebenfalls stehen: Der Aufrufer überschreibt sie
+ * mit dem neuen Konto, sobald dessen Abgleich durchgelaufen ist.
+ */
+export async function forgetPreviousAccountMarkers(): Promise<void> {
+  const db = await getDb()
+  const tx = db.transaction('sync_meta', 'readwrite')
+  const store = tx.objectStore('sync_meta')
+
+  await Promise.all([
+    // Der Erstabgleich muss wieder laufen — er stellt die Besitzfrage.
+    store.delete('hasMigrated'),
+    // Ein Wasserzeichen des fremden Kontos liesse den ersten Abruf
+    // inkrementell ab dessen Stand laufen.
+    store.delete('lastSyncedAt'),
+    store.delete('lastChangeSeq'),
+    // Der Ereignis-Cursor zeigt in den Strom eines fremden Kontos.
+    store.delete('lastEventId'),
+    // Die Heilungssperre ist gegen einen Bestand gemessen, den es hier nicht
+    // mehr gibt — stehengelassen sperrte sie die erste Selbstheilung aus.
+    store.delete('lastSelfHealHash'),
+    store.delete('lastSelfHealAt'),
+  ])
+
+  await tx.done
+}
+
 /* ------------------------------------------------------------------ *
  * sync_meta — Key-Value
  * ------------------------------------------------------------------ */
