@@ -16,6 +16,7 @@ import {
   compareByUpdatedAtDesc,
   type Draft,
   linkFieldsAfterWrite,
+  isOwnedByOther,
   type ManualOrder,
   mergeFieldTimestamps,
   snapshotStampOf,
@@ -276,5 +277,39 @@ describe('linkFieldsAfterWrite', () => {
       linkImagePath: null,
       linkImageKind: null,
     })
+  })
+})
+
+/**
+ * „Gehört diese Liste jemand anderem?" — die Frage vor einer echten Löschung.
+ *
+ * Sie entscheidet beim Abmelden, was vom Gerät verschwindet. Deshalb steht
+ * hier zuerst der Fall, in dem NICHTS gelöscht werden darf: ohne bekannte
+ * eigene Identität. Wäre der Schutz weg, würde ein Abmelden ohne geladenes
+ * Profil jede synchronisierte Liste als fremd einstufen — und wegwerfen.
+ *
+ * Gegenstück: `deleteListsOwnedByOthers` in Androids UserStore.
+ */
+describe('isOwnedByOther', () => {
+  const ME = 'uuid-ich'
+  const OTHER = 'uuid-jemand-anderes'
+
+  test('ohne eigene Identität gehört nichts jemand anderem', () => {
+    expect(isOwnedByOther({ ownerUserId: OTHER }, null)).toBe(false)
+    expect(isOwnedByOther({ ownerUserId: ME }, null)).toBe(false)
+    expect(isOwnedByOther({ ownerUserId: null }, null)).toBe(false)
+  })
+
+  test('eine rein lokale Liste gehört immer einem selbst', () => {
+    // `ownerUserId === null` heißt "nie beim Server gewesen".
+    expect(isOwnedByOther({ ownerUserId: null }, ME)).toBe(false)
+  })
+
+  test('die eigene Liste bleibt', () => {
+    expect(isOwnedByOther({ ownerUserId: ME }, ME)).toBe(false)
+  })
+
+  test('die Liste eines anderen Kontos ist fremd', () => {
+    expect(isOwnedByOther({ ownerUserId: OTHER }, ME)).toBe(true)
   })
 })
