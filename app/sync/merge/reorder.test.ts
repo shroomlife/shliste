@@ -287,3 +287,66 @@ describe('Blöcke aus offenen und erledigten Einträgen', () => {
     }
   })
 })
+
+/**
+ * Zwei Zeilen mit demselben Schlüssel — der Zustand nach zwei gleichzeitigen
+ * Verschiebungen an dieselbe Stelle.
+ *
+ * WIE ER ENTSTEHT: Gerät 1 zieht einen Eintrag nach oben, Gerät 2 gleichzeitig
+ * einen anderen an dieselbe Stelle. Beide rechnen denselben Schlüssel aus.
+ * Die Pushes betreffen verschiedene Zeilen und verschiedene Felder, es gibt
+ * also keinen Konflikt, den das Last-Write-Wins auflösen könnte — der Server
+ * nimmt brav beide an.
+ *
+ * WAS ER ANRICHTETE: Jedes weitere Ziehen ZWISCHEN diese beiden Zeilen rief
+ * `generateKeyBetween('aW', 'aW')` und warf `a >= b`. Die Ausnahme landete in
+ * der Konsole, der Eintrag sprang wortlos zurück, und zwar für immer — ein
+ * Duplikat löst sich von allein nie wieder auf.
+ */
+const MIT_DUPLIKAT: OrderedRow[] = [
+  { id: 'a', sortKey: 'aV' },
+  { id: 'b', sortKey: 'aW' },
+  { id: 'c', sortKey: 'aW' },
+  { id: 'd', sortKey: 'aX' },
+]
+
+describe('doppelte Schlüssel', () => {
+  test('das Verschieben zwischen zwei gleiche Schlüssel wirft nicht mehr', () => {
+    // Genau der Zug, der vorher `a >= b: aW, aW` warf.
+    expect(() => planMoveTo(MIT_DUPLIKAT, MIT_DUPLIKAT, 'd', 2)).not.toThrow()
+  })
+
+  test('stattdessen wird die ganze Liste neu durchgeschrieben', () => {
+    const plan = planMoveTo(MIT_DUPLIKAT, MIT_DUPLIKAT, 'd', 2)
+
+    // Alle vier bekommen einen frischen Schlüssel — wie bei fehlenden auch.
+    expect(plan?.normalized).toHaveLength(4)
+  })
+
+  test('danach ist kein Schlüssel mehr doppelt', () => {
+    const plan = planMoveTo(MIT_DUPLIKAT, MIT_DUPLIKAT, 'd', 2)
+    const schluessel = new Map(plan?.normalized.map(row => [row.id, row.sortKey]))
+    if (plan !== null) schluessel.set(plan.moved.id, plan.moved.sortKey)
+
+    const werte = [...schluessel.values()]
+    expect(new Set(werte).size).toBe(werte.length)
+  })
+
+  test('eine Liste ohne Duplikate wird weiterhin NICHT durchgeschrieben', () => {
+    // Die Normalisierung ist der teure Weg: Sie schreibt jede Zeile der Liste.
+    // Sie darf nur laufen, wenn sie gebraucht wird.
+    const sauber: OrderedRow[] = [
+      { id: 'a', sortKey: 'aV' },
+      { id: 'b', sortKey: 'aW' },
+      { id: 'c', sortKey: 'aX' },
+    ]
+    expect(planMoveTo(sauber, sauber, 'c', 0)?.normalized).toEqual([])
+  })
+
+  test('leere Schlüssel gelten nicht als Duplikat voneinander', () => {
+    // Zwei fehlende Schlüssel sind nicht "doppelt vergeben", sondern gar nicht
+    // vergeben — das fängt die bestehende Bedingung ab, und das Ergebnis ist
+    // dasselbe: einmal durchschreiben.
+    expect(() => planMoveTo(FRESH, FRESH, 'd', 2)).not.toThrow()
+  })
+})

@@ -72,6 +72,24 @@ export function nextSortKey(rows: readonly Pick<OrderedRow, 'sortKey'>[]): strin
 }
 
 /**
+ * Tragen zwei Zeilen denselben Schlüssel?
+ *
+ * Leere und fehlende Schlüssel zählen hier nicht mit — die fängt die
+ * Bedingung daneben bereits ab, und sie sind per Definition nicht doppelt
+ * vergeben, sondern gar nicht.
+ */
+function hasDuplicateSortKeys(rows: readonly OrderedRow[]): boolean {
+  const gesehen = new Set<string>()
+  for (const row of rows) {
+    const key = row.sortKey
+    if (key === null || key === '') continue
+    if (gesehen.has(key)) return true
+    gesehen.add(key)
+  }
+  return false
+}
+
+/**
  * Berechnet die Schlüssel für eine Verschiebung an eine beliebige Stelle.
  *
  * ZWEI LISTEN, DREI AUFGABEN — und sie zu vermischen war ein echter Fehler:
@@ -109,9 +127,27 @@ export function planMoveTo(
   if (toIndex < 0 || toIndex >= groupRows.length) return null
   if (toIndex === from) return null
 
-  // Erst dafür sorgen, dass JEDE Zeile der Liste einen Schlüssel hat — nicht
-  // nur die des Blocks, sonst kollidieren die Blöcke miteinander.
+  // Erst dafür sorgen, dass JEDE Zeile der Liste einen EIGENEN Schlüssel hat —
+  // nicht nur die des Blocks, sonst kollidieren die Blöcke miteinander.
+  //
+  // DOPPELTE ZÄHLEN WIE FEHLENDE. Zwei Geräte, die gleichzeitig an dieselbe
+  // Stelle schieben, rechnen beide denselben Schlüssel aus: Die Pushes
+  // betreffen verschiedene Zeilen und verschiedene Felder, es gibt also keinen
+  // Konflikt, und der Server nimmt beide an. Danach tragen zwei Zeilen
+  // denselben Schlüssel. Die Anzeige verkraftet das (orderIndex und createdAt
+  // springen als Tie-Breaker ein, auf beiden Clients gleich) — aber jedes
+  // weitere Ziehen ZWISCHEN diese beiden Zeilen rief `generateKeyBetween` mit
+  // zweimal demselben Wert auf, und das wirft. Die Ausnahme landete in der
+  // Konsole, und für den Menschen sprang der Eintrag wortlos zurück. Dauerhaft,
+  // denn von allein wird ein Duplikat nie wieder aufgelöst.
+  //
+  // Normalisieren statt werfen: Die nächste Verschiebung schreibt die Liste neu
+  // durch und räumt die Kollision damit ab. Genau das tut Androids
+  // `reorderItems` ohnehin bei JEDEM Zug — dort kann der Fehler deshalb nicht
+  // auftreten, und ein einziges Umsortieren auf dem Telefon heilt eine Liste,
+  // die im Browser hängt.
   const needsNormalizing = allRows.some(row => row.sortKey === null || row.sortKey === '')
+    || hasDuplicateSortKeys(allRows)
   const allKeys = needsNormalizing
     ? generateNKeysBetween(null, null, allRows.length)
     : allRows.map(row => row.sortKey as string)
