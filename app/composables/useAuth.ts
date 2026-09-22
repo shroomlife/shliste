@@ -1,4 +1,5 @@
 import type { UserProfile } from '#shared/types/domain'
+import { removeListsOwnedByOthers } from '../db/repositories'
 
 /**
  * Anmeldung — der optionale Teil dieser App.
@@ -143,9 +144,34 @@ export function useAuth() {
   async function signOut(): Promise<void> {
     isLoading.value = true
     try {
+      // VOR dem Leeren gelesen: Danach ist nicht mehr feststellbar, welche
+      // Listen einem anderen Konto gehören.
+      const ownUserId = profile.value?.userId ?? null
+
       await $fetch('/api/auth/logout', { method: 'POST' })
       profile.value = null
       authenticated.value = false
+
+      /*
+       * Fremde geteilte Listen gehen mit der Abmeldung — und nur die.
+       *
+       * Sie lagen hier als MITGLIEDSCHAFT, und die endet jetzt. Blieben sie
+       * liegen, wären sie von eigenen Listen nicht mehr zu unterscheiden, und
+       * der Erstabgleich eines ANDEREN Kontos auf demselben Gerät lüde sie als
+       * dessen eigene hoch. Android macht das an dieser Stelle seit jeher
+       * (`UserStore.signOut()`), die PWA hat es nachgezogen.
+       *
+       * Ohne bekannte eigene Id wird NICHTS gelöscht: Dann ließe sich fremd
+       * nicht von eigen unterscheiden, und ein falscher Treffer wäre hier
+       * nicht rückholbar. Lieber zu viel behalten als das Falsche wegwerfen.
+       */
+      if (ownUserId === null) {
+        console.warn('[useAuth] Abmelden ohne bekannte eigene Id — fremde Listen bleiben liegen.')
+      }
+      else {
+        const entfernt = await removeListsOwnedByOthers(ownUserId)
+        if (entfernt > 0) console.info(`[useAuth] Abmelden: ${entfernt} fremde Liste(n) entfernt.`)
+      }
 
       // Die Service-Worker-Caches der Bilder überleben das Cookie — auf einem
       // geteilten Gerät sollen sie mit der Sitzung gehen. Das gilt für

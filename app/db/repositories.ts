@@ -653,6 +653,56 @@ export async function replaceListMembers(listId: string, members: readonly ListM
  * — verwaiste Fremddaten haben hier nichts mehr verloren (Androids
  * Gegenstück ist `HistoryDao.deleteOrphanedEntries`).
  */
+/**
+ * Gehört diese Liste einem ANDEREN Konto?
+ *
+ * `ownerUserId === null` heißt "rein lokal, nie beim Server gewesen" und ist
+ * damit immer die eigene — genau wie in Androids Gegenstück, wo `ownerUserId
+ * IS NULL` ausdrücklich stehen bleibt.
+ *
+ * OHNE BEKANNTE EIGENE IDENTITÄT GEHÖRT NICHTS JEMAND ANDEREM. Dieselbe
+ * Schranke wie bei `isUnseenForeignChange` und `isSharedWithOthers`, hier aber
+ * mit dem höchsten Einsatz: Am Ende dieser Frage steht eine echte Löschung.
+ * Wer nicht weiß, wer er ist, löscht gar nichts.
+ */
+export function isOwnedByOther(
+  list: { readonly ownerUserId: string | null },
+  ownUserId: string | null,
+): boolean {
+  if (ownUserId === null) return false
+  return list.ownerUserId !== null && list.ownerUserId !== ownUserId
+}
+
+/**
+ * Wirft beim Abmelden die Listen weg, die einem anderen Konto gehören.
+ *
+ * WARUM ÜBERHAUPT LÖSCHEN, wo das Abmelden sonst alles stehen lässt: Eine
+ * fremde Liste lag auf diesem Gerät nur als MITGLIEDSCHAFT — und die endet
+ * hier. Bliebe sie liegen, wäre sie nach dem Abmelden von einer eigenen nicht
+ * mehr zu unterscheiden, und der Erstabgleich eines ANDEREN Kontos auf
+ * demselben Gerät lüde sie als dessen eigene Listen hoch. Genau diese
+ * Begründung steht in `UserStore.signOut()` der Android-App, wo dieser Schritt
+ * seit jeher läuft.
+ *
+ * Eigene Listen und rein lokale bleiben unangetastet: Abmelden heißt "kein
+ * Abgleich mehr", nicht "Listen weg".
+ *
+ * @returns wie viele Listen entfernt wurden.
+ */
+export async function removeListsOwnedByOthers(ownUserId: string): Promise<number> {
+  const db = await getDb()
+  const rows = await db.getAll('lists')
+  const fremde = rows.filter(row => isOwnedByOther(row, ownUserId))
+
+  // Nacheinander statt nebenläufig: Jeder Aufruf öffnet seine eigene
+  // Transaktion über vier Stores, und die dürfen sich nicht überlappen.
+  for (const row of fremde) {
+    await hardDeleteList(row.id)
+  }
+
+  return fremde.length
+}
+
 export async function hardDeleteList(listId: string): Promise<void> {
   const db = await getDb()
   const tx = db.transaction(['lists', 'list_items', 'list_members', 'history_entries'], 'readwrite')
