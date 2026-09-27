@@ -106,6 +106,8 @@ function fakeSyncStore(options: {
     vergessen: 0,
     readDirty: () => Promise.resolve({ ...emptyDirty(), ...options.dirty }),
     clearDirty: () => Promise.resolve(),
+    settleRecoveries: () => Promise.resolve(),
+    secureOrphans: () => Promise.resolve(0),
     putPulledHistoryEntry: () => Promise.resolve(),
     trimHistoryForParent: () => Promise.resolve(),
     replaceMembers: (_listId: string, _members: readonly ListMember[]) => Promise.resolve(),

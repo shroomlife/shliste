@@ -24,6 +24,7 @@ import type {
   RecipeStepRow,
 } from '../../db/schema'
 import type { DirtyStoreName } from '../../db/repositories'
+import type { IdsByTable, RejectedIds, SyncRowRef } from '../recovery/orphan-policy'
 
 /**
  * Zusammenführen einer Serverzeile mit dem lokalen Stand.
@@ -88,6 +89,25 @@ export interface PushStore {
    * weil nur sie den aktuellen Stand der Zeile kennt.
    */
   clearDirty: (store: DirtyStoreName, ids: readonly string[], snapshot: IsoUtc) => Promise<void>
+  /**
+   * Ordnet offene Waisenrettungen nach einem Push ein (siehe
+   * `app/sync/recovery/orphan-policy.ts`): Angenommenes gilt als gerettet,
+   * Abgelehntes wird lokal entfernt und bleibt als Kopie in Quarantäne.
+   * `pushed` sind die Zeilen, die in diesem Push hinausgingen.
+   */
+  settleRecoveries: (pushed: readonly SyncRowRef[], skipped: RejectedIds) => Promise<void>
+}
+
+/**
+ * Die Waisenrettung nach dem vollen Abruf der Selbstheilung.
+ */
+export interface RecoveryStore {
+  /**
+   * Sichert saubere lokale Zeilen im Umfang des Hashes, die der Server nicht
+   * geliefert hat, und markiert sie zum erneuten Hochladen.
+   * @returns wie viele Zeilen gesichert wurden
+   */
+  secureOrphans: (fromServer: IdsByTable, serverHash: string | null) => Promise<number>
 }
 
 export interface PullStore {
@@ -219,6 +239,7 @@ export interface SessionStore {
  * Der vollständige Port, wie `sync.ts` ihn braucht.
  *
  * `ListRemovalStore` ist dabei: Die Pull-Antwort nennt entzogene Listen, und
- * `runPull` muss sie hart entfernen können (siehe `pull.ts`).
+ * `runPull` muss sie hart entfernen können (siehe `pull.ts`). `RecoveryStore`
+ * ebenso: Die Selbstheilung sichert nach ihrem vollen Abruf die Waisen.
  */
-export interface SyncStore extends PushStore, PullStore, SessionStore, ListRemovalStore {}
+export interface SyncStore extends PushStore, PullStore, SessionStore, ListRemovalStore, RecoveryStore {}

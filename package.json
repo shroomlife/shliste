@@ -48,6 +48,7 @@
     "@types/sortablejs": "^1.15.9",
     "@vite-pwa/nuxt": "^1.1.1",
     "eslint": "9.38.0",
+    "fake-indexeddb": "6.2.5",
     "tailwindcss": "^4.3.3",
     "typescript": "5.9.3",
     "vite-svg-loader": "5.1.0",

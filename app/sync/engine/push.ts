@@ -40,6 +40,7 @@ import {
   parseStep,
 } from './entities'
 import { API_ISO_PATTERN, isRecord, parseAll, readArray, readIso, readNumberOr } from './json'
+import type { SyncRowRef, SyncTable } from '../recovery/orphan-policy'
 import type { DirtyRows, PushStore, RowStores } from './ports'
 
 /* ------------------------------------------------------------------ *
@@ -803,6 +804,7 @@ export interface PushOutcome {
  *    Pushs verloren.
  * 2. Blöcke streng nacheinander. Ein Fehler bricht ab, die restlichen Zeilen
  *    bleiben schmutzig und kommen beim nächsten Lauf mit.
+ * 2a. Offene Waisenrettungen einordnen (nur wenn alle Blöcke durch sind).
  * 3. Dirty-Flags löschen, aber OHNE die vom Server verworfenen Ids. Sie
  *    bleiben schmutzig, damit der nächste Push es erneut versucht — sonst
  *    wären sie nie wieder Teil einer Nutzlast.
@@ -840,6 +842,16 @@ export async function runPush(store: PushStore, send: PushSender, onNotice?: Not
     addSkipped(skippedIds, response.skippedIds)
     conflicts.push(response.conflicts)
   }
+
+  /*
+   * Offene Waisenrettungen einordnen, VOR dem Zurücksetzen der Flags. Android
+   * macht beides in einer Transaktion; hier öffnet `clearDirtyFlags` je Store
+   * eine eigene (siehe oben). Die Reihenfolge hält einen Abbruch dazwischen
+   * harmlos: Eine gerettete Zeile bleibt höchstens schmutzig und geht mit
+   * demselben Stand noch einmal hinaus. Andersherum blieben gerettete Kopien
+   * für immer offen.
+   */
+  await store.settleRecoveries(pushedRefs(dirty), skippedIds)
 
   await clearPushedFlags(store, dirty, skippedIds, pushSnapshot)
 
@@ -906,6 +918,20 @@ export async function runMigrate(
     skippedIds,
     skippedCount: countSkipped(skippedIds),
   }
+}
+
+/** Die Zeilen im Umfang des Hashes, die dieser Push hinausgeschickt hat. */
+function pushedRefs(dirty: DirtyRows): SyncRowRef[] {
+  const refs = (table: SyncTable, rows: readonly { id: string }[]): SyncRowRef[] =>
+    rows.map(row => ({ table, id: row.id }))
+  return [
+    ...refs('LIST', dirty.lists),
+    ...refs('ITEM', dirty.items),
+    ...refs('RECIPE', dirty.recipes),
+    ...refs('INGREDIENT', dirty.ingredients),
+    ...refs('STEP', dirty.steps),
+    ...refs('BADGE', dirty.badges),
+  ]
 }
 
 function addSkipped(target: SkippedIds, addition: SkippedIds): void {

@@ -90,13 +90,30 @@ function hashRows<T extends { id: string }>(rows: readonly T[], line: (row: T) =
 }
 
 /**
- * Rechnet die sechs Teil-Summen und die Gesamtsumme.
+ * Die Zeilen, die in den Fingerabdruck eingehen.
  *
- * Rein: keine Datenbank, keine Uhr. Die Filter stehen bewusst HIER und nicht
- * beim Aufrufer, weil sie Teil der Formel sind — sie müssen zu den
- * WHERE-Klauseln des Servers passen.
+ * Die Filter stehen bewusst HIER und nicht beim Aufrufer, weil sie Teil der
+ * Formel sind — sie müssen zu den WHERE-Klauseln des Servers passen. Die
+ * Waisenrettung (`app/db/recovery.ts`) nimmt genau diese Auswahl: Was nicht im
+ * Hash steht, kann keine Abweichung erzeugen.
+ *
+ * Generisch, damit gespeicherte Zeilen mit ihrem vollen Typ herauskommen.
  */
-export function computeContentHashes(input: ContentHashInput): ContentHashes {
+export function selectContentHashScope<
+  L extends List,
+  I extends ListItem,
+  R extends Recipe,
+  G extends RecipeIngredient,
+  S extends RecipeStep,
+  B extends Badge,
+>(input: {
+  lists: readonly L[]
+  items: readonly I[]
+  recipes: readonly R[]
+  ingredients: readonly G[]
+  steps: readonly S[]
+  badges: readonly B[]
+}): { lists: L[], items: I[], recipes: R[], ingredients: G[], steps: S[], badges: B[] } {
   // Listen: nicht gelöscht.
   const lists = input.lists.filter(row => row.deletedAt === null)
 
@@ -116,6 +133,17 @@ export function computeContentHashes(input: ContentHashInput): ContentHashes {
   const steps = input.steps.filter(row => row.deletedAt === null)
 
   const badges = input.badges.filter(row => row.deletedAt === null)
+
+  return { lists, items, recipes, ingredients, steps, badges }
+}
+
+/**
+ * Rechnet die sechs Teil-Summen und die Gesamtsumme.
+ *
+ * Rein: keine Datenbank, keine Uhr.
+ */
+export function computeContentHashes(input: ContentHashInput): ContentHashes {
+  const { lists, items, recipes, ingredients, steps, badges } = selectContentHashScope(input)
 
   const parts: ContentHashParts = {
     lists: hashRows(lists, row =>

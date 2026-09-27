@@ -36,6 +36,7 @@ import { requestJson, SYNC_ENDPOINTS, type RequestOptions } from './transport'
 import { runAsLeader } from './leader'
 import { evaluateIntegrity } from './integrity'
 import { describeClockSkew, judgeClockSkew } from './clock-skew'
+import { createServerIdCollector, type ServerIdCollector } from '../recovery/orphan-policy'
 
 /* ------------------------------------------------------------------ *
  * Antworten, die nur hier gebraucht werden
@@ -272,6 +273,31 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
   }
 
   /**
+   * Rettet Waisen nach dem vollen Abruf der Selbstheilung.
+   *
+   * Der volle Abruf überschreibt nur, er löscht nie. Was lokal als
+   * synchronisiert gilt und dem Server fehlt, heilt er also nicht, und die
+   * Heilung liefe alle zwölf Stunden erfolglos erneut an. Solche Waisen werden
+   * gesichert und gleich erneut hochgeladen; der Server entscheidet (siehe
+   * `app/sync/recovery/orphan-policy.ts`). Die Prüfung danach macht `finish`.
+   *
+   * Nur nach einem VOLLSTÄNDIGEN Abruf: Fehlt auch nur eine Seite, sähe jede
+   * Zeile darauf wie eine Waise aus.
+   *
+   * @returns der Fehler des Pushs, sonst `null`
+   */
+  const rescueOrphans = async (
+    pull: PullOutcome,
+    serverIds: ServerIdCollector,
+    serverHash: string | null,
+  ): Promise<SyncError | null> => {
+    if (pull.truncated || !pull.cursorAdvanced) return null
+    const requeued = await store.secureOrphans(serverIds.snapshot(), serverHash)
+    if (requeued === 0) return null
+    return (await pushTolerantly()).error
+  }
+
+  /**
    * Beide Seiten haben Daten — dürfen sie ohne Rückfrage zusammengeführt werden?
    *
    * Ja, wenn die Stände nachweislich identisch sind (Content-Hash) oder wenn
@@ -451,7 +477,10 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
         await deps.integrity.attempt(Date.now())
         // Unter derselben Web-Sperre. Vollabruf führt zusammen und löscht keine lokalen Daten.
         await deps.integrity.resetCursor()
-        await finish(await runPull(store, fetchPull), notSyncedCount, null, true)
+        const serverIds = createServerIdCollector()
+        const vollabruf = await runPull(store, fetchPull, serverIds)
+        const rettungsFehler = await rescueOrphans(vollabruf, serverIds, status.contentHashV2)
+        await finish(vollabruf, notSyncedCount, rettungsFehler, true)
         return
       }
       if (verdict.kind === 'in-sync' && repairedThisRun && status.contentHashV2 !== null) {
