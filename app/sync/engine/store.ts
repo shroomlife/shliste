@@ -38,6 +38,7 @@ import {
   getHasMigrated,
   getLastSignedInUserId,
   getLastSyncedAt,
+  getPendingSeenMarks,
   getListsForView,
   getRecipesForView,
   clearDirtyOnDeleted,
@@ -190,6 +191,7 @@ export const localStore: SyncStore & RealtimeStore & ConflictStore = {
   isListDirty: isListDirtyWithItems,
   isRecipeDirty: isDirtyRecipeOrChildren,
   removeList: hardDeleteList,
+  readPendingSeenMarks: getPendingSeenMarks,
   clearDirtyOnDeleted,
   wipeLocalData: wipeSyncedData,
 }

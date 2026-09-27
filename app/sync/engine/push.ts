@@ -28,6 +28,7 @@ import type {
   RecipeStep,
 } from '../../../shared/types/domain'
 import { CLEAN, type ListItemRow } from '../../db/schema'
+import { keepListLocalFields } from '../../db/seen'
 import { isAtOrBefore, nowIso } from '../../db/timestamps'
 import { linkMirrorsFor, type LinkMirrors } from '../merge/link-mirrors'
 import { sanitize } from '../merge/limits'
@@ -986,9 +987,9 @@ async function applyConflicts(rows: RowStores, conflicts: PushConflicts, pushSna
         // bekannte Eigentümer.
         ownerUserId: local?.ownerUserId ?? list.ownerUserId,
         dirty: CLEAN,
-        // Rein lokales Wasserzeichen, das der Server nicht kennt und nie
-        // überschreiben darf (siehe applyList in ./pull.ts).
-        seenAt: local?.seenAt ?? null,
+        // Das Gesehen-Wasserzeichen gehört nicht zu den Listendaten, die
+        // Konfliktzeile kennt es nicht (siehe applyList in ./pull.ts).
+        ...keepListLocalFields(local),
       }
     })
   }

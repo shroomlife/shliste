@@ -329,9 +329,16 @@ async function loadList(): Promise<void> {
  * nicht erst beim nächsten Abgleich. Beim Verlassen, damit alles, was WÄHREND
  * des Lesens hereingekommen ist, nicht hinterher wieder als ungesehen gilt —
  * man hatte die Liste ja offen vor sich.
+ *
+ * `shareWithOtherDevices` stößt beim Verlassen einen Abgleich an, der den
+ * Zeitpunkt ans Konto meldet — wie `markListSeen(shareWithOtherDevices)` in
+ * der Android-App. Nur beim Verlassen: Beim Betreten käme sonst ein zweiter
+ * Abgleich für denselben Besuch dazu. Offline bleibt der Zeitpunkt über
+ * `seenPushedAt` offen und geht mit dem nächsten Abgleich hinaus.
  */
-async function markSeen(id: string): Promise<void> {
+async function markSeen(id: string, shareWithOtherDevices = false): Promise<void> {
   await markListSeen(id)
+  if (shareWithOtherDevices) scheduleSync()
   // Die Übersicht zählt gegen das Wasserzeichen. Ohne Neuladen stünde ihr
   // Hinweis noch da, obwohl die Liste längst offen ist.
   await reloadOverview()
@@ -350,7 +357,7 @@ let visitedListId: string | null = null
 watch(listId, (currentId, previousId) => {
   // Der Wechsel im Desktop-Nebeneinander ist ein Verlassen der alten Liste.
   if (previousId !== undefined && previousId !== currentId) {
-    run(markSeen(previousId))
+    run(markSeen(previousId, true))
   }
   visitedListId = currentId
 
@@ -359,7 +366,7 @@ watch(listId, (currentId, previousId) => {
 }, { immediate: true })
 
 onBeforeUnmount(() => {
-  if (visitedListId !== null) run(markSeen(visitedListId))
+  if (visitedListId !== null) run(markSeen(visitedListId, true))
 })
 
 // Hat der Abgleich etwas geschrieben, können es Einträge dieser Liste sein.

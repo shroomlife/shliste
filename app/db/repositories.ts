@@ -59,6 +59,7 @@ import {
   type SyncMetaKey,
   type SyncMetaMap,
 } from './schema'
+import { keepListLocalFields, pendingSeenMark, type SeenMark } from './seen'
 import { compareIso, isAtOrBefore, isIsoUtc, nowIso } from './timestamps'
 
 /**
@@ -346,8 +347,8 @@ export function compareHistoryNewestFirst(
 
 export async function upsertList(input: Draft<List>): Promise<ListRow> {
   const db = await getDb()
-  // Lesen und Schreiben in EINER Transaktion: `seenAt` wird aus der
-  // gelesenen Zeile bewahrt — ein `markListSeen` zwischen einem freien
+  // Lesen und Schreiben in EINER Transaktion: `seenAt` und `seenPushedAt`
+  // werden aus der gelesenen Zeile bewahrt — ein `markListSeen` zwischen einem freien
   // get und put ginge sonst still verloren (dieselbe Begründung, aus der
   // markListSeen und mutateRow transaktional gebaut sind).
   const tx = db.transaction(['lists', 'sync_meta'], 'readwrite')
@@ -361,9 +362,9 @@ export async function upsertList(input: Draft<List>): Promise<ListRow> {
     return previous
   }
 
-  // `seenAt` ist rein lokal und steht nicht im Draft — ohne diese Zeile
-  // würde jedes Umbenennen das Gesehen-Wasserzeichen der Liste verwerfen.
-  const row: ListRow = { ...input, ...buildRowMeta(previous, changed, nowIso()), seenAt: previous?.seenAt ?? null }
+  // Das Gesehen-Wasserzeichen steht nicht im Draft — ohne diese Zeile würde
+  // jedes Umbenennen es verwerfen.
+  const row: ListRow = { ...input, ...buildRowMeta(previous, changed, nowIso()), ...keepListLocalFields(previous) }
   await tx.objectStore('lists').put(row)
   await advanceWorkGeneration(tx)
   await tx.done
@@ -447,7 +448,7 @@ async function writeImportedList(
   try {
     const parent = newList === undefined
       ? await tx.objectStore('lists').get(listId)
-      : { ...newList, ...buildRowMeta(undefined, changedFields(undefined, newList), nowIso()), seenAt: null }
+      : { ...newList, ...buildRowMeta(undefined, changedFields(undefined, newList), nowIso()), ...keepListLocalFields(undefined) }
     if (parent === undefined || parent.deletedAt !== null || parent.secret) {
       throw new Error('Diese Liste ist nicht mehr verfügbar. Bitte wähle eine andere Liste.')
     }
@@ -882,7 +883,7 @@ export async function getHistoryForParent(parentId: string): Promise<HistoryEntr
 }
 
 /* ------------------------------------------------------------------ *
- * Gesehen-Wasserzeichen — rein lokal, nie gesynct
+ * Gesehen-Wasserzeichen — gilt für das Konto, nie Teil der Listendaten
  * ------------------------------------------------------------------ */
 
 /**
@@ -890,9 +891,11 @@ export async function getHistoryForParent(parentId: string): Promise<HistoryEntr
  *
  * Setzt bewusst WEDER `updatedAt` NOCH `dirty` noch einen Feld-Zeitstempel —
  * Hinschauen ist keine Bearbeitung. Deshalb direktes `put` statt `upsertList`:
- * Der Upsert würde die Zeile schmutzig machen und einen Push auslösen, für
- * eine Information, die den Server gar nichts angeht. Dasselbe Muster wie
- * `markListSeen` im ShlisteDao der Android-App.
+ * Der Upsert würde die Zeile schmutzig machen und die Listendaten pushen, für
+ * eine Information, die dort nicht hingehört. Ans Konto geht der Zeitpunkt
+ * über einen eigenen Weg: `seenPushedAt` bleibt stehen, damit liegt `seenAt`
+ * darüber und steht zum Hochladen an (siehe `app/db/seen.ts`). Dasselbe Muster
+ * wie `markListSeen` im ShlisteDao der Android-App.
  */
 export async function markListSeen(listId: string): Promise<void> {
   const db = await getDb()
@@ -931,6 +934,24 @@ export async function countUnseenForeignChanges(listId: string, ownUserId: strin
     .filter(row => row.deletedAt === null && !row.removed)
     .filter(row => isUnseenForeignChange(row, ownUserId, seenAt))
     .length
+}
+
+/**
+ * Gesehen-Zeitpunkte, die der Server noch nicht kennt, höchstens `limit` Stück.
+ *
+ * Ein voller Lesevorgang über `lists` statt eines Index: Die Tabelle ist
+ * klein, und ein Index auf einem berechneten Vergleich zweier Felder ist in
+ * IndexedDB nicht möglich.
+ */
+export async function getPendingSeenMarks(limit: number): Promise<SeenMark[]> {
+  const rows = await (await getDb()).getAll('lists')
+  const marks: SeenMark[] = []
+  for (const row of rows) {
+    if (marks.length >= limit) break
+    const mark = pendingSeenMark(row)
+    if (mark !== null) marks.push(mark)
+  }
+  return marks
 }
 
 /* ------------------------------------------------------------------ *

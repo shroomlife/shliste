@@ -17,6 +17,7 @@ import type {
   RecipeStepRow,
 } from '../../db/schema'
 import { DIRTY } from '../../db/schema'
+import type { SeenMark } from '../../db/seen'
 import { SyncError } from './errors'
 import type { ConflictStore, DirtyRows, EntityStore, LocalDataCounts, RowStores, SyncStore } from './ports'
 import { createSyncStateStore } from './state'
@@ -83,6 +84,8 @@ function fakeSyncStore(options: {
   local?: LocalDataCounts
   lastSignedInUserId?: string | null
   pending?: number
+  /** Offene Gesehen-Zeitpunkte, die der Lauf nach dem Pull melden soll. */
+  pendingSeen?: SeenMark[]
 } = {}): FakeSyncStore {
   const rows: RowStores = {
     lists: memoryEntityStore<ListRow>(),
@@ -149,6 +152,7 @@ function fakeSyncStore(options: {
       store.removed.push(listId)
       return Promise.resolve()
     },
+    readPendingSeenMarks: () => Promise.resolve(options.pendingSeen ?? []),
   }
 
   return store
@@ -1133,5 +1137,57 @@ describe('schiefe Uhr', () => {
     await createSyncEngine({ store: fakeSyncStore(), state, request }).sync()
 
     expect(state.get().phase).not.toBe('pending')
+  })
+})
+
+/* ------------------------------------------------------------------ *
+ * Gesehen je Konto
+ * ------------------------------------------------------------------ */
+
+describe('createSyncEngine — Gesehen melden', () => {
+  const MARK: SeenMark = { listId: 'l1', seenAt: TS }
+
+  test('meldet offene Zeitpunkte NACH dem Pull', async () => {
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/push': () => PUSH_OK,
+      '/api/sync/pull': () => PULL_OK,
+      '/api/sync/seen': () => ({ marks: [MARK] }),
+    })
+
+    await createSyncEngine({ store: fakeSyncStore({ pendingSeen: [MARK] }), state: createSyncStateStore(), request }).sync()
+
+    const pfade = request.calls.map(call => call.split('?')[0])
+    expect(pfade.indexOf('/api/sync/seen')).toBeGreaterThan(pfade.indexOf('/api/sync/pull'))
+  })
+
+  test('ohne offene Zeitpunkte keine Anfrage', async () => {
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/push': () => PUSH_OK,
+      '/api/sync/pull': () => PULL_OK,
+      '/api/sync/seen': () => ({ marks: [] }),
+    })
+
+    await createSyncEngine({ store: fakeSyncStore(), state: createSyncStateStore(), request }).sync()
+
+    expect(called(request, '/api/sync/seen')).toBe(false)
+  })
+
+  test('ein gescheitertes Melden lässt den Abgleich nicht scheitern', async () => {
+    const request = fakeRequest({
+      '/api/auth/me': () => SESSION,
+      '/api/sync/push': () => PUSH_OK,
+      '/api/sync/pull': () => PULL_OK,
+      '/api/sync/seen': () => {
+        throw new SyncError('kaputt', { kind: 'transient', status: 503 })
+      },
+    })
+    const state = createSyncStateStore()
+
+    await createSyncEngine({ store: fakeSyncStore({ pendingSeen: [MARK] }), state, request }).sync()
+
+    expect(called(request, '/api/sync/seen')).toBe(true)
+    expect(state.get().phase).toBe('idle')
   })
 })
