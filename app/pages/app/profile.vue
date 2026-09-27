@@ -7,12 +7,13 @@
  * Antwort wartet; der Abgleich steht zuletzt und zurückgenommen.
  */
 import { getListsForView, getRecipesForView } from '../../db/repositories'
+import { describeSyncError, toSyncError } from '../../sync/engine/errors'
 import { requestJson, SYNC_ENDPOINTS } from '../../sync/engine/transport'
 import { formatRelativeTime } from '../../utils/relativeTime'
 
 definePageMeta({ layout: 'app' })
 
-const { profile, isSignedIn, signOut } = useAuth()
+const { profile, isSignedIn, signOut, updateDisplayName } = useAuth()
 const { snapshot, display, dataVersion, realtime, requestSync } = useSync()
 const { badges, reload: reloadBadges } = useBadges()
 
@@ -93,6 +94,53 @@ watch(isSignedIn, (signedIn) => {
 watch(dataVersion, () => {
   void reloadLocal()
 })
+
+/* ------------------------------------------------------------------ *
+ * Eigener Name
+ * ------------------------------------------------------------------ */
+
+/** Wie die API: Mehr Zeichen würde sie ohnehin abschneiden. */
+const DISPLAY_NAME_MAX_LENGTH = 40
+
+const nameDraft = ref('')
+const isSavingName = ref(false)
+const nameError = ref<string | null>(null)
+
+// Vorbelegt mit dem gezeigten Namen. Ob das ein eigener oder der von Google
+// ist, sagt die Anmeldung nicht. Deshalb bleibt Speichern ohne Änderung
+// gesperrt, sonst würde der Google-Name ungewollt zum eigenen.
+watch(() => profile.value?.displayName, (name) => {
+  nameDraft.value = name ?? ''
+}, { immediate: true })
+
+const isNameUnchanged = computed(() => nameDraft.value.trim() === (profile.value?.displayName ?? ''))
+
+function describeNameError(cause: unknown): string {
+  const error = toSyncError(cause)
+  switch (error.kind) {
+    case 'auth': return describeSyncError(error)
+    case 'offline': return 'Keine Verbindung. Dein Name wurde nicht gespeichert.'
+    case 'rateLimited': return 'Zu viele Anfragen. Versuch es gleich noch einmal.'
+    default: return 'Dein Name konnte nicht gespeichert werden. Versuch es später noch einmal.'
+  }
+}
+
+async function saveName(): Promise<void> {
+  if (isNameUnchanged.value || isSavingName.value) return
+  isSavingName.value = true
+  nameError.value = null
+  try {
+    await updateDisplayName(nameDraft.value)
+    // Auch wenn der gekürzte Name dem alten gleicht und der Beobachter schweigt
+    nameDraft.value = profile.value?.displayName ?? ''
+  }
+  catch (cause) {
+    nameError.value = describeNameError(cause)
+  }
+  finally {
+    isSavingName.value = false
+  }
+}
 
 /* ------------------------------------------------------------------ *
  * Darstellung
@@ -235,6 +283,56 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
           </UButton>
           <AuthButton v-else />
         </div>
+
+        <!-- Eigener Name -->
+        <form
+          v-if="isSignedIn"
+          class="mt-3 rounded-xl p-4 shadow-sm"
+          style="background-color: var(--md-surface); border: 1px solid var(--md-outline-variant)"
+          @submit.prevent="saveName"
+        >
+          <label
+            for="display-name"
+            class="text-[1rem] font-bold"
+          >
+            Dein Name
+          </label>
+          <p
+            class="pt-1 text-[1rem]"
+            style="color: var(--md-on-surface-variant)"
+          >
+            So sehen dich andere an deinen Einträgen in geteilten Listen. Lässt du das Feld leer, gilt wieder dein Name aus dem Google-Konto.
+          </p>
+          <p
+            v-if="nameError"
+            class="mt-3 rounded-lg px-3 py-2 text-[1rem]"
+            style="background: var(--md-delete-surface); color: var(--md-delete-content)"
+            role="alert"
+          >
+            {{ nameError }}
+          </p>
+          <div class="flex items-center gap-2 pt-3">
+            <UInput
+              id="display-name"
+              v-model="nameDraft"
+              :maxlength="DISPLAY_NAME_MAX_LENGTH"
+              placeholder="Name aus dem Google-Konto"
+              size="lg"
+              autocomplete="nickname"
+              class="grow"
+              :ui="{ root: 'w-full' }"
+            />
+            <UButton
+              type="submit"
+              :loading="isSavingName"
+              :disabled="isNameUnchanged"
+              size="lg"
+              class="shrink-0 rounded-xl font-bold"
+            >
+              Speichern
+            </UButton>
+          </div>
+        </form>
       </section>
 
       <!-- Badges -->

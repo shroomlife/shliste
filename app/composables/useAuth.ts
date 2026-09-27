@@ -1,5 +1,6 @@
 import type { UserProfile } from '#shared/types/domain'
 import { removeListsOwnedByOthers } from '../db/repositories'
+import { saveDisplayName } from '../sync/profile'
 
 /**
  * Anmeldung — der optionale Teil dieser App.
@@ -190,6 +191,20 @@ export function useAuth() {
     }
   }
 
+  /**
+   * Ändert den Namen, den andere an Einträgen in geteilten Listen sehen.
+   *
+   * Ein leerer Name heißt: wieder den aus dem Google-Konto zeigen. Übernommen
+   * wird, was der Server zurückgibt (gekürzt, oder eben der Google-Name), nicht
+   * die Eingabe. Fehler gehen wie beim Anmelden an die Oberfläche.
+   */
+  async function updateDisplayName(displayName: string): Promise<void> {
+    const names = await saveDisplayName(displayName)
+    if (profile.value !== null) {
+      profile.value = { ...profile.value, displayName: names.displayName }
+    }
+  }
+
   return {
     profile: readonly(profile),
     clientConfig: readonly(clientConfig),
@@ -199,5 +214,6 @@ export function useAuth() {
     loadSession,
     signIn,
     signOut,
+    updateDisplayName,
   }
 }

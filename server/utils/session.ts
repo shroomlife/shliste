@@ -153,6 +153,17 @@ export function persistRefreshedTokens(
   }
 }
 
+/**
+ * Schreibt nur das Anzeigeprofil neu, etwa nach dem Ändern des eigenen Namens.
+ *
+ * Die Restlaufzeit der Session steht in keinem lesbaren Cookie, deshalb die
+ * 30 Legacy-Tage. Jeder stille Refresh setzt das Profil-Cookie ohnehin wieder
+ * auf die Laufzeit des Refresh-Tokens (persistRefreshedTokens).
+ */
+export function persistProfile(event: H3Event, profile: UserProfile): void {
+  setCookie(event, PROFILE_COOKIE, JSON.stringify(profile), { ...BASE_COOKIE_OPTIONS, maxAge: LEGACY_MAX_AGE_SECONDS })
+}
+
 /** Das Session-JWT, oder undefined wenn keine Session besteht. */
 export function readSessionToken(event: H3Event): string | undefined {
   return rotatedCarry.get(event)?.sessionToken ?? getCookie(event, SESSION_COOKIE)

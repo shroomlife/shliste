@@ -41,7 +41,7 @@ export const SYNC_ENDPOINTS = {
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
 
 export interface RequestOptions {
-  method?: 'GET' | 'POST'
+  method?: 'GET' | 'POST' | 'PUT'
   /** Wird hier serialisiert. Die BFF reicht die Bytes unverändert weiter. */
   body?: unknown
   /**
