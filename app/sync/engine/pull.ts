@@ -54,6 +54,7 @@ import {
   parseStep,
 } from './entities'
 import { isRecord, parseAll, readArray, readBooleanOr, readIso, readNumber, readNumberOr } from './json'
+import type { ServerIdCollector } from '../recovery/orphan-policy'
 import type { ListRemovalStore, PullStore, RowStores } from './ports'
 import { applySeenMarks, parseSeenMark } from './seen'
 
@@ -709,6 +710,12 @@ export interface PullOutcome {
 export async function runPull(
   store: PullStore & ListRemovalStore,
   fetchPull: PullFetcher,
+  /**
+   * Sammelt die gelieferten Ids aller Seiten, für die Waisenrettung nach dem
+   * vollen Abruf der Selbstheilung. Verwertbar nur, wenn der Abruf
+   * vollständig war (`truncated === false` und `cursorAdvanced`).
+   */
+  collectServerIds?: ServerIdCollector,
 ): Promise<PullOutcome> {
   const since = await store.readCursor()
 
@@ -741,6 +748,7 @@ export async function runPull(
     requireCompletePage(raw, response)
     letzte = response
     seiten += 1
+    collectServerIds?.add(response)
 
     await applyPulledRows(store, response)
 
