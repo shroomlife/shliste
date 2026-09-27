@@ -29,6 +29,8 @@ export const SYNC_ENDPOINTS = {
   delta: '/api/sync/pull/delta',
   push: '/api/sync/push',
   migrate: '/api/sync/migrate',
+  /** Gesehen-Zeitpunkte ans Konto melden (siehe `seen.ts`). */
+  seen: '/api/sync/seen',
 } as const
 
 /**

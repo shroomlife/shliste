@@ -9,7 +9,7 @@
  *     Server leer + lokale Daten          -> einmaliger Import
  *     Server hat Daten + lokale Daten     -> Stände vergleichen, sonst Konflikt melden
  *     sonst                               -> Marker setzen und ziehen
- *   sonst: pushen (fehlertolerant), dann ziehen
+ *   sonst: pushen (fehlertolerant), dann ziehen, dann Gesehen melden (still)
  *
  * Lokale Änderungen tragen eine dauerhafte Generation. Unter der Tab-Sperre
  * wird nachgeladen, solange während des Laufs neue Arbeit dazugekommen ist.
@@ -23,6 +23,7 @@ import { computeContentHashes } from '../merge/content-hash'
 import { getAllForContentHash, getWorkGeneration, completeWorkGeneration, getSelfHealMarker, setSelfHealAttempt, setSelfHealSuccess, setLastSyncedAt } from '~/db/repositories'
 import { runPull, type PullOutcome } from './pull'
 import { runMigrate, runPush, type NoticeSink, type PushOutcome, type PushPayload } from './push'
+import { pushSeenMarksQuietly, type SeenSender } from './seen'
 import { localStore } from './store'
 import {
   phaseFromError,
@@ -243,6 +244,9 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
   const sendMigrate = (payload: PushPayload): Promise<unknown> =>
     request(SYNC_ENDPOINTS.migrate, { method: 'POST', body: payload })
 
+  const sendSeen: SeenSender = marks =>
+    request(SYNC_ENDPOINTS.seen, { method: 'POST', body: { marks } })
+
   const fetchPull = (since: IsoUtc | null, pageToken?: string): Promise<unknown> => {
     const params = new URLSearchParams()
     if (since !== null) params.set('since', since)
@@ -382,6 +386,16 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
     }
 
     const pull = await runPull(store, fetchPull)
+
+    /*
+     * Gesehen-Zeitpunkte NACH dem Pull melden: Dann stehen die Marken der
+     * anderen Geräte schon in den Zeilen, und was hinausgeht, ist nur noch,
+     * was wirklich auf diesem Gerät neuer ist. Das Ergebnis geht bewusst nicht
+     * in die Phase ein: Gesehen ist kein Inhalt, und ein gescheitertes Melden
+     * bleibt über `seenPushedAt` für den nächsten Lauf offen.
+     */
+    await pushSeenMarksQuietly(store, sendSeen)
+
     await finish(pull, push.outcome?.skippedCount ?? 0, push.error)
   }
 

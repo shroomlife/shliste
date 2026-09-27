@@ -56,25 +56,33 @@ export const CLEAN: DirtyFlag = 0
 export type Dirty<T> = T & { dirty: DirtyFlag }
 
 /**
- * Rein lokale Felder der Listenzeile — sie verlassen dieses Gerät nie.
+ * Felder der Listenzeile, die nicht zu den Listendaten gehören.
  *
  * `seenAt` ist das Gesehen-Wasserzeichen: wann diese Liste zuletzt geöffnet
  * war. Daraus zählt die Übersicht die ungesehenen Fremdänderungen — dasselbe
  * Muster wie `lastSeenAt` in der Android-App (ShlisteDao.getUnseenForeignChanges).
+ * Es gilt für das Konto und nicht nur für dieses Gerät: Es geht über den
+ * eigenen Weg `POST /sync/seen` hinaus und kommt als `seenMarks` im Pull
+ * zurück. `seenPushedAt` hält fest, bis wohin der Server Bescheid weiß. Die
+ * Regeln dazu stehen in `app/db/seen.ts`.
  *
- * NIE im Push: Die Nutzlast zählt ihre Felder explizit auf (`toPushList` in
- * `app/sync/engine/push.ts`), ein lokales Feld kann also nicht hineinrutschen.
- * NIE vom Pull überschrieben: `applyList` in `app/sync/engine/pull.ts` trägt
- * das Wasserzeichen der bestehenden Zeile ausdrücklich fort — es liest und
- * schreibt in EINER Transaktion und sieht den Vorgänger deshalb direkt.
+ * NIE im Push der Listendaten: Die Nutzlast zählt ihre Felder explizit auf
+ * (`toPushList` in `app/sync/engine/push.ts`), ein lokales Feld kann also
+ * nicht hineinrutschen. NIE vom Pull der Listendaten überschrieben: `applyList`
+ * in `app/sync/engine/pull.ts` trägt beide Felder der bestehenden Zeile
+ * ausdrücklich fort (`keepListLocalFields`) — es liest und schreibt in EINER
+ * Transaktion und sieht den Vorgänger deshalb direkt.
  *
  * Optional auf Typ-Ebene, denn IndexedDB ist schemalos: Zeilen aus der Zeit
- * vor diesem Feld tragen es nicht, und ein Versions-Bump wäre dafür falsch —
- * es gibt keinen Index und nichts zu migrieren. `undefined` bedeutet dasselbe
- * wie `null`: noch nie gesehen.
+ * vor diesen Feldern tragen sie nicht, und ein Versions-Bump wäre dafür falsch
+ * — es gibt keinen Index und nichts zu migrieren. `undefined` bedeutet
+ * dasselbe wie `null`: noch nie gesehen bzw. noch nie gemeldet. Eine
+ * Bestandszeile mit `seenAt` und ohne `seenPushedAt` gilt damit von selbst als
+ * offen und geht beim ersten Abgleich ans Konto.
  */
 export interface ListLocalFields {
   seenAt?: IsoUtc | null
+  seenPushedAt?: IsoUtc | null
 }
 
 export type ListRow = Dirty<List> & ListLocalFields
