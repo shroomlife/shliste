@@ -124,7 +124,7 @@ export type ListMemberRow = ListMember
  * in keinem Hash und sind deshalb keine `SyncTable`; gesichert werden sie
  * trotzdem, wenn ihr Elternteil in Quarantäne geht.
  */
-export type RecoveryTable = SyncTable | 'CHAT_MESSAGE' | 'HISTORY'
+export type RecoveryTable = SyncTable | 'CHAT_MESSAGE' | 'HISTORY' | 'MEMBER'
 
 /**
  * - `PENDING`: gesichert und zum erneuten Hochladen markiert
@@ -142,6 +142,7 @@ export type RecoveryPayload
     | BadgeRow
     | RecipeChatMessageRow
     | HistoryEntryRow
+    | ListMemberRow
 
 /**
  * Kopie einer Waise, bevor irgendetwas mit ihr passiert (siehe

@@ -8,6 +8,7 @@ import {
   type BadgeRow,
   type HistoryEntryRow,
   type ListItemRow,
+  type ListMemberRow,
   type ListRow,
   type RecipeChatMessageRow,
   type RecipeIngredientRow,
@@ -124,6 +125,19 @@ export function chatMessageRow(id: string, recipeId: string, overrides: Partial<
     createdAt: OLD,
     createdBy: null,
     dirty: CLEAN,
+    ...overrides,
+  }
+}
+
+export function memberRow(listId: string, userId: string, overrides: Partial<ListMemberRow> = {}): ListMemberRow {
+  return {
+    listId,
+    userId,
+    email: null,
+    displayName: null,
+    photoUrl: null,
+    role: 'member',
+    status: 'accepted',
     ...overrides,
   }
 }

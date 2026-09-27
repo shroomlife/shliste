@@ -45,6 +45,15 @@ export const RESTORED_RETENTION_MS = 30 * 24 * 60 * 60 * 1000
 const HASHED_STORES = ['lists', 'list_items', 'recipes', 'recipe_ingredients', 'recipe_steps', 'badges'] as const
 type HashedStoreName = typeof HASHED_STORES[number]
 
+const STORE_OF: Record<SyncTable, HashedStoreName> = {
+  LIST: 'lists',
+  ITEM: 'list_items',
+  RECIPE: 'recipes',
+  INGREDIENT: 'recipe_ingredients',
+  STEP: 'recipe_steps',
+  BADGE: 'badges',
+}
+
 type SecureStores = (HashedStoreName | 'sync_recovery')[]
 type SettleStores = (HashedStoreName | 'recipe_chat_messages' | 'list_members' | 'history_entries' | 'sync_recovery')[]
 
@@ -166,7 +175,7 @@ export async function settleRecoveries(
   const childrenFirst = [...result.quarantined]
     .sort((a, b) => SYNC_TABLES.indexOf(b.table) - SYNC_TABLES.indexOf(a.table))
   for (const ref of childrenFirst) {
-    await markSettled(recovery, ref, 'QUARANTINED', now)
+    await secureCurrentState(tx, ref, now)
     await removeLocally(tx, ref)
   }
 
@@ -207,7 +216,31 @@ function recoveryCopy(
   settledAt: number | null,
   serverHash: string | null,
 ): SyncRecoveryRow {
-  return { table, rowId: payload.id, payload, status, detectedAt, settledAt, serverHash }
+  return { table, rowId: rowIdOf(payload), payload, status, detectedAt, settledAt, serverHash }
+}
+
+/** Mitgliedschaften haben keine eigene Id, ihr Schlüssel ist Liste und Person. */
+function rowIdOf(payload: RecoveryPayload): string {
+  return 'id' in payload ? payload.id : `${payload.listId}:${payload.userId}`
+}
+
+/**
+ * Kurz vor dem Entfernen zählt der Stand, der gleich verschwindet. Die Kopie
+ * vom Zeitpunkt der Erkennung reicht nicht: Wer die Zeile dazwischen geändert
+ * hat, etwa eine Liste umbenannt, fände seine Änderung sonst nirgends mehr.
+ * Erkennungszeit und Serverstand der ersten Kopie bleiben erhalten.
+ */
+async function secureCurrentState(
+  tx: IDBPTransaction<ShlisteDb, SettleStores, 'readwrite'>,
+  ref: SyncRowRef,
+  now: number,
+): Promise<void> {
+  const recovery = tx.objectStore('sync_recovery')
+  const earlier = await recovery.get([ref.table, ref.id])
+  const current = await tx.objectStore(STORE_OF[ref.table]).get(ref.id)
+  const payload = current ?? earlier?.payload
+  if (payload === undefined) return
+  await recovery.put(recoveryCopy(ref.table, payload, 'QUARANTINED', earlier?.detectedAt ?? now, now, earlier?.serverHash ?? null))
 }
 
 /** Kopie zuerst, dann nur das Flag. Eine vorhandene Kopie gibt es hier nicht (`alreadyRecovered`). */
@@ -256,6 +289,7 @@ async function secureChildrenOfQuarantinedParents(
   for (const ref of quarantined) {
     if (ref.table === 'LIST') {
       await replace('ITEM', await tx.objectStore('list_items').index('by-listId').getAll(ref.id))
+      await replace('MEMBER', await tx.objectStore('list_members').index('by-listId').getAll(ref.id))
     }
     else if (ref.table === 'RECIPE') {
       await replace('INGREDIENT', await tx.objectStore('recipe_ingredients').index('by-recipeId').getAll(ref.id))

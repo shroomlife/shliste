@@ -177,7 +177,9 @@ describe('Waisenrettung im Lauf der Selbstheilung', () => {
     const list = await database().get('sync_recovery', ['LIST', 'orphan'])
     const item = await database().get('sync_recovery', ['ITEM', 'orphan-item'])
     expect(list?.status).toBe('QUARANTINED')
-    expect(list?.payload).toEqual(listRow('orphan', { name: 'Alt', ownerUserId: 'u1' }))
+    // Mit dem Stand kurz vor dem Entfernen gesichert, also samt der
+    // Markierung zum Hochladen, wie jede abgelehnte Zeile.
+    expect(list?.payload).toEqual(listRow('orphan', { name: 'Alt', ownerUserId: 'u1', dirty: DIRTY }))
     expect(item?.status).toBe('QUARANTINED')
     // Als Kind der abgelehnten Liste mit dem Stand kurz vor dem Entfernen
     // gesichert, also samt der Markierung zum Hochladen.

@@ -17,6 +17,7 @@ import {
   ingredientRow,
   itemRow,
   listRow,
+  memberRow,
   OLD,
   recipeRow,
   stepRow,
@@ -159,7 +160,7 @@ describe('settleRecoveries', () => {
     const copy = await db.get('sync_recovery', ['ITEM', 'orphan-item'])
     expect(copy?.status).toBe('QUARANTINED')
     expect(copy?.settledAt).toBe(NOW + 5)
-    expect(copy?.payload.id).toBe('orphan-item')
+    expect(copy?.payload).toMatchObject({ id: 'orphan-item' })
     expect(await statusOf('LIST', 'orphan')).toBe('QUARANTINED')
     // Alles andere bleibt.
     expect(await db.get('lists', 'known')).toBeDefined()
@@ -218,6 +219,32 @@ describe('settleRecoveries', () => {
     await settleRecoveries(db, ORPHANS, { ...NOTHING_REJECTED, lists: ['orphan'], listItems: ['orphan-item'] }, NOW + 5)
 
     expect(await db.getAll('list_members')).toEqual([])
+  })
+
+  test('die abgelehnte Zeile selbst wird mit ihrem AKTUELLEN Stand gesichert', async () => {
+    await secureAndRequeueOrphans(db, SERVER, 'abc', NOW)
+    // Zwischen Erkennung und Ablehnung benennt jemand die Liste um
+    const list = await db.get('lists', 'orphan')
+    if (list === undefined) throw new Error('Liste fehlt')
+    await db.put('lists', { ...list, name: 'Geburtstag' })
+
+    await settleRecoveries(db, ORPHANS, { ...NOTHING_REJECTED, lists: ['orphan'], listItems: ['orphan-item'] }, NOW + 5)
+
+    const copy = await db.get('sync_recovery', ['LIST', 'orphan'])
+    expect(copy?.payload).toMatchObject({ name: 'Geburtstag' })
+    expect(copy?.status).toBe('QUARANTINED')
+    expect(copy?.detectedAt).toBe(NOW)
+  })
+
+  test('die Mitglieder einer abgelehnten Liste werden vor dem Entfernen gesichert', async () => {
+    await db.put('list_members', memberRow('orphan', 'user-2'))
+    await secureAndRequeueOrphans(db, SERVER, 'abc', NOW)
+
+    await settleRecoveries(db, ORPHANS, { ...NOTHING_REJECTED, lists: ['orphan'], listItems: ['orphan-item'] }, NOW + 5)
+
+    const copy = await db.get('sync_recovery', ['MEMBER', 'orphan:user-2'])
+    expect(copy?.payload).toMatchObject({ listId: 'orphan', userId: 'user-2' })
+    expect(copy?.status).toBe('QUARANTINED')
   })
 
   test('der Verlauf einer abgelehnten Liste geht mit, als Kopie gesichert', async () => {
