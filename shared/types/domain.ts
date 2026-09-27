@@ -237,3 +237,14 @@ export interface UserProfile {
   displayName: string | null
   photoUrl: string | null
 }
+
+/**
+ * Antwort auf das Ändern des eigenen Namens (PUT /sync/profile der API).
+ *
+ * `displayName` ist der Name, den andere sehen: der eigene, sonst der aus dem
+ * Google-Konto. `customDisplayName` ist `null`, wenn kein eigener gesetzt ist.
+ */
+export interface ProfileNames {
+  displayName: string | null
+  customDisplayName: string | null
+}

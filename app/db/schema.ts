@@ -24,10 +24,15 @@ import type {
   RecipeIngredient,
   RecipeStep,
 } from '../../shared/types/domain'
+import type { SyncTable } from '../sync/recovery/orphan-policy'
 
 export const DB_NAME = 'shliste'
 
 /**
+ * Version 4: neuer, leerer Store `sync_recovery` für die Waisenrettung
+ * (Gegenstück zu Androids Tabelle `sync_recovery`, Room v33). Kein
+ * Datennachtrag, bestehende Stores bleiben unberührt.
+ *
  * Version 3: die Link-Felder an `list_items` (`url` plus die drei
  * Server-Spiegel). Kein neuer Store und kein neuer Index — der Sprung
  * existiert allein für den DATENnachtrag, siehe `backfillLinkFields`.
@@ -36,7 +41,7 @@ export const DB_NAME = 'shliste'
  * Gegenstück zu Androids `history_entries`-Tabelle). Version 1 war der
  * Erststand mit den acht Stores plus `sync_meta`.
  */
-export const DB_VERSION = 3
+export const DB_VERSION = 4
 
 /**
  * 1 = diese Zeile wurde lokal geändert und muss gepusht werden.
@@ -56,25 +61,33 @@ export const CLEAN: DirtyFlag = 0
 export type Dirty<T> = T & { dirty: DirtyFlag }
 
 /**
- * Rein lokale Felder der Listenzeile — sie verlassen dieses Gerät nie.
+ * Felder der Listenzeile, die nicht zu den Listendaten gehören.
  *
  * `seenAt` ist das Gesehen-Wasserzeichen: wann diese Liste zuletzt geöffnet
  * war. Daraus zählt die Übersicht die ungesehenen Fremdänderungen — dasselbe
  * Muster wie `lastSeenAt` in der Android-App (ShlisteDao.getUnseenForeignChanges).
+ * Es gilt für das Konto und nicht nur für dieses Gerät: Es geht über den
+ * eigenen Weg `POST /sync/seen` hinaus und kommt als `seenMarks` im Pull
+ * zurück. `seenPushedAt` hält fest, bis wohin der Server Bescheid weiß. Die
+ * Regeln dazu stehen in `app/db/seen.ts`.
  *
- * NIE im Push: Die Nutzlast zählt ihre Felder explizit auf (`toPushList` in
- * `app/sync/engine/push.ts`), ein lokales Feld kann also nicht hineinrutschen.
- * NIE vom Pull überschrieben: `applyList` in `app/sync/engine/pull.ts` trägt
- * das Wasserzeichen der bestehenden Zeile ausdrücklich fort — es liest und
- * schreibt in EINER Transaktion und sieht den Vorgänger deshalb direkt.
+ * NIE im Push der Listendaten: Die Nutzlast zählt ihre Felder explizit auf
+ * (`toPushList` in `app/sync/engine/push.ts`), ein lokales Feld kann also
+ * nicht hineinrutschen. NIE vom Pull der Listendaten überschrieben: `applyList`
+ * in `app/sync/engine/pull.ts` trägt beide Felder der bestehenden Zeile
+ * ausdrücklich fort (`keepListLocalFields`) — es liest und schreibt in EINER
+ * Transaktion und sieht den Vorgänger deshalb direkt.
  *
  * Optional auf Typ-Ebene, denn IndexedDB ist schemalos: Zeilen aus der Zeit
- * vor diesem Feld tragen es nicht, und ein Versions-Bump wäre dafür falsch —
- * es gibt keinen Index und nichts zu migrieren. `undefined` bedeutet dasselbe
- * wie `null`: noch nie gesehen.
+ * vor diesen Feldern tragen sie nicht, und ein Versions-Bump wäre dafür falsch
+ * — es gibt keinen Index und nichts zu migrieren. `undefined` bedeutet
+ * dasselbe wie `null`: noch nie gesehen bzw. noch nie gemeldet. Eine
+ * Bestandszeile mit `seenAt` und ohne `seenPushedAt` gilt damit von selbst als
+ * offen und geht beim ersten Abgleich ans Konto.
  */
 export interface ListLocalFields {
   seenAt?: IsoUtc | null
+  seenPushedAt?: IsoUtc | null
 }
 
 export type ListRow = Dirty<List> & ListLocalFields
@@ -105,6 +118,54 @@ export type HistoryEntryRow = Dirty<HistoryEntry>
  * man auch nicht als schmutzig markieren.
  */
 export type ListMemberRow = ListMember
+
+/**
+ * Die Tabelle einer gesicherten Zeile. Chat-Nachrichten und Verlauf stehen
+ * in keinem Hash und sind deshalb keine `SyncTable`; gesichert werden sie
+ * trotzdem, wenn ihr Elternteil in Quarantäne geht.
+ */
+export type RecoveryTable = SyncTable | 'CHAT_MESSAGE' | 'HISTORY' | 'MEMBER'
+
+/**
+ * - `PENDING`: gesichert und zum erneuten Hochladen markiert
+ * - `RESTORED`: der Server hat die Zeile angenommen
+ * - `QUARANTINED`: der Server hat sie abgelehnt; lokal entfernt, die Kopie bleibt
+ */
+export type RecoveryStatus = 'PENDING' | 'RESTORED' | 'QUARANTINED'
+
+export type RecoveryPayload
+  = | ListRow
+    | ListItemRow
+    | RecipeRow
+    | RecipeIngredientRow
+    | RecipeStepRow
+    | BadgeRow
+    | RecipeChatMessageRow
+    | HistoryEntryRow
+    | ListMemberRow
+
+/**
+ * Kopie einer Waise, bevor irgendetwas mit ihr passiert (siehe
+ * `app/sync/recovery/orphan-policy.ts`).
+ *
+ * `payload` ist die vollständige Zeile, samt `fieldTimestamps`. Damit lässt
+ * sich jede Zeile auch dann noch zurückholen, wenn sie lokal entfernt wurde.
+ *
+ * Eine Zeile je Tabelle und Id (zusammengesetzter Schlüssel): Wer hier steht,
+ * geht nie ein zweites Mal hinaus. Das ist die Sperre gegen eine
+ * Rettungsschleife.
+ */
+export interface SyncRecoveryRow {
+  table: RecoveryTable
+  rowId: string
+  payload: RecoveryPayload
+  status: RecoveryStatus
+  /** Millisekunden seit Epoch, wie in Android. */
+  detectedAt: number
+  settledAt: number | null
+  /** Serverstand (Inhalts-Hash) zum Zeitpunkt der Erkennung, für die Diagnose. */
+  serverHash: string | null
+}
 
 /**
  * Die Schlüssel des Key-Value-Stores mit ihren Werttypen.
@@ -248,6 +309,15 @@ export interface ShlisteDb extends DBSchema {
     key: SyncMetaKey
     value: SyncMetaValue
   }
+  /**
+   * Die Waisenrettung. Schlüssel ist `[table, rowId]`, `by-status` findet die
+   * offenen und die abgelaufenen geretteten Kopien.
+   */
+  sync_recovery: {
+    key: [string, string]
+    value: SyncRecoveryRow
+    indexes: { 'by-status': RecoveryStatus }
+  }
 }
 
 /**
@@ -318,6 +388,12 @@ export function createSchema(db: IDBPDatabase<ShlisteDb>): void {
 
   if (!db.objectStoreNames.contains('sync_meta')) {
     db.createObjectStore('sync_meta')
+  }
+
+  // Version 4: die Waisenrettung.
+  if (!db.objectStoreNames.contains('sync_recovery')) {
+    const recovery = db.createObjectStore('sync_recovery', { keyPath: ['table', 'rowId'] })
+    recovery.createIndex('by-status', 'status')
   }
 }
 

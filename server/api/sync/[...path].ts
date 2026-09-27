@@ -46,6 +46,7 @@ const ALLOWED_ROUTES: ReadonlySet<string> = new Set([
   'GET /pull/delta',
   'POST /push',
   'POST /migrate',
+  'POST /seen',
   'POST /realtime/ticket',
   'GET /members/contacts',
   'POST /members/add',

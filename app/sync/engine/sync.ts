@@ -9,7 +9,7 @@
  *     Server leer + lokale Daten          -> einmaliger Import
  *     Server hat Daten + lokale Daten     -> Stände vergleichen, sonst Konflikt melden
  *     sonst                               -> Marker setzen und ziehen
- *   sonst: pushen (fehlertolerant), dann ziehen
+ *   sonst: pushen (fehlertolerant), dann ziehen, dann Gesehen melden (still)
  *
  * Lokale Änderungen tragen eine dauerhafte Generation. Unter der Tab-Sperre
  * wird nachgeladen, solange während des Laufs neue Arbeit dazugekommen ist.
@@ -23,6 +23,7 @@ import { computeContentHashes } from '../merge/content-hash'
 import { getAllForContentHash, getWorkGeneration, completeWorkGeneration, getSelfHealMarker, setSelfHealAttempt, setSelfHealSuccess, setLastSyncedAt } from '~/db/repositories'
 import { runPull, type PullOutcome } from './pull'
 import { runMigrate, runPush, type NoticeSink, type PushOutcome, type PushPayload } from './push'
+import { pushSeenMarksQuietly, type SeenSender } from './seen'
 import { localStore } from './store'
 import {
   phaseFromError,
@@ -36,6 +37,7 @@ import { requestJson, SYNC_ENDPOINTS, type RequestOptions } from './transport'
 import { runAsLeader } from './leader'
 import { evaluateIntegrity } from './integrity'
 import { describeClockSkew, judgeClockSkew } from './clock-skew'
+import { createServerIdCollector, type ServerIdCollector } from '../recovery/orphan-policy'
 
 /* ------------------------------------------------------------------ *
  * Antworten, die nur hier gebraucht werden
@@ -243,6 +245,9 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
   const sendMigrate = (payload: PushPayload): Promise<unknown> =>
     request(SYNC_ENDPOINTS.migrate, { method: 'POST', body: payload })
 
+  const sendSeen: SeenSender = marks =>
+    request(SYNC_ENDPOINTS.seen, { method: 'POST', body: { marks } })
+
   const fetchPull = (since: IsoUtc | null, pageToken?: string): Promise<unknown> => {
     const params = new URLSearchParams()
     if (since !== null) params.set('since', since)
@@ -269,6 +274,31 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
     catch (cause) {
       return { outcome: null, error: toSyncError(cause) }
     }
+  }
+
+  /**
+   * Rettet Waisen nach dem vollen Abruf der Selbstheilung.
+   *
+   * Der volle Abruf überschreibt nur, er löscht nie. Was lokal als
+   * synchronisiert gilt und dem Server fehlt, heilt er also nicht, und die
+   * Heilung liefe alle zwölf Stunden erfolglos erneut an. Solche Waisen werden
+   * gesichert und gleich erneut hochgeladen; der Server entscheidet (siehe
+   * `app/sync/recovery/orphan-policy.ts`). Die Prüfung danach macht `finish`.
+   *
+   * Nur nach einem VOLLSTÄNDIGEN Abruf: Fehlt auch nur eine Seite, sähe jede
+   * Zeile darauf wie eine Waise aus.
+   *
+   * @returns der Fehler des Pushs, sonst `null`
+   */
+  const rescueOrphans = async (
+    pull: PullOutcome,
+    serverIds: ServerIdCollector,
+    serverHash: string | null,
+  ): Promise<SyncError | null> => {
+    if (pull.truncated || !pull.cursorAdvanced) return null
+    const requeued = await store.secureOrphans(serverIds.snapshot(), serverHash)
+    if (requeued === 0) return null
+    return (await pushTolerantly()).error
   }
 
   /**
@@ -382,6 +412,16 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
     }
 
     const pull = await runPull(store, fetchPull)
+
+    /*
+     * Gesehen-Zeitpunkte NACH dem Pull melden: Dann stehen die Marken der
+     * anderen Geräte schon in den Zeilen, und was hinausgeht, ist nur noch,
+     * was wirklich auf diesem Gerät neuer ist. Das Ergebnis geht bewusst nicht
+     * in die Phase ein: Gesehen ist kein Inhalt, und ein gescheitertes Melden
+     * bleibt über `seenPushedAt` für den nächsten Lauf offen.
+     */
+    await pushSeenMarksQuietly(store, sendSeen)
+
     await finish(pull, push.outcome?.skippedCount ?? 0, push.error)
   }
 
@@ -451,7 +491,10 @@ export function createSyncEngine(deps: SyncEngineDeps): SyncEngine {
         await deps.integrity.attempt(Date.now())
         // Unter derselben Web-Sperre. Vollabruf führt zusammen und löscht keine lokalen Daten.
         await deps.integrity.resetCursor()
-        await finish(await runPull(store, fetchPull), notSyncedCount, null, true)
+        const serverIds = createServerIdCollector()
+        const vollabruf = await runPull(store, fetchPull, serverIds)
+        const rettungsFehler = await rescueOrphans(vollabruf, serverIds, status.contentHashV2)
+        await finish(vollabruf, notSyncedCount, rettungsFehler, true)
         return
       }
       if (verdict.kind === 'in-sync' && repairedThisRun && status.contentHashV2 !== null) {

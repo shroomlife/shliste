@@ -39,8 +39,8 @@ const altzeile: StoredListItemRow = {
 }
 
 describe('DB_VERSION', () => {
-  test('steht auf 3 — die Link-Felder sind der Grund', () => {
-    expect(DB_VERSION).toBe(3)
+  test('steht auf 4 — die Waisenrettung ist der Grund, die Link-Felder kamen mit 3', () => {
+    expect(DB_VERSION).toBe(4)
   })
 })
 

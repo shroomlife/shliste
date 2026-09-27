@@ -10,8 +10,8 @@ import { attachBffProof } from './bffProof'
 import type { FetchResponse } from 'ofetch'
 import { signRequest } from './apiSignature'
 
-/** Mehr braucht die BFF nicht: alle erlaubten Routen sind GET oder POST. */
-export type ApiMethod = 'GET' | 'POST'
+/** Mehr braucht die BFF nicht: GET und POST, PUT nur für den eigenen Namen. */
+export type ApiMethod = 'GET' | 'POST' | 'PUT'
 
 export interface ApiFetchOptions {
   timeoutMs?: number

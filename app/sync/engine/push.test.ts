@@ -24,6 +24,7 @@ import type {
 import { CLEAN, DIRTY } from '../../db/schema'
 import { compareIso, nowIso } from '../../db/timestamps'
 import type { DirtyRows, EntityStore, PushStore, RowStores } from './ports'
+import type { RejectedIds, SyncRowRef } from '../recovery/orphan-policy'
 import {
   PUSH_BLOCK_LIMITS,
   buildPushPayload,
@@ -420,6 +421,8 @@ function memoryEntityStore<TRow extends { id: string }>(rows: TRow[] = []): Enti
 
 interface FakePushStore extends PushStore {
   cleared: { store: string, ids: readonly string[], snapshot: IsoUtc }[]
+  /** Mitschrift der Einordnung offener Waisenrettungen, samt Zeitpunkt relativ zu `cleared`. */
+  settled: { pushed: readonly SyncRowRef[], skipped: RejectedIds, clearedBefore: number }[]
   readDirtyAt: IsoUtc | null
   lists: Map<string, ListRow>
   items: Map<string, ListItemRow>
@@ -445,6 +448,7 @@ function fakePushStore(dirty: Partial<DirtyRows> = {}, local: { lists?: ListRow[
   const store: FakePushStore = {
     rows,
     cleared: [],
+    settled: [],
     readDirtyAt: null,
     lists: listStore.all,
     items: itemStore.all,
@@ -454,6 +458,10 @@ function fakePushStore(dirty: Partial<DirtyRows> = {}, local: { lists?: ListRow[
     },
     clearDirty: (name, ids, snapshot) => {
       store.cleared.push({ store: name, ids, snapshot })
+      return Promise.resolve()
+    },
+    settleRecoveries: (pushed, skipped) => {
+      store.settled.push({ pushed, skipped, clearedBefore: store.cleared.length })
       return Promise.resolve()
     },
   }
@@ -518,6 +526,34 @@ describe('runPush', () => {
 
     expect(calls).toBe(0)
     expect(outcome.blocks).toBe(0)
+    expect(store.cleared).toHaveLength(0)
+  })
+
+  test('Waisenrettungen werden mit den gesendeten Zeilen eingeordnet, BEVOR die Flags fallen', async () => {
+    // Die Reihenfolge ersetzt die gemeinsame Transaktion von Android: Ein
+    // Abbruch dazwischen lässt höchstens eine gerettete Zeile schmutzig.
+    const store = fakePushStore({ lists: [dirtyList('l1')], items: [dirtyItem('i1', 'l1')] })
+
+    await runPush(store, () => Promise.resolve({
+      ...OK_RESPONSE,
+      skippedIds: { ...OK_RESPONSE.skippedIds, listItems: ['i1'] },
+    }))
+
+    expect(store.settled).toHaveLength(1)
+    expect(store.settled[0]?.pushed).toEqual([{ table: 'LIST', id: 'l1' }, { table: 'ITEM', id: 'i1' }])
+    expect(store.settled[0]?.skipped.listItems).toEqual(['i1'])
+    expect(store.settled[0]?.clearedBefore).toBe(0)
+    expect(store.cleared.length).toBeGreaterThan(0)
+  })
+
+  test('scheitert ein Block, wird nichts eingeordnet', async () => {
+    // Ohne vollständige Antwort gibt es kein Urteil; die Zeilen bleiben
+    // schmutzig und die Rettung offen, der nächste Push entscheidet.
+    const store = fakePushStore({ lists: [dirtyList('l1')] })
+
+    await expect(runPush(store, () => Promise.reject(new Error('Netz weg')))).rejects.toThrow('Netz weg')
+
+    expect(store.settled).toHaveLength(0)
     expect(store.cleared).toHaveLength(0)
   })
 

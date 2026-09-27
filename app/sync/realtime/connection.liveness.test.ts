@@ -10,19 +10,33 @@
  * Die reinen Bausteine (Stream-Ids, Backoff, Adressbau) stehen in
  * `connection.test.ts`.
  */
-import { afterEach, beforeEach, describe, expect, jest, mock, test } from 'bun:test'
+import { afterAll, afterEach, beforeEach, describe, expect, jest, mock, test } from 'bun:test'
+import * as realRepositories from '~/db/repositories'
 
 // Ohne diesen Ersatz würde `getLastEventId()` auf IndexedDB warten, das es
 // außerhalb eines Browsers nicht gibt — der Aufruf löste sich nie auf und der
 // Verbindungsaufbau käme nie über sein erstes `await` hinaus.
+//
+// `mock.module` wirkt für den GANZEN Testprozess und überlebt diese Datei.
+// Deshalb trägt der Ersatz alle Exporte des echten Moduls und ersetzt nur die
+// beiden, die hier gebraucht werden, und wird am Ende zurückgestellt. Vorher
+// lieferte er nur diese zwei; lief eine andere Testdatei danach, fehlten ihr
+// die übrigen Funktionen, und das Ergebnis hing von der Reihenfolge ab.
+// Gemerkt werden die WERTE (Spread), nicht der Namensraum: ES-Module haben
+// Live Bindings, ein gemerkter Namensraum zeigte später auf den Ersatz.
+const originalRepositories = { ...realRepositories }
 let gespeicherterCursor: string | null = null
 mock.module('~/db/repositories', () => ({
+  ...originalRepositories,
   getLastEventId: () => Promise.resolve(gespeicherterCursor),
   setLastEventId: (value: string | null) => {
     gespeicherterCursor = value
     return Promise.resolve()
   },
 }))
+afterAll(() => {
+  mock.module('~/db/repositories', () => originalRepositories)
+})
 
 const {
   createRealtimeConnection,

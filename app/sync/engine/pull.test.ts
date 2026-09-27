@@ -908,3 +908,120 @@ describe('Blätterung einer gekappten Antwort', () => {
     expect(outcome.cursorAdvanced).toBe(true)
   })
 })
+
+/* ------------------------------------------------------------------ *
+ * Gesehen je Konto
+ * ------------------------------------------------------------------ */
+
+describe('runPull — Gesehen-Marken', () => {
+  const SEEN_EARLY: IsoUtc = '2026-02-01T08:00:00.000Z'
+  const SEEN_LATE: IsoUtc = '2026-02-10T08:00:00.000Z'
+
+  test('eine Liste aus dem Pull behält seenAt UND seenPushedAt', async () => {
+    // Ohne seenPushedAt gälte ein längst gemeldeter Zeitpunkt nach jedem
+    // Pull wieder als offen und ginge bei jedem Abgleich erneut hinaus.
+    const store = fakePullStore({ lists: [localList({ seenAt: SEEN_LATE, seenPushedAt: SEEN_EARLY })] })
+
+    await runPull(store, () => Promise.resolve(pullBody({ lists: [serverList()] })))
+
+    const row = store.lists.get('l1')
+    expect(row?.name).toBe('Server-Liste')
+    expect(row?.seenAt).toBe(SEEN_LATE)
+    expect(row?.seenPushedAt).toBe(SEEN_EARLY)
+  })
+
+  test('eine Bestandszeile ohne die Felder bekommt null statt undefined', async () => {
+    const store = fakePullStore({ lists: [localList()] })
+
+    await runPull(store, () => Promise.resolve(pullBody({ lists: [serverList()] })))
+
+    expect(store.lists.get('l1')?.seenAt).toBeNull()
+    expect(store.lists.get('l1')?.seenPushedAt).toBeNull()
+  })
+
+  test('eine Marke eines anderen Geräts wird übernommen und gilt als gemeldet', async () => {
+    const store = fakePullStore({ lists: [localList({ seenAt: SEEN_EARLY, seenPushedAt: SEEN_EARLY })] })
+
+    await runPull(store, () => Promise.resolve(pullBody({
+      seenMarks: [{ listId: 'l1', seenAt: SEEN_LATE }],
+    })))
+
+    expect(store.lists.get('l1')?.seenAt).toBe(SEEN_LATE)
+    expect(store.lists.get('l1')?.seenPushedAt).toBe(SEEN_LATE)
+  })
+
+  test('eine ältere Marke dreht einen neueren lokalen Zeitpunkt nicht zurück', async () => {
+    const store = fakePullStore({ lists: [localList({ seenAt: SEEN_LATE, seenPushedAt: null })] })
+
+    await runPull(store, () => Promise.resolve(pullBody({
+      seenMarks: [{ listId: 'l1', seenAt: SEEN_EARLY }],
+    })))
+
+    // seenAt bleibt, und weil es über seenPushedAt liegt, bleibt es offen.
+    expect(store.lists.get('l1')?.seenAt).toBe(SEEN_LATE)
+    expect(store.lists.get('l1')?.seenPushedAt).toBe(SEEN_EARLY)
+  })
+
+  test('die Marke verändert weder dirty noch updatedAt', async () => {
+    const store = fakePullStore({ lists: [localList({ dirty: DIRTY, updatedAt: OLD })] })
+
+    await runPull(store, () => Promise.resolve(pullBody({
+      seenMarks: [{ listId: 'l1', seenAt: SEEN_LATE }],
+    })))
+
+    expect(store.lists.get('l1')?.dirty).toBe(DIRTY)
+    expect(store.lists.get('l1')?.updatedAt).toBe(OLD)
+  })
+
+  test('verglichen wird als Zeitpunkt: ohne Millisekunden gilt derselbe Moment nicht als neuer', async () => {
+    // Als Zeichenkette wäre "…08:00:00Z" größer als "…08:00:00.000Z".
+    const store = fakePullStore({ lists: [localList({ seenAt: SEEN_LATE, seenPushedAt: SEEN_LATE })] })
+
+    await runPull(store, () => Promise.resolve(pullBody({
+      seenMarks: [{ listId: 'l1', seenAt: '2026-02-10T08:00:00Z' }],
+    })))
+
+    expect(store.lists.get('l1')?.seenAt).toBe(SEEN_LATE)
+    expect(store.lists.get('l1')?.seenPushedAt).toBe(SEEN_LATE)
+  })
+
+  test('eine Marke für eine unbekannte Liste legt keine Zeile an', async () => {
+    const store = fakePullStore()
+
+    await runPull(store, () => Promise.resolve(pullBody({
+      seenMarks: [{ listId: 'fremd', seenAt: SEEN_LATE }],
+    })))
+
+    expect(store.lists.has('fremd')).toBe(false)
+  })
+
+  test('eine Marke auf Seite 1 trifft ihre Liste von Seite 2', async () => {
+    const store = fakePullStore()
+    let seite = 0
+
+    await runPull(store, () => {
+      seite += 1
+      return Promise.resolve(seite === 1
+        ? pullBody({ truncated: true, nextPageToken: 'seite-1', seenMarks: [{ listId: 'l2', seenAt: SEEN_LATE }] })
+        : pullBody({ lists: [serverList({ id: 'l2' })] }))
+    })
+
+    expect(store.lists.get('l2')?.seenAt).toBe(SEEN_LATE)
+    expect(store.lists.get('l2')?.seenPushedAt).toBe(SEEN_LATE)
+  })
+
+  test('eine unlesbare Marke fällt weg, ohne den Abgleich zu brechen', async () => {
+    const store = fakePullStore({ cursor: OLD, lists: [localList()] })
+
+    const outcome = await runPull(store, () => Promise.resolve(pullBody({
+      seenMarks: [{ listId: 'l1', seenAt: 'gestern' }, { seenAt: SEEN_LATE }, 'kaputt'],
+    })))
+
+    expect(outcome.cursorAdvanced).toBe(true)
+    expect(store.lists.get('l1')?.seenAt ?? null).toBeNull()
+  })
+
+  test('ein Server ohne das Feld liefert keine Marken', () => {
+    expect(parsePullResponse(pullBody()).seenMarks).toEqual([])
+  })
+})

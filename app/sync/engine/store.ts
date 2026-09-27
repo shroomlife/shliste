@@ -1,8 +1,9 @@
 /**
  * Die Anbindung der Ports an die lokale Datenbank.
  *
- * Alle Datenbankzugriffe laufen über `app/db/repositories.ts`, auch die
- * rohen Lese- und Schreibpaare für den Abgleich. Die brauchen einen eigenen
+ * Alle Datenbankzugriffe laufen über `app/db/repositories.ts` (die
+ * Waisenrettung über `app/db/recovery.ts`), auch die rohen Lese- und
+ * Schreibpaare für den Abgleich. Die brauchen einen eigenen
  * Satz, weil die Funktionen für den normalen Betrieb hier falsch wären:
  * `upsert*` setzt `dirty = 1` und stempelt `updatedAt` auf jetzt — genau
  * verkehrt für eine Zeile, die gerade vom Server kommt und ihre
@@ -38,6 +39,7 @@ import {
   getHasMigrated,
   getLastSignedInUserId,
   getLastSyncedAt,
+  getPendingSeenMarks,
   getListsForView,
   getRecipesForView,
   clearDirtyOnDeleted,
@@ -67,6 +69,9 @@ import type {
   SyncStore,
 } from './ports'
 import { mutateRow } from '../../db/repositories'
+import { getDb } from '../../db/client'
+import { secureAndRequeueOrphans, settleRecoveries } from '../../db/recovery'
+import { SYNC_TABLES, type IdsByTable, type RejectedIds, type SyncRowRef } from '../recovery/orphan-policy'
 
 /*
  * Die sieben Zeilenspeicher.
@@ -161,6 +166,32 @@ async function isListDirtyWithItems(listId: string): Promise<boolean> {
   return await countDirtyItemsForList(listId) > 0
 }
 
+/*
+ * Die Waisenrettung. Die PWA hat keinen Diagnosebericht wie Android
+ * (`SyncDiagnostics`); jeder Schritt geht deshalb in die Konsole, und die
+ * Kopien in `sync_recovery` tragen Status und Zeitpunkte selbst. Kein Dialog:
+ * Die Rettung läuft still (Selbstheilung statt Dialog).
+ */
+async function secureOrphans(fromServer: IdsByTable, serverHash: string | null): Promise<number> {
+  const orphans = await secureAndRequeueOrphans(await getDb(), fromServer, serverHash, Date.now())
+  if (orphans.length > 0) {
+    const perTable = SYNC_TABLES
+      .map(table => [table, orphans.filter(ref => ref.table === table).length] as const)
+      .filter(([, count]) => count > 0)
+      .map(([table, count]) => `${table}=${count}`)
+      .join(', ')
+    console.warn(`[sync] Waisen gesichert und zum Hochladen markiert: ${perTable}`)
+  }
+  return orphans.length
+}
+
+async function settlePushedRecoveries(pushed: readonly SyncRowRef[], skipped: RejectedIds): Promise<void> {
+  const result = await settleRecoveries(await getDb(), pushed, skipped, Date.now())
+  if (result !== null) {
+    console.warn(`[sync] Waisen eingeordnet: ${result.restored.length} gerettet, ${result.quarantined.length} in Quarantäne`)
+  }
+}
+
 /**
  * Der Standard-Port: die echte IndexedDB dieses Browsers.
  *
@@ -172,6 +203,8 @@ export const localStore: SyncStore & RealtimeStore & ConflictStore = {
   readDirty,
   clearDirty: (store: DirtyStoreName, ids: readonly string[], snapshot: IsoUtc) =>
     clearDirtyFlags(store, ids, snapshot),
+  settleRecoveries: settlePushedRecoveries,
+  secureOrphans,
   replaceMembers: (listId: string, members: readonly ListMember[]) =>
     replaceListMembers(listId, members),
   putPulledHistoryEntry,
@@ -190,6 +223,7 @@ export const localStore: SyncStore & RealtimeStore & ConflictStore = {
   isListDirty: isListDirtyWithItems,
   isRecipeDirty: isDirtyRecipeOrChildren,
   removeList: hardDeleteList,
+  readPendingSeenMarks: getPendingSeenMarks,
   clearDirtyOnDeleted,
   wipeLocalData: wipeSyncedData,
 }

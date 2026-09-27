@@ -29,6 +29,8 @@ export const SYNC_ENDPOINTS = {
   delta: '/api/sync/pull/delta',
   push: '/api/sync/push',
   migrate: '/api/sync/migrate',
+  /** Gesehen-Zeitpunkte ans Konto melden (siehe `seen.ts`). */
+  seen: '/api/sync/seen',
 } as const
 
 /**
@@ -41,7 +43,7 @@ export const SYNC_ENDPOINTS = {
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
 
 export interface RequestOptions {
-  method?: 'GET' | 'POST'
+  method?: 'GET' | 'POST' | 'PUT'
   /** Wird hier serialisiert. Die BFF reicht die Bytes unverändert weiter. */
   body?: unknown
   /**

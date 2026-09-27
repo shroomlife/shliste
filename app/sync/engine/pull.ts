@@ -37,6 +37,7 @@ import type {
   RecipeStep,
 } from '../../../shared/types/domain'
 import { CLEAN, DIRTY, type DirtyFlag } from '../../db/schema'
+import { keepListLocalFields, type SeenMark } from '../../db/seen'
 import type { LocalRow, PullMergeResult } from '../merge/field-lww'
 import { mergePulledEntity } from '../merge/field-lww'
 import { linkMirrorsFor } from '../merge/link-mirrors'
@@ -53,7 +54,9 @@ import {
   parseStep,
 } from './entities'
 import { isRecord, parseAll, readArray, readBooleanOr, readIso, readNumber, readNumberOr } from './json'
+import type { ServerIdCollector } from '../recovery/orphan-policy'
 import type { ListRemovalStore, PullStore, RowStores } from './ports'
+import { applySeenMarks, parseSeenMark } from './seen'
 
 /* ------------------------------------------------------------------ *
  * Die Antwort des Servers
@@ -100,6 +103,11 @@ export interface PullResponse {
    * sie blieben auf diesem Gerät für immer sichtbar.
    */
   revokedListIds: string[]
+  /**
+   * Wann dieses Konto welche Liste zuletzt angesehen hat, auf irgendeinem
+   * seiner Geräte. Nur die eigenen Marken, nie die anderer Mitglieder.
+   */
+  seenMarks: SeenMark[]
   /** `null`, wenn der Server keinen brauchbaren Zeitpunkt geliefert hat. */
   serverTime: IsoUtc | null
   truncated: boolean
@@ -137,6 +145,9 @@ export function parsePullResponse(value: unknown): PullResponse {
     // einen Fehler laufen, sonst hinge der Abgleich an der Reihenfolge des
     // Rollouts.
     revokedListIds: parseAll(readArray(record, 'revokedListIds'), readListId),
+    // Fehlt das Feld, gibt es keine Marken — ein Server von vor "gesehen je
+    // Konto" darf den Abgleich nicht brechen.
+    seenMarks: parseAll(readArray(record, 'seenMarks'), parseSeenMark),
     serverTime: readIso(record, 'serverTime'),
     // Fehlt das Feld, gilt die Antwort als vollständig — so verhielt sich der
     // Server, bevor es das Feld gab.
@@ -161,6 +172,10 @@ function requireCompletePage(raw: unknown, parsed: PullResponse): void {
     if (!Array.isArray(value) || value.length !== count) invalid()
   }
 
+  // `seenMarks` fehlt hier mit Absicht: Eine unlesbare Marke ist kein Inhalt,
+  // der verlorengeht. Sie fällt weg, und der nächste Blick in die Liste setzt
+  // einen neuen Zeitpunkt. An ihr den ganzen Abgleich scheitern zu lassen,
+  // wäre der größere Schaden.
   for (const key of ['lists', 'recipes', 'badges', 'historyEntries', 'pendingInvites', 'revokedListIds'] as const) {
     checkArray(raw, key, parsed[key].length)
   }
@@ -395,16 +410,19 @@ async function applyList(rows: RowStores, server: PulledList): Promise<void> {
       fieldTimestamps: merged.fieldTimestamps,
       dirty: dirtyFlagOf(merged),
       /*
-       * `seenAt` ist rein lokal und darf der Abgleich NIE überschreiben — sonst
-       * gälte nach jedem Abgleich jede Liste wieder als "nie gesehen" und die
-       * Übersicht flutete mit falschen Hinweisen.
+       * Das Gesehen-Wasserzeichen gehört nicht zu den Listendaten und darf
+       * ihr Abgleich NIE überschreiben — sonst gälte nach jedem Abgleich jede
+       * Liste wieder als "nie gesehen" und die Übersicht flutete mit falschen
+       * Hinweisen. Ohne `seenPushedAt` gälte zudem ein längst gemeldeter
+       * Zeitpunkt wieder als offen. Nachgezogen wird es getrennt, über die
+       * `seenMarks` am Ende von `runPull`.
        *
        * Vorher hat `putListRow` das Wasserzeichen bewahrt. Seit hier in EINER
        * Transaktion gelesen und geschrieben wird, gehört es an diese Stelle.
-       * Der Compiler hilft dabei nicht: Das Feld ist optional (IndexedDB ist
-       * schemalos), ein Weglassen fiele erst im Betrieb auf.
+       * Der Compiler hilft dabei nicht: Die Felder sind optional (IndexedDB
+       * ist schemalos), ein Weglassen fiele erst im Betrieb auf.
        */
-      seenAt: local?.seenAt ?? null,
+      ...keepListLocalFields(local),
     }
   })
 }
@@ -692,6 +710,12 @@ export interface PullOutcome {
 export async function runPull(
   store: PullStore & ListRemovalStore,
   fetchPull: PullFetcher,
+  /**
+   * Sammelt die gelieferten Ids aller Seiten, für die Waisenrettung nach dem
+   * vollen Abruf der Selbstheilung. Verwertbar nur, wenn der Abruf
+   * vollständig war (`truncated === false` und `cursorAdvanced`).
+   */
+  collectServerIds?: ServerIdCollector,
 ): Promise<PullOutcome> {
   const since = await store.readCursor()
 
@@ -716,6 +740,7 @@ export async function runPull(
   let badges = 0
   let revokedLists = 0
   const pendingInvites: PendingInvite[] = []
+  const seenMarks: SeenMark[] = []
 
   do {
     const raw = await fetchPull(since, pageToken)
@@ -723,6 +748,7 @@ export async function runPull(
     requireCompletePage(raw, response)
     letzte = response
     seiten += 1
+    collectServerIds?.add(response)
 
     await applyPulledRows(store, response)
 
@@ -750,11 +776,23 @@ export async function runPull(
     // Seite, auf der sie noch offen waren, und eine spätere leere Menge würde
     // sie sonst wieder verschlucken.
     pendingInvites.push(...response.pendingInvites)
+    seenMarks.push(...response.seenMarks)
 
     pageToken = response.nextPageToken ?? undefined
   } while (pageToken !== undefined && seiten < MAX_PULL_PAGES)
 
   const unvollstaendig = pageToken !== undefined || letzte.truncated
+
+  /*
+   * Gesehen-Marken ERST HIER, nach allen Seiten: Eine Marke kann auf einer
+   * früheren Seite stehen als ihre Liste und träfe dort noch keine Zeile. Und
+   * nach den Entzügen, damit keine Marke eine gerade entfernte Liste berührt.
+   *
+   * Auch bei einer unvollständigen Antwort: Was sie sagt, stimmt, und beide
+   * Felder laufen ohnehin nur vorwärts. Vor dem Cursor, denn ein Abbruch hier
+   * soll den nächsten Pull dieselben Marken erneut holen lassen.
+   */
+  await applySeenMarks(store.rows, seenMarks)
 
   // Erst schreiben, dann vorrücken: Ein Abbruch mitten im Anwenden lässt das
   // Wasserzeichen stehen, und der nächste Pull holt dieselbe Menge erneut.
