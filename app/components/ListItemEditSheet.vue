@@ -70,7 +70,7 @@ const mirrorsApply = computed(() => parsedUrl.value !== null && parsedUrl.value 
 
 /** Der Platzhalter des Namensfelds zeigt, was ohne Eingabe erscheinen wird. */
 const namePlaceholder = computed(() =>
-  (mirrorsApply.value ? item?.linkTitle ?? null : null) ?? 'Name des Eintrags')
+  (mirrorsApply.value ? item?.linkTitle : null) ?? 'Name des Eintrags')
 
 /** Die Vorschauzeile — nur mit brauchbarer Adresse. */
 const previewHost = computed(() => hostOf(parsedUrl.value))

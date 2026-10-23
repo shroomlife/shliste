@@ -1,7 +1,13 @@
+# Der Build läuft unter Node, nicht unter Bun: Nuxt 4.6 und @nuxtjs/seo 6
+# verlangen Node ^22.22.3 || ^24.15.0 || >=26, und nuxt-og-image ruft beim
+# Build module.findPackageJSON auf, das Bun als Node-Ersatz nicht kennt.
+# Bun bleibt Paketmanager und Laufzeit des fertigen Servers.
+FROM node:24.22.1-alpine AS builder
+
 # Bun-Fassung identisch zu `packageManager` in der package.json. Weicht sie ab,
 # löst der Build im Bild andere Abhängigkeiten auf als der Build auf dem
 # Rechner — und genau das soll ein Lockfile verhindern.
-FROM oven/bun:1.3.14-alpine AS builder
+COPY --from=oven/bun:1.4.4-alpine /usr/local/bin/bun /usr/local/bin/bun
 
 WORKDIR /app
 
@@ -19,7 +25,8 @@ COPY . .
 # das entscheidet Nuxt selbst, nicht diese Variable.
 RUN bun run build
 
-FROM oven/bun:1.3.14-alpine AS runtime
+# Dieselbe Bun-Fassung wie im Builder (siehe oben).
+FROM oven/bun:1.4.4-alpine AS runtime
 
 WORKDIR /app
 

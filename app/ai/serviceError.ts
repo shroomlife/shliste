@@ -8,6 +8,8 @@ export function aiServiceError(payload: unknown): string | null {
       return 'Dein heutiges Kontingent ist aufgebraucht. Deine Eingaben bleiben erhalten.'
     case 'AI_BUSY':
       return 'Deine beiden KI-Aufträge laufen noch. Warte bitte, bis einer abgeschlossen ist.'
+    case 'AI_PROVIDER_BUSY':
+      return 'Die KI ist gerade überlastet. Bitte versuche es gleich noch einmal. Deine Eingaben bleiben erhalten.'
     case 'AI_DISABLED':
     case 'QUOTA_UNAVAILABLE':
       return 'Die KI ist vorübergehend nicht verfügbar. Deine Eingaben bleiben erhalten.'

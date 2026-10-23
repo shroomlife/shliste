@@ -734,7 +734,7 @@ export async function runPull(
    */
   let pageToken: string | undefined
   let seiten = 0
-  let letzte: PullResponse | null = null
+  let letzte: PullResponse
   let lists = 0
   let recipes = 0
   let badges = 0
