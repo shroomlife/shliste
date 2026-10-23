@@ -50,6 +50,10 @@ export default defineNuxtConfig({
   site: {
     indexable: true,
     url: 'https://shliste.app',
+    // Site Config leitet den Namen seit v4 nicht mehr aus der package.json ab.
+    // Der Wert entspricht dem bisher abgeleiteten, damit Titel und Meta-Tags
+    // der öffentlichen Seiten gleich bleiben.
+    name: 'shliste.app',
     // @nuxtjs/seo setzt html lang zur LAUFZEIT aus dieser Locale und
     // überschreibt damit still das htmlAttrs lang="de" aus app.head —
     // ohne den Eintrag stünde auf jeder SSR-Seite lang="en".
@@ -130,6 +134,11 @@ export default defineNuxtConfig({
       cssCodeSplit: true,
     },
   },
+
+  // @nuxtjs/seo 6 installiert AI Ready mit. Das ist eine neue Funktion und
+  // kein Teil des Updates: sie veröffentlicht zusätzliche Inhalte (/llms.txt,
+  // Markdown je Seite). Ob wir das wollen, ist eine eigene Entscheidung.
+  aiReady: false,
 
   eslint: {
     config: { stylistic: true },
@@ -294,4 +303,9 @@ export default defineNuxtConfig({
   },
 
   seo: { enabled: true },
+
+  // Ebenfalls neu mit @nuxtjs/seo 6. Skew Protection überschneidet sich mit
+  // dem Update-Ablauf des Service Workers (siehe `pwa`) und braucht einen
+  // Build-Cache zwischen den Deploys, den der Docker-Build nicht hat.
+  skewProtection: false,
 })
