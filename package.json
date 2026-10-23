@@ -41,7 +41,7 @@
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.147",
     "@nuxt/eslint": "1.17.0",
-    "@nuxt/fonts": "^0.14.0",
+    "@nuxt/fonts": "^1.1.0",
     "@nuxt/ui": "^4.12.0",
     "@types/bun": "^1.4.4",
     "@types/lodash-es": "4.17.12",
