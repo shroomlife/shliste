@@ -237,8 +237,8 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
 </script>
 
 <template>
-  <!-- Kein eigener Scroll-Container: Für Seiten ohne eigenen scrollt das <main> des Layouts. -->
   <div>
+    <!-- Kein eigener Scroll-Container: Für Seiten ohne eigenen scrollt das <main> des Layouts. -->
     <div class="mx-auto w-full max-w-3xl pb-10">
       <AppPageHeader title="Mein Profil" />
 

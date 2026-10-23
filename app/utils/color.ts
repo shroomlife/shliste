@@ -28,9 +28,9 @@ function toHex(value: number): string {
  * die Verteilung an den Rändern verzerren und Farben häufen.
  */
 export function randomListColor(): string {
-  let r = 0
-  let g = 0
-  let b = 0
+  let r: number
+  let g: number
+  let b: number
 
   do {
     r = Math.floor(Math.random() * 256)
