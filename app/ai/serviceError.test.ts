@@ -12,6 +12,8 @@ describe('AI error ownership', () => {
     expect(aiServiceError({ code: 'USER_QUOTA_EXCEEDED' })).toContain('Dein heutiges Kontingent')
     expect(aiServiceError({ code: 'AI_BUSY' })).toContain('beiden KI-Aufträge')
     expect(aiServiceError({ code: 'QUOTA_UNAVAILABLE' })).toContain('vorübergehend')
+    // Seit dem Wechsel auf Claude meldet die API Überlastung als 503 AI_PROVIDER_BUSY.
+    expect(aiServiceError({ code: 'AI_PROVIDER_BUSY' })).toContain('gleich noch einmal')
   })
   test('unknown payloads do not invent a budget diagnosis', () => {
     for (const payload of [null, 'error', {}, { code: 'UNKNOWN' }]) expect(aiServiceError(payload)).toBeNull()
