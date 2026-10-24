@@ -8,8 +8,8 @@
  *
  * Ausführen: `bun test server/tests`
  */
-import { describe, expect, test } from 'bun:test'
-import { buildSignatureMessage, createSignatureHeaders, hashBody } from '../utils/apiSignature'
+import { afterEach, describe, expect, test } from 'bun:test'
+import { buildSignatureMessage, createSignatureHeaders, hashBody, readApiSecret, signRequest } from '../utils/apiSignature'
 
 const SECRET = 'test-secret-nicht-in-produktion'
 const TIMESTAMP = 1_700_000_000_000
@@ -111,5 +111,45 @@ describe('der Query-String geht nicht in die Signatur ein', () => {
     const wrong = createSignatureHeaders(SECRET, 'GET', '/sync/pull?since=2026-08-19', '', TIMESTAMP)
 
     expect(wrong['x-auth-signature']).not.toBe(correct['x-auth-signature'])
+  })
+})
+
+describe('signRequest: fail fast ohne apiSecret', () => {
+  // Nitro stellt useRuntimeConfig/createError als Auto-Imports bereit, unter
+  // bun test existieren sie nicht. Die Stubs ersetzen genau diese zwei Globals,
+  // damit der echte Lesepfad geprüft wird statt einer Kopie davon.
+  const stubNitro = (config: Record<string, string>): void => {
+    Object.assign(globalThis, {
+      useRuntimeConfig: () => config,
+      createError: (input: { statusCode: number, message: string }) =>
+        Object.assign(new Error(input.message), { statusCode: input.statusCode }),
+    })
+  }
+
+  afterEach(() => {
+    Reflect.deleteProperty(globalThis, 'useRuntimeConfig')
+    Reflect.deleteProperty(globalThis, 'createError')
+  })
+
+  test('leeres apiSecret bricht mit 500 ab statt zu signieren', () => {
+    stubNitro({ apiSecret: '' })
+
+    expect(() => signRequest('GET', '/sync/pull')).toThrow('NUXT_API_SECRET ist nicht gesetzt')
+    expect(() => readApiSecret()).toThrow(expect.objectContaining({ statusCode: 500 }))
+  })
+
+  test('Nuxts eigenes appSecret springt nicht ein', () => {
+    // Nuxt 4.6 füllt appSecret im Dev mit einem Zufallswert. Damit zu signieren
+    // sähe wie ein Signaturbug aus statt wie fehlende Konfiguration.
+    stubNitro({ apiSecret: '', appSecret: 'a'.repeat(64) })
+
+    expect(() => signRequest('GET', '/sync/pull')).toThrow('NUXT_API_SECRET ist nicht gesetzt')
+  })
+
+  test('gesetztes apiSecret signiert wie createSignatureHeaders', () => {
+    stubNitro({ apiSecret: SECRET })
+
+    const headers = signRequest('GET', '/sync/pull')
+    expect(headers).toEqual(createSignatureHeaders(SECRET, 'GET', '/sync/pull', '', Number(headers['x-auth-timestamp'])))
   })
 })

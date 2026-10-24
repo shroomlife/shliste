@@ -2,7 +2,7 @@
  * Signierender Proxy zu den Sync-Routen der API.
  *
  * WARUM EINE ALLOWLIST UND KEIN CATCH-ALL:
- * Diese Route hat Zugriff auf das APP_SECRET. Würde sie jeden Pfad
+ * Diese Route hat Zugriff auf das API-Secret. Würde sie jeden Pfad
  * weiterreichen, wäre sie ein öffentlicher Signier-Dienst: jeder Besucher
  * könnte sich über diesen Server beliebige Anfragen an api.shliste.app
  * signieren lassen — auch an Routen, die diese App nie braucht, und mit

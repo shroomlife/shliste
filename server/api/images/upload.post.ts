@@ -16,7 +16,7 @@ import { attachBffProof } from '../../utils/bffProof'
  */
 import { createHash, createHmac } from 'node:crypto'
 import type { FetchResponse } from 'ofetch'
-import { buildSignatureMessage } from '../../utils/apiSignature'
+import { buildSignatureMessage, readApiSecret } from '../../utils/apiSignature'
 import { getFreshSessionToken } from '../../utils/sessionRefresh'
 
 export default defineEventHandler(async (event): Promise<unknown> => {
@@ -28,18 +28,9 @@ export default defineEventHandler(async (event): Promise<unknown> => {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized', message: 'Nicht angemeldet.' })
   }
 
-  const { apiBase, appSecret } = useRuntimeConfig()
-
-  // Fail fast wie im AI-Proxy: Ein leeres Secret erzeugt sonst still eine
-  // Signatur, die die API mit 403 ablehnt — ein Fehlerbild, das nach
-  // Signaturbug aussieht statt nach fehlender Konfiguration.
-  if (!appSecret) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Server nicht konfiguriert',
-      message: 'NUXT_APP_SECRET ist nicht gesetzt — ohne das Secret kann der Server keine Anfrage an api.shliste.app signieren.',
-    })
-  }
+  const { apiBase } = useRuntimeConfig()
+  // Fail fast vor dem Puffern des Bodys (Begründung in apiSignature.ts).
+  const apiSecret = readApiSecret()
 
   // Grössen-Schranke VOR dem Puffern: `readRawBody` hält alles im Speicher,
   // die 5-MB-Grenze der API greift erst danach. 12 MB = grösstes legitimes
@@ -61,7 +52,7 @@ export default defineEventHandler(async (event): Promise<unknown> => {
   const url = new URL('/sync/images/upload', apiBase)
   const timestamp = Date.now()
   const bodyHash = createHash('sha256').update(body).digest('hex')
-  const signature = createHmac('sha256', appSecret)
+  const signature = createHmac('sha256', apiSecret)
     .update(buildSignatureMessage('POST', url.pathname, timestamp, bodyHash), 'utf8')
     .digest('hex')
 

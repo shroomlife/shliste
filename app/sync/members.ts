@@ -2,7 +2,7 @@
  * Mitglieder einer geteilten Liste — der Weg zur API.
  *
  * Alles läuft über die eigene BFF (siehe `engine/transport.ts`): Die API
- * verlangt eine HMAC-Signatur mit dem APP_SECRET, und das kennt der Browser
+ * verlangt eine HMAC-Signatur mit dem API-Secret, und das kennt der Browser
  * nicht. Die Pfade müssen exakt in der Allowlist von
  * `server/api/sync/[...path].ts` stehen.
  *

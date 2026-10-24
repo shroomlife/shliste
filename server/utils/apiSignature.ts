@@ -2,7 +2,8 @@
  * HMAC-SHA256-Signatur für api.shliste.app.
  *
  * Die API sichert JEDE Route mit einer Signatur ab, die das geteilte
- * APP_SECRET voraussetzt. Das Secret darf niemals in den Browser gelangen,
+ * Secret voraussetzt (drüben `APP_SECRET`, hier `runtimeConfig.apiSecret`
+ * bzw. `NUXT_API_SECRET`). Das Secret darf niemals in den Browser gelangen,
  * deshalb signiert ausschließlich der Nitro-Server — dieses Modul ist der
  * einzige Ort im Projekt, der das Secret liest.
  *
@@ -82,33 +83,33 @@ export function createSignatureHeaders(
 /**
  * Signiert eine Anfrage mit dem Secret aus der server-only runtimeConfig.
  *
- * Gelesen wird ausschließlich `useRuntimeConfig().appSecret` — niemals über
+ * Gelesen wird ausschließlich `useRuntimeConfig().apiSecret` — niemals über
  * `public`. Alles unterhalb von `public` wird beim Build ins Browser-Bundle
  * inlined und wäre in diesem öffentlichen Repo für jeden lesbar.
  */
 export function signRequest(method: string, pathname: string, rawBody = ''): ApiSignatureHeaders {
-  return createSignatureHeaders(readAppSecret(), method, pathname, rawBody)
+  return createSignatureHeaders(readApiSecret(), method, pathname, rawBody)
 }
 
 /**
  * Fail fast: Ohne Secret ist keine einzige API-Anfrage möglich.
  *
  * Bewusst beim ersten Gebrauch und nicht beim Modul-Import: die runtimeConfig
- * steht erst zur Laufzeit fest (NUXT_APP_SECRET wird im Container gesetzt, nicht
+ * steht erst zur Laufzeit fest (NUXT_API_SECRET wird im Container gesetzt, nicht
  * beim Build). Ein leerer Wert erzeugt sonst still eine Signatur, die die API
  * mit 403 ablehnt — ein Fehlerbild, das nach Signaturbug aussieht statt nach
- * fehlender Konfiguration.
+ * fehlender Konfiguration. Nuxts eigenes `appSecret` ist nie ein Ersatz.
  */
-function readAppSecret(): string {
-  const { appSecret } = useRuntimeConfig()
+export function readApiSecret(): string {
+  const { apiSecret } = useRuntimeConfig()
 
-  if (!appSecret) {
+  if (!apiSecret) {
     throw createError({
       statusCode: 500,
       statusMessage: 'Server nicht konfiguriert',
-      message: 'NUXT_APP_SECRET ist nicht gesetzt — ohne das Secret kann der Server keine Anfrage an api.shliste.app signieren.',
+      message: 'NUXT_API_SECRET ist nicht gesetzt — ohne das Secret kann der Server keine Anfrage an api.shliste.app signieren.',
     })
   }
 
-  return appSecret
+  return apiSecret
 }
