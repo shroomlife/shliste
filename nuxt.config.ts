@@ -11,7 +11,7 @@ export default defineNuxtConfig({
   ],
 
   // SSR bleibt an: der Nitro-Server wird ohnehin gebraucht, weil er das
-  // APP_SECRET hält und die Anfragen an api.shliste.app signiert.
+  // API-Secret hält und die Anfragen an api.shliste.app signiert.
   // Die App-Seiten selbst rendern client-seitig (siehe routeRules) — ihre Daten
   // liegen offline-first in IndexedDB und existieren auf dem Server gar nicht.
   ssr: true,
@@ -71,7 +71,10 @@ export default defineNuxtConfig({
     // `public` würde beim Build ins Browser-Bundle inlined und wäre damit
     // für jeden Besucher lesbar, unabhängig davon ob das Repo public ist.
     apiBase: process.env.NUXT_API_BASE || 'https://api.shliste.app',
-    appSecret: process.env.NUXT_APP_SECRET || '',
+    // Bewusst nicht `appSecret`: Den Schlüssel reserviert Nuxt seit 4.6 als
+    // eigenes Root-Secret und erzeugt im Dev still einen Zufallswert, wenn er
+    // fehlt. Unsere Signatur würde dann damit gebildet statt laut zu scheitern.
+    apiSecret: process.env.NUXT_API_SECRET || '',
     bffSecret: process.env.NUXT_BFF_SECRET || '',
 
     public: {

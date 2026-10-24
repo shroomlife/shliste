@@ -2,7 +2,7 @@
  * Der Weg vom Browser zur Sync-API.
  *
  * IMMER ÜBER DIE EIGENE BFF, NIE DIREKT ZU api.shliste.app: Jede Anfrage an
- * die API muss mit dem APP_SECRET signiert sein, und dieses Geheimnis liegt
+ * die API muss mit dem API-Secret signiert sein, und dieses Geheimnis liegt
  * ausschließlich im Nitro-Server (siehe `nuxt.config.ts`, `runtimeConfig`).
  * Der Browser kennt es nicht und darf es nie kennen. `server/api/sync/
  * [...path].ts` signiert und hängt das Session-JWT aus dem httpOnly-Cookie an

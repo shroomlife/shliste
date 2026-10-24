@@ -8,7 +8,7 @@
  *
  * Der Upload läuft über die eigene BFF (`server/api/images/upload.post.ts`),
  * die signiert und die Session anhängt — derselbe Grund wie bei `postAi`:
- * das APP_SECRET und das Session-JWT erreichen den Browser nie.
+ * das API-Secret und das Session-JWT erreichen den Browser nie.
  */
 import type { FetchResponse } from 'ofetch'
 import { isRecord, readString } from '../sync/engine/json'

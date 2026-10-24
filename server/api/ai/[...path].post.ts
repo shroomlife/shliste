@@ -4,7 +4,7 @@ import { attachBffProof } from '../../utils/bffProof'
  *
  * Gleiche Grundhaltung wie der Sync-Proxy (server/api/sync/[...path].ts):
  * eine Allowlist statt eines Catch-alls, denn diese Route hat Zugriff auf das
- * APP_SECRET und wäre sonst ein öffentlicher Signier-Dienst.
+ * API-Secret und wäre sonst ein öffentlicher Signier-Dienst.
  *
  * Zwei Unterschiede zum Sync-Proxy, beide begründet:
  *
@@ -18,7 +18,7 @@ import { attachBffProof } from '../../utils/bffProof'
  */
 import { createHash, createHmac } from 'node:crypto'
 import type { FetchResponse } from 'ofetch'
-import { buildSignatureMessage } from '../../utils/apiSignature'
+import { buildSignatureMessage, readApiSecret } from '../../utils/apiSignature'
 import { getFreshSessionToken } from '../../utils/sessionRefresh'
 import { checkSession } from '../../utils/sessionCheck'
 
@@ -107,18 +107,9 @@ export default defineEventHandler(async (event): Promise<unknown> => {
     })
   }
 
-  const { apiBase, appSecret } = useRuntimeConfig()
-
-  // Fail fast wie in apiSignature.ts: Ein leeres Secret erzeugt sonst still
-  // eine Signatur, die die API mit 403 ablehnt — ein Fehlerbild, das nach
-  // Signaturbug aussieht statt nach fehlender Konfiguration.
-  if (!appSecret) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Server nicht konfiguriert',
-      message: 'NUXT_APP_SECRET ist nicht gesetzt — ohne das Secret kann der Server keine Anfrage an api.shliste.app signieren.',
-    })
-  }
+  const { apiBase } = useRuntimeConfig()
+  // Fail fast vor dem Puffern des Bodys (Begründung in apiSignature.ts).
+  const apiSecret = readApiSecret()
 
   // `false` liefert den Buffer: exakt die Bytes, die der Browser gesendet hat.
   // Genau diese Bytes werden gehasht UND weitergesendet — jede Umkodierung
@@ -130,7 +121,7 @@ export default defineEventHandler(async (event): Promise<unknown> => {
   const url = new URL(`/ai/${path}`, apiBase)
   const timestamp = Date.now()
   const bodyHash = createHash('sha256').update(body).digest('hex')
-  const signature = createHmac('sha256', appSecret)
+  const signature = createHmac('sha256', apiSecret)
     .update(buildSignatureMessage('POST', url.pathname, timestamp, bodyHash), 'utf8')
     .digest('hex')
 
