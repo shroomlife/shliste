@@ -9,7 +9,10 @@
  *
  * Ein mitgeteilter Titel wird NIE zum Namen des Eintrags: Er beschreibt die
  * Seite und nicht das, was man kaufen will — und für die Seite ist der
- * Seitentitel zuständig, den der Server nachträgt. Er dient nur der Vorschau.
+ * Seitentitel zuständig, den der Server nachträgt. Er dient der Vorschau und
+ * geht zusammen mit dem Text als VORSCHLAG an den Server (`shareTitleHint`):
+ * Sperrt eine Seite uns aus, nimmt der Server ihn als Titel. Aufgeräumt wird
+ * nur dort, damit die Regel nicht zweimal existiert.
  *
  * Dieselbe Reihenfolge und dieselben Regeln im Android-Client
  * (`share/ShareReceive.kt`).
@@ -85,4 +88,18 @@ export function extractSharedLink(input: {
   if (url === null && text.length === 0) return null
 
   return { url, title, text }
+}
+
+/**
+ * Der rohe Titelvorschlag für einen Link-Eintrag: Betreff und Text, je eine
+ * Zeile, der Betreff zuerst — er ist am ehesten der reine Titel.
+ *
+ * `null` ohne Adresse (dann wird der Text ja selbst der Name) und ohne
+ * Inhalt. Die Adresse im Text bleibt drin; der Server entfernt sie beim
+ * Aufräumen ohnehin (`lib/link-preview/share-hint.ts` der API).
+ */
+export function shareTitleHint(payload: SharedPayload): string | null {
+  if (payload.url === null) return null
+  const hint = [payload.title, payload.text].filter(part => part.length > 0).join('\n')
+  return hint.length > 0 ? hint : null
 }

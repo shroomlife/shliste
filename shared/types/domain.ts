@@ -56,7 +56,7 @@ export interface List extends SyncedEntity {
 export type LinkImageKind = 'preview' | 'icon'
 
 /**
- * Die drei Felder, die AUSSCHLIESSLICH der Server pflegt.
+ * Die vier Felder, die AUSSCHLIESSLICH der Server pflegt.
  *
  * Sie sind ein Spiegel und kein Besitz: Der Client sendet sie nie und mergt
  * sie nie, sondern übernimmt sie bei jedem Abgleich wörtlich vom Server — auf
@@ -73,7 +73,7 @@ export type LinkImageKind = 'preview' | 'icon'
  * genau daran ist der Produktionsbuild gescheitert. Die Liste als Werte steht
  * dort, wo sie gebraucht wird (`app/db/schema.ts`).
  */
-export type LinkMirrorField = 'linkTitle' | 'linkImagePath' | 'linkImageKind'
+export type LinkMirrorField = 'linkTitle' | 'linkImagePath' | 'linkImageKind' | 'linkPending'
 
 export interface ListItem extends SyncedEntity {
   listId: string
@@ -111,6 +111,12 @@ export interface ListItem extends SyncedEntity {
   linkImagePath: string | null
   /** Server-Spiegel: Art des Bildes. Siehe `LINK_MIRROR_FIELDS`. */
   linkImageKind: LinkImageKind | null
+  /**
+   * Server-Spiegel: Der Server arbeitet gerade an diesem Link (erster Abruf).
+   * Solange zeigt die Zeile "in Arbeit" und das Löschen ist gesperrt. Die
+   * Regel steht nur auf dem Server (`lib/link-preview/pending.ts` der API).
+   */
+  linkPending: boolean
   createdBy: string | null
   modifiedBy: string | null
 }

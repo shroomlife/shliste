@@ -139,7 +139,8 @@ async function initialise(): Promise<void> {
  * Mit Adresse entsteht ein Link-Eintrag OHNE Namen: Die Zeile zeigt dann den
  * Seitentitel, den der Server nachträgt. Ohne Adresse wird der geteilte Text
  * zum Namen. Ein mitgeteilter Titel wird nie zum Namen — er beschreibt die
- * Seite und nicht das, was man kaufen will.
+ * Seite und nicht das, was man kaufen will. Er geht aber als Vorschlag mit,
+ * falls die Seite uns aussperrt.
  */
 async function addToList(listId: string, listName: string): Promise<void> {
   const current = payload.value
@@ -151,6 +152,7 @@ async function addToList(listId: string, listName: string): Promise<void> {
       name: current.url === null ? current.text : '',
       quantity: 1,
       url: current.url,
+      titleHint: shareTitleHint(current),
     }])
 
     // Der neue Eintrag leuchtet in der Zielliste kurz auf — derselbe

@@ -39,8 +39,8 @@ const altzeile: StoredListItemRow = {
 }
 
 describe('DB_VERSION', () => {
-  test('steht auf 4 — die Waisenrettung ist der Grund, die Link-Felder kamen mit 3', () => {
-    expect(DB_VERSION).toBe(4)
+  test('steht auf 5 — linkPending ist der Grund, die Waisenrettung kam mit 4, die Link-Felder mit 3', () => {
+    expect(DB_VERSION).toBe(5)
   })
 })
 
@@ -56,6 +56,7 @@ describe('needsLinkBackfill', () => {
       linkTitle: null,
       linkImagePath: null,
       linkImageKind: null,
+      linkPending: false,
     })).toBe(false)
   })
 
@@ -66,6 +67,7 @@ describe('needsLinkBackfill', () => {
       linkTitle: 'Ofenkartoffeln',
       linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
       linkImageKind: 'preview',
+      linkPending: false,
     })).toBe(false)
   })
 
@@ -73,7 +75,7 @@ describe('needsLinkBackfill', () => {
     // Sonst bliebe eine halb migrierte Zeile für immer halb migriert. Der
     // Test geht alle vier durch, damit kein Schlüssel aus der Prüfliste
     // fallen kann, ohne dass es auffällt.
-    const vollstaendig = { ...altzeile, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null }
+    const vollstaendig = { ...altzeile, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false }
     expect(needsLinkBackfill(vollstaendig)).toBe(false)
 
     for (const key of ['url', 'linkTitle', 'linkImagePath', 'linkImageKind']) {
@@ -116,6 +118,7 @@ describe('fillLinkFields', () => {
       url: 'https://kochwelt.de/x',
       linkTitle: 'Ofenkartoffeln',
       linkImageKind: 'icon',
+      linkPending: false,
     })
     expect(gefuellt.url).toBe('https://kochwelt.de/x')
     expect(gefuellt.linkTitle).toBe('Ofenkartoffeln')

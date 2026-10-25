@@ -179,6 +179,7 @@ function serverItem(overrides: Record<string, unknown> = {}): Record<string, unk
     linkTitle: null,
     linkImagePath: null,
     linkImageKind: null,
+    linkPending: false,
     createdAt: OLD,
     updatedAt: OLD,
     deletedAt: null,
@@ -234,6 +235,7 @@ function localItem(overrides: Partial<ListItemRow> = {}): ListItemRow {
     linkTitle: null,
     linkImagePath: null,
     linkImageKind: null,
+    linkPending: false,
     createdBy: null,
     modifiedBy: null,
     createdAt: OLD,
@@ -548,6 +550,7 @@ describe('runPull — Link-Felder', () => {
     linkTitle: 'Ofenkartoffeln mit Kräuterquark',
     linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
     linkImageKind: 'preview',
+    linkPending: false,
   }
 
   test('alle vier Felder kommen an', async () => {
@@ -594,6 +597,22 @@ describe('runPull — Link-Felder', () => {
     expect(row?.linkTitle).toBeNull()
     expect(row?.linkImagePath).toBeNull()
     expect(row?.linkImageKind).toBeNull()
+  })
+
+  test('linkPending kommt als Spiegel an — und fehlt es, ist nichts in Arbeit', async () => {
+    const store = fakePullStore()
+
+    await runPull(store, () => Promise.resolve(pullBody({
+      lists: [serverList({ items: [serverItem({ ...ANGEREICHERT, linkPending: true })] })],
+    })))
+    expect(store.items.get('i1')?.linkPending).toBe(true)
+
+    const alt = fakePullStore()
+    const { linkPending: _fehlt, ...ohneFeld } = ANGEREICHERT
+    await runPull(alt, () => Promise.resolve(pullBody({
+      lists: [serverList({ items: [serverItem(ohneFeld)] })],
+    })))
+    expect(alt.items.get('i1')?.linkPending).toBe(false)
   })
 
   test('eine unbekannte Bildart wird zu null statt geraten', async () => {

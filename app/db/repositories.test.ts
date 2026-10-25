@@ -15,11 +15,12 @@ import {
   compareByManualOrder,
   compareByUpdatedAtDesc,
   type Draft,
-  linkFieldsAfterWrite,
   isOwnedByOther,
+  linkFieldsAfterWrite,
   type ManualOrder,
   mergeFieldTimestamps,
   snapshotStampOf,
+  titleHintAfterWrite,
 } from './repositories'
 import type { ListRow } from './schema'
 
@@ -232,6 +233,7 @@ const angereichert = {
   linkTitle: 'Ofenkartoffeln mit Kräuterquark',
   linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
   linkImageKind: 'preview' as const,
+  linkPending: false,
 }
 
 describe('linkFieldsAfterWrite', () => {
@@ -241,6 +243,7 @@ describe('linkFieldsAfterWrite', () => {
       linkTitle: 'Ofenkartoffeln mit Kräuterquark',
       linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
       linkImageKind: 'preview',
+      linkPending: false,
     })
   })
 
@@ -251,6 +254,7 @@ describe('linkFieldsAfterWrite', () => {
       linkTitle: null,
       linkImagePath: null,
       linkImageKind: null,
+      linkPending: false,
     })
   })
 
@@ -259,6 +263,7 @@ describe('linkFieldsAfterWrite', () => {
       linkTitle: null,
       linkImagePath: null,
       linkImageKind: null,
+      linkPending: false,
     })
   })
 
@@ -267,15 +272,17 @@ describe('linkFieldsAfterWrite', () => {
       linkTitle: null,
       linkImagePath: null,
       linkImageKind: null,
+      linkPending: false,
     })
   })
 
   test('eine Zeile ohne Adresse behält ihre leeren Spiegel', () => {
-    const ohneLink = { url: null, linkTitle: null, linkImagePath: null, linkImageKind: null }
+    const ohneLink = { url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false }
     expect(linkFieldsAfterWrite(ohneLink, null)).toEqual({
       linkTitle: null,
       linkImagePath: null,
       linkImageKind: null,
+      linkPending: false,
     })
   })
 })
@@ -355,5 +362,35 @@ describe('mergeFieldTimestamps läuft monoton', () => {
   test('andere Felder bleiben unangetastet', () => {
     const merged = mergeFieldTimestamps({ name: SPAETER, quantity: FRUEHER }, ['name'], FRUEHER)
     expect(merged['quantity']).toBe(FRUEHER)
+  })
+})
+
+describe('titleHintAfterWrite', () => {
+  const url = 'https://www.thalia.de/a'
+
+  test('beim Anlegen mit Link kommt der Vorschlag an die Zeile', () => {
+    expect(titleHintAfterWrite(undefined, url, 'Unruhig bleiben')).toEqual({ linkTitleHint: 'Unruhig bleiben' })
+  })
+
+  test('ohne Link gibt es beim Anlegen nichts', () => {
+    expect(titleHintAfterWrite(undefined, null, 'Unruhig bleiben')).toEqual({})
+  })
+
+  test('ohne Vorschlag gibt es beim Anlegen nichts', () => {
+    expect(titleHintAfterWrite(undefined, url, null)).toEqual({})
+    expect(titleHintAfterWrite(undefined, url, undefined)).toEqual({})
+  })
+
+  test('eine Umbenennung vor dem ersten Push verliert ihn nicht', () => {
+    expect(titleHintAfterWrite({ url, linkTitleHint: 'Unruhig bleiben' }, url, undefined))
+      .toEqual({ linkTitleHint: 'Unruhig bleiben' })
+  })
+
+  test('eine andere Adresse macht ihn wertlos', () => {
+    expect(titleHintAfterWrite({ url, linkTitleHint: 'Unruhig bleiben' }, 'https://www.thalia.de/b', undefined)).toEqual({})
+  })
+
+  test('ein späterer Schreibvorgang setzt keinen neuen — die API wertet ihn nur beim Anlegen aus', () => {
+    expect(titleHintAfterWrite({ url, linkTitleHint: null }, url, 'Neu')).toEqual({})
   })
 })

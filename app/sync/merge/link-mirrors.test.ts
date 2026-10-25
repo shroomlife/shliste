@@ -10,7 +10,7 @@
 import { describe, expect, test } from 'bun:test'
 import { emptyLinkMirrors, linkMirrorsFor } from './link-mirrors'
 
-const LEER = { linkTitle: null, linkImagePath: null, linkImageKind: null }
+const LEER = { linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false }
 
 /** Eine angereicherte Zeile, wie der Server sie liefert. */
 const angereichert = {
@@ -18,6 +18,7 @@ const angereichert = {
   linkTitle: 'Ofenkartoffeln mit Kräuterquark',
   linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
   linkImageKind: 'preview' as const,
+  linkPending: false,
 }
 
 describe('linkMirrorsFor', () => {
@@ -26,6 +27,7 @@ describe('linkMirrorsFor', () => {
       linkTitle: 'Ofenkartoffeln mit Kräuterquark',
       linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
       linkImageKind: 'preview',
+      linkPending: false,
     })
   })
 

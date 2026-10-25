@@ -171,6 +171,7 @@ describe('Die Link-Felder gehören NICHT in die Prüfsumme', () => {
               linkTitle: 'Ofenkartoffeln mit Kräuterquark',
               linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
               linkImageKind: 'preview',
+              linkPending: false,
             })
           : row),
     }

@@ -29,6 +29,11 @@ import type { SyncTable } from '../sync/recovery/orphan-policy'
 export const DB_NAME = 'shliste'
 
 /**
+ * Version 5: der Server-Spiegel `linkPending` an `list_items`. Wie Version 3
+ * ein reiner DATENnachtrag (`backfillLinkFields`): Danach trägt wieder jede
+ * Zeile alle Link-Schlüssel, und kein Leser muss `undefined` von `false`
+ * unterscheiden.
+ *
  * Version 4: neuer, leerer Store `sync_recovery` für die Waisenrettung
  * (Gegenstück zu Androids Tabelle `sync_recovery`, Room v33). Kein
  * Datennachtrag, bestehende Stores bleiben unberührt.
@@ -41,7 +46,7 @@ export const DB_NAME = 'shliste'
  * Gegenstück zu Androids `history_entries`-Tabelle). Version 1 war der
  * Erststand mit den acht Stores plus `sync_meta`.
  */
-export const DB_VERSION = 4
+export const DB_VERSION = 5
 
 /**
  * 1 = diese Zeile wurde lokal geändert und muss gepusht werden.
@@ -91,14 +96,27 @@ export interface ListLocalFields {
 }
 
 export type ListRow = Dirty<List> & ListLocalFields
-export type ListItemRow = Dirty<ListItem>
+/**
+ * Was eine Eintragszeile außer der Domäne lokal trägt.
+ *
+ * `linkTitleHint` ist der rohe Teilen-Text (Betreff und Text), den der Server
+ * beim ANLEGEN zu einem Titelvorschlag aufräumt. Er gehört nicht zur Domäne:
+ * kein Feld-Zeitstempel, kein Merge, nach dem Anlegen ohne Bedeutung. Er
+ * bleibt an der Zeile, bis sie gepusht ist, und fällt mit dem nächsten Pull
+ * von selbst weg. Optional, weil fast keine Zeile ihn je hat.
+ */
+export interface ListItemLocalFields {
+  linkTitleHint?: string | null
+}
+
+export type ListItemRow = Dirty<ListItem> & ListItemLocalFields
 
 /**
  * Eine Eintragszeile, wie IndexedDB sie WIRKLICH liefert.
  *
  * IndexedDB ist schemalos: Zeilen, die vor den Link-Feldern entstanden sind,
- * tragen die vier Schlüssel gar nicht. Der Typ sagt hier die Wahrheit, damit
- * der Nachtrag ohne Cast auskommt. Nach dem Upgrade auf Version 3 ist jede
+ * tragen die Link-Schlüssel gar nicht. Der Typ sagt hier die Wahrheit, damit
+ * der Nachtrag ohne Cast auskommt. Nach dem Upgrade auf Version 5 ist jede
  * Zeile vollständig, überall sonst genügt deshalb `ListItemRow`.
  */
 export type StoredListItemRow
@@ -402,18 +420,19 @@ export function createSchema(db: IDBPDatabase<ShlisteDb>): void {
  * ------------------------------------------------------------------ */
 
 /**
- * Die vier Schlüssel, die Version 3 an jeder Eintragszeile garantiert.
+ * Die Schlüssel, die Version 3 (und mit `linkPending` Version 5) an jeder
+ * Eintragszeile garantiert.
  *
  * Der Typ bindet jeden Eintrag an einen echten Feldnamen der Domäne, ein
  * Tippfehler fällt also beim Übersetzen auf. Die Vollständigkeit sichert
- * `fillLinkFields` — dessen Rückgabetyp verlangt alle vier Felder, ein
- * vergessenes fällt dort auf — und der Test, der alle vier durchgeht.
+ * `fillLinkFields` — dessen Rückgabetyp verlangt alle Felder, ein
+ * vergessenes fällt dort auf — und der Test, der alle durchgeht.
  */
 const LINK_ROW_KEYS: readonly ('url' | LinkMirrorField)[]
-  = ['url', 'linkTitle', 'linkImagePath', 'linkImageKind']
+  = ['url', 'linkTitle', 'linkImagePath', 'linkImageKind', 'linkPending']
 
 /**
- * Fehlt dieser Zeile mindestens einer der vier Link-Schlüssel?
+ * Fehlt dieser Zeile mindestens einer der Link-Schlüssel?
  *
  * Geprüft wird die EXISTENZ des Schlüssels und nicht sein Wert: `null` ist
  * der gültige Ruhezustand, `undefined` ist die Altlast. Genau dieser
@@ -442,6 +461,7 @@ export function fillLinkFields(row: StoredListItemRow): ListItemRow {
     linkTitle: row.linkTitle ?? null,
     linkImagePath: row.linkImagePath ?? null,
     linkImageKind: row.linkImageKind ?? null,
+    linkPending: row.linkPending ?? false,
   }
 }
 
@@ -451,7 +471,7 @@ type UpgradeTransaction = IDBPTransaction<ShlisteDb, StoreNames<ShlisteDb>[], 'v
 /**
  * Trägt die Link-Felder an allen bestehenden Einträgen nach.
  *
- * Läuft EINMALIG beim Sprung auf Version 3 und in DERSELBEN
+ * Läuft EINMALIG beim Sprung auf Version 3 bzw. 5 und in DERSELBEN
  * versionchange-Transaktion wie die Store-Anlage: Entweder die Datenbank ist
  * danach vollständig auf Version 3, oder der Wechsel gilt als gescheitert und
  * wird zurückgerollt. Ein Lese-Shim in `repositories.ts` wird dadurch
@@ -461,7 +481,7 @@ type UpgradeTransaction = IDBPTransaction<ShlisteDb, StoreNames<ShlisteDb>[], 'v
  * Datenbank hat keine Zeilen, über die sich laufen ließe.
  */
 export async function backfillLinkFields(oldVersion: number, transaction: UpgradeTransaction): Promise<void> {
-  if (oldVersion === 0 || oldVersion >= 3) return
+  if (oldVersion === 0 || oldVersion >= 5) return
 
   let cursor = await transaction.objectStore('list_items').openCursor()
   while (cursor !== null) {

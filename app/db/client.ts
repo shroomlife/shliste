@@ -25,9 +25,9 @@ function open(): Promise<IDBPDatabase<ShlisteDb>> {
       // IndexedDB-Anfrage, bricht die Transaktion ohnehin ab. Ein gewöhnlicher
       // JavaScript-Fehler mitten in der Schleife täte das NICHT: Die
       // Transaktion hätte nichts mehr zu tun, committete brav, die Version
-      // stünde auf 3 — und alle Zeilen hinter der Abbruchstelle hätten die
-      // vier Schlüssel für immer nicht, weil der Nachtrag nur bei
-      // `oldVersion < 3` läuft. Genau der Phantom-Zeitstempel, gegen den
+      // stünde auf 5 — und alle Zeilen hinter der Abbruchstelle hätten die
+      // Link-Schlüssel für immer nicht, weil der Nachtrag nur bei
+      // `oldVersion < 5` läuft. Genau der Phantom-Zeitstempel, gegen den
       // dieser Versionssprung existiert, wäre für einen Teil des Bestands
       // wieder da. Lieber laut scheitern: Der Abbruch rollt zurück, das
       // Öffnen schlägt fehl, `getDb` verwirft die gescheiterte Verbindung

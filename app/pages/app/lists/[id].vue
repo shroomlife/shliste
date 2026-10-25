@@ -567,6 +567,9 @@ function onEditItemSave(changes: { name: string, quantity: number, url: string |
  * stünde der Hinweis noch da, wenn man längst weiter ist.
  */
 function onRemoveItem(item: ListItem): void {
+  // In Arbeit ist Entfernen gesperrt — ohne Toast, der ein Rückgängig für
+  // etwas anböte, das nicht passiert ist.
+  if (isItemBusy(item)) return
   mutate(removeItem(item))
 
   toast.add({
@@ -761,6 +764,8 @@ async function applyAiEditWork(payload: AiEditApplyPayload): Promise<void> {
     if (row === undefined) continue
 
     if (entry.kind === 'removed') {
+      // Ein Eintrag, an dem der Server gerade arbeitet, bleibt stehen —
+      // dieselbe Sperre wie am Knopf (`removeItem` prüft selbst).
       await removeItem(row)
       continue
     }
