@@ -305,8 +305,16 @@ export function useListDetail() {
    * wie `removeItemFromList` in Androids ListStore. Das Rückgängig im Toast
    * (`restoreItem`) schreibt bewusst KEINEN Eintrag: Es hebt die Löschung auf,
    * statt eine neue Tat festzuhalten.
+   *
+   * GESPERRT, SOLANGE DER SERVER AN DEM LINK ARBEITET (`isItemBusy`): Dann
+   * passiert gar nichts, auch kein Verlaufseintrag. Die Oberfläche sperrt den
+   * Knopf schon; diese Prüfung gilt für jeden Weg hierher, auch für die
+   * KI-Bearbeitung.
+   *
+   * @returns ob tatsächlich entfernt wurde
    */
-  async function removeItem(item: ListItem): Promise<void> {
+  async function removeItem(item: ListItem): Promise<boolean> {
+    if (isItemBusy(item)) return false
     await appendHistoryEntry({
       id: crypto.randomUUID(),
       parentId: item.listId,
@@ -323,6 +331,7 @@ export function useListDetail() {
     })
     await upsertItem({ ...toItemDraft(item), removed: true })
     await reload()
+    return true
   }
 
   /**

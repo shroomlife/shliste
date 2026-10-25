@@ -36,6 +36,14 @@ import type { ListItem } from '#shared/types/domain'
  * und ein Lichtschimmer läuft einmal darüber. Die Utility `delta-flash` in
  * main.css beschreibt beides; Android macht dasselbe in `Modifier.deltaFlash`.
  *
+ * "IN ARBEIT" (Design A, Lichtlauf): Holt der Server gerade Titel und Bild
+ * eines Links (`isItemBusy`), läuft ein rosa Lichtstreifen über die Zeile, ein
+ * gestrichelter Ring um die Kachel, und statt der Herkunft steht in Worten,
+ * was passiert. Das Entfernen ist solange gesperrt — `aria-disabled` statt
+ * `disabled`, damit der Knopf fokussierbar bleibt und per `aria-describedby`
+ * sagt, warum. Die Zeile trägt `aria-busy`. Die Bewegung liegt in main.css
+ * (`busy-sweep`, `busy-ring`) und steht bei `prefers-reduced-motion` still.
+ *
  * Barrierefreiheit: Alle Knöpfe halten mindestens 44 Pixel Zeilenhöhe, damit
  * sie auch am Handy sicher zu treffen sind (WCAG 2.2 SC 2.5.8).
  */
@@ -79,6 +87,26 @@ const showHost = computed(() => showHostLine(item))
  * zurück, aber nichts Unlesbares landet in einem Link.
  */
 const linkUrl = computed(() => (item.url !== null && isHttpUrl(item.url) ? item.url : null))
+
+/** Arbeitet der Server gerade an diesem Link? Daran hängt die Löschsperre. */
+const busy = computed(() => isItemBusy(item))
+
+/**
+ * Die ANZEIGE dazu bleibt mindestens eine Sekunde: Eine Seite, die uns
+ * aussperrt, ist nach einer halben Sekunde fertig, und ein Lichtlauf, der nur
+ * aufblitzt, wirkt wie ein Fehler. Die Sperre folgt weiter `busy`.
+ */
+const showBusy = useMinimumVisible(busy, 1000)
+
+/** Die Statuszeile beschreibt den gesperrten Entfernen-Knopf. */
+const statusId = useId()
+
+function onRemove(): void {
+  // Der Knopf bleibt fokussierbar (`aria-disabled`), also kommt der Klick
+  // hier an. Gesperrt ist er trotzdem — und `removeItem` prüft noch einmal.
+  if (busy.value) return
+  emit('remove')
+}
 </script>
 
 <template>
@@ -117,10 +145,19 @@ const linkUrl = computed(() => (item.url !== null && isHttpUrl(item.url) ? item.
        in voller Zeilenhöhe (items-stretch), wie in ListItemContent.kt. -->
   <div
     v-else
-    class="group flex min-h-15 w-full items-stretch rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-colors"
+    class="group relative flex min-h-15 w-full items-stretch rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-colors"
     :class="[justChanged && 'delta-flash']"
+    :aria-busy="busy || undefined"
     style="background: var(--md-surface)"
   >
+    <Transition name="busy-fade">
+      <span
+        v-if="showBusy"
+        class="busy-sweep"
+        aria-hidden="true"
+      />
+    </Transition>
+
     <!-- Mengenkachel: nur ab 2 Stück — die 1 ist der Normalfall und kein
          Etikett wert. Abgehakt wechselt sie auf den gedämpften Ton. -->
     <span
@@ -167,6 +204,27 @@ const linkUrl = computed(() => (item.url !== null && isHttpUrl(item.url) ? item.
         :link-image-path="item.linkImagePath"
         :link-image-kind="item.linkImageKind"
       />
+      <!-- Der Ring liegt im 6-Pixel-Innenabstand um die Kachel: Am Layout
+           ändert sich nichts. Abgerundet wie die Fläche (rounded-xl = 12). -->
+      <svg
+        v-if="showBusy"
+        class="busy-ring"
+        viewBox="0 0 60 60"
+        aria-hidden="true"
+      >
+        <rect
+          x="1.5"
+          y="1.5"
+          width="57"
+          height="57"
+          rx="11"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-dasharray="6 5"
+          stroke-linecap="round"
+        />
+      </svg>
     </a>
 
     <button
@@ -184,8 +242,16 @@ const linkUrl = computed(() => (item.url !== null && isHttpUrl(item.url) ? item.
         <!-- Die Herkunft steht nur da, wenn sie etwas hinzufügt: Heißt der
              Eintrag ohnehin schon "rewe.de", stünde derselbe Text zweimal
              untereinander. -->
+        <!-- Solange der Server arbeitet, steht hier in Worten, was passiert —
+             der Lichtlauf allein wäre eine Aussage nur über Bewegung. -->
         <span
-          v-if="showHost"
+          v-if="showBusy"
+          :id="statusId"
+          class="truncate text-[0.875rem] font-bold"
+          style="color: var(--md-busy-content)"
+        >Vorschau wird geholt…</span>
+        <span
+          v-else-if="showHost"
           class="truncate text-[0.875rem]"
           :class="item.checked && 'opacity-50'"
           style="color: var(--md-on-surface-variant)"
@@ -232,9 +298,12 @@ const linkUrl = computed(() => (item.url !== null && isHttpUrl(item.url) ? item.
       <button
         type="button"
         class="flex w-13 shrink-0 items-center justify-center rounded-r-sm"
+        :class="busy && 'cursor-not-allowed [&>*]:opacity-40'"
         style="background: var(--md-delete-surface); color: var(--md-delete-content)"
         :aria-label="`${displayName} entfernen`"
-        @click="emit('remove')"
+        :aria-disabled="busy || undefined"
+        :aria-describedby="busy ? statusId : undefined"
+        @click="onRemove"
       >
         <UIcon
           name="i-lucide-x"

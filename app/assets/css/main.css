@@ -178,6 +178,16 @@
   --md-delta-color: var(--md-primary);
   --md-delta-peak: 12%;
   --md-delta-sheen: 45%;
+
+  /*
+   * "In Arbeit" (Lichtlauf): Der Server holt gerade Titel und Bild eines
+   * Links. Die Statuszeile steht in tertiary — hell 4,6:1, dunkel 7,2:1 auf
+   * `--md-surface` (WCAG 1.4.3 verlangt 4,5:1). Der Lichtstreifen ist primary,
+   * dunkel etwas kräftiger, damit er auf der dunklen Fläche nicht verschwindet.
+   */
+  --md-busy-content: var(--md-tertiary);
+  --md-busy-accent: var(--md-primary);
+  --md-busy-sweep: 16%;
 }
 
 .dark {
@@ -235,6 +245,7 @@
   /* Auf #1E1E1E trägt schon ein schwächerer Streifen weit genug. */
   --md-delta-peak: 20%;
   --md-delta-sheen: 30%;
+  --md-busy-sweep: 24%;
 }
 
 body {
@@ -508,6 +519,95 @@ body {
     background-image: none;
     box-shadow: inset 3px 0 0 0 var(--md-delta-color);
     animation: none;
+  }
+}
+
+/*
+ * "In Arbeit" — der Lichtlauf (Design A, siehe ListItemRow.vue).
+ *
+ * EIN EIGENES ELEMENT, KEIN PSEUDO-ELEMENT DER ZEILE: `::before` gehört
+ * `delta-flash`, `::after` gehört `state-layer`. Weil es ein eigenes Element
+ * ist, darf es `overflow: hidden` tragen, ohne die Fokusringe der Knöpfe
+ * daneben abzuschneiden — und der Streifen kann über `transform` laufen, das
+ * der Browser ohne Neuzeichnen auf dem Compositor animiert.
+ *
+ * Er liegt ÜBER der Zeile (`z-index: 1`) und fängt keine Klicks ab: Die Zeile
+ * bleibt voll bedienbar, abhaken und umbenennen gehen weiter.
+ */
+@keyframes busy-sweep {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(250%); }
+}
+
+@keyframes busy-ring {
+  to { stroke-dashoffset: -22; }
+}
+
+@utility busy-sweep {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: 40%;
+    background-image: linear-gradient(
+      100deg,
+      transparent,
+      color-mix(in srgb, var(--md-busy-accent) var(--md-busy-sweep), transparent) 50%,
+      transparent
+    );
+    animation: busy-sweep 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+}
+
+@utility busy-ring {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--md-busy-accent);
+
+  & rect {
+    animation: busy-ring 1.2s linear infinite;
+  }
+}
+
+/* Das Ausblenden, wenn der Server fertig ist (<Transition name="busy-fade">). */
+.busy-fade-leave-active {
+  transition: opacity 0.3s ease-out;
+}
+
+.busy-fade-leave-to {
+  opacity: 0;
+}
+
+/*
+ * Ohne Bewegung bleibt der Zustand sichtbar, nur ruhig: eine stehende Tönung
+ * statt des Streifens und ein stehender gestrichelter Ring. Die Statuszeile
+ * sagt ohnehin in Worten, was passiert — die Aussage hängt nie allein an
+ * Bewegung.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .busy-sweep {
+    background-color: color-mix(in srgb, var(--md-busy-accent) 8%, transparent);
+  }
+
+  .busy-sweep::after,
+  .busy-ring rect {
+    animation: none;
+  }
+
+  .busy-sweep::after {
+    background-image: none;
+  }
+
+  .busy-fade-leave-active {
+    transition: none;
   }
 }
 
