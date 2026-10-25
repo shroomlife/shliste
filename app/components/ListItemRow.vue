@@ -199,13 +199,10 @@ function onRemove(): void {
       :class="[item.quantity > 1 ? 'ml-0.5' : 'ml-2', item.checked && 'opacity-50']"
       :aria-label="`Link öffnen: ${host}`"
     >
-      <LinkTile
-        :url="linkUrl"
-        :link-image-path="item.linkImagePath"
-        :link-image-kind="item.linkImageKind"
-      />
       <!-- Der Ring liegt im 6-Pixel-Innenabstand um die Kachel: Am Layout
-           ändert sich nichts. Abgerundet wie die Fläche (rounded-xl = 12). -->
+           ändert sich nichts. Abgerundet wie die Fläche (rounded-xl = 12).
+           VOR der Kachel im DOM, damit er UNTER ihr liegt: Das Pfeil-Abzeichen
+           ragt über den Ring und muss obenauf bleiben. -->
       <svg
         v-if="showBusy"
         class="busy-ring"
@@ -225,6 +222,11 @@ function onRemove(): void {
           stroke-linecap="round"
         />
       </svg>
+      <LinkTile
+        :url="linkUrl"
+        :link-image-path="item.linkImagePath"
+        :link-image-kind="item.linkImageKind"
+      />
     </a>
 
     <button
