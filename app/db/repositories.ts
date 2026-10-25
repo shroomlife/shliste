@@ -48,6 +48,7 @@ import {
   type BadgeRow,
   type DirtyFlag,
   type HistoryEntryRow,
+  type ListItemLocalFields,
   type ListItemRow,
   type ListMemberRow,
   type ListRow,
@@ -198,6 +199,26 @@ export function linkFieldsAfterWrite(
   nextUrl: string | null,
 ): LinkMirrors {
   return linkMirrorsFor(previous, nextUrl)
+}
+
+/**
+ * Was aus dem Teilen-Text einer Zeile wird, wenn sie geschrieben wird.
+ *
+ * Er zählt nur beim ANLEGEN — die API wertet ihn auch nur dort aus. Danach
+ * bleibt er stehen, solange die Adresse dieselbe ist, damit eine Umbenennung
+ * vor dem ersten Push ihn nicht verliert. Eine andere Adresse macht ihn
+ * wertlos: Er beschrieb die alte Seite.
+ */
+export function titleHintAfterWrite(
+  previous: Pick<ListItemRow, 'url' | 'linkTitleHint'> | undefined,
+  nextUrl: string | null,
+  fresh: string | null | undefined,
+): ListItemLocalFields {
+  if (previous === undefined) {
+    return fresh === null || fresh === undefined || nextUrl === null ? {} : { linkTitleHint: fresh }
+  }
+  const kept = previous.linkTitleHint
+  return previous.url === nextUrl && kept !== null && kept !== undefined ? { linkTitleHint: kept } : {}
 }
 
 /** Die Felder, die diese Schicht selbst führt. */
@@ -389,7 +410,10 @@ export async function upsertList(input: Draft<List>): Promise<ListRow> {
  * Stand von vor dem Lesen zurückdrehen. Dieselbe Begründung wie bei
  * `upsertList` (dort für `seenAt`) und bei `mutateRow` weiter unten.
  */
-export async function upsertItem(input: ListItemDraft): Promise<ListItemRow> {
+export async function upsertItem(
+  input: ListItemDraft,
+  options: { linkTitleHint?: string | null } = {},
+): Promise<ListItemRow> {
   const db = await getDb()
   const tx = db.transaction(['list_items', 'sync_meta'], 'readwrite')
   const previous = await tx.objectStore('list_items').get(input.id)
@@ -405,6 +429,7 @@ export async function upsertItem(input: ListItemDraft): Promise<ListItemRow> {
   const row: ListItemRow = {
     ...input,
     ...linkFieldsAfterWrite(previous, input.url),
+    ...titleHintAfterWrite(previous, input.url, options.linkTitleHint),
     ...buildRowMeta(previous, changed, nowIso()),
   }
   await tx.objectStore('list_items').put(row)

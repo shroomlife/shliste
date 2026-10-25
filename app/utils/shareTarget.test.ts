@@ -9,7 +9,7 @@
  * (`ShareReceiveExtractor`).
  */
 import { describe, expect, test } from 'bun:test'
-import { extractSharedLink, firstQueryValue } from './shareTarget'
+import { extractSharedLink, firstQueryValue, shareTitleHint } from './shareTarget'
 
 describe('firstQueryValue', () => {
   test('ein String kommt durch', () => {
@@ -94,5 +94,29 @@ describe('extractSharedLink', () => {
 
   test('ein fremdes Schema wird gar nicht erst gefunden', () => {
     expect(extractSharedLink({ url: 'mailto:wer@beispiel.de', text: 'Notiz' })?.url).toBeNull()
+  })
+})
+
+describe('shareTitleHint', () => {
+  const url = 'https://www.thalia.de/shop/home/artikeldetails/A1078709086'
+
+  test('Betreff und Text gehen roh mit, der Betreff zuerst', () => {
+    // Aufgeräumt wird auf dem Server (" | Thalia" fällt dort weg).
+    expect(shareTitleHint({ url, title: 'Unruhig bleiben | Thalia', text: `Schau mal ${url}` }))
+      .toBe(`Unruhig bleiben | Thalia
+Schau mal ${url}`)
+  })
+
+  test('leere Teile fallen weg', () => {
+    expect(shareTitleHint({ url, title: '', text: 'Unruhig bleiben' })).toBe('Unruhig bleiben')
+    expect(shareTitleHint({ url, title: 'Unruhig bleiben', text: '' })).toBe('Unruhig bleiben')
+  })
+
+  test('ohne Inhalt gibt es keinen Vorschlag', () => {
+    expect(shareTitleHint({ url, title: '', text: '' })).toBeNull()
+  })
+
+  test('ohne Adresse gibt es keinen Vorschlag — dann wird der Text selbst der Name', () => {
+    expect(shareTitleHint({ url: null, title: 'Betreff', text: 'Milch' })).toBeNull()
   })
 })

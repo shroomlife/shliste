@@ -485,6 +485,7 @@ function dirtyItem(id: string, listId: string, updatedAt: IsoUtc = TS): ListItem
     linkTitle: null,
     linkImagePath: null,
     linkImageKind: null,
+    linkPending: false,
     updatedAt,
     dirty: DIRTY,
   }
@@ -640,6 +641,40 @@ describe('runPush', () => {
   })
 
   /* ---------------------------------------------------------------- *
+   * "In Arbeit" aus der Antwort
+   * ---------------------------------------------------------------- */
+
+  test('ein laut Antwort angereicherter Eintrag ist sofort in Arbeit — ohne schmutzig zu werden', async () => {
+    const zeile: ListItemRow = { ...dirtyItem('i1', 'l1'), url: 'https://www.thalia.de/a' }
+    const store = fakePushStore({ items: [zeile] }, { items: [zeile] })
+
+    await runPush(store, () => Promise.resolve({ ...OK_RESPONSE, pendingLinkItemIds: ['i1'] }))
+
+    expect(store.items.get('i1')?.linkPending).toBe(true)
+    // Ein Spiegel ist keine lokale Änderung: Das Push-Flag bleibt, wie es war
+    // (das Zurücksetzen erledigt clearDirty, das dieses Doppel nur mitschreibt).
+    expect(store.items.get('i1')?.dirty).toBe(zeile.dirty)
+  })
+
+  test('eine seitdem geänderte Adresse bekommt den Zustand nicht', async () => {
+    const gesendet: ListItemRow = { ...dirtyItem('i1', 'l1'), url: 'https://www.thalia.de/a' }
+    const store = fakePushStore({ items: [gesendet] }, { items: [{ ...gesendet, url: 'https://www.thalia.de/b', updatedAt: FUTURE }] })
+
+    await runPush(store, () => Promise.resolve({ ...OK_RESPONSE, pendingLinkItemIds: ['i1'] }))
+
+    expect(store.items.get('i1')?.linkPending).toBe(false)
+  })
+
+  test('ein älterer Server ohne das Feld ändert nichts', async () => {
+    const zeile: ListItemRow = { ...dirtyItem('i1', 'l1'), url: 'https://www.thalia.de/a' }
+    const store = fakePushStore({ items: [zeile] }, { items: [zeile] })
+
+    await runPush(store, () => Promise.resolve(OK_RESPONSE))
+
+    expect(store.items.get('i1')?.linkPending).toBe(false)
+  })
+
+  /* ---------------------------------------------------------------- *
    * Die Link-Felder im Konfliktpfad
    * ---------------------------------------------------------------- */
 
@@ -658,6 +693,7 @@ describe('runPush', () => {
       linkTitle: 'Ofenkartoffeln mit Kräuterquark',
       linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
       linkImageKind: 'preview',
+      linkPending: false,
       createdAt: TS,
       updatedAt: TS,
       deletedAt: null,
@@ -739,6 +775,7 @@ describe('runPush', () => {
       linkTitle: 'Ofenkartoffeln mit Kräuterquark',
       linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
       linkImageKind: 'preview',
+      linkPending: false,
     })
     const store = fakePushStore({ items: [dirtyItem('i1', 'l1')] }, { items: [lokal] })
 
@@ -792,6 +829,24 @@ describe('buildPushPayload — Link-Felder', () => {
     expect(sent).not.toHaveProperty('linkTitle')
     expect(sent).not.toHaveProperty('linkImagePath')
     expect(sent).not.toHaveProperty('linkImageKind')
+    expect(sent).not.toHaveProperty('linkPending')
+  })
+
+  test('ein Titelvorschlag aus dem Teilen-Text geht mit, wenn die Zeile einen trägt', () => {
+    const row: ListItemRow = { ...dirtyItem('i1', 'l1'), url: 'https://www.thalia.de/a', linkTitleHint: 'Unruhig bleiben | Thalia' }
+    const built = buildPushPayload({ ...emptyDirty(), items: [row] })
+    expect(built.listItems[0]?.linkTitleHint).toBe('Unruhig bleiben | Thalia')
+  })
+
+  test('ohne Vorschlag fehlt der Schlüssel ganz', () => {
+    const built = buildPushPayload({ ...emptyDirty(), items: [dirtyItem('i1', 'l1')] })
+    expect(built.listItems[0]).not.toHaveProperty('linkTitleHint')
+  })
+
+  test('ein überlanger Vorschlag wird gekappt statt den ganzen Push zu kippen', () => {
+    const row: ListItemRow = { ...dirtyItem('i1', 'l1'), url: 'https://www.thalia.de/a', linkTitleHint: 'x'.repeat(3000) }
+    const built = buildPushPayload({ ...emptyDirty(), items: [row] })
+    expect(built.listItems[0]?.linkTitleHint).toHaveLength(1000)
   })
 
   test('eine Zeile ohne Link sendet url als null', () => {

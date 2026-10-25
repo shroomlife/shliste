@@ -114,6 +114,7 @@ function serverItem(overrides: Record<string, unknown> = {}): Record<string, unk
     linkTitle: null,
     linkImagePath: null,
     linkImageKind: null,
+    linkPending: false,
     createdAt: OLD,
     updatedAt: NEW,
     deletedAt: null,
@@ -158,6 +159,7 @@ function localItem(overrides: Partial<ListItemRow> = {}): ListItemRow {
     linkTitle: null,
     linkImagePath: null,
     linkImageKind: null,
+    linkPending: false,
     createdBy: null,
     modifiedBy: null,
     createdAt: OLD,
@@ -390,6 +392,7 @@ describe('runDelta — Link-Felder', () => {
     linkTitle: 'Ofenkartoffeln mit Kräuterquark',
     linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
     linkImageKind: 'preview',
+    linkPending: false,
   }
 
   test('Titel und Vorschaubild kommen über das Delta an', async () => {

@@ -47,6 +47,12 @@ export const SYNC_FIELD_LIMITS = {
    * `SyncLimits.ITEM_URL` in Android.
    */
   ITEM_URL: 2000,
+  /**
+   * Roher Teilen-Text als Titelvorschlag (`linkTitleHint`), nur beim Anlegen
+   * gesendet. Gegenstücke: `SYNC_FIELD_LIMITS.LINK_TITLE_HINT` in der API,
+   * `SyncLimits.LINK_TITLE_HINT` in Android.
+   */
+  LINK_TITLE_HINT: 1000,
   /** imagePath von Rezepten und Badge-recipeImagePath */
   IMAGE_PATH: 2000,
   /** lastSuggestedItems einer Liste */

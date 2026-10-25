@@ -50,6 +50,7 @@ export function itemRow(id: string, listId: string, overrides: Partial<ListItemR
     linkTitle: null,
     linkImagePath: null,
     linkImageKind: null,
+    linkPending: false,
     createdBy: null,
     modifiedBy: null,
     createdAt: OLD,

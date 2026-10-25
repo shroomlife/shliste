@@ -218,7 +218,7 @@ export function useLists() {
    */
   async function addItemsToList(
     listId: string,
-    eintraege: readonly { name: string, quantity: number, url?: string | null }[],
+    eintraege: readonly { name: string, quantity: number, url?: string | null, titleHint?: string | null }[],
   ): Promise<ListItemRow[]> {
     const bestand = [...await getItemsForList(listId)]
     const angelegt: ListItemRow[] = []
@@ -243,7 +243,7 @@ export function useLists() {
         createdBy: null,
         modifiedBy: null,
         deletedAt: null,
-      })
+      }, { linkTitleHint: eintrag.titleHint })
 
       bestand.push(row)
       angelegt.push(row)

@@ -2,7 +2,8 @@
  * EINE Regel für die drei Server-Spiegel eines Listeneintrags — und die
  * einzige Stelle, an der sie steht.
  *
- * DIE REGEL: Titel, Vorschaubild und Bildart gehören zu GENAU EINER Adresse.
+ * DIE REGEL: Titel, Vorschaubild, Bildart und der Zustand "in Arbeit"
+ * gehören zu GENAU EINER Adresse.
  * Sie werden übernommen, solange die Zeile noch auf dieselbe Adresse zeigt,
  * und fallen sonst weg. Sie werden nie gemergt und nie erfunden — der Server
  * ist ihr einziger Schreiber.
@@ -27,16 +28,22 @@
  */
 import type { LinkImageKind, LinkMirrorField, ListItem } from '../../../shared/types/domain'
 
-/** Die drei serverseitig gepflegten Felder eines Listeneintrags. */
+/** Die vier serverseitig gepflegten Felder eines Listeneintrags. */
 export interface LinkMirrors {
   linkTitle: string | null
   linkImagePath: string | null
   linkImageKind: LinkImageKind | null
+  linkPending: boolean
 }
 
-/** Kein Titel, kein Bild — der Ruhezustand. */
+/**
+ * Kein Titel, kein Bild, nichts in Arbeit — der Ruhezustand.
+ *
+ * Auch eine lokal neu gesetzte Adresse ist NICHT in Arbeit: Gearbeitet wird
+ * erst, wenn der Server sie kennt, und das sagt er selbst.
+ */
 export function emptyLinkMirrors(): LinkMirrors {
-  return { linkTitle: null, linkImagePath: null, linkImageKind: null }
+  return { linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false }
 }
 
 /**
@@ -48,7 +55,7 @@ export function emptyLinkMirrors(): LinkMirrors {
  *
  * Stimmen beide Adressen überein, werden die Spiegel wörtlich übernommen —
  * auch `null`, denn ein Zurücksetzen auf dem Server ist eine Aussage. Weichen
- * sie ab (oder gibt es keine Quelle), bleiben drei `null` übrig.
+ * sie ab (oder gibt es keine Quelle), bleibt der Ruhezustand übrig.
  */
 export function linkMirrorsFor(
   source: Pick<ListItem, 'url' | LinkMirrorField> | undefined,
@@ -60,5 +67,8 @@ export function linkMirrorsFor(
     linkTitle: source.linkTitle,
     linkImagePath: source.linkImagePath,
     linkImageKind: source.linkImageKind,
+    // `?? false`: Zeilen aus der Zeit vor dem Feld tragen es nicht (siehe
+    // Version 5 in `app/db/schema.ts`).
+    linkPending: source.linkPending ?? false,
   }
 }

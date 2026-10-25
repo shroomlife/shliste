@@ -99,9 +99,9 @@ function readLinkImageKind(source: Record<string, unknown>): LinkImageKind | nul
 /**
  * Ein Listeneintrag.
  *
- * DIE VIER LINK-FELDER SIND TOLERANT GELESEN: Ein Server, der sie noch nicht
- * kennt, schickt sie nicht mit — dann sind sie `null`, und das ist der
- * richtige Ruhezustand. Umgekehrt schickt der Server drei Felder mit, die den
+ * DIE LINK-FELDER SIND TOLERANT GELESEN: Ein Server, der sie noch nicht
+ * kennt, schickt sie nicht mit — dann sind sie `null` bzw. `false`, und das
+ * ist der richtige Ruhezustand. Umgekehrt schickt der Server drei Felder mit, die den
  * Client NICHTS angehen (`linkFetchedAt`, `linkAttempts`,
  * `linkNextAttemptAt`): Sie sind sein Warteschlangenzustand, werden hier gar
  * nicht erst gelesen und fallen damit von selbst weg.
@@ -127,6 +127,7 @@ export function parseListItem(value: unknown): ListItem | null {
     linkTitle: readNullableString(value, 'linkTitle'),
     linkImagePath: readNullableString(value, 'linkImagePath'),
     linkImageKind: readLinkImageKind(value),
+    linkPending: readBooleanOr(value, 'linkPending', false),
     createdBy: readNullableString(value, 'createdBy'),
     modifiedBy: readNullableString(value, 'modifiedBy'),
     deletedAt: readNullableIso(value, 'deletedAt'),

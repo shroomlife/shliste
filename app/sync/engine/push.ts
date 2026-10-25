@@ -31,7 +31,7 @@ import { CLEAN, type ListItemRow } from '../../db/schema'
 import { keepListLocalFields } from '../../db/seen'
 import { isAtOrBefore, nowIso } from '../../db/timestamps'
 import { linkMirrorsFor, type LinkMirrors } from '../merge/link-mirrors'
-import { sanitize } from '../merge/limits'
+import { capText, sanitize, SYNC_FIELD_LIMITS } from '../merge/limits'
 import {
   parseBadge,
   parseIngredient,
@@ -67,10 +67,13 @@ export interface PushList {
 }
 
 /**
- * Die drei Server-Spiegel stehen bewusst NICHT in dieser Nutzlast: Sie
- * gehören dem Server, der sie beim Anreichern selbst schreibt. Ein Client,
- * der sie mitschickte, behauptete ein Wissen, das er nicht hat — die API
- * ignoriert sie deshalb ohnehin.
+ * Die Server-Spiegel stehen bewusst NICHT in dieser Nutzlast: Sie gehören dem
+ * Server, der sie beim Anreichern selbst schreibt. Ein Client, der sie
+ * mitschickte, behauptete ein Wissen, das er nicht hat — die API ignoriert
+ * sie deshalb ohnehin.
+ *
+ * `linkTitleHint` geht nur mit, wenn die Zeile einen trägt (Teilen-Empfang).
+ * Die API wertet ihn ausschließlich beim Anlegen aus und räumt ihn selbst auf.
  */
 export interface PushListItem {
   id: string
@@ -82,6 +85,7 @@ export interface PushListItem {
   orderIndex: number
   sortKey: string | null
   url: string | null
+  linkTitleHint?: string
   createdAt: IsoUtc
   updatedAt: IsoUtc
   deletedAt: IsoUtc | null
@@ -252,7 +256,7 @@ export function isEmptyPayload(payload: PushPayload): boolean {
 export function buildPushPayload(dirty: DirtyRows): PushPayload {
   return {
     lists: dirty.lists.map(row => toPushList(sanitize('list', row))),
-    listItems: dirty.items.map(row => toPushListItem(sanitize('listItem', row))),
+    listItems: dirty.items.map(row => toPushListItem(sanitize('listItem', row), row.linkTitleHint ?? null)),
     recipes: dirty.recipes.map(row => toPushRecipe(sanitize('recipe', row))),
     recipeIngredients: dirty.ingredients.map(row => toPushIngredient(sanitize('recipeIngredient', row))),
     recipeSteps: dirty.steps.map(row => toPushStep(sanitize('recipeStep', row))),
@@ -318,8 +322,11 @@ function toPushList(row: List): PushList {
   }
 }
 
-function toPushListItem(row: ListItem): PushListItem {
+function toPushListItem(row: ListItem, linkTitleHint: string | null): PushListItem {
   return {
+    // Gekappt wie jedes andere Feld: Ein Wert über dem Limit kippte den
+    // ganzen Push mit 422 (siehe `app/sync/merge/limits.ts`).
+    ...(linkTitleHint === null ? {} : { linkTitleHint: capText(linkTitleHint, SYNC_FIELD_LIMITS.LINK_TITLE_HINT) }),
     id: row.id,
     listId: row.listId,
     name: row.name,
@@ -713,6 +720,11 @@ export interface PushResponse {
   conflicts: PushConflicts
   skippedIds: SkippedIds
   serverTime: IsoUtc | null
+  /**
+   * Die Einträge dieses Pushs, an denen der Server jetzt arbeitet
+   * (`linkPending`). Fehlt das Feld (älterer Server), ist es leer.
+   */
+  pendingLinkItemIds: string[]
 }
 
 export function parsePushResponse(value: unknown): PushResponse {
@@ -731,6 +743,7 @@ export function parsePushResponse(value: unknown): PushResponse {
     },
     skippedIds: parseSkippedIds(record['skippedIds']),
     serverTime: readIso(record, 'serverTime'),
+    pendingLinkItemIds: readArray(record, 'pendingLinkItemIds').filter((entry): entry is string => typeof entry === 'string'),
   }
 }
 
@@ -837,11 +850,13 @@ export async function runPush(store: PushStore, send: PushSender, onNotice?: Not
   const blocks = splitIntoBlocks(payload, onNotice)
   const skippedIds = emptySkipped()
   const conflicts: PushConflicts[] = []
+  const pendingLinkItemIds: string[] = []
 
   for (const block of blocks) {
     const response = parsePushResponse(await send(block))
     addSkipped(skippedIds, response.skippedIds)
     conflicts.push(response.conflicts)
+    pendingLinkItemIds.push(...response.pendingLinkItemIds)
   }
 
   /*
@@ -860,6 +875,8 @@ export async function runPush(store: PushStore, send: PushSender, onNotice?: Not
   for (const block of conflicts) {
     conflictCount += await applyConflicts(store.rows, block, pushSnapshot)
   }
+
+  await applyPendingLinks(store.rows, pendingLinkItemIds, dirty.items)
 
   return {
     pushSnapshot,
@@ -981,6 +998,39 @@ export function keptIds(rows: readonly { id: string }[], skipped: readonly strin
 }
 
 /**
+ * Setzt den Zustand "in Arbeit" an den Einträgen, die der Server laut Antwort
+ * gerade anreichert.
+ *
+ * WARUM AUS DER ANTWORT: Sonst erführe ausgerechnet das Gerät, das den Link
+ * geteilt hat, den Zustand nur über das Ereignis zu seinem eigenen Push — und
+ * das verwirft `realtime.ts`, solange dieser Abgleich die Sperre hält. Bis
+ * der Herzschlag nachholt, wäre eine schnelle Seite längst fertig.
+ *
+ * Nur an einer Zeile, die noch die GESENDETE Adresse trägt: Wurde der Link
+ * seitdem lokal geändert, arbeitet der Server an einer Seite, die diese Zeile
+ * nicht mehr zeigt (dieselbe Regel wie `linkMirrorsFor`). Zurückgenommen wird
+ * der Zustand wie jeder Spiegel vom Server — die Anreicherung meldet ihr Ende
+ * per Ereignis, und das kommt nach dieser Antwort.
+ */
+async function applyPendingLinks(
+  rows: RowStores,
+  pendingIds: readonly string[],
+  pushedItems: readonly ListItemRow[],
+): Promise<void> {
+  if (pendingIds.length === 0) return
+  const sentUrl = new Map(pushedItems.map(item => [item.id, item.url]))
+
+  for (const id of new Set(pendingIds)) {
+    const url = sentUrl.get(id)
+    if (url === undefined || url === null) continue
+    await rows.items.mutate(id, (local) => {
+      if (local === undefined || local.url !== url || local.linkPending) return null
+      return { ...local, linkPending: true }
+    })
+  }
+}
+
+/**
  * Übernimmt den Serverstand der Zeilen, bei denen der Server gewonnen hat.
  *
  * Eine Zeile, die seit `pushSnapshot` lokal bearbeitet wurde, bleibt
@@ -1088,7 +1138,7 @@ function isLocallyNewer(local: { updatedAt: IsoUtc } | undefined, pushSnapshot: 
 }
 
 /**
- * Weicht mindestens einer der drei Server-Spiegel ab?
+ * Weicht mindestens einer der Server-Spiegel ab?
  *
  * Nur dann lohnt der Schreibvorgang im Konfliktpfad. Sonst schriebe jeder
  * Konflikt dieselbe Zeile grundlos neu.
@@ -1097,4 +1147,5 @@ function linkMirrorsDiffer(local: ListItemRow, next: LinkMirrors): boolean {
   return local.linkTitle !== next.linkTitle
     || local.linkImagePath !== next.linkImagePath
     || local.linkImageKind !== next.linkImageKind
+    || local.linkPending !== next.linkPending
 }
