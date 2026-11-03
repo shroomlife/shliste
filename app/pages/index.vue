@@ -259,7 +259,7 @@ useSchemaOrg([
             Für Sams Geburtstag
           </p><h2 id="secret-title">
             Manches darf<br>eine Überraschung bleiben.
-          </h2><p>Konzertkarten, Lieblingsschokolade, eine Karte. Als geheime Liste bleiben die Einträge hinter einer zusätzlichen Entsperrung. Auf Android bestätigst du mit Biometrie oder deiner Displaysperre.</p><p>Die Vorschau zeigt den Fingerabdruck-Ablauf. Im Browser hängt die Bestätigung von deinem Gerät ab. Auf unterstützten Apple-Geräten kann das Face ID oder Touch ID sein.</p><NuxtLink
+          </h2><p>Konzertkarten, Lieblingsschokolade, eine Karte. Als geheime Liste bleiben die Einträge hinter einer zusätzlichen Entsperrung. Auf Android bestätigst du mit Biometrie oder deiner Displaysperre.</p><p>Die Vorschau zeigt den Fingerabdruck-Ablauf auf Android. Im Browser bleiben geheime Listen derzeit gesperrt. Die Entsperrung über dein Gerät ist dort noch in Entwicklung.</p><NuxtLink
             to="/funktionen/geheime-listen"
             class="home-text-link"
           >Geheime Listen kennenlernen <UIcon name="i-lucide-arrow-right" /></NuxtLink><small>Der Listenname bleibt in der Übersicht sichtbar. Die Sperre schützt das Öffnen der Liste auf deinem Gerät.</small>
