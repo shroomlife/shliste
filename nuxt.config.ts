@@ -1,3 +1,4 @@
+import { marketingStories } from './app/data/marketingStories'
 import svgLoader from 'vite-svg-loader'
 
 export default defineNuxtConfig({
@@ -20,7 +21,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'shliste ~ Deine smarte Einkaufsliste',
+      title: 'shliste: Einkaufslisten und Rezepte',
       htmlAttrs: { lang: 'de' },
       meta: [
         // viewport-fit=cover: Ohne dieses Attribut liefert env(safe-area-inset-*)
@@ -29,7 +30,7 @@ export default defineNuxtConfig({
         // den Inhalt, statt ihn zu überdecken — Eingabeleiste und Listenende
         // bleiben damit über der Tastatur sichtbar (Chrome 108+, sonst wirkungslos).
         { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content' },
-        { name: 'description', content: 'Erstelle und verwalte mühelos deine Einkaufslisten mit shliste. Pack Produkte ein, hake sie ab und behalte immer den Überblick beim Shoppen!' },
+        // description kommt aus site.description (nuxt-seo-utils) — nicht doppelt setzen.
         // Entspricht --color-secondary aus dem Android-Farbschema (SecondaryColor)
         { name: 'theme-color', content: '#FDECF5' },
         // Beide Schreibweisen: Chrome hat die apple-Variante für veraltet
@@ -38,9 +39,17 @@ export default defineNuxtConfig({
         // Plattformen den Vollbildmodus der installierten App.
         { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
+        // Statisches OG-Bild: dynamische OG-Generierung bleibt aus (native Binary).
+        { property: 'og:image', content: 'https://shliste.app/og-image.png' },
+        { property: 'og:image:width', content: '1024' },
+        { property: 'og:image:height', content: '1024' },
+        { property: 'og:image:alt', content: 'shliste' },
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/images/logo/logo32.png' },
+        { rel: 'icon', type: 'image/png', sizes: '192x192', href: '/images/logo/logo192.png' },
+        { rel: 'apple-touch-icon', href: '/images/logo/logo192.png' },
       ],
     },
   },
@@ -53,7 +62,8 @@ export default defineNuxtConfig({
     // Site Config leitet den Namen seit v4 nicht mehr aus der package.json ab.
     // Der Wert entspricht dem bisher abgeleiteten, damit Titel und Meta-Tags
     // der öffentlichen Seiten gleich bleiben.
-    name: 'shliste.app',
+    name: 'shliste',
+    description: 'Listen und Rezepte in shliste. Einkaufen und Kochen zusammen, mit KI wo’s hilft. Im Browser und auf Android; iPhone über die Web-App, native iOS-App im Aufbau.',
     // @nuxtjs/seo setzt html lang zur LAUFZEIT aus dieser Locale und
     // überschreibt damit still das htmlAttrs lang="de" aus app.head —
     // ohne den Eintrag stünde auf jeder SSR-Seite lang="en".
@@ -87,6 +97,10 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
+    '/funktionen/rezept-badges': { prerender: true },
+    '/funktionen/geheime-listen': { prerender: true },
+    ...Object.fromEntries(marketingStories.map(story => [story.path, { prerender: true }])),
+    '/im-alltag': { prerender: true },
     // Die Startseite wird NICHT prerendert, sondern gerendert und per SWR
     // gecacht: Eine prerenderte Seite liefert Nitro aus der statischen
     // Schicht aus, BEVOR Server-Middleware läuft — der Eingeloggt-Redirect
@@ -94,6 +108,8 @@ export default defineNuxtConfig({
     // läuft die Middleware zuerst, Anonyme bekommen weiter die gecachte
     // Antwort. Empirisch am Produktionsbuild verifiziert, nicht vermutet.
     // Im Dev-Server darf altes HTML nicht mit neuem HMR-Code gemischt werden.
+    // Markdown-Negotiation: zusätzlich `/` als `/.md` (AI Ready); Accept-
+    // Varies für SWR bewusst nicht verdoppelt — `.md`-URL reicht.
     '/': { swr: process.env.NODE_ENV === 'development' ? false : 3600 },
     '/rezepte': { prerender: true },
     '/gemeinsam-einkaufen': { prerender: true },
@@ -112,7 +128,9 @@ export default defineNuxtConfig({
     '/app': { redirect: { to: '/app/lists', statusCode: 302 } },
     // Der App-Bereich rendert ausschließlich im Client — seine Daten liegen
     // in IndexedDB und sind auf dem Server nicht vorhanden.
-    '/app/**': { ssr: false },
+    // robots: false → noindex/nofollow (crawlable genug für das Meta-Tag;
+    // nicht per robots.txt sperren, sonst liest Google das noindex nicht).
+    '/app/**': { ssr: false, robots: false },
     // Diese eine Seite wird zusätzlich vorgerendert. Sie ist die Hülle, die der
     // Service Worker offline für JEDE /app-Adresse ausliefert (navigateFallback):
     // Weil im App-Bereich ohnehin nur der Browser rendert, ist die ausgelieferte
@@ -138,10 +156,14 @@ export default defineNuxtConfig({
     },
   },
 
-  // @nuxtjs/seo 6 installiert AI Ready mit. Das ist eine neue Funktion und
-  // kein Teil des Updates: sie veröffentlicht zusätzliche Inhalte (/llms.txt,
-  // Markdown je Seite). Ob wir das wollen, ist eine eigene Entscheidung.
-  aiReady: false,
+  // Offizielles LLM-Discoverability: /llms.txt und Markdown-Export.
+  // Boolean `true` ist ungültig — das Modul erwartet ein Config-Objekt.
+  aiReady: {
+    contentSignal: { search: true, aiInput: true, aiTrain: false },
+    llmsTxt: {
+      notes: 'Listen und Rezepte in shliste. Einkaufen und Kochen zusammen, mit KI wo’s hilft.',
+    },
+  },
 
   eslint: {
     config: { stylistic: true },
@@ -188,24 +210,22 @@ export default defineNuxtConfig({
    * verspricht, nicht tragbar ist. Workbox erzeugt das Manifest beim Build
    * aus den echten Ausgabedateien.
    *
-   * Neue Fassungen werden im Hintergrund geladen, aber erst nach bewusster
-   * Bestätigung aktiviert. Gespeicherte Daten liegen in IndexedDB; offene
-   * Eingaben und KI-Vorschauen dagegen noch nicht. Ein automatisches Neuladen
-   * würde diese Entwürfe verlieren. PwaUpdateNotice bietet einen ruhigen
-   * Hinweis, periodicSyncForUpdates entdeckt auch bei langer Nutzung Updates.
+   * Neue Fassungen werden im Hintergrund geladen und automatisch aktiviert.
+   * Sobald das Update bereit ist, werden offene Ansichten neu geladen.
+   * periodicSyncForUpdates entdeckt Updates auch bei längerer Nutzung.
    */
   pwa: {
-    registerType: 'prompt',
+    registerType: 'autoUpdate',
 
     client: {
-      // Sekunden — stündlicher Blick auf den Server, ob es eine neue Fassung gibt.
-      periodicSyncForUpdates: 3600,
+      // Alle 60 Sekunden auf eine neue Fassung prüfen.
+      periodicSyncForUpdates: 60,
     },
 
     manifest: {
-      name: 'shliste ~ Deine smarte Einkaufsliste',
+      name: 'shliste',
       short_name: 'shliste',
-      description: 'Listen und Rezepte für deinen Alltag. Gespeicherte Listen offline bearbeiten; mit Anmeldung und Verbindung zwischen Geräten abgleichen.',
+      description: 'Listen und Rezepte in shliste. Offline nutzbar; mit Anmeldung zwischen Browser und Android abgleichen. iPhone über die Web-App.',
       lang: 'de',
       // Die installierte App startet direkt im Listenbereich und nicht auf der
       // Werbeseite: Wer sie installiert hat, ist überzeugt.
@@ -306,6 +326,12 @@ export default defineNuxtConfig({
   },
 
   seo: { enabled: true },
+
+  // App-Shells gehören nicht in die Sitemap — dünne SPA ohne Marketing-Inhalt.
+  sitemap: {
+    exclude: ['/app', '/app/**'],
+    urls: ['/im-alltag', ...marketingStories.map(story => story.path)],
+  },
 
   // Ebenfalls neu mit @nuxtjs/seo 6. Skew Protection überschneidet sich mit
   // dem Update-Ablauf des Service Workers (siehe `pwa`) und braucht einen

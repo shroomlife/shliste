@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+@import "./marketing.css";
 
 /*
  * Design-Tokens — 1:1 aus dem Android-Quellcode übernommen, nicht geschätzt.

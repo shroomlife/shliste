@@ -145,7 +145,7 @@ function onRemove(): void {
        in voller Zeilenhöhe (items-stretch), wie in ListItemContent.kt. -->
   <div
     v-else
-    class="group relative flex min-h-15 w-full items-stretch rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-colors"
+    class="list-item-row group relative flex min-h-15 w-full items-stretch rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-colors"
     :class="[justChanged && 'delta-flash']"
     :aria-busy="busy || undefined"
     style="background: var(--md-surface)"
@@ -271,7 +271,7 @@ function onRemove(): void {
     <button
       v-if="!item.checked"
       type="button"
-      class="flex w-14 shrink-0 items-center justify-center rounded-r-sm"
+      class="list-item-action flex w-14 shrink-0 items-center justify-center rounded-r-sm"
       style="background: var(--md-check-surface); color: var(--md-check-content)"
       :aria-label="`${displayName} abhaken`"
       @click="emit('toggle')"
@@ -287,7 +287,7 @@ function onRemove(): void {
     <template v-else>
       <button
         type="button"
-        class="flex w-13 shrink-0 items-center justify-center"
+        class="list-item-action flex w-13 shrink-0 items-center justify-center"
         style="background: var(--md-undo-surface); color: var(--md-undo-content)"
         :aria-label="`${displayName} wieder auf offen setzen`"
         @click="emit('toggle')"
@@ -299,7 +299,7 @@ function onRemove(): void {
       </button>
       <button
         type="button"
-        class="flex w-13 shrink-0 items-center justify-center rounded-r-sm"
+        class="list-item-action flex w-13 shrink-0 items-center justify-center rounded-r-sm"
         :class="busy && 'cursor-not-allowed [&>*]:opacity-40'"
         style="background: var(--md-delete-surface); color: var(--md-delete-content)"
         :aria-label="`${displayName} entfernen`"

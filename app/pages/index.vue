@@ -2,17 +2,11 @@
 // Öffentliche Startseite. Wird per routeRules gerendert und gecacht (SEO, First Paint),
 // während der App-Bereich unter /app rein client-seitig läuft.
 useSeoMeta({
-  title: 'shliste ~ Deine smarte Einkaufsliste',
-  description: 'Weniger merken, mehr zusammen machen: Einkaufslisten teilen, Rezepte sammeln und Links in Einträge verwandeln. shliste im Browser und für Android.',
+  title: 'shliste: Einkaufslisten und Rezepte',
+  description: 'Listen und Rezepte in shliste. Gemeinsam einkaufen, Rezepte speichern, mit KI aus Stimme, Foto oder Link. Browser und Android jetzt; iPhone über die Web-App, native iOS-App im Aufbau.',
+  ogImage: 'https://shliste.app/og-image.png',
 })
 
-// Eingeloggt hat die Landing nichts mehr zu sagen: Das Logo zeigt auf die
-// Listen, und wer hier ankommt, wird direkt dorthin gebracht. Beides nur
-// client-seitig wirksam: Die Seite wird serverseitig gerendert, und der Client startet
-// ebenso ausgeloggt wie der Server — kein Hydration-Mismatch. Die Session
-// kommt danach asynchron, deshalb ein Watcher statt einer einmaligen Prüfung;
-// `immediate` fängt den Fall ab, dass sie beim Aufruf schon geladen ist.
-// Den serverseitigen Teil übernimmt die Nitro-Middleware.
 const { isSignedIn } = useAuth()
 
 if (import.meta.client) {
@@ -21,556 +15,358 @@ if (import.meta.client) {
   }, { immediate: true })
 }
 
-const moments = [
-  { number: '01', icon: 'i-lucide-users', title: '„Bringst du noch Milch mit?“', text: 'Eine Liste für euren Haushalt. Ergänzt, was fehlt, und hakt beim Einkaufen ab. Geteilte Listen halten euch auf demselben Stand.', to: '/gemeinsam-einkaufen', link: 'Gemeinsam einkaufen' },
-  { number: '02', icon: 'i-lucide-chef-hat', title: 'Heute kochen. Vorher planen.', text: 'Rezepte aufheben und ihre Zutaten zur Einkaufsliste hinzufügen. So bleibt die Idee fürs Abendessen dort, wo du sie wiederfindest.', to: '/rezepte', link: 'Das Rezeptbuch entdecken' },
-  { number: '03', icon: 'i-lucide-link', title: 'Ein guter Link darf bleiben.', text: 'Eine Fundstelle direkt auf der Liste speichern. Oder mit AI Einträge auslesen, prüfen und einer vorhandenen oder neuen Liste hinzufügen.', to: '/so-funktionierts', link: 'So funktioniert shliste' },
-]
-const recipeIdeas = [
-  { image: '/images/recipes/lasagne.webp', title: 'Vegane Lasagne mit Béchamelsoße', occasion: 'Zeit fürs Lieblingsessen', text: 'Eine Idee fürs gemeinsame Abendessen. Zutaten sammeln, den Einkauf planen und beim Kochen Schritt für Schritt vorgehen.' },
-  { image: '/images/recipes/pizzabroetchen.webp', title: 'Vegane Pizzabrötchen', occasion: 'Etwas zum Teilen', text: 'Für den nächsten Besuch oder einen gemütlichen Abend: Behalte das Rezept und die Besorgungen dafür zusammen im Blick.' },
-  { image: '/images/recipes/marmorkuchen.webp', title: 'Veganer Marmorkuchen', occasion: 'Ein Stück Wochenende', text: 'Lieblingsrezepte zum Wiederbacken aufheben. So suchst du beim nächsten Mal nicht wieder nach derselben Fundstelle.' },
-]
 const questions = [
-  { title: 'Kann ich ohne Konto anfangen?', answer: 'Ja. Du kannst Listen und Rezepte zunächst lokal in deinem Browser anlegen. Für geteilte Listen und den Abgleich zwischen deinen Geräten meldest du dich an. Ohne Anmeldung gibt es keine Serverkopie deiner lokalen Inhalte.' },
-  { title: 'Was funktioniert ohne Internet?', answer: 'Bereits lokal gespeicherte Listen kannst du weiterhin ansehen und bearbeiten. Für den ersten Aufruf, den Abgleich mit anderen Geräten und AI-Funktionen brauchst du eine Verbindung. Andere Personen sehen deine Änderungen erst nach dem Abgleich.' },
-  { title: 'Was passiert mit einem eingefügten Link?', answer: 'Du wählst, ob du nur die Adresse auf deiner Liste speichern oder mit AI Einträge aus dem Inhalt übernehmen möchtest. Die Vorschläge prüfst du und wählst eine vorhandene oder neue Liste als Ziel. Das Einfügen allein startet keinen Abruf.' },
-  { title: 'Kann ich Rezepte und Einkaufslisten verbinden?', answer: 'Ja. Ein Rezept hält Zutaten und Zubereitung zusammen. Die Zutaten kannst du in eine Einkaufsliste übernehmen und dort mit deinen übrigen Besorgungen ergänzen. Prüfe vor dem Einkauf, was bereits im Vorrat steht.' },
-  { title: 'Browser oder Android – muss ich mich entscheiden?', answer: 'Du kannst shliste im Browser nutzen oder die Android-App installieren. Mit Anmeldung und Internetverbindung lassen sich deine Inhalte zwischen den Geräten abgleichen. Ein lokal angelegter Bestand ohne Konto bleibt zunächst auf dem jeweiligen Gerät.' },
+  { title: 'Kann ich ohne Konto anfangen?', answer: 'Ja. Listen und Rezepte legst du zunächst lokal an. Für gemeinsame Listen, den Abgleich zwischen Geräten und KI brauchst du Anmeldung und Internet.' },
+  { title: 'Was funktioniert ohne Internet?', answer: 'Bereits gespeicherte Listen kannst du offline ansehen und abhaken. Änderungen werden mit anderen Geräten abgeglichen, sobald wieder eine Verbindung besteht.' },
+  { title: 'Wie kommen Zutaten auf meine Einkaufsliste?', answer: 'Öffne die Zutatenübernahme im Rezept, wähle aus, was fehlt, und bestimme eine vorhandene oder neue Einkaufsliste. Die Zutaten bleiben auch beim Rezept erhalten.' },
+  { title: 'Wo kann ich shliste nutzen?', answer: 'Im Browser und auf Android über Google Play. Auf dem iPhone verwendest du die Web-App. Die native iOS-App hat bereits einen eigenen Multiplattform-Build und ist noch in Entwicklung.' },
 ]
+const guides = [
+  { icon: 'i-lucide-camera', title: 'Das Rezept auf Omas Zettel.', text: 'So übernimmst du ein Rezept vom Foto und prüfst die erkannten Angaben.', to: '/anleitungen/rezept-aus-foto' },
+  { icon: 'i-lucide-users', title: 'Kaffee leer. WG-Liste voll.', text: 'Gemeinsame Basics planen, ohne jeden Einkauf im Chat zu besprechen.', to: '/im-alltag/wg-einkauf' },
+  { icon: 'i-lucide-link', title: 'Ein Link, den du wiederfindest.', text: 'Eine Kochidee behalten und ihre Quelle direkt beim Rezept lassen.', to: '/anleitungen/rezept-aus-link' },
+]
+useSchemaOrg([
+  defineSoftwareApp({
+    name: 'shliste',
+    applicationCategory: 'LifestyleApplication',
+    operatingSystem: 'Web, Android',
+    description: 'Listen und Rezepte in shliste. Gemeinsame Einkaufslisten, Rezeptbuch und KI für Stimme, Foto und Links. Browser und Android verfügbar; iPhone über die Web-App.',
+    url: 'https://shliste.app',
+    offers: { price: 0, priceCurrency: 'EUR' },
+  }),
+  defineWebPage({ '@type': 'FAQPage' }),
+  ...questions.map(question => defineQuestion({ name: question.title, acceptedAnswer: question.answer })),
+])
 </script>
 
 <template>
-  <div class="landing min-h-dvh">
-    <header class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-6 sm:px-8">
-      <NuxtLink
-        :to="isSignedIn ? '/app/lists' : '/'"
-        aria-label="shliste Startseite"
-      >
-        <img
-          src="/images/brand/wordmark.svg"
-          alt="shliste"
-          width="152"
-          height="40"
-          class="h-8 w-auto sm:h-9"
-        >
-      </NuxtLink>
-      <nav
-        aria-label="Hauptnavigation"
-        class="flex shrink-0 items-center gap-6"
-      >
-        <NuxtLink
-          to="/rezepte"
-          class="hidden text-sm font-semibold hover:underline lg:inline"
-        >Rezepte</NuxtLink>
-        <NuxtLink
-          to="/gemeinsam-einkaufen"
-          class="hidden text-sm font-semibold hover:underline lg:inline"
-        >Gemeinsam einkaufen</NuxtLink>
-        <NuxtLink
-          to="/so-funktionierts"
-          class="hidden text-sm font-semibold hover:underline lg:inline"
-        >So funktioniert’s</NuxtLink>
-        <UButton
-          to="/app/lists"
-          size="lg"
-          class="rounded-full font-bold whitespace-nowrap"
-        >
-          App öffnen <UIcon
-            name="i-lucide-arrow-up-right"
-            class="size-4"
-          />
-        </UButton>
-      </nav>
-    </header>
-    <nav
-      aria-label="shliste entdecken"
-      class="mx-auto flex max-w-7xl flex-wrap gap-x-5 gap-y-1 px-5 text-sm font-semibold sm:px-8 lg:hidden"
+  <MarketingChrome>
+    <main
+      id="inhalt"
+      class="home-story"
     >
-      <NuxtLink
-        to="/rezepte"
-        class="inline-flex min-h-11 items-center hover:underline"
-      >Rezepte</NuxtLink>
-      <NuxtLink
-        to="/gemeinsam-einkaufen"
-        class="inline-flex min-h-11 items-center hover:underline"
-      >Gemeinsam einkaufen</NuxtLink>
-      <NuxtLink
-        to="/so-funktionierts"
-        class="inline-flex min-h-11 items-center hover:underline"
-      >So funktioniert’s</NuxtLink>
-    </nav>
-
-    <main>
       <section
-        class="hero relative mx-auto grid max-w-7xl items-center gap-12 overflow-hidden px-5 pt-9 pb-14 sm:px-8 sm:pt-16 sm:pb-20 lg:grid-cols-[1.1fr_0.9fr] lg:gap-6"
+        class="home-hero home-width"
         aria-labelledby="hero-title"
       >
-        <div class="relative z-10">
-          <p class="eyebrow mb-6 inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold tracking-wide">
-            <UIcon
-              name="i-lucide-sprout"
-              class="size-4"
-            /> Kleine Listen. Mehr Platz im Kopf.
+        <div class="hero-copy">
+          <p class="home-eyebrow">
+            <span /> Für euren ganz normalen Alltag
           </p>
-          <h1
-            id="hero-title"
-            class="max-w-3xl text-[clamp(3rem,6.6vw,5.8rem)] leading-[0.99] font-black tracking-[-0.055em]"
-          >
-            Weniger merken.<br><span class="accent">Mehr zusammen<br class="hidden sm:block"> machen.</span>
+          <h1 id="hero-title">
+            <span>Weniger merken.</span><span>Mehr zusammen</span><em>machen.</em>
           </h1>
-          <p class="muted mt-7 max-w-lg text-lg leading-relaxed sm:text-xl">
-            Der Einkauf fürs Wochenende. Das Rezept für heute Abend.
-            Der Link, den du behalten willst. Alles findet seinen Platz in shliste.
+          <p class="hero-intro">
+            Vom ersten „Was fehlt noch?“ bis zum fertigen Abendessen: Listen teilen, Rezepte behalten und den Einkauf gemeinsam erledigen.
           </p>
-          <div class="mt-8 flex flex-wrap gap-3">
-            <UButton
+          <div class="hero-actions">
+            <NuxtLink
               to="/app/lists"
-              size="xl"
-              class="rounded-full px-6 font-bold"
-            >
-              Im Browser starten <UIcon
-                name="i-lucide-arrow-right"
-                class="size-5"
-              />
-            </UButton>
-            <UButton
-              to="https://play.google.com/store/apps/details?id=com.shroomlife.shliste"
+              class="home-button"
+            >Meine erste Liste <UIcon name="i-lucide-arrow-up-right" /></NuxtLink><a
+              href="https://play.google.com/store/apps/details?id=com.shroomlife.shliste"
               target="_blank"
               rel="noopener"
-              size="xl"
-              variant="outline"
-              class="rounded-full px-6 font-bold"
-            >
-              Für Android
-            </UButton>
+              class="home-text-link"
+            >Für Android <UIcon name="i-lucide-arrow-up-right" /></a>
           </div>
-          <p class="muted mt-4 text-sm">
-            Im Browser direkt loslegen. Ohne Installation.
+          <p class="hero-start-note">
+            Ohne Konto im Browser loslegen.
           </p>
-          <div class="mt-10 flex flex-wrap gap-x-5 gap-y-3 text-sm font-medium">
-            <a
-              href="#alltag"
-              class="inline-flex min-h-11 items-center gap-2 hover:underline"
-            ><UIcon
-              name="i-lucide-list-checks"
-              class="accent size-4"
-            /> Listen teilen</a>
-            <a
-              href="#rezepte"
-              class="inline-flex min-h-11 items-center gap-2 hover:underline"
-            ><UIcon
-              name="i-lucide-book-open"
-              class="accent size-4"
-            /> Rezepte entdecken</a>
-            <a
-              href="#links"
-              class="inline-flex min-h-11 items-center gap-2 hover:underline"
-            ><UIcon
-              name="i-lucide-link"
-              class="accent size-4"
-            /> Links behalten</a>
+          <div class="hero-detail">
+            <UIcon name="i-lucide-heart-handshake" /><p>Für euren Wocheneinkauf.<br>Und wenn spontan Freunde kommen.</p>
           </div>
+          <a
+            href="#gemeinsam"
+            class="hero-scroll"
+          ><span /> Ein Freitag mit shliste <UIcon name="i-lucide-arrow-down" /></a>
         </div>
-        <figure class="hero-visual relative flex flex-col items-center px-7 pt-5 pb-2 lg:pt-0">
-          <div
-            class="hero-orbit absolute inset-x-0 top-[12%] bottom-[12%] rounded-[50%]"
-            aria-hidden="true"
+        <MarketingHeroDevice />
+      </section>
+
+      <div class="home-intro-line home-width">
+        <span>Was ihr braucht, steht auf eurer Liste.</span><p>Zu Hause ergänzen. Unterwegs abhaken. Später zusammen kochen.</p>
+      </div>
+
+      <section
+        id="gemeinsam"
+        class="home-chapter home-width"
+        aria-labelledby="shared-title"
+      >
+        <div class="chapter-copy">
+          <p class="home-eyebrow">
+            01 / Der Einkauf beginnt zu Hause
+          </p><h2 id="shared-title">
+            „Rucola fehlt<br>auch noch.“
+          </h2><p>Sam ist schon auf dem Weg in den Laden. Du schaust in den Kühlschrank und ergänzt Rucola auf eurer gemeinsamen Liste. Der Eintrag kommt nach dem Abgleich auch bei Sam an.</p><p>Was im Korb liegt, wird abgehakt. So bleibt die kleine Ergänzung dort, wo sie gebraucht wird: beim Einkauf.</p><NuxtLink
+            to="/anleitungen/einkaufsliste-teilen"
+            class="home-text-link"
+          >So teilt ihr eine Liste <UIcon name="i-lucide-arrow-right" /></NuxtLink><small>Gemeinsame Listen brauchen Anmeldung und Internet.</small>
+        </div>
+        <div class="chapter-example">
+          <MarketingInlineDemo
+            mode="shared"
+            embedded
           />
-          <div class="phone relative w-full max-w-[290px] rotate-2 overflow-hidden rounded-[2rem] border-[7px] sm:max-w-[320px]">
-            <img
-              src="/images/screenshots/list.png"
-              alt="Die echte shliste Web-App mit einer Einkaufsliste aus Beispieldaten, offenen und erledigten Einträgen."
-              width="390"
-              height="844"
-              fetchpriority="high"
-              class="block h-auto w-full"
-            >
-          </div>
-          <figcaption class="muted relative mt-6 text-center text-xs">
-            Ein Blick in die Web-App · Beispieldaten
-          </figcaption>
-        </figure>
+        </div>
+      </section>
+
+      <section
+        id="vom-rezept-zum-einkauf"
+        class="home-chapter home-chapter--reverse home-width"
+        aria-labelledby="recipe-title"
+      >
+        <div class="chapter-copy">
+          <p class="home-eyebrow">
+            02 / Freitag kommen Freunde
+          </p><h2 id="recipe-title">
+            Die Idee steht.<br>Der Einkauf auch.
+          </h2><p>Lasagne für alle. Im Rezept stehen die Zutaten, in deiner Küche schon das Olivenöl. Wähle nur aus, was noch fehlt, und übernimm es in eure Freitagsliste.</p><p>Die Zubereitung bleibt beim Rezept. Getränke und die Zutaten für den Salat ergänzt du auf derselben Liste. So kann Sam alles in einem Einkauf mitbringen.</p><NuxtLink
+            to="/im-alltag/gaeste-zum-essen"
+            class="home-text-link"
+          >So plant ihr den Einkauf <UIcon name="i-lucide-arrow-right" /></NuxtLink>
+        </div>
+        <div class="chapter-example">
+          <MarketingInlineDemo
+            mode="recipe"
+            embedded
+          />
+        </div>
+      </section>
+
+      <section
+        class="offline-note home-width"
+        aria-labelledby="offline-title"
+      >
+        <div class="offline-symbol">
+          <UIcon name="i-lucide-wifi-off" />
+        </div><div>
+          <p class="home-eyebrow">
+            Zwischen zwei Supermarktregalen
+          </p><h2 id="offline-title">
+            Kein Netz. Die Liste ist trotzdem da.
+          </h2><p>Bereits gespeicherte Einträge nachsehen und abhaken geht auch offline. Den neuen Stand sehen die anderen nach dem nächsten Abgleich mit Verbindung.</p>
+        </div><NuxtLink
+          to="/hilfe/offline-einkaufen"
+          class="home-text-link"
+        >Was offline geht <UIcon name="i-lucide-arrow-up-right" /></NuxtLink>
+      </section>
+
+      <MarketingFoodInterlude
+        id="frische-zutaten"
+        motif="tomatoes"
+      />
+
+      <section
+        id="listenuebersicht"
+        class="home-chapter home-chapter--reverse home-width"
+        aria-labelledby="overview-title"
+      >
+        <div class="chapter-copy">
+          <p class="home-eyebrow">
+            Dein Alltag hat mehr als eine Liste
+          </p><h2 id="overview-title">
+            Freitag, die Woche.<br>Und eine Überraschung.
+          </h2><p>Deine Listen stehen nebeneinander. Du siehst, wie viele Einträge noch offen sind und wo jemand etwas ergänzt hat. Sobald du etwas abhakst, zeigt die Karte euren Fortschritt.</p><p>Die WG kauft gemeinsam ein. Deine Geburtstagsideen bekommen eine eigene Liste mit Schloss. So findest du wieder, was zu welchem Anlass gehört.</p><NuxtLink
+            to="/funktionen/geheime-listen"
+            class="home-text-link"
+          >Die Überraschung für dich behalten <UIcon name="i-lucide-arrow-right" /></NuxtLink>
+        </div>
+        <div class="chapter-example">
+          <MarketingFeatureDemo mode="overview" />
+        </div>
+      </section>
+
+      <section
+        id="weniger-tippen"
+        class="home-chapter home-width"
+        aria-labelledby="voice-title"
+      >
+        <div class="chapter-copy">
+          <p class="home-eyebrow">
+            03 / Kurz nachsehen, was fehlt
+          </p><h2 id="voice-title">
+            Sag einfach,<br>was du brauchst.
+          </h2><p>„Zwei Haferdrinks, Bananen und Kaffee.“ Sprich deine Besorgungen ein, solange du noch vor dem Kühlschrank stehst. shliste macht daraus mit KI einzelne Einträge.</p><p>Danach schaust du kurz über Artikel und Mengen. Falls etwas falsch erkannt wurde, korrigierst du den Eintrag vor dem Einkauf.</p><NuxtLink
+            to="/anleitungen/einkaufsliste-diktieren"
+            class="home-text-link"
+          >Eine Liste diktieren <UIcon name="i-lucide-arrow-right" /></NuxtLink><small>Für Sprache, Foto und KI brauchst du Anmeldung und Internet.</small>
+        </div>
+        <div class="chapter-example">
+          <MarketingInlineDemo
+            mode="voice"
+            embedded
+          />
+        </div>
+      </section>
+
+      <section
+        id="rezeptbilder"
+        class="home-chapter home-chapter--reverse home-width"
+        aria-labelledby="picture-title"
+      >
+        <div class="chapter-copy">
+          <p class="home-eyebrow">
+            04 / Das kochen wir wieder
+          </p><h2 id="picture-title">
+            Die Lasagne<br>kochen wir wieder.
+          </h2><p>Du kannst zu deiner Lasagne mit KI ein Bild erstellen lassen. So findest du das Rezept in deiner Sammlung leichter wieder. Zutaten und Kochschritte sind gleich dabei.</p><p>Du kannst Rezepte selbst anlegen oder Angaben aus einem Foto oder Link übernehmen. Prüfe importierte Inhalte am Original. Ein Bild ist ein schönes Extra; dein Rezept funktioniert auch ohne.</p><NuxtLink
+            to="/rezepte"
+            class="home-text-link"
+          >Dein Rezeptbuch entdecken <UIcon name="i-lucide-arrow-right" /></NuxtLink>
+        </div>
+        <div class="chapter-example">
+          <MarketingInlineDemo
+            mode="photo"
+            embedded
+          />
+        </div>
+      </section>
+
+      <MarketingFoodInterlude
+        id="zeit-zum-essen"
+        motif="lasagne"
+      />
+
+      <section
+        id="rezept-badges"
+        class="home-chapter home-width"
+        aria-labelledby="badge-title"
+      >
+        <div class="chapter-copy">
+          <p class="home-eyebrow">
+            Das hast du gekocht
+          </p><h2 id="badge-title">
+            Letzter Schritt.<br>Kleiner Glücksmoment.
+          </h2><p>Die Lasagne ist fertig. Du hakst den letzten Kochschritt ab und shliste feiert mit dir. Beim ersten Mal bekommt das Rezept einen goldenen Badge mit Bild und Datum.</p><p>Beim nächsten Kochen gibt es wieder Konfetti. Deine Auszeichnung findest du in deiner Badge-Sammlung wieder.</p><NuxtLink
+            to="/funktionen/rezept-badges"
+            class="home-text-link"
+          >So verdienst du einen Badge <UIcon name="i-lucide-arrow-right" /></NuxtLink>
+        </div>
+        <div class="chapter-example">
+          <MarketingFeatureDemo mode="badge" />
+        </div>
+      </section>
+
+      <section
+        id="geheime-listen"
+        class="home-chapter home-chapter--reverse home-width"
+        aria-labelledby="secret-title"
+      >
+        <div class="chapter-copy">
+          <p class="home-eyebrow">
+            Für Sams Geburtstag
+          </p><h2 id="secret-title">
+            Manches darf<br>eine Überraschung bleiben.
+          </h2><p>Konzertkarten, Lieblingsschokolade, eine Karte. Als geheime Liste bleiben die Einträge hinter einer zusätzlichen Entsperrung. Auf Android bestätigst du mit Biometrie oder deiner Displaysperre.</p><p>Die Vorschau zeigt den Fingerabdruck-Ablauf. Im Browser hängt die Bestätigung von deinem Gerät ab. Auf unterstützten Apple-Geräten kann das Face ID oder Touch ID sein.</p><NuxtLink
+            to="/funktionen/geheime-listen"
+            class="home-text-link"
+          >Geheime Listen kennenlernen <UIcon name="i-lucide-arrow-right" /></NuxtLink><small>Der Listenname bleibt in der Übersicht sichtbar. Die Sperre schützt das Öffnen der Liste auf deinem Gerät.</small>
+        </div>
+        <div class="chapter-example">
+          <MarketingFeatureDemo mode="secret" />
+        </div>
       </section>
 
       <section
         id="alltag"
-        class="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-20"
-        aria-labelledby="moments-title"
+        class="home-guides home-width"
+        aria-labelledby="guides-title"
       >
-        <div class="mb-9 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div class="guides-heading">
           <div>
-            <p class="accent text-xs font-bold tracking-[0.16em] uppercase">
-              Mitten im Leben
-            </p>
-            <h2
-              id="moments-title"
-              class="mt-3 text-3xl leading-tight font-extrabold tracking-tight sm:text-4xl"
-            >
-              Für alles, was noch auf die Liste muss.
+            <p class="home-eyebrow">
+              Was steht bei dir an?
+            </p><h2 id="guides-title">
+              Was möchtest du<br>ausprobieren?
             </h2>
-          </div>
-          <p class="muted max-w-xs leading-relaxed">
-            Von der ersten Idee bis zum letzten Häkchen.
-          </p>
-        </div>
-        <div class="grid gap-4 md:grid-cols-3">
-          <article
-            v-for="moment in moments"
-            :key="moment.number"
-            class="moment rounded-[1.5rem] p-6 sm:p-8"
-          >
-            <div class="flex items-center justify-between">
-              <UIcon
-                :name="moment.icon"
-                class="accent size-7"
-              />
-              <span class="muted text-xs font-semibold">{{ moment.number }}</span>
-            </div>
-            <h3 class="mt-8 text-xl font-bold">
-              {{ moment.title }}
-            </h3>
-            <p class="muted mt-3 leading-relaxed">
-              {{ moment.text }}
-            </p>
-            <NuxtLink
-              :to="moment.to"
-              class="accent mt-5 inline-flex min-h-11 items-center gap-2 font-semibold hover:underline"
-            >{{ moment.link }} <UIcon
-              name="i-lucide-arrow-right"
-              class="size-4"
-            /></NuxtLink>
-          </article>
-        </div>
-      </section>
-
-      <section
-        class="mx-auto grid max-w-7xl gap-6 px-5 py-8 sm:px-8 lg:grid-cols-2"
-        aria-label="So sieht shliste aus"
-      >
-        <article
-          id="rezepte"
-          class="showcase recipe-showcase grid scroll-mt-6 items-center gap-8 overflow-hidden rounded-[2rem] px-6 pt-8 sm:px-10 sm:pt-10 lg:col-span-2 lg:grid-cols-[1fr_0.9fr]"
-        >
-          <div class="lg:pb-10">
-            <p class="text-xs font-bold tracking-[0.14em] uppercase">
-              Dein eigenes Rezeptbuch
-            </p>
-            <h2 class="mt-3 max-w-xl text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
-              Deine Lieblingsrezepte.<br>Bereit zum Nachkochen.
-            </h2>
-            <p class="mt-5 max-w-md text-lg leading-relaxed">
-              Das schnelle Abendessen. Der Kuchen vom letzten Geburtstag.
-              Bewahre deine Rezepte mit Zutaten und Zubereitung an einem Ort auf.
-            </p>
-            <ol class="mt-7 flex max-w-md flex-col gap-5">
-              <li class="flex gap-3">
-                <UIcon
-                  name="i-lucide-book-open"
-                  class="mt-1 size-5 shrink-0"
-                />
-                <div><strong>Wiederfinden statt suchen.</strong><br>Deine Sammlung ist dort, wo du auch deinen Einkauf planst.</div>
-              </li>
-              <li class="flex gap-3">
-                <UIcon
-                  name="i-lucide-list-checks"
-                  class="mt-1 size-5 shrink-0"
-                />
-                <div><strong>Schritt für Schritt kochen.</strong><br>Hake ab, was fertig ist, und behalte den nächsten Schritt im Blick.</div>
-              </li>
-              <li class="flex gap-3">
-                <UIcon
-                  name="i-lucide-shopping-basket"
-                  class="mt-1 size-5 shrink-0"
-                />
-                <div><strong>Zutaten direkt übernehmen.</strong><br>Was du einkaufen möchtest, wandert aus dem Rezept auf deine Liste.</div>
-              </li>
-            </ol>
-            <UButton
-              to="/rezepte"
-              size="xl"
-              class="mt-8 rounded-full px-6 font-bold"
-            >
-              Rezepte entdecken
-            </UButton>
-          </div>
-          <figure class="flex flex-col items-center">
-            <img
-              src="/images/recipes/lasagne.webp"
-              alt="Rezeptillustration: vegane Lasagne mit Béchamelsoße, Tomaten und frischem Basilikum."
-              width="1200"
-              height="600"
-              loading="lazy"
-              class="showcase-shot block h-auto w-full rounded-[1.25rem]"
-            >
-            <figcaption class="py-4 text-xs">
-              Vegane Lasagne mit Béchamelsoße · Illustration aus shliste
-            </figcaption>
-          </figure>
-        </article>
-        <article
-          id="links"
-          class="showcase link-showcase grid scroll-mt-6 items-center gap-8 overflow-hidden rounded-[2rem] px-6 pt-8 sm:px-10 sm:pt-10 lg:col-span-2 lg:grid-cols-[1fr_0.9fr]"
-        >
-          <div class="lg:pb-10">
-            <p class="text-xs font-bold tracking-[0.14em] uppercase">
-              Aus einem Link wird mehr
-            </p>
-            <h2 class="mt-3 max-w-md text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Gefunden.<br>Geprüft. Hinzugefügt.
-            </h2>
-            <p class="mt-4 max-w-md text-lg leading-relaxed">
-              Du entscheidest: nur den Link behalten oder Einträge daraus übernehmen. Die AI-Auswahl prüfst du vor dem Speichern.
-            </p>
-            <ol class="mt-7 flex max-w-md flex-col gap-5">
-              <li class="flex gap-3">
-                <span class="flex size-7 shrink-0 items-center justify-center rounded-full border text-sm font-bold">1</span>
-                <div><strong>Link einfügen.</strong><br>Die Eingabeleiste erkennt deine Adresse und bietet dir die passenden Möglichkeiten an.</div>
-              </li>
-              <li class="flex gap-3">
-                <span class="flex size-7 shrink-0 items-center justify-center rounded-full border text-sm font-bold">2</span>
-                <div><strong>Selbst entscheiden.</strong><br>Behalte die Fundstelle als Link. Oder lass dir Einträge aus dem Inhalt vorschlagen.</div>
-              </li>
-              <li class="flex gap-3">
-                <span class="flex size-7 shrink-0 items-center justify-center rounded-full border text-sm font-bold">3</span>
-                <div><strong>Auswählen und hinzufügen.</strong><br>Prüfe die Vorschläge und ergänze eine vorhandene Liste oder starte eine neue.</div>
-              </li>
-            </ol>
-            <UButton
-              to="/app/lists"
-              size="xl"
-              class="mt-8 rounded-full px-6 font-bold"
-            >
-              Meine Listen öffnen
-            </UButton>
-          </div>
-          <figure class="flex flex-col items-center">
-            <img
-              src="/images/screenshots/links.png"
-              alt="Link-Auswahl der echten shliste Web-App: Link in der Liste speichern oder Einträge daraus übernehmen."
-              width="390"
-              height="844"
-              loading="lazy"
-              class="showcase-shot block h-auto w-full max-w-[270px] rounded-t-[1.25rem]"
-            >
-            <figcaption class="py-4 text-xs">
-              Link-Auswahl · AI benötigt Anmeldung und Internet
-            </figcaption>
-          </figure>
-        </article>
-      </section>
-
-      <section
-        class="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-20"
-        aria-labelledby="recipe-ideas-title"
-      >
-        <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p class="accent text-xs font-bold tracking-[0.16em] uppercase">
-              Lust auf etwas Gutes?
-            </p>
-            <h2
-              id="recipe-ideas-title"
-              class="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl"
-            >
-              Herzhaft. Süß. Wiederkochenswert.
-            </h2>
-          </div>
+          </div><NuxtLink
+            to="/im-alltag"
+            class="home-text-link"
+          >Alle Beispiele & Anleitungen <UIcon name="i-lucide-arrow-right" /></NuxtLink>
+        </div><div class="guide-grid">
           <NuxtLink
-            to="/rezepte"
-            class="accent inline-flex min-h-11 items-center gap-2 font-semibold hover:underline"
-          >
-            Mehr über dein Rezeptbuch <UIcon
-              name="i-lucide-arrow-right"
-              class="size-4"
-            />
-          </NuxtLink>
+            v-for="guide in guides"
+            :key="guide.to"
+            :to="guide.to"
+            class="guide-card"
+          ><UIcon :name="guide.icon" /><h3>{{ guide.title }}</h3><p>{{ guide.text }}</p><span>Beispiel entdecken <UIcon name="i-lucide-arrow-up-right" /></span></NuxtLink>
         </div>
-        <div class="grid gap-5 md:grid-cols-3">
-          <article
-            v-for="idea in recipeIdeas"
-            :key="idea.title"
-            class="moment overflow-hidden rounded-[1.5rem]"
-          >
-            <img
-              :src="idea.image"
-              :alt="`Rezeptillustration: ${idea.title}`"
-              width="1200"
-              height="600"
-              loading="lazy"
-              class="block h-auto w-full"
-            >
-            <div class="p-6">
-              <p class="accent text-xs font-bold tracking-wide uppercase">
-                {{ idea.occasion }}
-              </p>
-              <h3 class="mt-3 text-xl font-bold">
-                {{ idea.title }}
-              </h3>
-              <p class="muted mt-3 leading-relaxed">
-                {{ idea.text }}
-              </p>
-            </div>
-          </article>
-        </div>
-        <p class="muted mt-4 text-sm">
-          Einblicke in eine shliste-Rezeptsammlung · Rezeptillustrationen
-        </p>
       </section>
 
       <section
-        class="mx-auto grid max-w-7xl gap-8 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-[0.8fr_1.2fr]"
-        aria-labelledby="details-title"
+        id="plattformen"
+        class="home-platforms home-width"
+        aria-labelledby="platform-title"
       >
         <div>
-          <p class="accent text-xs font-bold tracking-[0.16em] uppercase">
-            Einfach im Alltag
-          </p>
-          <h2
-            id="details-title"
-            class="mt-3 text-3xl leading-tight font-extrabold tracking-tight sm:text-4xl"
-          >
-            Deine Liste kommt mit.
-          </h2>
-        </div>
-        <div class="grid gap-7 sm:grid-cols-2">
-          <div>
-            <UIcon
-              name="i-lucide-cloud-off"
-              class="accent size-6"
-            />
-            <h3 class="mt-3 text-lg font-bold">
-              Abhaken, auch ohne Empfang
-            </h3>
-            <p class="muted mt-2 leading-relaxed">
-              Gespeicherte Listen kannst du auch offline bearbeiten. Für den Abgleich mit anderen Geräten brauchst du wieder eine Verbindung.
-            </p>
-          </div>
-          <div>
-            <UIcon
-              name="i-lucide-panels-top-left"
-              class="accent size-6"
-            />
-            <h3 class="mt-3 text-lg font-bold">
-              Browser oder Android
-            </h3>
-            <p class="muted mt-2 leading-relaxed">
-              Am großen Bildschirm planen, unterwegs abhaken. Mit Anmeldung nutzt du den Abgleich zwischen deinen Geräten.
-            </p>
-          </div>
+          <p class="home-eyebrow">
+            Im Browser und auf Android
+          </p><h2 id="platform-title">
+            Fang da an,<br>wo du gerade bist.
+          </h2><p>Im Browser direkt loslegen oder die Android-App nutzen. Auf dem iPhone ist shliste als Web-App dabei; die native iOS-App entsteht bereits im Multiplattform-Build.</p>
+        </div><div class="platform-links">
+          <NuxtLink to="/app/lists"><UIcon name="i-lucide-globe" /><span><strong>Im Browser starten</strong><small>Ohne Installation · auch auf dem iPhone</small></span><UIcon name="i-lucide-arrow-up-right" /></NuxtLink><a
+            href="https://play.google.com/store/apps/details?id=com.shroomlife.shliste"
+            target="_blank"
+            rel="noopener"
+          ><UIcon name="i-lucide-smartphone" /><span><strong>shliste für Android</strong><small>Mit den Farben deines Geräts</small></span><UIcon name="i-lucide-arrow-up-right" /></a>
         </div>
       </section>
 
       <section
-        class="mx-auto grid max-w-7xl gap-8 px-5 pb-16 sm:px-8 lg:grid-cols-[0.8fr_1.2fr]"
+        id="auf-allen-geraeten"
+        class="home-devices home-width"
+        aria-labelledby="devices-title"
+      >
+        <div class="devices-copy">
+          <p class="home-eyebrow">
+            Jeder auf seinem Gerät
+          </p><h2 id="devices-title">
+            Du am Laptop.<br>Sam schon im Laden.
+          </h2><p>Robin ergänzt Rucola im Browser. Sam sieht den Eintrag auf Android und hakt ihn beim Einkaufen ab. Zu Hause sieht Robin sofort, was schon besorgt ist.</p><p>Ihr braucht dafür eine geteilte Liste, Anmeldung und Internet. Daneben zeigen wir euch einen ersten Blick auf unsere native iOS-App: die Listenübersicht aus dem Multiplattform-Build.</p>
+        </div><MarketingDevicesDemo />
+      </section>
+
+      <section
+        class="home-faq home-width"
         aria-labelledby="questions-title"
       >
         <div>
-          <p class="accent text-xs font-bold tracking-[0.16em] uppercase">
+          <p class="home-eyebrow">
             Gut zu wissen
-          </p>
-          <h2
-            id="questions-title"
-            class="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl"
-          >
-            Einfach anfangen.<br>Mit einem guten Gefühl.
-          </h2>
-          <p class="muted mt-5 max-w-sm leading-relaxed">
-            Die wichtigsten Antworten für deinen Einstieg. Eine ausführliche Tour findest du auf unserer Seite zur Nutzung.
-          </p>
-          <NuxtLink
+          </p><h2 id="questions-title">
+            Einfach anfangen.
+          </h2><NuxtLink
             to="/so-funktionierts"
-            class="accent mt-4 inline-flex min-h-11 items-center gap-2 font-semibold hover:underline"
-          >So funktioniert shliste <UIcon
-            name="i-lucide-arrow-right"
-            class="size-4"
-          /></NuxtLink>
-        </div>
-        <div class="space-y-3">
+            class="home-text-link"
+          >Die ausführliche Tour <UIcon name="i-lucide-arrow-right" /></NuxtLink>
+        </div><div>
           <details
             v-for="question in questions"
             :key="question.title"
-            class="moment rounded-2xl px-5"
           >
-            <summary class="cursor-pointer py-5 pr-3 font-bold">
-              {{ question.title }}
-            </summary>
-            <p class="muted pb-5 leading-relaxed">
-              {{ question.answer }}
-            </p>
+            <summary>{{ question.title }}<UIcon name="i-lucide-plus" /></summary><p>{{ question.answer }}</p>
           </details>
         </div>
       </section>
-
-      <section class="mx-auto max-w-7xl px-5 pb-16 sm:px-8">
-        <div class="closing rounded-[2rem] px-6 py-12 text-center sm:px-10 sm:py-16">
-          <UIcon
-            name="i-lucide-check-check"
-            class="mb-4 size-9"
-          />
-          <h2 class="text-3xl font-extrabold tracking-tight sm:text-5xl">
-            Was steht bei dir als Nächstes an?
-          </h2>
-          <p class="mx-auto mt-4 max-w-lg text-lg">
-            Fang mit einer Liste an. Der Rest darf aus dem Kopf.
-          </p>
-          <UButton
-            to="/app/lists"
-            size="xl"
-            color="neutral"
-            class="mt-7 rounded-full px-7 font-bold"
-          >
-            shliste öffnen <UIcon
-              name="i-lucide-arrow-right"
-              class="size-5"
-            />
-          </UButton>
-        </div>
+      <section class="home-closing home-width">
+        <span class="home-eyebrow">Bereit für den nächsten Einkauf?</span><h2>Was fehlt noch<br>für einen guten Abend?</h2><NuxtLink
+          to="/app/lists"
+          class="home-button"
+        >Schreib’s auf deine Liste <UIcon name="i-lucide-arrow-up-right" /></NuxtLink>
       </section>
     </main>
-
-    <footer class="mx-auto flex max-w-7xl flex-col gap-6 px-5 pb-10 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-      <p class="muted text-sm">
-        shliste · Für die kleinen und großen Besorgungen.
-      </p>
-      <nav
-        aria-label="Rechtliches"
-        class="flex gap-6 text-sm"
-      >
-        <NuxtLink
-          to="/imprint"
-          class="hover:underline"
-        >Impressum</NuxtLink>
-        <NuxtLink
-          to="/privacy"
-          class="hover:underline"
-        >Datenschutz</NuxtLink>
-      </nav>
-    </footer>
-  </div>
+  </MarketingChrome>
 </template>
 
 <style scoped>
-.landing { background: var(--md-background); color: var(--md-on-background); }
-.accent { color: var(--md-primary); }
-.landing { --marketing-text-accent: #A6387D; }
-:global(.dark) .landing { --marketing-text-accent: var(--md-primary); }
-p.accent, a.accent { color: var(--marketing-text-accent); }
-.muted { color: var(--md-on-surface-variant); }
-.eyebrow, .moment { background: var(--md-surface-container); }
-.eyebrow { color: var(--marketing-text-accent); }
-.hero-orbit { background: var(--md-primary-container); transform: rotate(-12deg); }
-.phone { border-color: var(--md-surface-high); background: var(--md-surface); box-shadow: 0 22px 55px color-mix(in srgb, var(--md-primary) 16%, transparent); }
-.recipe-showcase { background: var(--md-primary-container); color: var(--md-on-primary-container); }
-.link-showcase { background: var(--md-secondary-container); color: var(--md-on-secondary-container); }
-.showcase-shot { box-shadow: 0 10px 35px rgb(0 0 0 / 10%); }
-.closing { background: var(--md-primary); color: var(--md-on-primary); }
-.hero-visual { animation: arrive 650ms ease-out both; }
-@keyframes arrive {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .hero-visual { animation: none; }
-}
+.home-story{--home-accent:var(--demo-accent);--home-ink:var(--md-on-background);color:var(--home-ink);overflow:clip}.home-width{width:calc(100% - 2 * var(--marketing-gutter));max-width:var(--marketing-content);margin-inline:auto}.home-eyebrow{display:flex;align-items:center;gap:8px;font-size:0.8125rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--home-accent);margin:0 0 20px}.home-eyebrow>span{width:6px;height:6px;border-radius:50%;background:currentColor}.home-hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);align-items:center;gap:64px;padding:62px 0 64px}.hero-copy{padding-bottom:12px}.hero-copy h1{font-size:clamp(3rem,5.2vw,4.25rem);font-weight:900;line-height:.99;letter-spacing:-.05em;margin:0}.hero-copy h1>span{display:block;white-space:nowrap}.hero-copy h1 em{font-style:normal;color:var(--home-accent)}.hero-intro{font-size:1.375rem;line-height:1.5;max-width:30rem;margin:26px 0;color:var(--md-on-surface-variant)}.hero-actions{display:flex;align-items:center;gap:26px;flex-wrap:wrap}.home-button{display:inline-flex;align-items:center;justify-content:center;gap:17px;background:var(--home-accent);color:white;border-radius:30px;padding:15px 23px;min-height:52px;font-size:1.125rem;font-weight:700;text-decoration:none;transition:background .2s,transform .2s}.home-button:hover{background:#883066;transform:translateY(-2px)}.home-button .iconify{width:20px;height:20px}.home-text-link{display:inline-flex;align-items:center;gap:10px;min-height:44px;font-size:1.062rem;font-weight:700;color:var(--home-accent);text-decoration:none}.home-text-link:hover{text-decoration:underline;text-underline-offset:5px}.home-text-link .iconify{width:19px;height:19px;flex-shrink:0}.hero-start-note{margin-top:12px;font-size:0.875rem;color:var(--md-on-surface-variant)}.hero-detail{display:flex;align-items:center;gap:13px;margin-top:30px;color:var(--md-on-surface-variant)}.hero-detail>.iconify{width:28px;height:28px;color:var(--home-accent)}.hero-detail p{font-size:1rem;line-height:1.4;margin:0}.hero-scroll{display:inline-flex;align-items:center;gap:10px;font-size:0.875rem;color:var(--md-on-surface-variant);margin-top:34px}.hero-scroll>span{width:28px;height:1px;background:color-mix(in srgb,var(--demo-accent) 31%,transparent)}.hero-scroll .iconify{width:15px;height:15px}.home-intro-line{display:flex;justify-content:space-between;gap:20px;padding:25px 0;border-top:1px solid color-mix(in srgb,var(--demo-accent) 13%,transparent);border-bottom:1px solid color-mix(in srgb,var(--demo-accent) 13%,transparent)}.home-intro-line>span{font-weight:700;font-size:1.125rem}.home-intro-line>p{font-size:1.062rem;color:var(--md-on-surface-variant);margin:0}.home-chapter{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);align-items:center;gap:64px;padding-block:90px;scroll-margin-top:110px}.home-chapter+.home-chapter{border-top:1px solid color-mix(in srgb,var(--demo-accent) 7%,transparent)}.home-chapter--reverse{grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr)}.home-chapter--reverse .chapter-copy{grid-column:2;grid-row:1}.home-chapter--reverse .chapter-example{grid-column:1;grid-row:1}.chapter-copy{max-width:32rem;min-width:0}.chapter-copy h2,.guides-heading h2,.home-platforms h2,.home-faq h2{font-size:clamp(2.3rem,3.8vw,3.55rem);font-weight:800;letter-spacing:-.035em;line-height:1.04;margin:0 0 23px}.chapter-copy>p:not(.home-eyebrow){font-size:1.188rem;line-height:1.65;color:var(--md-on-surface-variant);margin:0 0 17px}.chapter-copy .home-text-link{margin-top:5px}.chapter-copy>small{display:block;font-size:0.8125rem;line-height:1.5;color:var(--md-on-surface-variant);margin-top:12px;max-width:320px}.chapter-example{min-width:0}.offline-note{display:grid;grid-template-columns:64px 1fr auto;align-items:center;gap:25px;padding:30px 36px;background:#eff3e8;border-radius:24px;color:#30412b}.offline-symbol{display:grid;place-items:center;width:58px;height:58px;background:#e0e8d5;border-radius:50%}.offline-symbol .iconify{width:27px;height:27px}.offline-note .home-eyebrow{font-size:0.6875rem;color:#536b45;margin-bottom:7px}.offline-note h2{font-size:1.562rem;font-weight:800;line-height:1.2;margin:0}.offline-note p:not(.home-eyebrow){font-size:1.062rem;line-height:1.5;margin:8px 0 0;max-width:590px;color:#53604b}.offline-note .home-text-link{color:#486239;font-size:1rem}.home-guides{padding:50px 0 80px;border-top:1px solid color-mix(in srgb,var(--demo-accent) 13%,transparent)}.guides-heading{display:flex;align-items:end;justify-content:space-between;gap:30px;margin-bottom:30px}.guides-heading h2{margin-bottom:0;font-size:2.5rem}.guide-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}.guide-card{display:block;padding:27px;border-radius:20px;border:1px solid color-mix(in srgb,var(--demo-accent) 15%,transparent);background:var(--md-surface);transition:translate .25s}.guide-card:hover{translate:0 -4px}.guide-card>.iconify{width:25px;height:25px;color:var(--home-accent)}.guide-card h3{font-size:1.562rem;font-weight:800;line-height:1.15;margin:28px 0 12px}.guide-card p{font-size:1.062rem;line-height:1.5;color:var(--md-on-surface-variant);margin:0 0 22px}.guide-card>span{display:flex;align-items:center;gap:8px;font-size:0.9375rem;font-weight:700;color:var(--home-accent)}.guide-card>span .iconify{width:17px;height:17px}.home-platforms{display:grid;grid-template-columns:1fr 1fr;gap:80px;padding-block:55px 80px;scroll-margin-top:110px}.home-platforms p:not(.home-eyebrow){font-size:1.188rem;line-height:1.6;color:var(--md-on-surface-variant);max-width:440px}.platform-links{align-self:center;display:grid;gap:15px}.platform-links>a{display:flex;align-items:center;gap:18px;padding:24px;border:1px solid color-mix(in srgb,var(--demo-accent) 15%,transparent);border-radius:20px;background:var(--md-surface)}.platform-links>a>.iconify{width:25px;height:25px;color:var(--home-accent);flex-shrink:0}.platform-links>a>.iconify:last-child{margin-left:auto;width:20px}.platform-links strong{display:block;font-size:1.438rem;line-height:1.2}.platform-links small{display:block;font-size:0.875rem;color:var(--md-on-surface-variant);margin-top:5px}.home-faq{display:grid;grid-template-columns:.8fr 1.2fr;gap:70px;padding:65px 0 80px;border-top:1px solid color-mix(in srgb,var(--demo-accent) 13%,transparent)}.home-faq h2{font-size:2.438rem}.home-faq details{border-bottom:1px solid color-mix(in srgb,var(--demo-accent) 13%,transparent)}.home-faq summary{display:flex;align-items:center;justify-content:space-between;gap:18px;cursor:pointer;list-style:none;font-weight:700;font-size:1.25rem;padding:21px 0}.home-faq summary::-webkit-details-marker{display:none}.home-faq summary .iconify{width:18px;height:18px;flex-shrink:0;color:var(--home-accent)}.home-faq details[open] summary .iconify{rotate:45deg}.home-faq details p{font-size:1.125rem;line-height:1.6;color:var(--md-on-surface-variant);margin:0 0 22px}.home-closing{padding:65px 0 80px;text-align:center}.home-closing .home-eyebrow{justify-content:center}.home-closing h2{font-size:clamp(2.5rem,5vw,4rem);line-height:1.05;font-weight:900;letter-spacing:-.035em;margin:0 0 28px}.home-story a:focus-visible,.home-faq summary:focus-visible{outline:2px solid var(--home-accent);outline-offset:5px}
+@media(max-width:1100px){.home-hero{gap:35px}.home-chapter{gap:35px;grid-template-columns:minmax(0,.75fr) minmax(0,1.25fr)}.home-chapter--reverse{grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr)}.chapter-copy>p:not(.home-eyebrow){font-size:1.125rem}.offline-note{grid-template-columns:52px 1fr}.offline-note>.home-text-link{grid-column:2}.home-platforms{gap:45px}}
+@media(max-width:820px){.home-hero{grid-template-columns:1fr;gap:30px;padding:40px 0 45px}.hero-copy{max-width:560px;margin:auto;width:100%}.hero-copy h1{font-size:clamp(2.4rem,8.4vw,4.25rem)}.hero-intro{font-size:1.312rem;max-width:490px}.hero-detail{display:none}.hero-scroll{margin-top:22px}.home-intro-line{flex-direction:column;gap:4px;padding:20px 0}.home-intro-line>p{font-size:1rem}.home-chapter,.home-chapter--reverse{grid-template-columns:1fr;gap:25px;padding-block:50px}.home-chapter--reverse .chapter-copy,.home-chapter--reverse .chapter-example{grid-column:auto;grid-row:auto}.chapter-copy{max-width:570px}.chapter-copy h2{font-size:2.688rem}.chapter-copy .home-eyebrow{margin-bottom:15px}.chapter-example{width:100%;max-width:640px;margin:auto}.offline-note{padding:25px;gap:15px;grid-template-columns:1fr}.offline-note>.home-text-link{grid-column:1}.offline-symbol{width:45px;height:45px}.offline-symbol .iconify{width:22px;height:22px}.guides-heading{align-items:start;flex-direction:column;gap:12px}.guides-heading h2{font-size:2.125rem}.guide-grid{grid-template-columns:1fr}.guide-card{padding:24px}.guide-card h3{margin-top:18px}.home-guides{padding-block:40px}.home-platforms{grid-template-columns:1fr;gap:25px;padding-block:40px}.home-platforms h2{font-size:2.438rem}.home-faq{grid-template-columns:1fr;gap:20px;padding-block:40px}.home-faq h2{margin-bottom:10px}.home-faq summary{font-size:1.188rem}.home-closing{padding-block:45px 60px}}
+@media(prefers-reduced-motion:reduce){.home-button,.guide-card{transition:none}.home-button:hover,.guide-card:hover{transform:none;translate:none}}
+.home-devices{padding-block:20px 80px;scroll-margin-top:110px}.devices-copy{max-width:46rem;margin-bottom:32px}.devices-copy h2{font-size:clamp(2.3rem,3.8vw,3.55rem);font-weight:800;line-height:1.05;letter-spacing:-.035em;margin:0 0 20px}.devices-copy>p:not(.home-eyebrow){font-size:1.188rem;line-height:1.6;color:var(--md-on-surface-variant);margin:0 0 12px}@media(max-width:820px){.home-devices{padding-bottom:50px}.devices-copy>p:not(.home-eyebrow){font-size:1.125rem}}
+.home-hero>.hero-device{max-width:600px;justify-self:center}.home-story h2{overflow-wrap:break-word}
+@media(min-width:1920px){.chapter-copy>small{max-width:26rem}.home-hero{gap:4rem}.home-hero>.hero-device{zoom:1.2}}
 </style>

@@ -30,6 +30,7 @@ const {
   checkedStepCount = 0,
   hasBadge = false,
   active = false,
+  imageSrc,
 } = defineProps<{
   recipe: Recipe
   ingredientCount?: number
@@ -39,6 +40,8 @@ const {
   /** Wurde dieses Rezept schon fertig gekocht? Zeigt das goldene Abzeichen. */
   hasBadge?: boolean
   active?: boolean
+  /** Optional already-resolved cover, e.g. a bundled image in an isolated preview. */
+  imageSrc?: string
 }>()
 
 /** Androids Regel aus Overview.kt: Fortschritt gibt es erst ab einem Haken. */
@@ -58,7 +61,7 @@ const progressPercent = computed(() =>
 )
 
 /** Nur `sync:`-Referenzen sind auflösbar; lokale Android-Pfade ergeben null. */
-const imageUrl = computed(() => resolveRecipeImageUrl(recipe.imagePath))
+const imageUrl = computed(() => imageSrc ?? resolveRecipeImageUrl(recipe.imagePath))
 
 /** Ladefehler blenden das Bild aus — ein Broken-Image-Icon hilft niemandem. */
 const isImageBroken = ref(false)

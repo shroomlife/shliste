@@ -1,5 +1,5 @@
 <script setup lang="ts">
-useSeoMeta({ title: 'Impressum ~ shliste', robots: 'noindex' })
+useSeoMeta({ title: 'Impressum', robots: 'noindex' })
 </script>
 
 <template>
@@ -22,6 +22,8 @@ useSeoMeta({ title: 'Impressum ~ shliste', robots: 'noindex' })
     <p class="mt-2 text-[1.125rem]">
       Robin Lehmann<br>
       shroomlife<br>
+      Bahnhofstr. 98<br>
+      71679 Asperg<br>
       Deutschland
     </p>
 
@@ -42,11 +44,11 @@ useSeoMeta({ title: 'Impressum ~ shliste', robots: 'noindex' })
       Robin Lehmann, Anschrift wie oben.
     </p>
 
-    <p
-      class="mt-8 text-[1rem]"
-      style="color: var(--md-on-surface-variant)"
-    >
-      Hinweis: Die vollständige Anschrift ist vor Veröffentlichung zu ergänzen.
+    <h2 class="mt-6 text-[1.25rem] font-bold">
+      Umsatzsteuer-Identifikationsnummer
+    </h2>
+    <p class="mt-2 text-[1.125rem]">
+      DE286428470
     </p>
   </div>
 </template>

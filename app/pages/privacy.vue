@@ -1,5 +1,5 @@
 <script setup lang="ts">
-useSeoMeta({ title: 'Datenschutz ~ shliste', robots: 'noindex' })
+useSeoMeta({ title: 'Datenschutz', robots: 'noindex' })
 </script>
 
 <template>

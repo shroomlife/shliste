@@ -1,0 +1,147 @@
+/**
+ * Gemeinsame Marketing-Sprache: Kapitel, Bänder, Karten, Shots.
+ * Wird von MarketingPage / Landing über Klassen genutzt.
+ */
+.mkt-label {
+  color: var(--demo-accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
+}
+:is(.dark) .mkt-label { color: var(--md-primary); }
+
+.mkt-muted { color: var(--md-on-surface-variant); }
+
+.mkt-section {
+  padding-block: clamp(2.75rem, 6vw, 4.5rem);
+  scroll-margin-top: 5.5rem;
+}
+.mkt-section--soft {
+  background: color-mix(in srgb, var(--md-secondary-container) 42%, var(--md-background));
+}
+.mkt-section--accent {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+.mkt-section--accent .mkt-label { color: inherit; opacity: 0.85; }
+.mkt-section--accent .mkt-muted { color: inherit; opacity: 0.82; }
+.mkt-section--accent p { color: inherit; opacity: 0.9; }
+
+.mkt-section-inner {
+  margin-inline: auto;
+  max-width: var(--marketing-shell);
+  padding-inline: var(--marketing-gutter);
+}
+@media (min-width: 640px) {
+  .mkt-section-inner { padding-inline: var(--marketing-gutter); }
+}
+
+.mkt-section h2 {
+  font-size: clamp(1.65rem, 3vw, 2.35rem);
+  line-height: 1.12;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  max-width: 40rem;
+  text-wrap: balance;
+}
+.mkt-section h3 {
+  font-size: 1.125rem;
+  line-height: 1.35;
+  font-weight: 700;
+}
+.mkt-section p {
+  line-height: 1.8;
+  color: var(--md-on-surface-variant);
+  margin-top: 1rem;
+  max-width: 40rem;
+}
+.mkt-section--accent p { max-width: 42rem; }
+
+.mkt-card {
+  background: var(--md-surface-container);
+  border-radius: 1.5rem;
+  padding: clamp(1.35rem, 3vw, 1.85rem);
+}
+.mkt-section--accent .mkt-card {
+  background: color-mix(in srgb, var(--md-background) 55%, transparent);
+}
+.mkt-card p { margin-top: 0.75rem; }
+
+.mkt-phone {
+  overflow: hidden;
+  border-radius: 1.35rem;
+  border: 6px solid color-mix(in srgb, var(--md-on-background) 86%, transparent);
+  background: var(--md-surface);
+  box-shadow: 0 18px 42px color-mix(in srgb, var(--md-primary) 14%, transparent);
+  max-width: 280px;
+  margin-inline: auto;
+}
+.mkt-phone img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.mkt-chapter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  min-height: 32px;
+  padding: 5px 13px;
+  line-height: 1;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--demo-accent);
+  background: color-mix(in srgb, var(--md-primary-container) 75%, white);
+  border: 1px solid color-mix(in srgb, var(--md-primary) 16%, transparent);
+}
+.mkt-chapter>span { display:block; transform:translateY(1px); }
+:is(.dark) .mkt-chapter { color: var(--md-primary); }
+
+.mkt-jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.85rem;
+  margin-top: 1.25rem;
+}
+.mkt-jump a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: inherit;
+  opacity: 0.78;
+  border-bottom: 2px solid transparent;
+  transition: opacity 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.mkt-jump a:hover {
+  opacity: 1;
+  color: var(--demo-accent);
+  border-bottom-color: currentColor;
+}
+:is(.dark) .mkt-jump a:hover { color: var(--md-primary); }
+
+/* One geometry for every illustrated app row. Never squeeze actions to fit a device. */
+.chrome .list-item-row > .list-item-action { width:60px; min-width:60px; height:60px; flex:0 0 60px; align-self:center; padding:0; }
+.chrome .list-item-row > .list-item-action:last-child { border-radius:0 8px 8px 0; }
+
+/* Reading text follows the viewport scale; the UI inside an illustrated phone keeps its native proportions. */
+.chrome [inert] { --spacing:4px; --text-xs:12px; --text-sm:14px; --text-base:16px; --text-lg:18px; --text-xl:20px; --text-2xl:24px; --text-3xl:30px; }
+.chrome [inert] .text-\[0\.75rem\] { font-size:12px; }
+.chrome [inert] .text-\[0\.875rem\] { font-size:14px; }
+.chrome [inert] .text-\[1rem\] { font-size:16px; }
+.chrome [inert] .text-\[1\.0625rem\] { font-size:17px; }
+.chrome [inert] .text-\[1\.25rem\] { font-size:20px; }
+.chrome [inert] .text-\[1\.375rem\] { font-size:22px; }
+.chrome main h1 { hyphens:auto; overflow-wrap:anywhere; }
+
+/* Long names must give way to the native square actions, including completed rows. */
+.chrome .list-item-row { min-width:0; max-width:100%; }
+.chrome :where(a,button,summary,input,textarea,select):focus-visible { outline:2px solid var(--demo-accent); outline-offset:4px; }
