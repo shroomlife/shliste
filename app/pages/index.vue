@@ -95,6 +95,8 @@ useSchemaOrg([
             <NuxtLink
               to="/app/lists"
               class="home-button"
+              data-analytics-event="open_app"
+              data-analytics-location="home_hero"
             >Im Browser starten <UIcon name="i-lucide-arrow-right" /></NuxtLink><a
               href="https://play.google.com/store/apps/details?id=com.shroomlife.shliste"
               target="_blank"
@@ -355,6 +357,8 @@ useSchemaOrg([
         <span class="home-eyebrow">Bereit für den nächsten Einkauf?</span><h2>Was fehlt noch<br>für einen guten Abend?</h2><NuxtLink
           to="/app/lists"
           class="home-button"
+          data-analytics-event="open_app"
+          data-analytics-location="home_closing"
         >Schreib’s auf deine Liste <UIcon name="i-lucide-arrow-up-right" /></NuxtLink>
       </section>
     </main>

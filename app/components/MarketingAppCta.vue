@@ -75,6 +75,8 @@ function focus(event: FocusEvent) {
   <NuxtLink
     to="/app/lists"
     class="app-cta"
+    data-analytics-event="open_app"
+    data-analytics-location="header"
     :class="{ 'is-engaged': engaged }"
     @pointerenter="hovered = $event.pointerType === 'mouse'"
     @pointerleave="hovered = false"
