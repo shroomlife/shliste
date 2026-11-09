@@ -3,7 +3,7 @@ import MarketingMysticAura from '~/components/MarketingMysticAura.vue'
 import RecipeBadgeConfetti from '~/components/RecipeBadgeConfetti.vue'
 import { trackEvent } from '~/utils/googleAnalytics'
 
-useSeoMeta({ title: 'Warteliste · shliste Premium', description: 'Zum Start der KI-Funktionen Bescheid bekommen. Trag dich mit deiner E-Mail in die shliste-Warteliste ein.' })
+useSeoMeta({ title: 'Warteliste · shliste Premium', description: 'Zum Start der KI-Funktionen Bescheid bekommen. Trag dich mit deiner E-Mail in die Warteshliste ein.' })
 const router = useRouter()
 const email = ref('')
 const consent = ref(false)
