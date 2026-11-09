@@ -20,7 +20,7 @@ withDefaults(defineProps<{
     :class="`mkt-section--${tone}`"
     :aria-labelledby="id ? `${id}-title` : undefined"
   >
-    <div class="mkt-section-inner">
+    <div class="mkt-section-inner mkt-shell">
       <p class="mkt-label">
         {{ label }}
       </p>

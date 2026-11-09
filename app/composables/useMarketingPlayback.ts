@@ -1,4 +1,4 @@
-export function useMarketingPlayback(count: number, interval = 3200) {
+export function useMarketingPlayback(count: number, interval: number | ((phase: number) => number) = 3200) {
   const root = ref<HTMLElement>()
   const phase = ref(0)
   const paused = ref(false)
@@ -6,7 +6,7 @@ export function useMarketingPlayback(count: number, interval = 3200) {
   const visible = ref(false)
   const foreground = ref(true)
   const running = computed(() => visible.value && foreground.value && !paused.value && !reduced.value)
-  let timer: ReturnType<typeof setInterval> | undefined
+  let timer: ReturnType<typeof setTimeout> | undefined
   let observer: IntersectionObserver | undefined
   let media: MediaQueryList | undefined
   const motion = () => {
@@ -24,18 +24,16 @@ export function useMarketingPlayback(count: number, interval = 3200) {
     observer = new IntersectionObserver(([entry]) => {
       visible.value = !!entry?.isIntersecting
     }, { threshold: 0.15 })
-    if (root.value)
-      observer.observe(root.value)
+    if (root.value) observer.observe(root.value)
   })
-  watch(running, (play) => {
-    clearInterval(timer)
-    if (play)
-      timer = setInterval(() => {
-        phase.value = (phase.value + 1) % count
-      }, interval)
+  watch([running, phase], ([play, step]) => {
+    clearTimeout(timer)
+    if (play) timer = setTimeout(() => {
+      phase.value = (step + 1) % count
+    }, typeof interval === 'number' ? interval : interval(step))
   })
   onBeforeUnmount(() => {
-    clearInterval(timer)
+    clearTimeout(timer)
     observer?.disconnect()
     media?.removeEventListener('change', motion)
     document.removeEventListener('visibilitychange', visibility)

@@ -9,37 +9,40 @@ const props = withDefaults(defineProps<{
 }>(), {
   intervalMs: 3200,
 })
+
 const index = ref(0)
 const reduced = ref(false)
 const slotWidth = ref<number | null>(null)
 const measureEl = ref<HTMLElement | null>(null)
 let timer: ReturnType<typeof setInterval> | null = null
+
 const current = computed(() => props.claims[index.value] ?? props.claims[0] ?? '')
+
 function measureWidth() {
   const el = measureEl.value
-  if (!el)
-    return
-    // Aufrunden vermeidet Subpixel-Clipping am rechten Rand
+  if (!el) return
+  // Aufrunden vermeidet Subpixel-Clipping am rechten Rand
   slotWidth.value = Math.ceil(el.getBoundingClientRect().width)
 }
+
 async function showNext() {
   index.value = (index.value + 1) % props.claims.length
   await nextTick()
   measureWidth()
 }
+
 onMounted(async () => {
   reduced.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   await nextTick()
   measureWidth()
-  if (reduced.value || props.claims.length < 2)
-    return
+  if (reduced.value || props.claims.length < 2) return
   timer = setInterval(() => {
     void showNext()
   }, props.intervalMs)
 })
+
 onBeforeUnmount(() => {
-  if (timer)
-    clearInterval(timer)
+  if (timer) clearInterval(timer)
 })
 </script>
 

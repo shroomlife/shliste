@@ -1,7 +1,7 @@
 <script setup lang="ts">
 useSeoMeta({
   title: 'So funktioniert shliste',
-  description: 'Liste anlegen, mit KI aus Stimme, Foto oder Link füllen, Rezepte sammeln, Listen mit anderen teilen. Browser und Android jetzt; iPhone über die Web-App, native iOS-App im Aufbau.',
+  description: 'Einkaufslisten anlegen, Rezepte sammeln und Listen miteinander teilen. So startest du in shliste. KI aktuell in geschlossener Testphase. Browser und Android jetzt; iPhone über die Web-App, native iOS-App im Aufbau.',
   ogImage: 'https://shliste.app/og-image.png',
 })
 
@@ -65,7 +65,7 @@ const jumps = [
         <article class="mkt-card">
           <h3>Einträge daraus übernehmen</h3>
           <p>
-            Mit Anmeldung und Verbindung kannst du die KI den Link auslesen lassen. Prüfe anschließend die vorgeschlagenen Einträge, wähle die passenden aus und entscheide zwischen einer vorhandenen und einer neuen Liste. Erst dein Speichern übernimmt die Auswahl.
+            Während der geschlossenen Testphase können nur freigeschaltete Testkonten die KI den Link auslesen lassen. Prüfe anschließend die vorgeschlagenen Einträge, wähle die passenden aus und entscheide zwischen einer vorhandenen und einer neuen Liste. Erst dein Speichern übernimmt die Auswahl.
           </p>
         </article>
       </div>
@@ -81,7 +81,7 @@ const jumps = [
         Unter Rezepte sammelst du Gerichte mit Zutaten und Zubereitungsschritten. So bleibt die Anleitung beim Gericht, während die Besorgungen auf der Einkaufsliste stehen. Zutaten kannst du von dort zum Einkauf hinzufügen, statt alles erneut einzutippen.
       </p>
       <p>
-        Du kannst Rezepte auch mit KI aus einem Foto oder Link übernehmen. Dafür brauchst du Anmeldung und Internet. Vergleiche die erkannten Zutaten, Mengen und Schritte anschließend mit dem Original. Mit KI kannst du ein passendes Rezeptbild ergänzen, damit du das Gericht in der Übersicht leichter wiedererkennst.
+        Du kannst Rezepte auch mit KI aus einem Foto oder Link übernehmen. Dafür brauchst du aktuell ein freigeschaltetes Testkonto und Internet. Zum späteren Start gibt es eine Warteliste. Vergleiche die erkannten Zutaten, Mengen und Schritte anschließend mit dem Original. Mit KI kannst du ein passendes Rezeptbild ergänzen, damit du das Gericht in der Übersicht leichter wiedererkennst.
       </p>
       <UButton
         to="/rezepte"

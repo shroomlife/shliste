@@ -13,9 +13,10 @@ import { useMediaQuery } from '@vueuse/core'
  * Der Umbruch liegt bei 1024 Pixeln und damit auf derselben Grenze wie der
  * Wechsel von der Bottom-Navigation zur Icon-Rail im Layout.
  */
-const { title, description } = defineProps<{
+const { title, description, compactHeader = false } = defineProps<{
   title: string
   description?: string
+  compactHeader?: boolean
 }>()
 
 /** Offen-Zustand liegt beim Aufrufer, damit er den Dialog steuern kann */
@@ -33,6 +34,7 @@ const isDesktop = useMediaQuery('(min-width: 1024px)')
     v-model:open="open"
     :title="title"
     :description="description"
+    :ui="compactHeader ? { wrapper: 'grid gap-0.5', title: '!m-0 leading-snug', description: '!m-0 leading-snug' } : undefined"
     close
   >
     <template #body>
@@ -51,6 +53,7 @@ const isDesktop = useMediaQuery('(min-width: 1024px)')
     v-model:open="open"
     :title="title"
     :description="description"
+    :ui="compactHeader ? { wrapper: 'grid gap-0.5', title: '!m-0 leading-snug', description: '!m-0 leading-snug' } : undefined"
     direction="bottom"
   >
     <template #body>

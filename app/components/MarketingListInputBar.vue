@@ -1,9 +1,5 @@
 <script setup lang="ts">
-withDefaults(defineProps<{
-  platform?: 'android' | 'web'
-  value?: string
-  quantity?: number
-}>(), { platform: 'android', value: '', quantity: 1 })
+withDefaults(defineProps<{ platform?: 'android' | 'web', value?: string, quantity?: number }>(), { platform: 'android', value: '', quantity: 1 })
 </script>
 
 <template>

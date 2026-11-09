@@ -2,6 +2,8 @@
 export function aiServiceError(payload: unknown): string | null {
   if (typeof payload !== 'object' || payload === null || !('code' in payload)) return null
   switch (payload.code) {
+    case 'AI_WAITLIST_REQUIRED':
+      return 'Die KI wird noch im kleinen Kreis getestet. Über die KI-Warteliste kannst du dich für den Start vormerken lassen. Deine Eingaben bleiben erhalten.'
     case 'AI_OPERATOR_BUDGET_EXHAUSTED':
       return 'Die KI ist gerade nicht verfügbar, weil das Budget des Dienstes erreicht ist. Deine Eingaben bleiben erhalten.'
     case 'USER_QUOTA_EXCEEDED':

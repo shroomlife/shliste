@@ -19,7 +19,6 @@ const { entries, reload, createRecipe } = useRecipes()
 const { createRecipeFromAi } = useAiCreate()
 const { badges, reload: reloadBadges } = useBadges()
 const { dataVersion, scheduleSync } = useSync()
-const { isSignedIn } = useAuth()
 const toast = useToast()
 
 const isDetailOpen = computed(() => typeof route.params.id === 'string')
@@ -43,7 +42,8 @@ const isSaving = ref(false)
 const isChooserOpen = ref(false)
 
 /** Das Angebot statt der Absage — siehe AiUpsellSheet. */
-const isAiUpsellOpen = ref(false)
+const { isAiUpsellOpen, premiumFeature, showPremium } = usePremiumPreview()
+const { canUseAi } = useAiAccess()
 
 const aiMode = ref<AiCreateMode>('voice')
 const isAiCreateOpen = ref(false)
@@ -62,11 +62,11 @@ function startAiCreate(mode: AiCreateMode): void {
 
   // Die BFF signiert AI-Aufrufe nur für Angemeldete — ehrliches Angebot
   // statt eines Fehlers nach fünf Sekunden Wartezeit.
-  if (!isSignedIn.value) {
+  if (!canUseAi.value) {
     // Kein Toast: Wer gerade auf eine AI-Funktion getippt hat, hat sein
     // Interesse gezeigt. Das ist der Moment für ein Angebot, nicht für eine
     // Absage, die nach vier Sekunden von selbst verschwindet.
-    isAiUpsellOpen.value = true
+    showPremium(mode === 'url' ? 'link' : mode)
     return
   }
 
@@ -138,13 +138,13 @@ async function submitDialog(): Promise<void> {
 
       <!-- Desktop: die drei AI-Wege neben „Neu" — auf Mobil stecken sie im
            Menü hinter dem FAB, ein zweiter Ort wäre dort nur Rauschen. -->
-      <div class="hidden items-center gap-2 px-5 pb-3 lg:flex">
+      <div class="hidden grid-cols-[1.18fr_1fr_1fr] gap-2 px-5 pt-2 pb-4 lg:grid">
         <UButton
           icon="i-lucide-mic"
           color="neutral"
           variant="subtle"
           size="sm"
-          class="rounded-full font-bold"
+          class="min-h-10 justify-center gap-1 whitespace-nowrap rounded-full px-1 font-bold"
           @click="startAiCreate('voice')"
         >
           Per Sprache
@@ -154,7 +154,7 @@ async function submitDialog(): Promise<void> {
           color="neutral"
           variant="subtle"
           size="sm"
-          class="rounded-full font-bold"
+          class="min-h-10 justify-center gap-1 whitespace-nowrap rounded-full px-1 font-bold"
           @click="startAiCreate('photo')"
         >
           Per Foto
@@ -164,7 +164,7 @@ async function submitDialog(): Promise<void> {
           color="neutral"
           variant="subtle"
           size="sm"
-          class="rounded-full font-bold"
+          class="min-h-10 justify-center gap-1 whitespace-nowrap rounded-full px-1 font-bold"
           @click="startAiCreate('url')"
         >
           Per Link
@@ -310,7 +310,10 @@ async function submitDialog(): Promise<void> {
       </div>
     </AppSheet>
 
-    <AiUpsellSheet v-model:open="isAiUpsellOpen" />
+    <AiUpsellSheet
+      v-model:open="isAiUpsellOpen"
+      :feature="premiumFeature"
+    />
 
     <AiRecipeCreateSheet
       v-model:open="isAiCreateOpen"

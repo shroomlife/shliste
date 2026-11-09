@@ -2,6 +2,7 @@
 import type { ListItem } from '#shared/types/domain'
 
 const { style: paletteStyle, next: nextPalette } = useMarketingDemoPalette()
+
 const root = ref<HTMLElement>()
 const phase = ref(0)
 const paused = ref(false)
@@ -50,17 +51,14 @@ onMounted(() => {
   observer = new IntersectionObserver(([entry]) => {
     visible.value = !!entry?.isIntersecting
   }, { threshold: 0.1 })
-  if (root.value)
-    observer.observe(root.value)
+  if (root.value) observer.observe(root.value)
 })
 watch(running, (play) => {
   clearInterval(timer)
-  if (play)
-    timer = setInterval(() => {
-      phase.value = (phase.value + 1) % steps.length
-      if (phase.value === 0)
-        nextPalette()
-    }, 3400)
+  if (play) timer = setInterval(() => {
+    phase.value = (phase.value + 1) % steps.length
+    if (phase.value === 0) nextPalette()
+  }, 3400)
 })
 onBeforeUnmount(() => {
   clearInterval(timer)
@@ -171,7 +169,7 @@ onBeforeUnmount(() => {
           v-if="device.id === 'iphone'"
           class="device-sync"
         >
-          <UIcon name="i-lucide-construction" /><span>Beispieldaten · Menü als Entwurf</span>
+          <UIcon name="i-lucide-construction" /><span>Entwicklungsvorschau · Beispieldaten</span>
         </div>
         <div
           v-else
@@ -201,7 +199,7 @@ onBeforeUnmount(() => {
         <span class="optical-center">{{ index + 1 }}</span>
       </button>
     </div>
-    <figcaption>Robin und Sam zeigen den Abgleich zwischen Browser und Android. Dafür braucht ihr Anmeldung und Internet. Daneben siehst du die Listenübersicht des nativen iOS-Builds. Sie arbeitet derzeit mit Beispieldaten und nimmt noch nicht am Abgleich teil. Der Menüknopf zeigt die geplante Ergänzung für iOS.</figcaption>
+    <figcaption>Beispieldaten</figcaption>
   </figure>
 </template>
 
@@ -218,12 +216,18 @@ onBeforeUnmount(() => {
 .film-story{display:flex;justify-content:center;align-items:center;gap:9px;min-height:48px;color:#733259;text-align:center}.film-story>.iconify{width:20px;height:20px;flex-shrink:0}.film-story p{font-size:19px;line-height:1.35;margin:0}.film-controls{display:flex;justify-content:center;gap:6px;margin:10px 0}.film-controls button{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;cursor:pointer}.film-controls button>span{display:grid;place-items:center;box-sizing:border-box;width:34px;height:34px;border-radius:50%;background:#eae2e7;font-size:15px;line-height:1;font-weight:700;font-variant-numeric:tabular-nums}.film-controls button[aria-pressed=true]>span{background:var(--demo-accent);color:white}.devices-demo button:focus-visible{outline:2px solid var(--demo-accent);outline-offset:2px}.devices-demo figcaption{max-width:680px;margin:0 auto;font-size:12px;line-height:1.5;color:#78616f;text-align:center}
 .device-row-enter-active,.device-row-leave-active{transition:opacity .35s,transform .45s cubic-bezier(.2,.8,.2,1)}.device-row-enter-from{opacity:0;transform:translateY(10px)}.device-row-leave-to{opacity:0;transform:translateY(-6px)}.tap-check::after{content:'';position:absolute;right:26px;top:18px;width:24px;height:24px;border:2px solid #2d9c74;border-radius:50%;pointer-events:none;animation:check-touch .65s ease-out both}.is-still :deep(*){animation-play-state:paused!important}.is-still .tap-check::after{display:none}@keyframes check-touch{from{opacity:.8;transform:scale(.6)}to{opacity:0;transform:scale(2.3)}}
 @container(max-width:850px){.devices-stage{gap:14px}.device-app{padding:12px 8px}.device-list :deep(.text-\[1\.25rem\]){font-size:16px}.device-platform{font-size:13px}.device-sync{font-size:11px}}
-@container(max-width:640px){.devices-stage{grid-template-columns:minmax(0,1fr);gap:28px;padding-top:20px}.device-column{max-width:340px;width:100%;margin:auto}.device-person{justify-content:flex-start;margin-bottom:10px}.device-shell--browser{margin-top:0}.device-app{padding:12px 16px}.app-toolbar{margin-bottom:12px}.device-app h3{font-size:23px}.device-list :deep(.text-\[1\.25rem\]){font-size:18px}.device-platform{margin-top:12px;font-size:15px}.device-sync{font-size:13px}.film-story{align-items:flex-start}.film-story p{font-size:17px}.device-bottom-nav{margin-top:14px}.devices-demo figcaption{font-size:12px}}
+@container(max-width:600px){.devices-stage{grid-template-columns:minmax(0,1fr);gap:28px;padding-top:20px}.device-column{max-width:340px;width:100%;margin:auto}.device-person{justify-content:flex-start;margin-bottom:10px}.device-shell--browser{margin-top:0}.device-app{padding:12px 16px}.app-toolbar{margin-bottom:12px}.device-app h3{font-size:23px}.device-list :deep(.text-\[1\.25rem\]){font-size:18px}.device-platform{margin-top:12px;font-size:15px}.device-sync{font-size:13px}.film-story{align-items:flex-start}.film-story p{font-size:17px}.device-bottom-nav{margin-top:14px}.devices-demo figcaption{font-size:12px}}
 @media(max-width:600px){.devices-demo{padding:16px;border-radius:24px}.film-top{font-size:15px}}
 @media(prefers-reduced-motion:reduce){.devices-demo :deep(*){transition:none!important;animation:none!important}.tap-check::after{display:none}}
 
 .devices-demo{background:var(--demo-canvas);color:var(--md-on-surface);transition:background .6s}.film-top,.film-story{color:var(--demo-accent)}
 .devices-stage{grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}.device-app{padding:0;display:flex;flex-direction:column;min-height:465px}.device-app--browser{min-height:340px}.device-list-heading{padding:20px 16px 10px;background:linear-gradient(var(--demo-soft),transparent)}.device-title-row{display:flex;align-items:flex-start;gap:8px}.device-title-row h3{flex:1}.device-title-row>.iconify{width:20px;height:20px;flex-shrink:0;margin-top:4px}.list-members{margin-bottom:4px}.device-list{padding:0 12px;margin-bottom:24px}.device-app>.list-input-bar{margin-top:auto}.avatar>.iconify{width:22px;height:22px}.device-column--iphone .device-person{justify-content:center}.device-column--iphone .device-shell{border-style:solid}
 @container(max-width:900px){.devices-stage{grid-template-columns:repeat(2,minmax(0,1fr));gap:28px}.device-column--iphone{grid-column:1/-1;width:320px;max-width:100%;justify-self:center}.device-app{min-height:440px}.device-app--browser{min-height:340px}}
-@container(max-width:640px){.devices-stage{grid-template-columns:minmax(0,1fr)}.device-column--iphone{grid-column:auto}.device-app{padding:0}.device-list-heading h3{font-size:24px}.device-app--browser{min-height:340px}}
+@container(max-width:600px){.devices-stage{grid-template-columns:minmax(0,1fr)}.device-column--iphone{grid-column:auto}.device-app{padding:0}.device-list-heading .device-title-row h3{font:var(--demo-list-heading)}.device-app--browser{min-height:340px}}
+</style>
+
+<style scoped>
+.device-column:not(.device-column--browser) .device-title-row h3 { font: var(--demo-list-heading); margin-bottom: 8px; }
+@container(min-width:1100px) { .devices-stage { zoom:1.15; } }
+@container(min-width:1500px) { .devices-stage { zoom:1.5; } }
 </style>

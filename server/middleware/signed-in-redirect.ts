@@ -20,7 +20,12 @@ import { SESSION_COOKIE } from '../utils/session'
  */
 export default defineEventHandler((event) => {
   if (event.method !== 'GET') return
-  if (getRequestURL(event).pathname !== '/') return
+  const url = getRequestURL(event)
+  if (url.pathname !== '/') return
+
+  // Ein bewusster Besuch der öffentlichen Website bleibt auch mit Sitzung dort.
+  // Das betrifft nur die Startseite, nicht die Anmeldung oder App-Berechtigungen.
+  if (url.searchParams.get('view') === 'website') return
 
   const accept = getRequestHeader(event, 'accept') ?? ''
   if (!accept.includes('text/html')) return

@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import type { List } from '#shared/types/domain'
 
-const props = defineProps<{
-  name: string
-}>()
+const props = defineProps<{ name: string }>()
 const list = computed<List>(() => ({ id: 'secret-preview', name: props.name, secret: true, color: '#B796D5', createdAt: '2026-11-03T12:00:00.000Z', updatedAt: '2026-11-03T12:00:00.000Z', deletedAt: null, fieldTimestamps: null, lastSuggestedItems: '', sourceUrl: null, ownerUserId: null }))
 </script>
 

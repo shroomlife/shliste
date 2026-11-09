@@ -18,6 +18,7 @@ import type { GeneratedList } from '../ai/contract'
 import { base64ToWebpBlob, toSyncImagePath, uploadRecipeImage } from '../ai/images'
 import { attachRecipeImageById, persistGeneratedListDetails, persistGeneratedRecipeDetails } from '../ai/persist'
 import type { GeneratedRecipe } from '../ai/recipeContract'
+import { enqueueAiJob, updateAiJob } from '../utils/aiJobQueue'
 
 export function useAiCreate() {
   const { reload: reloadLists, createList } = useLists()
@@ -32,14 +33,28 @@ export function useAiCreate() {
    * Listen-Datensatz.
    */
   async function createListFromAi(result: GeneratedList): Promise<void> {
-    const created = await createList(result.name)
-    await persistGeneratedListDetails(created.id, result)
+    const job = import.meta.client ? await enqueueAiJob('list-from-ai') : null
+    try {
+      if (job) await updateAiJob(job.id, { status: 'running' })
+      const created = await createList(result.name)
+      await persistGeneratedListDetails(created.id, result)
 
-    await reloadLists()
-    scheduleSync()
+      await reloadLists()
+      scheduleSync()
 
-    toast.add({ title: `Liste "${created.name}" erstellt`, icon: 'i-lucide-sparkles' })
-    await navigateTo(`/app/lists/${created.id}`)
+      toast.add({ title: `Liste "${created.name}" erstellt`, icon: 'i-lucide-sparkles' })
+      if (job) await updateAiJob(job.id, { status: 'done' })
+      await navigateTo(`/app/lists/${created.id}`)
+    }
+    catch (error) {
+      if (job) {
+        await updateAiJob(job.id, {
+          status: 'failed',
+          error: error instanceof Error ? error.message : 'failed',
+        })
+      }
+      throw error
+    }
   }
 
   /**

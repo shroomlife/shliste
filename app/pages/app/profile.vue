@@ -6,6 +6,7 @@
  * Wertaussage wie dort: Oben steht, was jemandem gehört und was auf eine
  * Antwort wartet; der Abgleich steht zuletzt und zurückgenommen.
  */
+import { parseEditorialMetadata } from '~~/lib/editorial'
 import { getListsForView, getRecipesForView } from '../../db/repositories'
 import { describeSyncError, toSyncError } from '../../sync/engine/errors'
 import { requestJson, SYNC_ENDPOINTS } from '../../sync/engine/transport'
@@ -31,7 +32,7 @@ async function reloadLocal(): Promise<void> {
 
   const [lists, recipes] = await Promise.all([getListsForView(), getRecipesForView()])
   localCounts.value = { lists: lists.length, recipes: recipes.length }
-  recipeImageById.value = new Map(recipes.map(row => [row.id, row.imagePath]))
+  recipeImageById.value = new Map(recipes.map(row => [row.id, resolveRecipeImageUrl(row.imagePath) ?? parseEditorialMetadata(row.editorialMetadata)?.hero.src ?? null]))
   await reloadBadges()
 }
 
@@ -153,14 +154,16 @@ function initialOf(name: string): string {
 
 function badgeImageUrl(recipeId: string, badgeImagePath: string | null): string | null {
   const current = recipeImageById.value.get(recipeId)
-  return resolveRecipeImageUrl(current ?? badgeImagePath)
+  return current ?? resolveRecipeImageUrl(badgeImagePath)
 }
 
-const dateFormat = new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+const selectedBadgeId = ref<string | null>(null)
+const badgeDetailOpen = ref(false)
+const selectedBadge = computed(() => badges.value.find(badge => badge.id === selectedBadgeId.value) ?? null)
 
-function formatDate(iso: string): string {
-  const parsed = new Date(iso)
-  return Number.isNaN(parsed.getTime()) ? '' : dateFormat.format(parsed)
+function showBadge(id: string) {
+  selectedBadgeId.value = id
+  badgeDetailOpen.value = true
 }
 
 // Die relative Zeit ("gerade eben, vor N Min., …") kommt aus
@@ -228,12 +231,6 @@ async function handleSignOut(): Promise<void> {
 
   await navigateTo('/')
 }
-
-/**
- * Goldrahmen der Badge-Kacheln — dieselben Farbstufen wie Androids
- * BadgeScreen (B8860B, FFD700, FFE88D, FFD700, B8860B).
- */
-const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700, #B8860B)'
 </script>
 
 <template>
@@ -361,51 +358,50 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
 
         <ul
           v-else
-          class="grid grid-cols-2 gap-3 pt-3 sm:grid-cols-3 lg:grid-cols-4"
+          class="collection-badges"
         >
           <li
             v-for="badge in badges"
             :key="badge.id"
           >
-            <!-- Goldrahmen wie in Android: 3px Verlaufsrand um die Kachel. -->
-            <div
-              class="rounded-xl p-[3px]"
-              :style="{ background: GOLD_BORDER }"
+            <button
+              type="button"
+              class="collection-badge"
+              aria-haspopup="dialog"
+              @click="showBadge(badge.id)"
             >
-              <div
-                class="overflow-hidden rounded-[9px]"
-                style="background-color: var(--md-surface)"
-              >
+              <span class="collection-badge__picture">
                 <img
                   v-if="badgeImageUrl(badge.recipeId, badge.recipeImagePath)"
                   :src="badgeImageUrl(badge.recipeId, badge.recipeImagePath) ?? undefined"
                   alt=""
                   loading="lazy"
-                  class="h-20 w-full object-cover"
                 >
-                <div
+                <span
                   v-else
-                  class="flex h-20 w-full items-center justify-center text-[1.5rem] font-bold text-white"
-                  :style="{ backgroundColor: badge.recipeColor }"
+                  class="collection-badge__monogram"
+                  aria-hidden="true"
+                  :style="{ '--recipe-ink': badge.recipeColor }"
                 >
                   {{ initialOf(badge.recipeName) }}
-                </div>
-                <div class="px-2 py-1.5 text-center">
-                  <p class="truncate text-[1rem] font-bold">
-                    {{ badge.recipeName }}
-                  </p>
-                  <p
-                    class="text-[0.9375rem]"
-                    style="color: var(--md-on-surface-variant)"
-                  >
-                    {{ formatDate(badge.earnedAt) }}
-                  </p>
-                </div>
-              </div>
-            </div>
+                </span>
+              </span>
+              <span class="collection-badge__inscription">
+                <RecipeBadgeSeal />
+                <span class="collection-badge__name">{{ badge.recipeName }}</span>
+              </span>
+            </button>
           </li>
         </ul>
       </section>
+
+      <BadgeEarnedSheet
+        v-if="selectedBadge"
+        v-model:open="badgeDetailOpen"
+        replay
+        :badge="selectedBadge"
+        :image-url="badgeImageUrl(selectedBadge.recipeId, selectedBadge.recipeImagePath)"
+      />
 
       <!-- Einladungen -->
       <section
@@ -601,3 +597,34 @@ const GOLD_BORDER = 'linear-gradient(135deg, #B8860B, #FFD700, #FFE88D, #FFD700,
     </div>
   </div>
 </template>
+
+<style scoped>
+.collection-badges {
+  display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); grid-auto-rows: 1fr;
+  gap: clamp(.65rem, 1.6vw, 1.15rem); padding-top: 1rem; container-type: inline-size;
+}
+.collection-badges > li { display: flex; min-width: 0; }
+.collection-badge {
+  position: relative; isolation: isolate; display: flex; flex-direction: column; width: 100%; min-width: 0;
+  cursor: pointer; text-align: center; padding: .38rem; overflow: hidden;
+  border: 1px solid #ac815f; border-radius: .95rem .95rem 1.35rem 1.35rem;
+  background: radial-gradient(ellipse at 6% 5%, #865063, transparent 64%), linear-gradient(140deg,#522e42,#271a2b);
+  color: #fff0da; box-shadow: inset 0 0 0 2px #45283b, inset 0 0 0 3px #ad835e, 0 4px 10px #401f361b;
+}
+.collection-badge__picture { display: grid; place-items: center; width: 100%; aspect-ratio: 2; overflow: hidden; background: #301f2a; border-radius: .62rem .62rem .16rem .16rem; }
+.collection-badge__picture img { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
+.collection-badge__monogram { color: #ffdfb2; font: italic 2rem Georgia,serif; }
+.collection-badge__inscription { position: relative; flex: 1; display: grid; place-items: center; width: 100%; padding: 1.82rem .68rem 1.2rem; }
+.collection-badge__inscription::before, .collection-badge__inscription::after {
+  content: ''; position: absolute; pointer-events: none; left: 12%; right: 12%;
+  background: linear-gradient(90deg, transparent, #deb684 24%, #deb684 76%, transparent);
+}
+.collection-badge__inscription::before { height: 1px; top: 0; }
+.collection-badge__inscription::after { height: 3px; bottom: .42rem; clip-path: polygon(0 50%,45% 35%,50% 0,55% 35%,100% 50%,55% 65%,50% 100%,45% 65%); }
+.collection-badge__inscription > .recipe-badge-seal { position: absolute; left: 50%; top: 0; translate: -50% -50%; z-index: 1; }
+.collection-badge__name { font: 600 clamp(1.09rem,3.15cqw,1.5rem)/1.12 Georgia,serif; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.collection-badge:focus-visible { outline: 3px solid var(--md-primary); outline-offset: 3px; }
+@media (hover: hover) { .collection-badge:hover { border-color: #e2bb88; box-shadow: inset 0 0 0 2px #45283b, inset 0 0 0 3px #e1bc8a, 0 6px 15px #401f3630; } }
+@media(max-width: 620px) { .collection-badges { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width: 340px) { .collection-badges { grid-template-columns: 1fr; } }
+</style>

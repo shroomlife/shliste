@@ -303,6 +303,7 @@ function recipeValues(row: Recipe): Record<string, unknown> {
     color: row.color,
     sourceUrl: row.sourceUrl,
     imagePath: row.imagePath,
+    ...(row.editorialMetadata !== undefined ? { editorialMetadata: row.editorialMetadata } : {}),
     deletedAt: row.deletedAt,
   }
 }
@@ -324,6 +325,7 @@ function stepValues(row: RecipeStep): Record<string, unknown> {
     sortKey: row.sortKey,
     isChecked: row.isChecked,
     aiExplanation: row.aiExplanation,
+    ...(row.illustration !== undefined ? { illustration: row.illustration } : {}),
     deletedAt: row.deletedAt,
   }
 }
@@ -488,6 +490,7 @@ async function applyRecipe(rows: RowStores, server: PulledRecipe): Promise<void>
       color: pickString(values, 'color', server.color),
       sourceUrl: pickNullableString(values, 'sourceUrl', server.sourceUrl),
       imagePath: pickNullableString(values, 'imagePath', server.imagePath),
+      editorialMetadata: pickNullableString(values, 'editorialMetadata', local?.editorialMetadata ?? server.editorialMetadata ?? null),
       createdAt: server.createdAt,
       updatedAt: server.updatedAt,
       deletedAt: pickNullableString(values, 'deletedAt', server.deletedAt),
@@ -539,6 +542,7 @@ async function applyStep(rows: RowStores, server: RecipeStep): Promise<void> {
       sortKey: pickNullableString(values, 'sortKey', server.sortKey),
       isChecked: pickBoolean(values, 'isChecked', server.isChecked),
       aiExplanation: pickNullableString(values, 'aiExplanation', server.aiExplanation),
+      illustration: pickNullableString(values, 'illustration', local?.illustration ?? server.illustration ?? null),
       createdBy: server.createdBy,
       modifiedBy: server.modifiedBy,
       createdAt: server.createdAt,

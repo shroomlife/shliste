@@ -33,7 +33,8 @@ const haptics = useHaptics()
 const toast = useToast()
 
 /** Das Angebot statt der Absage — siehe AiUpsellSheet. */
-const isAiUpsellOpen = ref(false)
+const { isAiUpsellOpen, premiumFeature, showPremium } = usePremiumPreview()
+const { canUseAi } = useAiAccess()
 
 /**
  * Die Mitglieder dieser Liste aus der lokalen Datenbank.
@@ -107,14 +108,32 @@ const renameValue = ref('')
 const sourceUrlValue = ref('')
 
 /**
- * Eine geheime Liste wird auf dem Web NICHT geöffnet.
- *
- * Android schützt sie mit Biometrie. Im Browser gäbe es dafür nur WebAuthn,
- * und das ist eine eigene Entscheidung — bis dahin ist "gesperrt" die
- * ehrliche Antwort. Einen schwächeren Schutz zu bauen hieße, genau das
- * Feature zu verwässern, das es der Privatsphäre wegen gibt.
+ * Geheime Listen: Android = Biometrie, Browser = Platform-WebAuthn.
+ * Ohne erfolgreichen Unlock bleibt die Liste zu — kein schwächerer Fallback.
  */
-const isLocked = computed(() => list.value?.secret === true)
+const { isSupported: secretUnlockSupported, isUnlocked: isSecretUnlocked, unlock: unlockSecret }
+  = useSecretUnlock()
+const isUnlocking = ref(false)
+const unlockFailed = ref(false)
+
+const isLocked = computed(() => {
+  const row = list.value
+  if (!row?.secret) return false
+  return !isSecretUnlocked(row.id)
+})
+
+async function onUnlockSecret() {
+  if (!list.value || isUnlocking.value) return
+  isUnlocking.value = true
+  unlockFailed.value = false
+  try {
+    const ok = await unlockSecret(list.value.id)
+    unlockFailed.value = !ok
+  }
+  finally {
+    isUnlocking.value = false
+  }
+}
 
 /**
  * Die Quelle der Liste, sofern sie in ein `href` darf.
@@ -695,8 +714,8 @@ function saveInputLink(): void {
 }
 function importInputLink(): void {
   isLinkChoiceOpen.value = false
-  if (!isSignedIn.value) {
-    isAiUpsellOpen.value = true
+  if (!canUseAi.value) {
+    showPremium('link')
     return
   }
   importUrl.value = detectedInputLink.value?.url ?? null
@@ -932,7 +951,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
       </div>
     </header>
 
-    <!-- Gesperrt: geheime Listen werden im Browser nicht geöffnet -->
+    <!-- Gesperrt: geheime Listen brauchen WebAuthn (Platform-Authenticator) -->
     <div
       v-if="isLocked"
       class="flex grow flex-col items-center justify-center gap-3 px-8 text-center"
@@ -949,10 +968,33 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
         class="max-w-md text-[1rem]"
         style="color: var(--md-on-surface-variant); text-wrap: pretty"
       >
-        Geheime Listen öffnet bisher nur die Android-App, dort geschützt per
-        Fingerabdruck oder Gesichtserkennung. Im Browser bleibt sie zu, solange
-        es hier keinen ebenbürtigen Schutz gibt. Ein schwächerer wäre
-        schlechter als keiner.
+        Wie auf Android mit Biometrie: Hier entsperrst du per Geräte-Login
+        (Fingerabdruck, Gesicht oder PIN). Ohne Platform-Authenticator bleibt
+        die Liste zu — absichtlich, kein schwächerer Ersatz.
+      </p>
+      <UButton
+        v-if="secretUnlockSupported"
+        size="lg"
+        class="mt-2 rounded-full font-bold"
+        :loading="isUnlocking"
+        @click="onUnlockSecret"
+      >
+        Entsperren
+      </UButton>
+      <p
+        v-else
+        class="mt-2 max-w-sm text-sm"
+        style="color: var(--md-on-surface-variant)"
+      >
+        Dieses Gerät bietet keinen Platform-Authenticator — geheime Listen
+        öffnest du in der Android- oder iOS-App.
+      </p>
+      <p
+        v-if="unlockFailed"
+        class="text-sm font-semibold"
+        style="color: var(--md-error)"
+      >
+        Entsperren abgebrochen oder fehlgeschlagen.
       </p>
     </div>
 
@@ -1076,7 +1118,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
               type="button"
               class="flex w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left"
               style="border-color: var(--md-outline-variant); background: var(--md-surface)"
-              @click="isAiEditOpen = true"
+              @click="canUseAi ? isAiEditOpen = true : showPremium('editList')"
             >
               <UIcon
                 name="i-lucide-wand-sparkles"
@@ -1097,7 +1139,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
               type="button"
               class="flex w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left"
               style="border-color: var(--md-outline-variant); background: var(--md-surface)"
-              @click="isSuggestionsOpen = true"
+              @click="canUseAi ? isSuggestionsOpen = true : showPremium('suggestions')"
             >
               <UIcon
                 name="i-lucide-sparkles"
@@ -1119,7 +1161,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
             type="button"
             class="state-layer flex w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left"
             style="border-color: var(--md-outline-variant)"
-            @click="isAiUpsellOpen = true"
+            @click="showPremium()"
           >
             <UIcon
               name="i-lucide-sparkles"
@@ -1131,7 +1173,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
               <span
                 class="text-[0.9375rem]"
                 style="color: var(--md-on-surface-variant)"
-              >Was ein Konto freischaltet</span>
+              >Was mit Premium kommt</span>
             </span>
           </button>
         </template>
@@ -1269,7 +1311,10 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
 
     <!-- Fremde Einträge geteilter Listen zeigen den Mitgliedsnamen — dieselbe
          Auflösung wie "bearbeitet von" an den Zeilen. -->
-    <AiUpsellSheet v-model:open="isAiUpsellOpen" />
+    <AiUpsellSheet
+      v-model:open="isAiUpsellOpen"
+      :feature="premiumFeature"
+    />
     <AppSheet
       v-model:open="isLinkChoiceOpen"
       title="Was möchtest du mit dem Link machen?"
@@ -1483,7 +1528,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
         class="shrink-0 rounded-xl font-bold"
         aria-label="AI-Vorschläge"
         :disabled="!isSignedIn || items.length === 0"
-        @click="isSuggestionsOpen = true"
+        @click="canUseAi ? isSuggestionsOpen = true : showPremium('suggestions')"
       />
     </div>
   </div>

@@ -20,6 +20,7 @@ import {
   getRecipe,
   getStepRow,
   getStepsForRecipe,
+  resetCheckedRecipeSteps,
   upsertBadge,
   upsertIngredient,
   upsertRecipe,
@@ -44,7 +45,7 @@ import { validHttpUrlOrNull } from '../utils/url'
  * Zeilen ohne Schlüssel und muss deshalb weiterhin eindeutig hinten liegen,
  * sonst springt der neue Eintrag an eine willkürliche Stelle.
  */
-export function nextOrderIndex(rows: readonly { readonly orderIndex: number }[]): number {
+export function nextRecipeOrderIndex(rows: readonly { readonly orderIndex: number }[]): number {
   return rows.reduce((highest, row) => Math.max(highest, row.orderIndex), -1) + 1
 }
 
@@ -190,7 +191,7 @@ export function useRecipeDetail() {
       recipeId: target.id,
       name: trimmed,
       quantity,
-      orderIndex: nextOrderIndex(ingredients.value),
+      orderIndex: nextRecipeOrderIndex(ingredients.value),
       sortKey: nextSortKey(ingredients.value),
       createdBy: null,
       modifiedBy: null,
@@ -210,7 +211,7 @@ export function useRecipeDetail() {
       id: crypto.randomUUID(),
       recipeId: target.id,
       description: trimmed,
-      orderIndex: nextOrderIndex(steps.value),
+      orderIndex: nextRecipeOrderIndex(steps.value),
       sortKey: nextSortKey(steps.value),
       isChecked: false,
       aiExplanation: null,
@@ -248,6 +249,12 @@ export function useRecipeDetail() {
       await attempt
     }
 
+    await reload()
+  }
+
+  async function resetSteps(): Promise<void> {
+    if (!recipe.value) return
+    await resetCheckedRecipeSteps(recipe.value.id)
     await reload()
   }
 
@@ -424,7 +431,7 @@ export function useRecipeDetail() {
     const trimmed = description.trim()
     if (trimmed.length === 0) return
 
-    await upsertStep({ ...toStepDraft(step), description: trimmed })
+    await upsertStep({ ...toStepDraft(step), description: trimmed, illustration: trimmed === step.description ? step.illustration : null })
     await reload()
   }
 
@@ -535,6 +542,7 @@ export function useRecipeDetail() {
     addIngredient,
     addStep,
     toggleStep,
+    resetSteps,
     removeIngredient,
     removeStep,
     restoreIngredient,

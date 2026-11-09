@@ -1,167 +1,107 @@
 <script setup lang="ts">
-/**
- * Was ein Konto freischaltet — statt eines Toasts, der nur „nein" sagt.
- *
- * Vorher erschien an sechs Stellen derselbe Hinweis „Anmeldung erforderlich".
- * Ein Toast ist die falsche Gattung dafür: Er verschwindet von selbst, er
- * trägt keine Handlung, und er beantwortet die einzig interessante Frage
- * nicht — WAS bekomme ich denn dafür? Wer gerade auf „Per Foto" getippt hat,
- * hat sein Interesse bereits gezeigt; das ist der Moment für ein Angebot, nicht
- * für eine Absage.
- *
- * Die Aufzählung nennt ausschließlich Funktionen, die es wirklich gibt und
- * die man in dieser App auch findet. Nichts Angekündigtes, nichts Erfundenes.
- *
- * Und der Schlusssatz bleibt ehrlich: Die App ist ohne Konto vollständig
- * benutzbar. Ein Angebot, das den Verzicht verschweigt, wäre ein Verkauf.
- */
+import { premiumFeatures, type PremiumFeature } from '~/utils/premiumFeatures'
+
+const props = withDefaults(defineProps<{ feature?: PremiumFeature }>(), { feature: 'general' })
 const open = defineModel<boolean>('open', { default: false })
-
-const { clientConfig, signIn } = useAuth()
-const toast = useToast()
-
-const hasClientId = computed(() => clientConfig.value.googleClientId.length > 0)
-
-/** Läuft gerade der Tausch des ID-Tokens gegen eine Sitzung? */
-const isExchanging = ref(false)
-
-/**
- * Wohin Google seinen Knopf zeichnet.
- *
- * Existiert erst, wenn der Dialog offen ist — `UModal` und `UDrawer` hängen
- * ihren Inhalt beim Öffnen in den DOM. Das Composable beobachtet den Ref und
- * zeichnet, sobald das Element da ist. Dieselbe Mechanik wie in
- * `AuthButton.vue`; die Begründung dazu steht dort.
- */
-const buttonHost = useTemplateRef<HTMLElement>('buttonHost')
-
-const { renderError } = useGoogleSignInButton(buttonHost, (idToken) => {
-  void completeSignIn(idToken)
-})
-
-async function completeSignIn(idToken: string): Promise<void> {
-  isExchanging.value = true
-  try {
-    await signIn(idToken)
-    open.value = false
-  }
-  catch (error) {
-    console.warn('[AiUpsell] Anmeldung fehlgeschlagen:', error)
-    toast.add({
-      title: 'Anmeldung fehlgeschlagen',
-      description: 'Die App bleibt ohne Konto vollständig nutzbar.',
-      icon: 'i-lucide-triangle-alert',
-      color: 'error',
-    })
-  }
-  finally {
-    isExchanging.value = false
-  }
-}
-
-/** Nur Vorhandenes. Reihenfolge: erst das Erschaffen, dann das Verfeinern. */
-const funktionen = [
-  {
-    icon: 'i-lucide-camera',
-    title: 'Aus Foto, Sprache oder Link',
-    text: 'Fotografier einen Kassenzettel, sprich deine Liste ein oder wirf einen Rezept-Link hinein.',
-  },
-  {
-    icon: 'i-lucide-sparkles',
-    title: 'Passende Vorschläge',
-    text: 'Die App schlägt vor, was zu deiner Liste noch fehlt.',
-  },
-  {
-    icon: 'i-lucide-wand-sparkles',
-    title: 'Umschreiben lassen',
-    text: 'Mengen anpassen, Schritte ordnen, Zutaten ergänzen. Im Gespräch statt von Hand.',
-  },
-  {
-    icon: 'i-lucide-message-circle',
-    title: 'Rezept-Chat und Erklärungen',
-    text: 'Frag nach, was ein Schritt bedeutet oder wodurch sich eine Zutat ersetzen lässt.',
-  },
-  {
-    icon: 'i-lucide-image-plus',
-    title: 'Bild zum Rezept',
-    text: 'Rezepte ohne Foto bekommen eins erzeugt.',
-  },
-]
+const { aiAccess } = useAiAccess()
+const state = computed(() => aiAccess.value?.state ?? 'none')
+const feature = computed(() => premiumFeatures[props.feature])
 </script>
 
 <template>
   <AppSheet
     v-model:open="open"
-    title="Mit Konto kommt die AI dazu"
-    description="Mit Google anmelden, und die App denkt mit."
+    :title="feature.title"
+    compact-header
+    description="Bald mit shliste Premium."
   >
-    <div class="flex flex-col gap-5">
-      <ul class="flex flex-col gap-4">
-        <li
-          v-for="funktion in funktionen"
-          :key="funktion.title"
-          class="flex items-start gap-3.5"
-        >
-          <span
-            class="flex size-10 shrink-0 items-center justify-center rounded-xl"
-            style="background: var(--md-secondary-container); color: var(--md-on-secondary-container)"
-          >
-            <UIcon
-              :name="funktion.icon"
-              class="size-5"
-            />
-          </span>
-          <span class="flex min-w-0 flex-col gap-0.5">
-            <span class="text-[1.125rem] font-bold">{{ funktion.title }}</span>
-            <span
-              class="text-[1rem]"
-              style="color: var(--md-on-surface-variant)"
-            >{{ funktion.text }}</span>
-          </span>
-        </li>
-      </ul>
-
-      <!-- Der ehrliche Teil. Ein Angebot, das den Verzicht verschweigt, wäre
-           ein Verkauf: Ohne Konto fehlt nichts außer der AI. -->
-      <p
-        class="rounded-xl px-4 py-3 text-[1rem]"
-        style="background: var(--md-surface-low); color: var(--md-on-surface-variant)"
+    <div class="premium-preview">
+      <PremiumComingSoonBadge variant="sheet" />
+      <div
+        class="premium-feature"
+        :class="{ 'premium-feature--image': props.feature === 'image' }"
       >
-        Listen, Rezepte und der Einkauf funktionieren auch ohne Konto, vollständig und offline.
-        Ein Konto bringt zusätzlich den Abgleich über deine Geräte und das Teilen von Listen.
-      </p>
-    </div>
-
-    <template #footer>
-      <div class="flex w-full flex-col items-center gap-2">
         <div
-          v-if="hasClientId"
-          ref="buttonHost"
-          class="flex min-h-11 items-center justify-center"
-        />
-        <p
-          v-else
-          class="text-center text-[1rem]"
-          style="color: var(--md-on-surface-variant)"
+          v-if="props.feature === 'image'"
+          class="premium-art"
         >
-          Die Anmeldung ist gerade nicht erreichbar. Versuch es später noch einmal.
-        </p>
-
-        <p
-          v-if="renderError !== null"
-          class="text-center text-[0.9375rem]"
-          style="color: var(--md-on-surface-variant)"
-        >
-          Googles Anmeldeknopf konnte nicht geladen werden.
-        </p>
-        <p
-          v-else-if="isExchanging"
-          class="text-center text-[0.9375rem]"
-          style="color: var(--md-on-surface-variant)"
-        >
-          Einen Moment …
+          <img
+            src="/images/editorial/french-onion-pasta/v2/hero-small.webp"
+            alt="Beispiel einer KI-generierten Rezeptillustration: French Onion Pasta in blauen Schalen"
+            width="768"
+            height="432"
+          >
+          <span>Stilvorschau · KI-generiert</span>
+        </div>
+        <div class="premium-feature-heading">
+          <p class="premium-eyebrow">
+            {{ feature.label }}
+          </p>
+          <span class="premium-feature-icon"><UIcon :name="feature.icon" /></span>
+          <p class="premium-result">
+            {{ feature.result }}
+          </p>
+        </div>
+        <p class="premium-intro">
+          {{ feature.detail }}
         </p>
       </div>
-    </template>
+      <div class="premium-next">
+        <p
+          v-if="state === 'confirmed'"
+          class="premium-status"
+        >
+          Du bist schon vorgemerkt. Wir melden uns zum Start.
+        </p>
+        <p
+          v-else-if="state === 'pending'"
+          class="premium-status"
+        >
+          Fast geschafft: Bestätige noch deine E-Mail-Adresse.
+        </p>
+        <NuxtLink
+          class="premium-action"
+          to="/warteliste"
+          @click="open = false"
+        >
+          <span>{{ state === 'confirmed' ? 'Deine Anmeldung ansehen' : state === 'pending' ? 'Zur Anmeldung' : 'Zum Start Bescheid bekommen' }}</span>
+          <UIcon name="i-lucide-arrow-right" />
+        </NuxtLink>
+        <p class="premium-footnote">
+          Deine Listen und Rezepte nutzt du wie gewohnt weiter.
+        </p>
+      </div>
+    </div>
   </AppSheet>
 </template>
+
+<style scoped>
+.premium-preview{display:grid;gap:1.25rem;min-width:0}
+.premium-feature{position:relative;min-width:0;overflow:hidden;display:grid;gap:.875rem;padding:1.125rem;border:1px solid var(--md-outline-variant);border-radius:1.25rem;background:var(--md-surface-low);animation:premium-arrive .24s ease-out both}
+.premium-feature::before{content:'';position:absolute;top:0;left:1.125rem;width:3rem;height:2px;background:var(--md-primary);opacity:.65}
+.premium-feature-heading{display:flex;align-items:flex-start;gap:.75rem;min-width:0}
+.premium-feature-heading > div{min-width:0}
+.premium-feature-icon{flex:none;display:grid;place-items:center;width:2rem;height:2rem;border-radius:.625rem;background:var(--md-primary-container);color:var(--md-on-primary-container)}
+.premium-feature-icon .iconify{width:1.125rem;height:1.125rem}
+.premium-eyebrow{margin:0;color:var(--md-primary);font-size:.8125rem;font-weight:650;line-height:1.25rem}
+.premium-result{margin:.1875rem 0 0;font-size:1rem;font-weight:650;line-height:1.4;color:var(--md-on-surface)}
+.premium-intro,.premium-status{margin:0;font-size:.9375rem;line-height:1.5;color:var(--md-on-surface-variant)}
+.premium-art{position:relative;overflow:hidden;aspect-ratio:16/9;border-radius:.75rem;background:var(--md-surface)}
+.premium-art img{display:block;width:100%;height:100%;object-fit:cover}
+.premium-art > span{position:absolute;left:.625rem;bottom:.625rem;border-radius:999px;background:#fff9f3ed;color:#382432;padding:.25rem .625rem;font-size:.6875rem;line-height:1.4}
+.premium-next{display:grid;gap:.75rem;min-width:0}
+.premium-action{display:flex;align-items:center;justify-content:center;gap:.625rem;min-height:3rem;padding:.75rem 1rem;border-radius:999px;background:var(--md-primary);color:var(--md-on-primary);font-weight:650;line-height:1.4;text-align:center;text-decoration:none;transition:filter .18s,box-shadow .18s}
+.premium-action > span:first-child{min-width:0}
+.premium-action:hover{filter:brightness(1.07);box-shadow:0 4px 14px color-mix(in srgb,var(--md-primary) 18%,transparent)}
+.premium-action:focus-visible{outline:2px solid var(--md-primary);outline-offset:3px}
+.premium-action .iconify{flex:none;width:1.125rem;height:1.125rem;transition:transform .18s}
+.premium-action:hover .iconify{transform:translateX(2px)}
+.premium-footnote{margin:0;font-size:.8125rem;line-height:1.5;text-align:center;color:var(--md-on-surface-variant)}
+@keyframes premium-arrive{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.premium-feature{animation:none}.premium-action,.premium-action .iconify{transition:none}.premium-action:hover .iconify{transform:none}}
+/* One continuous badge, with a single baseline and a quiet one-shot sheen. */
+.premium-feature-heading{position:relative;display:grid;grid-template-columns:2rem minmax(0,1fr);column-gap:.75rem;row-gap:0;align-items:center}
+.premium-eyebrow{grid-column:2;grid-row:1;margin:0;line-height:1rem}
+.premium-feature-icon{position:absolute;left:0;top:calc(1rem + .7rem - 1rem);grid-column:auto;grid-row:auto}
+.premium-result{grid-column:2;grid-row:2;margin:0;min-height:0;display:block;line-height:1.4}
+</style>

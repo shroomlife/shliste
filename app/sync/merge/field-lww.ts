@@ -47,9 +47,9 @@ export type EntityType = typeof ENTITY_TYPES[number]
 export const MUTABLE_FIELDS: Record<string, readonly string[]> = {
   list: ['name', 'color', 'secret', 'lastSuggestedItems', 'sourceUrl', 'deletedAt'],
   listItem: ['name', 'quantity', 'checked', 'removed', 'orderIndex', 'sortKey', 'url', 'deletedAt'],
-  recipe: ['name', 'color', 'sourceUrl', 'imagePath', 'deletedAt'],
+  recipe: ['name', 'color', 'sourceUrl', 'imagePath', 'editorialMetadata', 'deletedAt'],
   recipeIngredient: ['name', 'quantity', 'orderIndex', 'sortKey', 'deletedAt'],
-  recipeStep: ['description', 'orderIndex', 'sortKey', 'isChecked', 'aiExplanation', 'deletedAt'],
+  recipeStep: ['description', 'orderIndex', 'sortKey', 'isChecked', 'aiExplanation', 'illustration', 'deletedAt'],
   badge: ['recipeName', 'recipeColor', 'recipeImagePath', 'earnedAt', 'deletedAt'],
 }
 
@@ -149,6 +149,12 @@ export function mergeFields(
   const localWinFields: string[] = []
 
   for (const field of fields) {
+    // Fehlende optionale Felder sind bei alten Servern keine Löschanweisung.
+    if ((field === 'editorialMetadata' || field === 'illustration') && server[field] === undefined) {
+      mergedValues[field] = local[field]
+      if (localTs[field]) mergedTimestamps[field] = localTs[field]!
+      continue
+    }
     const localTime = localTs[field] ?? ''
     const serverTime = serverTs[field] ?? ''
 

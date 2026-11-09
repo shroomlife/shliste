@@ -30,7 +30,6 @@ const route = useRoute()
 const { entries, reload: reloadLists, createList, addItemsToList } = useLists()
 const { createRecipeFromAi } = useAiCreate()
 const { scheduleSync, dataVersion } = useSync()
-const { isSignedIn } = useAuth()
 const { mark } = useRecentlyChanged()
 const toast = useToast()
 
@@ -48,7 +47,8 @@ const isNewListOpen = ref(false)
 const newListName = ref('')
 
 /** Das Angebot statt der Absage — siehe AiUpsellSheet. */
-const isAiUpsellOpen = ref(false)
+const { isAiUpsellOpen, premiumFeature, showPremium } = usePremiumPreview()
+const { canUseAi } = useAiAccess()
 const isAiListOpen = ref(false)
 const isAiRecipeOpen = ref(false)
 
@@ -205,16 +205,16 @@ async function addToNewList(): Promise<void> {
  * sich weder eine Liste noch ein Rezept holen.
  */
 function startAiList(): void {
-  if (!isSignedIn.value) {
-    isAiUpsellOpen.value = true
+  if (!canUseAi.value) {
+    showPremium('link')
     return
   }
   isAiListOpen.value = true
 }
 
 function startAiRecipe(): void {
-  if (!isSignedIn.value) {
-    isAiUpsellOpen.value = true
+  if (!canUseAi.value) {
+    showPremium('link')
     return
   }
   isAiRecipeOpen.value = true
@@ -488,7 +488,10 @@ async function cancel(): Promise<void> {
       </div>
     </div>
 
-    <AiUpsellSheet v-model:open="isAiUpsellOpen" />
+    <AiUpsellSheet
+      v-model:open="isAiUpsellOpen"
+      :feature="premiumFeature"
+    />
 
     <AiLinkImportSheet
       v-model:open="isAiListOpen"

@@ -146,6 +146,7 @@ export function parseRecipe(value: unknown): Recipe | null {
     color: readStringOr(value, 'color', ''),
     sourceUrl: readNullableString(value, 'sourceUrl'),
     imagePath: readNullableString(value, 'imagePath'),
+    ...(Object.hasOwn(value, 'editorialMetadata') ? { editorialMetadata: readNullableString(value, 'editorialMetadata') } : {}),
     deletedAt: readNullableIso(value, 'deletedAt'),
     fieldTimestamps: readFieldTimestamps(value, 'fieldTimestamps'),
   }
@@ -189,6 +190,7 @@ export function parseStep(value: unknown): RecipeStep | null {
     sortKey: readNullableString(value, 'sortKey'),
     isChecked: readBooleanOr(value, 'isChecked', false),
     aiExplanation: readNullableString(value, 'aiExplanation'),
+    ...(Object.hasOwn(value, 'illustration') ? { illustration: readNullableString(value, 'illustration') } : {}),
     createdBy: readNullableString(value, 'createdBy'),
     modifiedBy: readNullableString(value, 'modifiedBy'),
     deletedAt: readNullableIso(value, 'deletedAt'),

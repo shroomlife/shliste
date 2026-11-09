@@ -1,5 +1,13 @@
 import { marketingStories } from './app/data/marketingStories'
+import { catalogRecipes } from './lib/recipes/catalog'
 import svgLoader from 'vite-svg-loader'
+
+const utilityRoutes = {
+  '/imprint': { prerender: true, robots: 'noindex, follow' },
+  '/privacy': { prerender: true, robots: 'noindex, follow' },
+  '/warteliste': { robots: 'noindex, follow' },
+  '/rezept-import/**': { robots: 'noindex, nofollow' },
+}
 
 export default defineNuxtConfig({
   modules: [
@@ -63,7 +71,7 @@ export default defineNuxtConfig({
     // Der Wert entspricht dem bisher abgeleiteten, damit Titel und Meta-Tags
     // der öffentlichen Seiten gleich bleiben.
     name: 'shliste',
-    description: 'Listen und Rezepte in shliste. Einkaufen und Kochen zusammen, mit KI wo’s hilft. Im Browser und auf Android; iPhone über die Web-App, native iOS-App im Aufbau.',
+    description: 'Gemeinsame Einkaufslisten und dein digitales Rezeptbuch. Plane den Einkauf, sammle Rezepte und koche Schritt für Schritt. Im Browser und auf Android, auf dem iPhone als Web-App.',
     // @nuxtjs/seo setzt html lang zur LAUFZEIT aus dieser Locale und
     // überschreibt damit still das htmlAttrs lang="de" aus app.head —
     // ohne den Eintrag stünde auf jeder SSR-Seite lang="en".
@@ -77,6 +85,8 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    // Nur explizit gestartete lokale Vorschauen dürfen Rechercheentwürfe ausliefern.
+    recipeCatalogPreview: process.env.NUXT_RECIPE_CATALOG_PREVIEW === 'true',
     // NUR serverseitig. Landet niemals im Client-Bundle — alles unterhalb von
     // `public` würde beim Build ins Browser-Bundle inlined und wäre damit
     // für jeden Besucher lesbar, unabhängig davon ob das Repo public ist.
@@ -93,10 +103,14 @@ export default defineNuxtConfig({
       // Öffentliche Google-Client-ID (kein Geheimnis). Muss identisch zu
       // GOOGLE_CLIENT_ID der API sein, sonst scheitert die aud-Prüfung.
       googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID || '',
+      // Web-Push VAPID (öffentlich). Leer = Push aus, SSE bleibt Vordergrund-Pfad.
+      vapidPublicKey: process.env.NUXT_PUBLIC_VAPID_PUBLIC_KEY || '',
     },
   },
 
   routeRules: {
+    '/**': { headers: { 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'X-Frame-Options': 'SAMEORIGIN' } },
+    ...utilityRoutes,
     '/funktionen/rezept-badges': { prerender: true },
     '/funktionen/geheime-listen': { prerender: true },
     ...Object.fromEntries(marketingStories.map(story => [story.path, { prerender: true }])),
@@ -112,10 +126,11 @@ export default defineNuxtConfig({
     // Varies für SWR bewusst nicht verdoppelt — `.md`-URL reicht.
     '/': { swr: process.env.NODE_ENV === 'development' ? false : 3600 },
     '/rezepte': { prerender: true },
+    '/rezeptideen': { prerender: false },
+    '/rezepte/**': { prerender: false },
+    '/funktionen/rezepte': { prerender: true },
     '/gemeinsam-einkaufen': { prerender: true },
     '/so-funktionierts': { prerender: true },
-    '/imprint': { prerender: true },
-    '/privacy': { prerender: true },
     // Die alten deutschen Adressen sind seit Jahren im Umlauf und in
     // Suchmaschinen erfasst. 301 statt Ersatzlos-Weg, damit weder Nutzer noch
     // Rankings verloren gehen.
@@ -283,6 +298,11 @@ export default defineNuxtConfig({
       // nur eine echte 200, niemals eine Fehlerantwort.
       runtimeCaching: [
         {
+          urlPattern: /\/images\/editorial\//,
+          handler: 'CacheFirst',
+          options: { cacheName: 'shliste-editorial-v1', cacheableResponse: { statuses: [200] }, expiration: { maxEntries: 250, maxAgeSeconds: 365 * 24 * 60 * 60 } },
+        },
+        {
           urlPattern: /\/api\/images\//,
           handler: 'CacheFirst',
           options: {
@@ -329,8 +349,8 @@ export default defineNuxtConfig({
 
   // App-Shells gehören nicht in die Sitemap — dünne SPA ohne Marketing-Inhalt.
   sitemap: {
-    exclude: ['/app', '/app/**'],
-    urls: ['/im-alltag', ...marketingStories.map(story => story.path)],
+    exclude: ['/app', '/app/**', '/api/**', ...Object.keys(utilityRoutes), '/ki-warteliste', '/impressum', '/datenschutz', '/funktionen/rezepte', ...catalogRecipes.filter(recipe => recipe.status !== 'published').map(recipe => `/rezepte/${recipe.slug}`)],
+    urls: ['/im-alltag', ...marketingStories.map(story => story.path), ...catalogRecipes.filter(recipe => recipe.status === 'published').map(recipe => `/rezepte/${recipe.slug}`)],
   },
 
   // Ebenfalls neu mit @nuxtjs/seo 6. Skew Protection überschneidet sich mit

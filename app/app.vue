@@ -4,6 +4,8 @@
 // Mit der deutschen Locale stimmen außerdem die eingebauten Komponenten-
 // Texte (aria-Labels, Schließen-Knöpfe) zur Sprache der App.
 import { de } from '@nuxt/ui/locale'
+
+const arrival = useRecipeCollectionArrival()
 </script>
 
 <template>
@@ -11,5 +13,11 @@ import { de } from '@nuxt/ui/locale'
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
+    <RecipeCollectionArrival
+      v-if="arrival"
+      :key="arrival.recipeId"
+      :receipt="arrival"
+      @finish="arrival = null"
+    />
   </UApp>
 </template>

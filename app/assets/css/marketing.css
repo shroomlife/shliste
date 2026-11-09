@@ -2,6 +2,48 @@
  * Gemeinsame Marketing-Sprache: Kapitel, Bänder, Karten, Shots.
  * Wird von MarketingPage / Landing über Klassen genutzt.
  */
+/* Android's AppContainer also draws its divider above an empty bottom bar. */
+.native-bottom-divider {
+  flex: none;
+  width: 100%;
+  height: 0;
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--md-primary);
+}
+
+/* Shared page geometry, including the narrow-phone gutter. No page owns a separate width. */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.chrome :target) { scroll-behavior: smooth; }
+}
+
+.chrome {
+  --marketing-shell: 80rem;
+  --demo-list-heading: 600 22px/26px var(--font-sans);
+  --marketing-gutter: 1.25rem;
+  --marketing-content: calc(var(--marketing-shell) - 2 * var(--marketing-gutter));
+}
+@media (min-width: 640px) {
+  .chrome { --marketing-gutter: 2rem; }
+}
+@media (max-width: 380px) {
+  .chrome { --marketing-gutter: 0.875rem; }
+}
+.mkt-shell {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: var(--marketing-shell);
+  min-width: 0;
+  margin-inline: auto;
+  padding-inline: var(--marketing-gutter);
+}
+.mkt-content {
+  box-sizing: border-box;
+  width: calc(100% - 2 * var(--marketing-gutter));
+  max-width: var(--marketing-content);
+  min-width: 0;
+  margin-inline: auto;
+}
 .mkt-label {
   color: var(--demo-accent);
   font-size: 0.75rem;
@@ -29,14 +71,6 @@
 .mkt-section--accent .mkt-muted { color: inherit; opacity: 0.82; }
 .mkt-section--accent p { color: inherit; opacity: 0.9; }
 
-.mkt-section-inner {
-  margin-inline: auto;
-  max-width: var(--marketing-shell);
-  padding-inline: var(--marketing-gutter);
-}
-@media (min-width: 640px) {
-  .mkt-section-inner { padding-inline: var(--marketing-gutter); }
-}
 
 .mkt-section h2 {
   font-size: clamp(1.65rem, 3vw, 2.35rem);

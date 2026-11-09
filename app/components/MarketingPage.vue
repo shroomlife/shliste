@@ -16,18 +16,18 @@ defineProps<{
   /** z. B. „Kapitel · Rezepte“ */
   chapter?: string
   /** Anker für Jump-Nav unter dem Intro */
-  jumps?: readonly {
-    href: string
-    label: string
-  }[]
+  jumps?: readonly { href: string, label: string }[]
 }>()
+
 const route = useRoute()
+
 const chapters = [
-  { to: '/', label: 'Start', short: 'Start' },
+  { to: '/?view=website', label: 'Startseite', short: 'Startseite' },
   { to: '/rezepte', label: 'Rezepte', short: 'Kochen' },
   { to: '/gemeinsam-einkaufen', label: 'Gemeinsam einkaufen', short: 'Haushalt' },
   { to: '/so-funktionierts', label: 'So funktioniert’s', short: 'Tour' },
 ] as const
+
 const explore = [
   { to: '/im-alltag', label: 'Im Alltag', icon: 'i-lucide-sparkles', blurb: 'Beispiele für euren Einkauf und eure Rezepte.' },
   { to: '/rezepte', label: 'Rezepte', icon: 'i-lucide-chef-hat', blurb: 'Rezepte speichern und fehlende Zutaten aufschreiben.' },
@@ -40,7 +40,7 @@ const explore = [
   <MarketingChrome>
     <main id="inhalt">
       <section
-        class="mkt-hero mx-auto grid max-w-7xl items-center gap-10 px-5 pt-8 pb-12 sm:px-8 sm:pt-12 sm:pb-16"
+        class="mkt-hero mkt-shell grid items-center gap-10 pt-8 pb-12 sm:pt-12 sm:pb-16"
         :class="landscape ? 'lg:grid-cols-[0.85fr_1.15fr]' : 'lg:grid-cols-[1.15fr_0.85fr]'"
         aria-labelledby="page-title"
       >
@@ -61,7 +61,7 @@ const explore = [
               <NuxtLink
                 :to="ch.to"
                 class="mkt-chapter-link"
-                :class="{ 'mkt-chapter-link--active': route.path === ch.to || (ch.to === '/' && route.path === '/') }"
+                :class="{ 'mkt-chapter-link--active': route.path === ch.to }"
                 :aria-current="route.path === ch.to ? 'page' : undefined"
               >{{ ch.short }}</NuxtLink>
             </template>
@@ -105,6 +105,7 @@ const explore = [
             >
               Für Android
             </UButton>
+            <slot name="hero-actions" />
           </div>
           <nav
             v-if="jumps?.length"
@@ -123,15 +124,21 @@ const explore = [
             class="mkt-hero-figure mx-auto flex w-full flex-col items-center rounded-[2rem]"
             :class="landscape ? 'overflow-hidden' : 'max-w-sm px-6 pt-6'"
           >
-            <img
-              :src="image"
-              :alt="imageAlt"
-              :width="landscape ? 1200 : 390"
-              :height="landscape ? 600 : 844"
-              fetchpriority="high"
-              class="mkt-hero-img block h-auto max-w-full object-contain"
-              :class="landscape ? 'w-full' : 'max-h-[500px] w-auto rounded-xl'"
+            <div
+              class="marketing-hero-image"
+              :class="{ 'w-full': landscape }"
             >
+              <img
+                :src="image"
+                :alt="imageAlt"
+                :width="landscape ? 1200 : 390"
+                :height="landscape ? 600 : 844"
+                fetchpriority="high"
+                class="mkt-hero-img block h-auto max-w-full object-contain"
+                :class="landscape ? 'w-full' : 'max-h-[500px] w-auto rounded-xl'"
+              >
+              <MarketingAiLabel v-if="image.startsWith('/images/recipes/') || image.startsWith('/images/illustrations/')" />
+            </div>
             <figcaption class="mkt-muted px-4 py-4 text-center text-xs leading-relaxed">
               {{ imageCaption }}
             </figcaption>
@@ -143,11 +150,13 @@ const explore = [
         <slot />
       </div>
 
+      <MarketingWaitlistSection />
+
       <section
         class="mkt-section mkt-section--soft"
         aria-labelledby="explore-title"
       >
-        <div class="mkt-section-inner">
+        <div class="mkt-section-inner mkt-shell">
           <p class="mkt-label">
             Weiter erkunden
           </p>
@@ -192,5 +201,7 @@ const explore = [
 :global(.dark) .mkt-chapter-link--active { color: var(--md-primary); }
 .mkt-hero-figure { background: var(--md-primary-container); }
 .mkt-hero-img { box-shadow: 0 8px 24px rgb(0 0 0 / 8%); }
+.marketing-hero-image{position:relative;max-width:100%;container:ai-image / inline-size}
+.marketing-hero-image>.ai-label{position:absolute;right:12px;bottom:12px;font-size:11px}
 .mkt-explore { color: inherit; }
 </style>

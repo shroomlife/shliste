@@ -231,6 +231,7 @@ function sanitizeRecipe(row: Recipe): Recipe {
     color: capText(row.color, SYNC_FIELD_LIMITS.COLOR),
     sourceUrl: capTextOrNull(row.sourceUrl, SYNC_FIELD_LIMITS.SOURCE_URL),
     imagePath: capTextOrNull(row.imagePath, SYNC_FIELD_LIMITS.IMAGE_PATH),
+    ...(row.editorialMetadata !== undefined ? { editorialMetadata: dropIfTooLong(row.editorialMetadata, 20000) } : {}),
   }
 }
 
@@ -253,6 +254,7 @@ function sanitizeRecipeStep(row: RecipeStep): RecipeStep {
     orderIndex: clampNumber(row.orderIndex),
     sortKey: sortKeyForSync(row.sortKey),
     aiExplanation: capTextOrNull(row.aiExplanation, SYNC_FIELD_LIMITS.AI_EXPLANATION),
+    ...(row.illustration !== undefined ? { illustration: dropIfTooLong(row.illustration, 4000) } : {}),
     createdBy: userRefForSync(row.createdBy),
     modifiedBy: userRefForSync(row.modifiedBy),
   }

@@ -1,7 +1,7 @@
 import type { ArticleSceneKey } from './marketingArticleScenes'
 import { everydayExpansionStories } from './marketingEverydayStories'
 
-export interface MarketingStory { path: string, animation: ArticleSceneKey, animationStep: number, kind: string, coverAlt: string, title: string, seoTitle?: string, intro: string, scene: string, steps: { title: string, text: string }[], tip: string, faq: { question: string, answer: string }[], related: string[], miniList?: { title: string, intro: string, items: string[], note: string } }
+export interface MarketingStory { path: string, animation: ArticleSceneKey, animationStep: number, kind: string, coverAlt: string, cover?: { src: string, srcset?: string, width: number, height: number }, title: string, seoTitle?: string, intro: string, scene: string, steps: { title: string, text: string }[], tip: string, faq: { question: string, answer: string }[], related: string[], miniList?: { title: string, intro: string, items: string[], note: string } }
 
 export const marketingStories: MarketingStory[] = [
   ...everydayExpansionStories,
@@ -139,10 +139,11 @@ export const marketingStories: MarketingStory[] = [
   },
   {
     path: '/anleitungen/rezept-aus-foto',
+    cover: { src: '/images/illustrations/rezept-aus-foto-v2.webp', srcset: '/images/illustrations/rezept-aus-foto-v2-small.webp 600w, /images/illustrations/rezept-aus-foto-v2-medium.webp 960w, /images/illustrations/rezept-aus-foto-v2.webp 1536w', width: 1536, height: 1024 },
     animation: 'rezept-aus-foto',
     seoTitle: 'Rezept aus einem Foto speichern und prüfen',
     animationStep: 2,
-    coverAlt: 'Eine ältere Frau zeigt einer jüngeren Frau eine Rezeptkarte. Sie hält ihr Smartphone bereit, vor ihnen steht ein Stück Marmorkuchen.',
+    coverAlt: 'Eine ältere Frau zeigt einer jüngeren Frau eine Rezeptkarte. Sie hält ihr Smartphone bereit, vor ihnen steht ein Stück Marmorkuchen mit pflanzlicher Sahne und Früchten.',
     kind: 'Anleitung',
     title: 'Vom Rezeptfoto zum Wiederkochen.',
     intro: 'Omas Marmorkuchen steht noch auf einem Zettel. Übernimm die Angaben mit KI in dein Rezeptbuch und kontrolliere Zutaten und Schritte direkt am Original.',
@@ -154,7 +155,7 @@ export const marketingStories: MarketingStory[] = [
       },
       {
         title: 'Die Foto-Erstellung öffnen',
-        text: 'Öffne den Rezeptbereich und wähle die Erstellung per Foto. Für die KI brauchst du im Web eine Anmeldung und Internet. Wähle die Aufnahme aus und starte die Analyse.',
+        text: 'Öffne den Rezeptbereich und wähle die Erstellung per Foto. Die KI befindet sich noch in einer geschlossenen Testphase. Für die Nutzung brauchst du ein freigeschaltetes Konto und Internet. Wähle die Aufnahme aus und starte die Analyse.',
       },
       {
         title: 'Original und Ergebnis vergleichen',
@@ -198,7 +199,7 @@ export const marketingStories: MarketingStory[] = [
       },
       {
         title: 'Im Rezeptbereich per Link erstellen',
-        text: 'Wähle die Rezept-Erstellung per Link und füge die Adresse ein. Mit Anmeldung und Internet kann die KI den Inhalt auswerten. Manche Seiten lassen sich nicht abrufen; ein erfolgreicher Import von jeder Website ist nicht garantiert.',
+        text: 'Wähle die Rezept-Erstellung per Link und füge die Adresse ein. Mit einem freigeschalteten Testkonto und Internet kann die KI den Inhalt auswerten. Manche Seiten lassen sich nicht abrufen; ein erfolgreicher Import von jeder Website ist nicht garantiert.',
       },
       {
         title: 'Die Übernahme kontrollieren',
@@ -345,7 +346,7 @@ export const marketingStories: MarketingStory[] = [
     faq: [
       {
         question: 'Kann ich offline ein Foto analysieren lassen?',
-        answer: 'Im Web nicht. KI-Abrufe benötigen Internet und Anmeldung.',
+        answer: 'Im Web nicht. KI-Abrufe benötigen Internet und ein freigeschaltetes Testkonto. Für den späteren Start gibt es eine Warteliste.',
       },
       {
         question: 'Ist offline auch ohne Konto möglich?',

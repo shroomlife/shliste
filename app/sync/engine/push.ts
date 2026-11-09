@@ -100,6 +100,7 @@ export interface PushRecipe {
   color: string
   sourceUrl: string | null
   imagePath: string | null
+  editorialMetadata?: string | null
   createdAt: IsoUtc
   updatedAt: IsoUtc
   deletedAt: IsoUtc | null
@@ -129,6 +130,7 @@ export interface PushRecipeStep {
   sortKey: string | null
   isChecked: boolean
   aiExplanation: string | null
+  illustration?: string | null
   createdAt: IsoUtc
   updatedAt: IsoUtc
   deletedAt: IsoUtc | null
@@ -352,6 +354,7 @@ function toPushRecipe(row: Recipe): PushRecipe {
     color: row.color,
     sourceUrl: row.sourceUrl,
     imagePath: row.imagePath,
+    ...(row.editorialMetadata !== undefined ? { editorialMetadata: row.editorialMetadata } : {}),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deletedAt: row.deletedAt,
@@ -385,6 +388,7 @@ function toPushStep(row: RecipeStep): PushRecipeStep {
     sortKey: row.sortKey,
     isChecked: row.isChecked,
     aiExplanation: row.aiExplanation,
+    ...(row.illustration !== undefined ? { illustration: row.illustration } : {}),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deletedAt: row.deletedAt,

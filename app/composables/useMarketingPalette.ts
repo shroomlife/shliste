@@ -1,14 +1,17 @@
 import { marketingPalettes, marketingPaletteStyle } from '~/utils/marketingPalette'
+
 // Shared only by the marketing preview. Never changes the signed-in app theme.
 export function useMarketingPalette() {
   const palette = useState('marketing-palette', () => 0)
   const selection = useState('marketing-palette-selection', () => 0)
+  const handoff = useState('marketing-hero-handoff', () => -1)
   function choose(index: number) {
     palette.value = index % marketingPalettes.length
     selection.value++
   }
-  return { palette, selection, choose, style: computed(() => marketingPaletteStyle(palette.value)) }
+  return { palette, selection, handoff, choose, style: computed(() => marketingPaletteStyle(palette.value)) }
 }
+
 // A colour selection immediately reaches every scene, including off-screen scenes.
 // Local colour cycles may continue afterwards without touching the playback phase.
 export function useMarketingDemoPalette() {

@@ -185,12 +185,12 @@ export function useLists() {
    * die Voraussetzung dafür, offline arbeiten zu können: ohne serverseitig
    * vergebene Schlüssel gäbe es offline keine stabile Identität.
    */
-  async function createList(name: string): Promise<ListRow> {
+  async function createList(name: string, options?: { secret?: boolean }): Promise<ListRow> {
     const row = await upsertList({
       id: crypto.randomUUID(),
       name: name.trim(),
       color: randomListColor(),
-      secret: false,
+      secret: options?.secret === true,
       lastSuggestedItems: '',
       sourceUrl: null,
       ownerUserId: null,

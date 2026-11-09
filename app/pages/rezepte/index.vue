@@ -1,7 +1,7 @@
 <script setup lang="ts">
 useSeoMeta({
   title: 'Rezepte speichern und den Einkauf planen mit shliste',
-  description: 'Rezepte mit Zutaten und Schritten speichern, mit KI aus Link oder Foto übernehmen, passende Bilder erstellen lassen und Zutaten auf die Einkaufsliste übernehmen.',
+  description: 'Dein digitales Rezeptbuch: Rezepte mit Zutaten und Kochschritten speichern, beim Kochen abhaken und den Einkauf planen. KI-Import aktuell in geschlossener Testphase.',
   ogImage: 'https://shliste.app/og-image.png',
 })
 
@@ -23,6 +23,17 @@ const gallery = [
   },
 ] as const
 
+const { data: ideaSlides } = await useFetch('/api/recipe-catalog/v1', {
+  key: 'marketing-recipe-illustrations',
+  transform: catalog => catalog.recipes.map(recipe => ({
+    src: recipe.hero.src, alt: recipe.hero.alt, title: recipe.title, to: '/rezepte/' + recipe.slug,
+  })),
+})
+const slides = computed(() => [
+  ...gallery.map(item => ({ src: item.image, title: item.title, alt: item.title + ' aus der shliste-Rezeptsammlung' })),
+  ...(ideaSlides.value ?? []),
+])
+
 const jumps = [
   { href: '#bild', label: 'Eigenes Bild' },
   { href: '#sammlung', label: 'Sammlung' },
@@ -36,15 +47,29 @@ const jumps = [
     chapter="Kapitel · Rezepte"
     eyebrow="Rezeptbuch inklusive"
     title="Kochideen, die nicht wieder verschwinden."
-    intro="Rezept speichern, Schritte abhaken, Zutaten auf die Liste. In shliste findest du dein Rezept und die passende Einkaufsliste. Mit KI kannst du ein Bild zum Rezept erstellen lassen."
+    intro="Rezept speichern, Schritte abhaken, Zutaten auf die Liste. In shliste findest du dein Rezept und die passende Einkaufsliste. Entdecke dazu unsere bebilderten Rezeptideen zum Nachkochen."
     image="/images/recipes/lasagne.webp"
     image-alt="Mit KI erstellte Rezeptillustration: Lasagne mit Tomaten, Möhren und Basilikum."
     image-caption="Rezeptillustration aus shliste · Vegane Lasagne mit Béchamelsoße"
     landscape
     primary-to="/app/recipes"
-    primary-label="Zu den Rezepten"
+    primary-label="Meine Rezeptsammlung öffnen"
     :jumps="jumps"
   >
+    <template #hero>
+      <MarketingRecipeSlides :slides="slides" />
+    </template>
+    <template #hero-actions>
+      <UButton
+        to="/rezeptideen"
+        icon="i-lucide-search"
+        size="xl"
+        variant="soft"
+        class="rounded-full px-6 font-bold"
+      >
+        Rezeptideen entdecken
+      </UButton>
+    </template>
     <MarketingSection
       id="bild"
       label="Das besondere Extra"
@@ -52,7 +77,7 @@ const jumps = [
       tone="accent"
     >
       <p>
-        Mit Anmeldung und Internet kannst du eine passende Illustration erzeugen lassen. Dein Rezept bleibt auch ohne Bild nutzbar.
+        Das Erstellen eigener KI-Illustrationen testen wir noch mit einem kleinen Kreis. Auf der KI-Warteliste kannst du dich für den Start vormerken lassen. Dein Rezept bleibt auch ohne Bild nutzbar.
       </p>
       <MarketingInlineDemo mode="photo" />
     </MarketingSection>
@@ -73,14 +98,17 @@ const jumps = [
           class="mosaic-card mkt-card overflow-hidden !p-0"
           :style="{ '--i': i }"
         >
-          <img
-            :src="item.image"
-            :alt="`Vorhandene Rezeptillustration: ${item.title}.`"
-            width="1200"
-            height="600"
-            loading="lazy"
-            class="block h-auto w-full"
-          >
+          <div class="recipe-gallery-image">
+            <img
+              :src="item.image"
+              :alt="`Vorhandene Rezeptillustration: ${item.title}.`"
+              width="1200"
+              height="600"
+              loading="lazy"
+              class="block h-auto w-full"
+            >
+            <MarketingAiLabel />
+          </div>
           <figcaption class="p-5">
             <h3>{{ item.title }}</h3>
             <p class="!mt-2">
@@ -91,9 +119,12 @@ const jumps = [
       </div>
     </MarketingSection>
 
-    <MarketingFoodInterlude
+    <div class="mkt-content">
+      <RecipeCollectionBridge discover />
+    </div>
+    <MarketingStoryMoment
       id="kuchenpause"
-      motif="cake"
+      moment="family"
     />
 
     <MarketingSection
@@ -231,4 +262,9 @@ const jumps = [
   .mosaic-card { animation: none; }
   .mosaic-card:hover { transform: none; }
 }
+</style>
+
+<style scoped>
+.recipe-gallery-image{position:relative;container:ai-image / inline-size}
+.recipe-gallery-image>.ai-label{position:absolute;right:10px;bottom:10px;font-size:11px}
 </style>

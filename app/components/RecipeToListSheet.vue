@@ -160,7 +160,7 @@ async function inNeueListe(): Promise<void> {
         >
           <button
             type="button"
-            class="state-layer flex min-h-12 w-full items-center gap-3 rounded-sm px-2 text-left"
+            class="state-layer flex min-h-12 w-full items-center gap-3 rounded-sm px-2 py-2 text-left"
             :aria-pressed="ausgewaehlt.has(zutat.id)"
             @click="umschalten(zutat.id)"
           >
@@ -169,7 +169,7 @@ async function inNeueListe(): Promise<void> {
               class="size-5 shrink-0"
               :style="{ color: ausgewaehlt.has(zutat.id) ? 'var(--md-primary)' : 'var(--md-on-surface-variant)' }"
             />
-            <span class="min-w-0 grow truncate text-[1.25rem]">{{ zutat.name }}</span>
+            <span class="min-w-0 grow whitespace-normal text-[1.25rem] leading-relaxed [overflow-wrap:anywhere]">{{ zutat.name }}</span>
             <span
               v-if="zutat.quantity > 1"
               class="shrink-0 text-[1rem] font-bold"
@@ -200,7 +200,7 @@ async function inNeueListe(): Promise<void> {
         >
           <button
             type="button"
-            class="state-layer flex min-h-12 w-full items-center gap-3 rounded-sm px-2 text-left"
+            class="state-layer flex min-h-12 w-full items-center gap-3 rounded-sm px-2 py-2 text-left"
             :disabled="laeuft"
             @click="uebernehmen(eintrag.list.id, eintrag.list.name)"
           >

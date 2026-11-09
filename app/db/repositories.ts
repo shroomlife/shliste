@@ -521,7 +521,7 @@ export async function upsertRecipe(input: Draft<Recipe>): Promise<RecipeRow> {
     return previous
   }
 
-  const row: RecipeRow = { ...input, ...buildRowMeta(previous, changed, nowIso()) }
+  const row: RecipeRow = { editorialMetadata: previous?.editorialMetadata, ...input, ...buildRowMeta(previous, changed, nowIso()) }
   await tx.objectStore('recipes').put(row)
   await advanceWorkGeneration(tx)
   await tx.done
@@ -549,17 +549,34 @@ export async function upsertStep(input: Draft<RecipeStep>): Promise<RecipeStepRo
   const db = await getDb()
   const tx = db.transaction(['recipe_steps', 'sync_meta'], 'readwrite')
   const previous = await tx.objectStore('recipe_steps').get(input.id)
+  if (previous && input.description !== previous.description && input.illustration === undefined && previous.illustration) {
+    input = { ...input, illustration: null }
+  }
   const changed = changedFields(previous, input)
 
   if (previous !== undefined && changed.length === 0) {
     return previous
   }
 
-  const row: RecipeStepRow = { ...input, ...buildRowMeta(previous, changed, nowIso()) }
+  const row: RecipeStepRow = { illustration: previous?.illustration, ...input, ...buildRowMeta(previous, changed, nowIso()) }
   await tx.objectStore('recipe_steps').put(row)
   await advanceWorkGeneration(tx)
   await tx.done
   return row
+}
+
+export async function resetCheckedRecipeSteps(recipeId: string): Promise<void> {
+  const db = await getDb()
+  const tx = db.transaction(['recipe_steps', 'sync_meta'], 'readwrite')
+  const store = tx.objectStore('recipe_steps')
+  const rows = await store.index('by-recipeId').getAll(recipeId)
+  const checked = rows.filter(row => row.deletedAt === null && row.isChecked)
+  const now = nowIso()
+  for (const row of checked) {
+    await store.put({ ...row, isChecked: false, ...buildRowMeta(row, ['isChecked'], now) })
+  }
+  if (checked.length) await advanceWorkGeneration(tx)
+  await tx.done
 }
 
 export async function upsertBadge(input: Draft<Badge>): Promise<BadgeRow> {

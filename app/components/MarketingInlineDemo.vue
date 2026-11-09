@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import type { ListItem } from '#shared/types/domain'
 
-const props = withDefaults(defineProps<{
-  mode?: string
-  embedded?: boolean
-}>(), { mode: 'recipe', embedded: false })
+const props = withDefaults(defineProps<{ mode?: string, embedded?: boolean }>(), { mode: 'recipe', embedded: false })
 const root = ref<HTMLElement>()
 const phase = ref(0)
 const { style: paletteStyle, next: nextPalette } = useMarketingDemoPalette()
@@ -54,17 +51,14 @@ onMounted(() => {
   observer = new IntersectionObserver(([entry]) => {
     visible.value = !!entry?.isIntersecting
   }, { threshold: 0.25 })
-  if (root.value)
-    observer.observe(root.value)
+  if (root.value) observer.observe(root.value)
 })
 watch(running, (play) => {
   clearInterval(timer)
-  if (play)
-    timer = setInterval(() => {
-      phase.value = (phase.value + 1) % 4
-      if (phase.value === 0)
-        nextPalette()
-    }, 3200)
+  if (play) timer = setInterval(() => {
+    phase.value = (phase.value + 1) % 4
+    if (phase.value === 0) nextPalette()
+  }, 3200)
 })
 onBeforeUnmount(() => {
   observer?.disconnect()
@@ -132,7 +126,9 @@ onBeforeUnmount(() => {
         </template>
         <template v-else-if="mode === 'shared'">
           <div class="pane-title">
-            <span class="person-badge"><b class="optical-center">R</b><span>Robin<small>zu Hause · Android</small></span></span><h3>Freitag mit Freunden</h3><span class="member"><UIcon name="i-lucide-users" /> Mit Sam geteilt</span>
+            <span class="person-badge"><b class="optical-center">R</b><span>Robin<small>zu Hause · Android</small></span></span><h3 class="list-name">
+              Freitag mit Freunden
+            </h3><span class="member"><UIcon name="i-lucide-users" /> Mit Sam geteilt</span>
           </div>
           <div class="source-rows">
             <ListItemRow :item="item('Tomaten')" /><div class="row-slot">
@@ -226,7 +222,11 @@ onBeforeUnmount(() => {
             >S</span><span
               v-else
               class="target-icon"
-            ><UIcon name="i-lucide-list-checks" /></span><div><span class="eyebrow">{{ mode === 'shared' ? 'Sam · iPhone im Laden' : 'Deine Einkaufsliste' }}</span><h3>{{ mode === 'voice' ? 'Für zu Hause' : 'Freitag mit Freunden' }}</h3></div>
+            ><UIcon name="i-lucide-list-checks" /></span><div>
+              <span class="eyebrow">{{ mode === 'shared' ? 'Sam · iPhone im Laden' : 'Deine Einkaufsliste' }}</span><h3 class="list-name">
+                {{ mode === 'voice' ? 'Für zu Hause' : 'Freitag mit Freunden' }}
+              </h3>
+            </div>
           </div>
           <div class="target-rows">
             <TransitionGroup name="row">
@@ -293,7 +293,7 @@ onBeforeUnmount(() => {
         <span class="step-dot optical-center">{{ index + 1 }}</span><span>{{ step }}</span>
       </button>
     </div>
-    <figcaption><strong>Animiertes App-Beispiel.</strong> {{ scene.note }}</figcaption>
+    <figcaption>Beispieldaten</figcaption>
   </figure>
 </template>
 
@@ -337,4 +337,14 @@ onBeforeUnmount(() => {
 
 .motion-canvas{background:radial-gradient(ellipse at 25% 20%,var(--md-surface),transparent 65%),var(--demo-canvas);color:var(--md-on-surface);transition:background .6s}.target-pane{border-color:var(--demo-soft)!important}.person-avatar--sam,.recipient-bar{background:var(--demo-soft);color:var(--demo-accent)}.scene-label{background:var(--md-surface)}.app-pane{transition:transform 900ms cubic-bezier(.2,0,0,1),opacity .7s,background .6s}.row-enter-active,.row-leave-active{transition:opacity .3s,transform .45s cubic-bezier(.2,0,0,1)}.row-enter-from{transform:translateY(8px);opacity:0}.row-leave-to{transform:translateY(-4px);opacity:0}
 [data-mode="shared"] .source-rows{margin-bottom:16px}[data-mode="shared"] .pane-title{background:linear-gradient(var(--demo-soft),transparent);padding-top:14px}[data-mode="shared"] .person-badge{margin-bottom:8px}
+</style>
+
+<style scoped>
+/* Scale the composed scene, not the empty space between fixed-size panes. */
+.is-embedded { max-width:none; }
+@container(min-width:561px) { .source-pane,.target-pane { max-width:none; } }
+@container(min-width:740px) { .motion-canvas { zoom:1.15; } }
+@container(min-width:1000px) { .motion-canvas { zoom:1.35; } }
+@container(min-width:1500px) { .motion-canvas { zoom:1.8; } }
+.app-pane h3.list-name { font: var(--demo-list-heading); }
 </style>

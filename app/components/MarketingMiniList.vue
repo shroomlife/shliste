@@ -1,17 +1,14 @@
 <script setup lang="ts">
 import type { MarketingStory } from '~/data/marketingStories'
 
-const props = defineProps<{
-  list: NonNullable<MarketingStory['miniList']>
-}>()
+const props = defineProps<{ list: NonNullable<MarketingStory['miniList']> }>()
 const selected = ref<string[]>([...props.list.items])
 const draft = ref(props.list.items.join('\n'))
 const edited = ref(false)
 const message = ref('')
 const fieldId = useId()
 watch(selected, (value) => {
-  if (!edited.value)
-    draft.value = value.join('\n')
+  if (!edited.value) draft.value = value.join('\n')
   message.value = ''
 })
 function edit() {

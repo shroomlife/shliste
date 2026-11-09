@@ -122,6 +122,8 @@ export interface ListItem extends SyncedEntity {
 }
 
 export interface Recipe extends SyncedEntity {
+  /** Versionierte redaktionelle Angaben als JSON; fehlt bei älteren Clients. */
+  editorialMetadata?: string | null
   name: string
   color: string
   sourceUrl: string | null
@@ -140,6 +142,8 @@ export interface RecipeIngredient extends SyncedEntity {
 }
 
 export interface RecipeStep extends SyncedEntity {
+  /** Öffentliches Schrittbild mit Alternativtext als JSON. */
+  illustration?: string | null
   recipeId: string
   description: string
   orderIndex: number

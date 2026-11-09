@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Recipe } from '#shared/types/domain'
+import { parseEditorialMetadata } from '~~/lib/editorial'
 
 /**
  * Rezeptkarte, Gegenstück zu `ListCard`.
@@ -61,7 +62,7 @@ const progressPercent = computed(() =>
 )
 
 /** Nur `sync:`-Referenzen sind auflösbar; lokale Android-Pfade ergeben null. */
-const imageUrl = computed(() => imageSrc ?? resolveRecipeImageUrl(recipe.imagePath))
+const imageUrl = computed(() => imageSrc ?? resolveRecipeImageUrl(recipe.imagePath) ?? parseEditorialMetadata(recipe.editorialMetadata)?.hero.src ?? null)
 
 /** Ladefehler blenden das Bild aus — ein Broken-Image-Icon hilft niemandem. */
 const isImageBroken = ref(false)

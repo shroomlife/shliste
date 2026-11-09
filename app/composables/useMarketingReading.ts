@@ -6,19 +6,16 @@ export function useMarketingReading() {
   function measure() {
     frame = 0
     const sections = readingRoot.value?.querySelectorAll<HTMLElement>('[data-reading-step]')
-    if (!sections?.length)
-      return
+    if (!sections?.length) return
     const readingLine = Math.min(240, window.innerHeight * 0.3)
     let current = 0
     sections.forEach((section, index) => {
-      if (section.getBoundingClientRect().top <= readingLine)
-        current = index
+      if (section.getBoundingClientRect().top <= readingLine) current = index
     })
     activeSection.value = current
   }
   function schedule() {
-    if (!frame)
-      frame = requestAnimationFrame(measure)
+    if (!frame) frame = requestAnimationFrame(measure)
   }
   onMounted(() => {
     window.addEventListener('scroll', schedule, { passive: true })

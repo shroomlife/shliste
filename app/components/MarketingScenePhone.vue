@@ -1,12 +1,5 @@
 <script setup lang="ts">
-withDefaults(defineProps<{
-  title?: string
-  detail?: 'list' | 'recipe' | 'overview' | 'profile' | 'locked'
-  input?: boolean
-  shared?: boolean
-  value?: string
-  offline?: boolean
-}>(), { title: '', detail: 'list', input: false, shared: false, value: '', offline: false })
+withDefaults(defineProps<{ title?: string, detail?: 'list' | 'recipe' | 'overview' | 'profile' | 'locked', input?: boolean, shared?: boolean, value?: string, offline?: boolean }>(), { title: '', detail: 'list', input: false, shared: false, value: '', offline: false })
 </script>
 
 <template>
@@ -22,7 +15,10 @@ withDefaults(defineProps<{
         :shared="shared"
       />
       <div class="scene-phone-content">
-        <h3 v-if="title">
+        <h3
+          v-if="title"
+          :class="{ 'scene-list-title': detail === 'list' || detail === 'locked' }"
+        >
           {{ title }}
         </h3><slot />
       </div>
@@ -31,6 +27,11 @@ withDefaults(defineProps<{
         :value="value"
       />
       <MarketingAppBottomBar v-else-if="detail === 'overview'" />
+      <hr
+        v-else
+        class="native-bottom-divider"
+        aria-hidden="true"
+      >
       <div class="scene-gesture" />
     </div>
   </div>
@@ -43,4 +44,5 @@ withDefaults(defineProps<{
 <style scoped>
 /* Keep the device and the surrounding article still when a story changes screens. */
 .scene-screen{height:620px;display:flex;flex-direction:column}.scene-phone-content{flex:1;min-height:0}.scene-status,.scene-screen>.native-toolbar,.scene-screen>.list-actions,.scene-screen>.native-bottom,.scene-screen>.list-input-bar,.scene-gesture{flex-shrink:0}
+.scene-phone .scene-phone-content > h3.scene-list-title { font: var(--demo-list-heading); }
 </style>

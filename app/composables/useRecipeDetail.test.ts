@@ -9,26 +9,26 @@
  * ihre eigenen Tests haben, und lebt ansonsten im Browser.
  */
 import { describe, expect, test } from 'bun:test'
-import { nextOrderIndex, stepProgress } from './useRecipeDetail'
+import { nextRecipeOrderIndex, stepProgress } from './useRecipeDetail'
 
-describe('nextOrderIndex', () => {
+describe('nextRecipeOrderIndex', () => {
   test('der erste Eintrag bekommt 0', () => {
-    expect(nextOrderIndex([])).toBe(0)
+    expect(nextRecipeOrderIndex([])).toBe(0)
   })
 
   test('ein neuer Eintrag landet hinter allen bestehenden', () => {
-    expect(nextOrderIndex([{ orderIndex: 0 }, { orderIndex: 1 }])).toBe(2)
+    expect(nextRecipeOrderIndex([{ orderIndex: 0 }, { orderIndex: 1 }])).toBe(2)
   })
 
   test('Lücken in der Ordnung stören nicht', () => {
     // Nach einer Löschung ist die Folge nicht mehr lückenlos. Entscheidend ist
     // allein, dass der neue Wert grösser als jeder vorhandene ist — sonst
     // sprünge der Eintrag an eine willkürliche Stelle.
-    expect(nextOrderIndex([{ orderIndex: 0 }, { orderIndex: 7 }])).toBe(8)
+    expect(nextRecipeOrderIndex([{ orderIndex: 0 }, { orderIndex: 7 }])).toBe(8)
   })
 
   test('auch eine unsortierte Vorlage ergibt den richtigen Wert', () => {
-    expect(nextOrderIndex([{ orderIndex: 5 }, { orderIndex: 2 }])).toBe(6)
+    expect(nextRecipeOrderIndex([{ orderIndex: 5 }, { orderIndex: 2 }])).toBe(6)
   })
 })
 

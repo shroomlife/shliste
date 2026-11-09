@@ -1,32 +1,35 @@
 <script setup lang="ts">
+import RecipeBadgeConfetti from './RecipeBadgeConfetti.vue'
+import RecipeBadgePlate from './RecipeBadgePlate.vue'
+
 import type { IsoUtc } from '#shared/types/domain'
 
-/**
- * Die Badge-Zeremonie — das Pendant zu `BadgeEarnedSheet.kt` und
- * `RecipeCelebration.kt` der Android-App, mit Konfetti in reinem CSS.
- *
- * Zwei Auftritte in einer Komponente, damit die Konfetti-Spans nur einmal
- * existieren:
- *
- * 1. Das Sheet (`open`): erstes Fertigkochen eines Rezepts. Goldpalette
- *    (#B8860B / #DAA520 / #FFD700 / #FFE88D), Rezeptname groß, Datum,
- *    Knopf "Toll!".
- * 2. Die kurze Feier (`celebrateTick`): das Rezept trägt schon eine
- *    Auszeichnung und wurde erneut fertig gekocht — drei Sekunden Konfetti
- *    als Overlay, ohne Sheet.
- *
- * Unter `prefers-reduced-motion: reduce` bewegt sich nichts: Das Konfetti
- * entfällt komplett, der Inhalt steht sofort still da.
- */
-const { badge, celebrateTick = 0 } = defineProps<{
+const { badge, imageUrl, replay = false, celebrateTick = 0 } = defineProps<{
   /** Die frisch verdiente Auszeichnung — `null`, solange keine ansteht. */
   badge: { recipeName: string, earnedAt: IsoUtc } | null
   /** Jede Erhöhung startet die kurze Wiederholungs-Feier ohne Sheet. */
+  replay?: boolean
+  imageUrl?: string | null
   celebrateTick?: number
 }>()
 
 /** Offen-Zustand liegt beim Aufrufer — wie bei jedem Dialog der App. */
 const open = defineModel<boolean>('open', { default: false })
+
+const showcase = useTemplateRef<HTMLDialogElement>('showcase')
+const titleId = useId()
+watchPostEffect(() => {
+  const dialog = showcase.value
+  if (open.value && dialog && !dialog.open) dialog.showModal()
+  if (!open.value && dialog?.open) dialog.close()
+})
+
+function dismissBackdrop(event: MouseEvent) {
+  const dialog = showcase.value
+  if (!dialog || event.target !== dialog) return
+  const bounds = dialog.querySelector('.badge-earned')?.getBoundingClientRect() ?? dialog.getBoundingClientRect()
+  if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) open.value = false
+}
 
 const earnedDate = computed(() => {
   if (badge === null) return ''
@@ -63,184 +66,84 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <AppSheet
-    v-model:open="open"
-    title="Badge verdient!"
-  >
-    <div class="badge-earned relative flex flex-col items-center gap-4 overflow-hidden px-2 py-6 text-center">
+  <Teleport to="body">
+    <dialog
+      ref="showcase"
+      role="dialog"
+      class="badge-showcase"
+      :class="{ 'award-spotlights': !replay, 'badge-replay': replay }"
+      :aria-labelledby="titleId"
+      @cancel.prevent="open = false"
+      @click="dismissBackdrop"
+    >
       <div
-        class="confetti"
-        aria-hidden="true"
+        v-if="open"
+        class="badge-earned"
       >
-        <span
-          v-for="n in 40"
-          :key="n"
+        <button
+          class="badge-earned__button"
+          type="button"
+          autofocus
+          aria-label="Schließen"
+          @click="open = false"
+        >
+          <UIcon
+            name="i-lucide-x"
+            mode="svg"
+          />
+        </button>
+        <RecipeBadgeConfetti
+          v-if="!replay"
+          award
+        />
+
+        <RecipeBadgePlate
+          :name="badge?.recipeName"
+          :earned-date="earnedDate"
+          :image-url="imageUrl"
+          :title-id="titleId"
+          :replay="replay"
         />
       </div>
-
-      <!-- Die goldene Plakette: Verlaufskante wie der animierte Goldrahmen
-           der Android-App, nur ruhig — bewegt wird hier allein das Konfetti. -->
-      <div class="badge-earned__plate flex flex-col items-center gap-1.5 rounded-2xl px-8 py-6">
-        <p class="badge-earned__name text-[1.75rem] leading-tight font-extrabold">
-          {{ badge?.recipeName }}
-        </p>
-        <p
-          class="text-[1rem]"
-          style="color: var(--md-on-surface-variant)"
-        >
-          Verdient am {{ earnedDate }}
-        </p>
-      </div>
-
-      <UButton
-        class="badge-earned__button rounded-xl px-8 font-bold"
-        size="xl"
-        @click="open = false"
-      >
-        Toll!
-      </UButton>
-    </div>
-  </AppSheet>
+    </dialog>
+  </Teleport>
 
   <!-- Die Wiederholungs-Feier: dieselben Spans, als Schicht über allem.
        pointer-events bleibt aus — gefeiert wird, bedient wird trotzdem. -->
   <Teleport to="body">
-    <div
+    <RecipeBadgeConfetti
       v-if="isCelebrating"
-      class="confetti confetti--overlay"
-      aria-hidden="true"
-    >
-      <span
-        v-for="n in 40"
-        :key="n"
-      />
-    </div>
+      overlay
+    />
   </Teleport>
 </template>
 
 <style scoped>
-/* Die Gold-Palette der Android-Zeremonie — nirgendwo sonst verwendet,
-   deshalb lokale Variablen statt neuer App-Tokens. */
-.badge-earned,
-.confetti {
-  --gold-dark: #b8860b;
-  --gold-mid: #daa520;
-  --gold-bright: #ffd700;
-  --gold-light: #ffe88d;
+.badge-showcase {
+  --badge-gutter: clamp(8px, 4vw, 48px);
+  width: min(calc(31rem + 2 * var(--badge-gutter)),calc(100vw - 1rem)); max-width: none; max-height: calc(100dvh - 2rem); margin: auto;
+  padding: var(--badge-gutter); border: 0; border-radius: .95rem .95rem 1.65rem 1.65rem;
+  color: #fff2da; background: transparent; box-shadow: none;
+  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin;
 }
-
-/* Verlaufskante über background-clip: zwei Hintergründe, der äußere ist der
-   Goldverlauf, der innere die Fläche — ergibt einen Goldrahmen ohne Pseudo-
-   Element und funktioniert in beiden Themes. */
-.badge-earned__plate {
-  border: 3px solid transparent;
-  background:
-    linear-gradient(var(--md-surface), var(--md-surface)) padding-box,
-    linear-gradient(135deg, var(--gold-dark), var(--gold-bright), var(--gold-light), var(--gold-bright), var(--gold-dark)) border-box;
+.badge-showcase::backdrop { background: rgb(33 17 33 / 36%); }
+@media (prefers-reduced-motion: no-preference) {
+  .badge-showcase.award-spotlights[open]::backdrop { animation: gallery-dim 850ms ease-out both; }
 }
-
-.badge-earned__name {
-  color: var(--gold-dark);
+.badge-earned { position: relative; isolation: isolate; text-align: center; }
+.badge-earned > :deep(.confetti) { inset: calc(-1 * var(--badge-gutter)); }
+@media (prefers-reduced-motion: no-preference) {
+  .badge-showcase[open] { animation: plaque-unveil 340ms cubic-bezier(.18,.80,.21,1) both; transform-origin: 50% 57%; }
+  .badge-showcase.badge-replay[open]::backdrop { animation: gallery-dim 220ms ease-out both; }
 }
-
+@keyframes plaque-unveil { from { transform: translateY(8px) scale(.965); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes gallery-dim { from { background-color: transparent; } to { background-color: rgb(33 17 33 / 36%); } }
 .badge-earned__button {
-  background: var(--gold-mid);
-  color: white;
+  position: absolute; z-index: 3; top: .85rem; right: .85rem; display: grid; place-items: center;
+  width: 44px; height: 44px; border: 1px solid #e9c99b; border-radius: 50%; cursor: pointer;
+  background: #3d2539; color: #fff2da; box-shadow: 0 2px 8px #1c0c213d;
 }
-
-.badge-earned__button:hover {
-  background: var(--gold-dark);
-}
-
-/* ------------------------------------------------------------------ *
- * Konfetti — ~40 absolut positionierte Spans, reine CSS-Animation.
- * Winkel, Versatz und Verzögerung entstehen aus überlagerten nth-child-
- * Rastern (5n, 6n, 7n …): teilerfremde Perioden ergeben eine Streuung,
- * die erst nach ihrem kleinsten gemeinsamen Vielfachen wiederkehrt —
- * für 40 Spans sieht das hinreichend zufällig aus. Keine Bibliothek.
- * ------------------------------------------------------------------ */
-.confetti {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-
-  /* Wie weit ein Teilchen fällt: im Sheet bis unter die Kante des Inhalts. */
-  --fall: 30rem;
-}
-
-.confetti--overlay {
-  position: fixed;
-  z-index: 60;
-  --fall: 110vh;
-}
-
-.confetti span {
-  position: absolute;
-  top: -5%;
-  width: 0.5rem;
-  height: 0.875rem;
-  border-radius: 2px;
-  opacity: 0;
-  background: var(--gold-bright);
-  animation: confetti-fall 2.6s linear infinite;
-}
-
-@keyframes confetti-fall {
-  0% {
-    opacity: 1;
-    transform: translate3d(0, 0, 0) rotate3d(var(--tilt, 1), 1, 0.5, 0deg);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translate3d(var(--sway, 0.75rem), var(--fall), 0) rotate3d(var(--tilt, 1), 1, 0.5, var(--spin, 660deg));
-  }
-}
-
-/* Farben: Gold führt, dazu die vier Akzente der Android-Konfetti-Party. */
-.confetti span:nth-child(8n + 1) { background: var(--gold-bright); }
-.confetti span:nth-child(8n + 2) { background: var(--gold-mid); }
-.confetti span:nth-child(8n + 3) { background: var(--gold-light); }
-.confetti span:nth-child(8n + 4) { background: #fff8dc; }
-.confetti span:nth-child(8n + 5) { background: #ff6b6b; }
-.confetti span:nth-child(8n + 6) { background: #4ecdc4; }
-.confetti span:nth-child(8n + 7) { background: #aa96da; }
-.confetti span:nth-child(8n) { background: #fcbf49; }
-
-/* Horizontale Verteilung: Grundraster … */
-.confetti span:nth-child(5n + 1) { left: 6%; }
-.confetti span:nth-child(5n + 2) { left: 26%; }
-.confetti span:nth-child(5n + 3) { left: 46%; }
-.confetti span:nth-child(5n + 4) { left: 66%; }
-.confetti span:nth-child(5n) { left: 86%; }
-
-/* … plus Versatz aus einem teilerfremden Raster, damit keine Spalten entstehen. */
-.confetti span:nth-child(3n + 1) { margin-left: 2%; }
-.confetti span:nth-child(3n + 2) { margin-left: 7%; }
-
-/* Winkel und Drall */
-.confetti span:nth-child(2n) { --spin: -540deg; --sway: -1rem; }
-.confetti span:nth-child(4n + 1) { --tilt: 0.4; --spin: 780deg; }
-.confetti span:nth-child(4n + 3) { --tilt: 1.6; --sway: 1.5rem; }
-
-/* Verzögerungen */
-.confetti span:nth-child(7n + 2) { animation-delay: 0.35s; }
-.confetti span:nth-child(7n + 3) { animation-delay: 0.7s; }
-.confetti span:nth-child(7n + 4) { animation-delay: 1.05s; }
-.confetti span:nth-child(7n + 5) { animation-delay: 1.4s; }
-.confetti span:nth-child(7n + 6) { animation-delay: 1.75s; }
-.confetti span:nth-child(7n) { animation-delay: 2.1s; }
-
-/* Fallgeschwindigkeiten */
-.confetti span:nth-child(6n + 1) { animation-duration: 2.2s; }
-.confetti span:nth-child(6n + 4) { animation-duration: 3.1s; }
-
-@media (prefers-reduced-motion: reduce) {
-  /* Ohne Bewegung: kein Konfetti. Ein eingefrorener Teilchenregen wäre nur
-     Rauschen vor dem Inhalt. */
-  .confetti {
-    display: none;
-  }
-}
+.badge-earned__button svg { width: 20px; height: 20px; }
+.badge-earned__button:hover { background: #633a51; }
+.badge-earned__button:focus-visible { outline: 2px solid white; outline-offset: 2px; }
 </style>

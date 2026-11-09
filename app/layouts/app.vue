@@ -15,6 +15,10 @@
 const route = useRoute()
 
 const { profile, isSignedIn } = useAuth()
+const { refresh: refreshAiAccess } = await useFetch<{ enabled: boolean, state: string }>('/api/waitlist/status', { server: false, key: 'ai-access' })
+watch(isSignedIn, () => {
+  void refreshAiAccess()
+})
 const { display, snapshot, resolveConflict } = useSync()
 
 useSyncRunner()
@@ -79,9 +83,9 @@ function navAriaLabel(destination: Destination): string | undefined {
            Vorher stand hier ein Menü-Symbol, das kein Menü öffnete — genau die
            Art Versprechen, das eine Oberfläche nicht halten kann. -->
       <NuxtLink
-        :to="isSignedIn ? '/app/lists' : '/'"
+        to="/app/lists"
         class="mb-4 flex size-10 items-center justify-center"
-        :aria-label="isSignedIn ? 'shliste, zu deinen Listen' : 'shliste, zur Startseite'"
+        aria-label="shliste, zu deinen Listen"
       >
         <img
           src="/images/brand/mark.svg"
@@ -111,7 +115,7 @@ function navAriaLabel(destination: Destination): string | undefined {
           />
         </span>
         <span
-          class="text-[0.875rem]"
+          class="text-[0.875rem] leading-[1.3]"
           :style="isActive(destination)
             ? 'color: var(--md-on-primary-container); font-weight: 700'
             : 'color: var(--md-on-surface-variant)'"
@@ -122,6 +126,7 @@ function navAriaLabel(destination: Destination): string | undefined {
       <!-- Konto und Abgleich stehen zusammen am unteren Ende der Rail: beides
            betrifft nicht den Inhalt, sondern den Zustand der App. -->
       <div class="flex flex-col items-center gap-2">
+        <AppWebsiteLink placement="rail" />
         <ThemeToggle />
         <!-- Ohne Konto gibt es nichts abzugleichen. Eine Anzeige wäre dann
              kein Hinweis, sondern eine Frage ohne Anlass. -->
@@ -165,8 +170,8 @@ function navAriaLabel(destination: Destination): string | undefined {
       style="background: var(--md-surface-container); border-color: var(--md-primary)"
     >
       <NuxtLink
-        :to="isSignedIn ? '/app/lists' : '/'"
-        :aria-label="isSignedIn ? 'shliste, zu deinen Listen' : 'shliste, zur Startseite'"
+        to="/app/lists"
+        aria-label="shliste, zu deinen Listen"
       >
         <img
           src="/images/brand/wordmark.svg"
@@ -240,7 +245,7 @@ function navAriaLabel(destination: Destination): string | undefined {
         v-for="destination in destinations"
         :key="destination.to"
         :to="destination.to"
-        class="flex grow flex-col items-center gap-0.5 py-2"
+        class="flex min-w-0 flex-1 flex-col items-center gap-1 py-2"
         :aria-current="isActive(destination) ? 'page' : undefined"
         :aria-label="navAriaLabel(destination)"
       >
@@ -264,12 +269,13 @@ function navAriaLabel(destination: Destination): string | undefined {
           >{{ inviteCount }}</span>
         </span>
         <span
-          class="text-[0.875rem]"
+          class="text-[0.875rem] leading-[1.3]"
           :style="isActive(destination)
             ? 'color: var(--md-on-primary-container); font-weight: 700'
             : 'color: var(--md-on-surface-variant)'"
         >{{ destination.label }}</span>
       </NuxtLink>
+      <AppWebsiteLink placement="bottom" />
     </nav>
   </div>
 </template>

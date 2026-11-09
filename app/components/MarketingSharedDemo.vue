@@ -4,24 +4,27 @@
  * Zeigt Shared-Badge, „von Sam“ und Abhaken auf derselben Liste.
  */
 type Phase = 'idle' | 'notice' | 'syncing' | 'checking' | 'synced'
+
 const phase = ref<Phase>('idle')
 const reduced = ref(false)
 let timer: ReturnType<typeof setTimeout> | null = null
 const timeouts: ReturnType<typeof setTimeout>[] = []
+
 const shotOpen = '/images/screenshots/android-list-detail.png'
 const shotChecked = '/images/screenshots/android-list-shared-checked.png'
 const shotOverview = '/images/screenshots/android-lists.png'
+
 function clearTimers() {
-  if (timer)
-    clearTimeout(timer)
-  for (const t of timeouts)
-    clearTimeout(t)
+  if (timer) clearTimeout(timer)
+  for (const t of timeouts) clearTimeout(t)
   timeouts.length = 0
   timer = null
 }
+
 function after(ms: number, fn: () => void) {
   timeouts.push(setTimeout(fn, ms))
 }
+
 function runCycle() {
   clearTimers()
   phase.value = 'idle'
@@ -39,6 +42,7 @@ function runCycle() {
   })
   timer = setTimeout(() => runCycle(), 9200)
 }
+
 onMounted(() => {
   reduced.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   if (reduced.value) {
@@ -47,15 +51,19 @@ onMounted(() => {
   }
   runCycle()
 })
+
 onBeforeUnmount(() => clearTimers())
-const storeShot = computed(() => phase.value === 'checking' || phase.value === 'synced' ? shotChecked : shotOpen)
+
+const storeShot = computed(() =>
+  phase.value === 'checking' || phase.value === 'synced' ? shotChecked : shotOpen,
+)
+
 const homeShot = computed(() => {
-  if (phase.value === 'idle' || phase.value === 'notice')
-    return shotOverview
-  if (phase.value === 'synced')
-    return shotChecked
+  if (phase.value === 'idle' || phase.value === 'notice') return shotOverview
+  if (phase.value === 'synced') return shotChecked
   return shotOpen
 })
+
 const statusText = computed(() => {
   switch (phase.value) {
     case 'idle':
@@ -72,11 +80,12 @@ const statusText = computed(() => {
       return ''
   }
 })
+
 const homeLabel = computed(() => {
-  if (phase.value === 'idle' || phase.value === 'notice')
-    return 'Zuhause · Übersicht'
+  if (phase.value === 'idle' || phase.value === 'notice') return 'Zuhause · Übersicht'
   return 'Zuhause · Sam'
 })
+
 const storeLabel = computed(() => 'Im Laden · Robin')
 </script>
 

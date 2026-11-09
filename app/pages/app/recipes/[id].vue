@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { useMediaQuery } from '@vueuse/core'
+import { refreshSavedCatalogArtwork } from '~/db/catalog-import'
+import { parseEditorialMetadata, parseIllustration, type CatalogRecipe } from '~~/lib/editorial'
 import type { IsoUtc, RecipeIngredient, RecipeStep } from '#shared/types/domain'
-import { toSyncImagePath } from '~/ai/images'
+import { uploadRecipeImage, toSyncImagePath } from '~/ai/images'
 import { attachRecipeImageById } from '~/ai/persist'
 import { buildChatRecipePayload, buildRecipeImageText } from '~/ai/recipeContract'
 import type { AiRecipeEditApplyPayload } from '~/ai/recipeDiff'
@@ -34,6 +36,7 @@ const {
   addIngredient,
   addStep,
   toggleStep,
+  resetSteps,
   removeIngredient,
   removeStep,
   restoreIngredient,
@@ -55,21 +58,44 @@ const { dataVersion, scheduleSync } = useSync()
 const { isSignedIn } = useAuth()
 const haptics = useHaptics()
 const toast = useToast()
+const arrival = useRecipeCollectionArrival()
+
+watch([() => recipe.value?.id, () => arrival.value?.recipeId], ([id, incoming]) => {
+  if (id && id === incoming && arrival.value) arrival.value.ready = true
+}, { flush: 'post', immediate: true })
+
+watch(arrival, (current, previous) => {
+  if (current || !previous?.ready || previous.recipeId !== recipe.value?.id) return
+  toast.add({
+    title: previous.created ? 'In deiner Rezeptsammlung gespeichert' : 'Dein gespeichertes Rezept ist geöffnet',
+    icon: 'i-lucide-bookmark-check',
+  })
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  const rows = ingredientList.value?.children
+  if (!rows) return
+  for (const [index, row] of Array.from(rows).slice(0, 4).entries()) {
+    row.animate?.([{ opacity: 0.5, transform: 'translateY(6px)' }, { opacity: 1, transform: 'translateY(0)' }], {
+      duration: 260, delay: index * 55, easing: 'ease-out', fill: 'backwards',
+    })
+  }
+}, { flush: 'post' })
 
 /** Der Weg vom Rezept in den Einkauf — siehe RecipeToListSheet. */
 const isToListOpen = ref(false)
 
 /** Das Angebot statt der Absage — siehe AiUpsellSheet. */
-const isAiUpsellOpen = ref(false)
+const { isAiUpsellOpen, premiumFeature, showPremium } = usePremiumPreview()
+const { canUseAi } = useAiAccess()
 
 /**
  * Serverbild des Rezepts. Nur `sync:`-Referenzen sind für die PWA auflösbar;
  * lokale Android-Pfade ergeben null — dann wird gar keine Bildfläche gerendert
  * und der Kopf behält seine heutige Höhe (kein Layout-Shift).
  */
-const recipeImageUrl = computed(() => resolveRecipeImageUrl(recipe.value?.imagePath ?? null))
+const recipeImageUrl = computed(() => resolveRecipeImageUrl(recipe.value?.imagePath ?? null) ?? parseEditorialMetadata(recipe.value?.editorialMetadata)?.hero.src ?? null)
 
 /** Ladefehler blenden die Fläche aus — ein Broken-Image-Icon hilft niemandem. */
+const editorialHero = computed(() => parseEditorialMetadata(recipe.value?.editorialMetadata)?.hero)
 const isImageBroken = ref(false)
 watch(recipeImageUrl, () => {
   isImageBroken.value = false
@@ -152,7 +178,7 @@ const menuItems = computed(() => [[
     label: 'Neues Bild',
     icon: 'i-lucide-image',
     onSelect: () => {
-      startImageGeneration()
+      isImageChoiceOpen.value = true
     },
   },
   {
@@ -192,6 +218,20 @@ function mutate(work: Promise<unknown>): void {
 watch(recipeId, () => {
   run(load(recipeId.value))
 }, { immediate: true })
+
+watch([() => recipe.value?.id, () => parseEditorialMetadata(recipe.value?.editorialMetadata)?.catalogId], async ([id, catalogId], _, onCleanup) => {
+  if (!id || !catalogId || !import.meta.client) return
+  const controller = new AbortController()
+  onCleanup(() => controller.abort())
+  try {
+    const data = await $fetch<{ recipe: CatalogRecipe }>(`/api/recipe-catalog/v1/${catalogId}`, { query: { version: parseEditorialMetadata(recipe.value?.editorialMetadata)?.version }, signal: controller.signal, retry: 0 })
+    if (!controller.signal.aborted && await refreshSavedCatalogArtwork(id, data.recipe)) {
+      scheduleSync()
+      if (recipeId.value === id) await Promise.all([load(id), reloadOverview()])
+    }
+  }
+  catch { /* Offline oder unveröffentlichte Ausgabe: die lokale Kopie bleibt lesbar. */ }
+})
 
 watch(dataVersion, () => {
   run(load(recipeId.value))
@@ -433,7 +473,7 @@ const isImageGenOpen = ref(false)
  * offener Fehler — eine dritte Rasterspur ohne Inhalt ist ein Loch.
  */
 const isChatColumnVisible = computed(() =>
-  hasChatColumn.value && isSignedIn.value && !isSortMode.value && recipe.value !== null,
+  hasChatColumn.value && canUseAi.value && !isSortMode.value && recipe.value !== null,
 )
 
 // Übernimmt die Spalte, ist ein zusätzlich offenes Blatt sinnlos — und beim
@@ -469,6 +509,17 @@ const recipeImageText = computed(() =>
  * Der erste offene Schritt — die Cockpit-Ansicht hebt ihn am Desktop leicht
  * hervor, damit beim Kochen sofort klar ist, wo es weitergeht.
  */
+const illustratedSteps = computed(() => steps.value.flatMap((step, index) => {
+  const image = parseIllustration(step.illustration)
+  if (!image) return []
+  const split = step.description.indexOf('\n\n')
+  return [{
+    number: index + 1,
+    title: split < 0 ? 'So geht’s' : step.description.slice(0, split),
+    instruction: split < 0 ? step.description : step.description.slice(split + 2),
+    image,
+  }]
+}))
 const currentStepId = computed(() => steps.value.find(step => !step.isChecked)?.id ?? null)
 
 /**
@@ -536,6 +587,10 @@ const isExplainOpen = ref(false)
 const explainTarget = ref<{ step: RecipeStep, index: number } | null>(null)
 
 function openExplain(step: RecipeStep, index: number): void {
+  if (!canUseAi.value) {
+    showPremium('explain')
+    return
+  }
   explainTarget.value = { step, index }
   isExplainOpen.value = true
 }
@@ -555,16 +610,49 @@ function onExplained(explanation: string): void {
  * beim Start festgehalten, und gespeichert wird über die festgehaltene Id
  * (`attachRecipeImageById`) — nie über den geteilten Ansichts-Zustand.
  */
+const isImageChoiceOpen = ref(false)
+const imageUploadBusy = ref(false)
+const imageUploadError = ref('')
+async function uploadOwnImage(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  const targetId = recipe.value?.id
+  input.value = ''
+  if (!file || !targetId || imageUploadBusy.value) return
+  imageUploadError.value = ''
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5_000_000) {
+    imageUploadError.value = 'Bitte wähle ein JPG-, PNG- oder WebP-Bild bis 5 MB.'
+    return
+  }
+  imageUploadBusy.value = true
+  try {
+    const result = await uploadRecipeImage(targetId, file)
+    if (!result.ok) {
+      imageUploadError.value = result.error
+      return
+    }
+    await attachRecipeImageById(targetId, toSyncImagePath(result.value))
+    await reloadOverview()
+    if (recipeId.value === targetId) await load(targetId)
+    scheduleSync()
+    isImageBroken.value = false
+    isImageChoiceOpen.value = false
+    toast.add({ title: 'Dein Rezeptbild ist gespeichert', icon: 'i-lucide-image-check' })
+  }
+  catch { imageUploadError.value = 'Das Bild konnte nicht gespeichert werden. Bitte versuche es erneut.' }
+  finally { imageUploadBusy.value = false }
+}
+
 const imageGenTarget = ref<{ recipeId: string, recipeText: string } | null>(null)
 
 function startImageGeneration(): void {
   // Die BFF signiert AI-Aufrufe nur für Angemeldete — ehrliches Angebot
   // statt eines Fehlers nach fünf Sekunden Wartezeit.
-  if (!isSignedIn.value) {
+  if (!canUseAi.value) {
     // Kein Toast: Wer gerade auf eine AI-Funktion getippt hat, hat sein
     // Interesse gezeigt. Das ist der Moment für ein Angebot, nicht für eine
     // Absage, die nach vier Sekunden von selbst verschwindet.
-    isAiUpsellOpen.value = true
+    showPremium('image')
     return
   }
   const target = recipe.value
@@ -600,11 +688,17 @@ function onImageGenerated(imageRef: string): void {
     >
       <img
         v-if="recipeImageUrl !== null && !isImageBroken"
+        data-arrival-cover
         :src="recipeImageUrl"
-        alt=""
+        :alt="editorialHero?.alt ?? ''"
         class="aspect-[2/1] w-full rounded-xl object-cover xl:hidden"
         @error="isImageBroken = true"
       >
+
+      <MarketingAiLabel
+        v-if="editorialHero && recipeImageUrl === editorialHero.src"
+        class="self-start xl:hidden"
+      />
 
       <!--
         Vertikaler Verlauf des Kopfs wie in DefaultCard.kt der Android-App:
@@ -676,12 +770,12 @@ function onImageGenerated(imageRef: string): void {
         class="relative flex items-center gap-3.5 xl:hidden"
       >
         <span
-          class="text-[1rem]"
+          class="shrink-0 text-[1rem]"
           style="color: var(--md-on-primary-container)"
         >{{ steps.filter(step => step.isChecked).length }} von {{ steps.length }} Schritten</span>
         <UProgress
           :model-value="progress"
-          class="max-w-64"
+          class="min-w-0 flex-1"
           aria-label="Fortschritt"
         />
       </div>
@@ -836,13 +930,20 @@ function onImageGenerated(imageRef: string): void {
              Rundungen und Hintergrund von Hand nachbauen muss, um das
              darunter Durchlaufende zu verdecken. -->
         <div class="hidden shrink-0 xl:block xl:px-5 xl:pt-5">
-          <!-- Die Höhe sitzt innen, nicht am gepolsterten Rahmen: Bei
-               border-box würde die Polsterung sonst vom Bild abgezogen. -->
-          <div class="h-[14.75rem] w-full">
+          <!-- Katalogbilder behalten auch in der Sammlung ihr vollständiges 2:1-Motiv. -->
+          <div
+            class="relative w-full"
+            :class="editorialHero && recipeImageUrl === editorialHero.src ? 'aspect-[2/1]' : 'h-[14.75rem]'"
+          >
+            <MarketingAiLabel
+              v-if="editorialHero && recipeImageUrl === editorialHero.src"
+              class="absolute bottom-3 left-3 z-10"
+            />
             <img
               v-if="recipeImageUrl !== null && !isImageBroken"
+              data-arrival-cover
               :src="recipeImageUrl"
-              alt=""
+              :alt="editorialHero?.alt ?? ''"
               class="size-full rounded-xl object-cover"
               @error="isImageBroken = true"
             >
@@ -851,13 +952,13 @@ function onImageGenerated(imageRef: string): void {
               type="button"
               class="state-layer flex size-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed"
               style="border-color: var(--md-outline-variant); color: var(--md-on-surface-variant)"
-              @click="startImageGeneration"
+              @click="isImageChoiceOpen = true"
             >
               <UIcon
                 name="i-lucide-image-plus"
                 class="size-8"
               />
-              <span class="text-[1rem]">Bild erzeugen</span>
+              <span class="text-[1rem]">Hier fehlt noch dein Rezeptbild</span><span class="text-sm">Eigenes Foto oder KI-Illustration auswählen</span>
             </button>
           </div>
         </div>
@@ -886,7 +987,7 @@ function onImageGenerated(imageRef: string): void {
               <div
                 v-for="ingredient in ingredients"
                 :key="ingredient.id"
-                class="state-layer group flex min-h-12 items-center gap-3 rounded-lg px-2"
+                class="state-layer group flex min-h-12 items-center gap-3 rounded-lg px-2 py-2"
                 :class="isSortMode && 'mb-0.5'"
                 :style="isSortMode ? 'background: var(--md-surface-container)' : ''"
               >
@@ -901,7 +1002,7 @@ function onImageGenerated(imageRef: string): void {
                     class="size-5"
                   />
                 </span>
-                <span class="min-w-0 grow truncate text-[1.25rem]">{{ ingredient.name }}</span>
+                <span class="min-w-0 grow whitespace-normal text-[1.25rem] leading-relaxed [overflow-wrap:anywhere]">{{ ingredient.name }}</span>
                 <span
                   v-if="ingredient.quantity > 1"
                   class="optical-center flex h-7 min-w-9 shrink-0 items-center justify-center rounded-lg px-2 text-[1.0625rem] font-bold"
@@ -951,6 +1052,12 @@ function onImageGenerated(imageRef: string): void {
             />
           </section>
 
+          <EditorialSavedDetails
+            v-if="recipe?.editorialMetadata"
+            :metadata="recipe.editorialMetadata"
+            :steps="steps"
+          />
+
           <!-- Die AI-Griffe der Werkbank: dieselben Sheets wie auf Mobil,
                dort öffnet sie die aufklappbare Sektion am Seitenende. -->
           <div
@@ -964,7 +1071,7 @@ function onImageGenerated(imageRef: string): void {
               type="button"
               class="state-layer flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left"
               style="background: var(--md-surface-container)"
-              @click="isAiChatOpen = true"
+              @click="canUseAi ? isAiChatOpen = true : showPremium('chat')"
             >
               <UIcon
                 name="i-lucide-sparkles"
@@ -983,7 +1090,7 @@ function onImageGenerated(imageRef: string): void {
               type="button"
               class="state-layer flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left"
               style="background: var(--md-surface-container)"
-              @click="isAiEditOpen = true"
+              @click="canUseAi ? isAiEditOpen = true : showPremium('editRecipe')"
             >
               <UIcon
                 name="i-lucide-wand-sparkles"
@@ -1056,12 +1163,12 @@ function onImageGenerated(imageRef: string): void {
           style="background: var(--md-surface); border-color: var(--md-outline-variant)"
         >
           <span
-            class="text-[1rem]"
+            class="shrink-0 text-[1rem]"
             style="color: var(--md-on-primary-container)"
           >{{ steps.filter(step => step.isChecked).length }} von {{ steps.length }} Schritten</span>
           <UProgress
             :model-value="progress"
-            class="max-w-64"
+            class="min-w-0 flex-1"
             aria-label="Fortschritt"
           />
         </div>
@@ -1104,7 +1211,7 @@ function onImageGenerated(imageRef: string): void {
                   class="optical-center flex size-7 shrink-0 items-center justify-center rounded-full text-[1rem] font-bold"
                   style="background: var(--md-surface-high); color: var(--md-on-surface-variant)"
                 >{{ index + 1 }}</span>
-                <span class="min-w-0 grow text-[1.25rem] xl:text-[1.375rem]">{{ step.description }}</span>
+                <span class="min-w-0 grow whitespace-pre-line text-[1.25rem] xl:text-[1.375rem]">{{ step.description }}</span>
                 <UButton
                   icon="i-lucide-x"
                   color="neutral"
@@ -1124,33 +1231,42 @@ function onImageGenerated(imageRef: string): void {
               v-for="(step, index) in steps"
               v-show="!isSortMode"
               :key="step.id"
-              class="group flex items-start"
+              class="group flex flex-wrap items-start"
+              :class="{ 'illustrated-step': parseIllustration(step.illustration) }"
             >
+              <EditorialImage
+                v-if="parseIllustration(step.illustration)"
+                :image="parseIllustration(step.illustration)!"
+                :step="illustratedSteps.find(item => item.number === index + 1)"
+                :gallery="illustratedSteps"
+                class="w-full basis-full"
+              />
               <button
                 type="button"
-                class="state-layer flex w-full min-w-0 grow items-start gap-3.5 rounded-lg px-2 py-3 text-left transition-colors"
+                class="step-toggle state-layer flex w-full min-w-0 grow items-start gap-3.5 rounded-lg px-2 py-3 text-left transition-colors"
                 :class="[step.isChecked && 'opacity-65', step.id === currentStepId && 'xl:bg-[var(--md-surface-container)]']"
                 :aria-pressed="step.isChecked"
+                :title="step.isChecked ? 'Als offen markieren' : 'Schritt abhaken'"
                 @click="onToggleStep(step)"
               >
                 <span
-                  class="optical-center mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full text-[1rem] font-bold transition-colors"
-                  :style="step.isChecked
-                    ? 'background: var(--md-check-content); color: white'
-                    : 'background: var(--md-surface-high); color: var(--md-on-surface-variant)'"
+                  class="step-bubble"
+                  aria-hidden="true"
                 >
+                  <span class="step-index">{{ index + 1 }}</span>
                   <UIcon
-                    v-if="step.isChecked"
                     name="i-lucide-check"
-                    class="size-4"
+                    class="step-check"
                   />
-                  <template v-else>{{ index + 1 }}</template>
                 </span>
                 <span
-                  class="min-w-0 grow text-[1.25rem] xl:text-[1.375rem]"
+                  class="step-text min-w-0 grow whitespace-pre-line text-[1.25rem] xl:text-[1.375rem]"
                   :class="step.isChecked && 'line-through'"
                   style="text-wrap: pretty"
-                >{{ step.description }}</span>
+                >
+                  <template v-if="parseIllustration(step.illustration) && step.description.includes('\n\n')"><strong class="step-caption">{{ step.description.split('\n\n')[0] }}</strong>{{ step.description.slice(step.description.indexOf('\n\n') + 2) }}</template>
+                  <template v-else>{{ step.description }}</template>
+                </span>
               </button>
 
               <!-- Immer sichtbar, nur gedimmt: Auf Touch-Geräten gibt es kein
@@ -1168,6 +1284,16 @@ function onImageGenerated(imageRef: string): void {
                 @click="openExplain(step, index)"
               />
             </div>
+
+            <UButton
+              v-if="!isSortMode && steps.length > 0 && steps.every(step => step.isChecked)"
+              block
+              label="Alle Schritte zurücksetzen"
+              icon="i-lucide-check-check"
+              variant="soft"
+              class="my-3 min-h-11 w-full rounded-full"
+              @click="mutate(resetSteps())"
+            />
 
             <UInput
               v-if="!isSortMode"
@@ -1214,7 +1340,7 @@ function onImageGenerated(imageRef: string): void {
                   type="button"
                   class="flex w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left"
                   style="border-color: var(--md-outline-variant); background: var(--md-surface)"
-                  @click="isAiChatOpen = true"
+                  @click="canUseAi ? isAiChatOpen = true : showPremium('chat')"
                 >
                   <UIcon
                     name="i-lucide-message-circle"
@@ -1234,7 +1360,7 @@ function onImageGenerated(imageRef: string): void {
                   type="button"
                   class="flex w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left"
                   style="border-color: var(--md-outline-variant); background: var(--md-surface)"
-                  @click="isAiEditOpen = true"
+                  @click="canUseAi ? isAiEditOpen = true : showPremium('editRecipe')"
                 >
                   <UIcon
                     name="i-lucide-wand-sparkles"
@@ -1256,7 +1382,7 @@ function onImageGenerated(imageRef: string): void {
                 type="button"
                 class="state-layer flex w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left"
                 style="border-color: var(--md-outline-variant)"
-                @click="isAiUpsellOpen = true"
+                @click="showPremium()"
               >
                 <UIcon
                   name="i-lucide-sparkles"
@@ -1268,7 +1394,7 @@ function onImageGenerated(imageRef: string): void {
                   <span
                     class="text-[0.9375rem]"
                     style="color: var(--md-on-surface-variant)"
-                  >Was ein Konto freischaltet</span>
+                  >Was mit Premium kommt</span>
                 </span>
               </button>
             </template>
@@ -1369,7 +1495,70 @@ function onImageGenerated(imageRef: string): void {
       </aside>
     </div>
 
-    <AiUpsellSheet v-model:open="isAiUpsellOpen" />
+    <AppSheet
+      v-model:open="isImageChoiceOpen"
+      title="Ein Bild für dein Rezept"
+      description="Dein eigenes Foto oder eine Illustration im shliste-Stil."
+    >
+      <div class="grid gap-4">
+        <div
+          class="rounded-2xl border p-4"
+          style="border-color:var(--md-outline-variant)"
+        >
+          <h3 class="flex items-center gap-2 font-semibold">
+            <UIcon name="i-lucide-upload" />Eigenes Bild hochladen
+          </h3>
+          <p class="mt-2 text-sm leading-relaxed">
+            Dein selbst fotografiertes Gericht. Ohne Premium.
+          </p>
+          <input
+            v-if="isSignedIn"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            aria-label="Eigenes Rezeptbild auswählen"
+            class="mt-3 block w-full text-sm"
+            :disabled="imageUploadBusy"
+            @change="uploadOwnImage"
+          >
+          <NuxtLink
+            v-else
+            to="/app/profile"
+            class="mt-3 inline-flex font-semibold"
+            @click="isImageChoiceOpen = false"
+          >Zum Hochladen anmelden</NuxtLink>
+          <p class="mt-2 text-xs">
+            JPG, PNG oder WebP · bis 5 MB
+          </p>
+          <p
+            v-if="imageUploadBusy"
+            role="status"
+            class="mt-2 text-sm"
+          >
+            Dein Bild wird gespeichert …
+          </p>
+          <p
+            v-if="imageUploadError"
+            role="alert"
+            class="mt-2 text-sm"
+          >
+            {{ imageUploadError }}
+          </p>
+        </div>
+        <button
+          type="button"
+          class="flex items-center justify-center gap-2 rounded-full px-4 py-3 font-semibold"
+          style="background:var(--md-primary-container);color:var(--md-on-primary-container)"
+          :disabled="imageUploadBusy"
+          @click="isImageChoiceOpen = false; startImageGeneration()"
+        >
+          <UIcon name="i-lucide-sparkles" />Mit KI gestalten
+        </button>
+      </div>
+    </AppSheet>
+    <AiUpsellSheet
+      v-model:open="isAiUpsellOpen"
+      :feature="premiumFeature"
+    />
 
     <!-- Der Chat als Blatt gibt es nur, solange er keine eigene Spalte hat. -->
     <AiRecipeChatSheet
@@ -1412,6 +1601,7 @@ function onImageGenerated(imageRef: string): void {
     <BadgeEarnedSheet
       v-model:open="isBadgeSheetOpen"
       :badge="badgeForSheet"
+      :image-url="recipeImageUrl"
       :celebrate-tick="celebrateTick"
     />
 
@@ -1443,3 +1633,38 @@ function onImageGenerated(imageRef: string): void {
     </div>
   </div>
 </template>
+
+<style scoped>
+.illustrated-step{margin-block:1rem 2rem;padding:clamp(.8rem,2vw,1.4rem);gap:.65rem;border:1px solid var(--md-outline-variant);border-radius:1.4rem;background:var(--md-surface-container-low);align-items:flex-start}
+.step-toggle { --step-line: 1.85rem; flex: 1 1 60%; }
+.step-text, .step-toggle .step-caption { line-height: var(--step-line); }
+.illustrated-step .step-caption{display:block;margin-bottom:.42em;color:var(--md-on-surface)}
+.illustrated-step>figure{margin:0;border-radius:.95rem}
+.step-bubble {
+  display: grid;
+  place-items: center;
+  flex: none;
+  height: var(--step-line);
+  min-width: max(var(--step-line), calc(2ch + .55rem));
+  border-radius: 99px;
+  font: 650 1rem/1 system-ui, sans-serif;
+  color: var(--md-on-surface-variant);
+  background: var(--md-surface-high);
+}
+.step-index, .step-check { grid-area: 1 / 1; }
+.step-check { width: 18px; height: 18px; opacity: 0; }
+.step-toggle[aria-pressed=true] .step-bubble { background: var(--md-check-surface); color: var(--md-check-content); }
+.step-toggle[aria-pressed=true] .step-index { opacity: 0; }
+.step-toggle[aria-pressed=true] .step-check { opacity: 1; }
+@media (hover: hover) and (pointer: fine) {
+  .step-toggle:hover .step-bubble { box-shadow: inset 0 0 0 1px var(--md-check-content); color: var(--md-check-content); }
+  .step-toggle[aria-pressed=false]:hover .step-check { opacity: 1; }
+  .step-toggle[aria-pressed=false]:hover .step-index { opacity: 0; }
+  .step-toggle[aria-pressed=true]:hover .step-check { opacity: 0; }
+  .step-toggle[aria-pressed=true]:hover .step-index { opacity: 1; }
+}
+.step-toggle:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) {
+  .step-check, .step-index, .step-bubble { transition: opacity 130ms ease, box-shadow 130ms ease, background-color 130ms ease; }
+}
+</style>
