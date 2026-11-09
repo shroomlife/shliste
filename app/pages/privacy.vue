@@ -1,5 +1,6 @@
 <script setup lang="ts">
 useSeoMeta({ title: 'Datenschutz' })
+const { openSettings } = useAnalyticsConsent()
 </script>
 
 <template>
@@ -69,6 +70,32 @@ useSeoMeta({ title: 'Datenschutz' })
       <p class="mt-2 text-[1.125rem]">
         Du kannst deine Anmeldung jederzeit über den Abmeldelink in deiner Bestätigungsmail auf der <NuxtLink to="/warteliste">Wartelistenseite</NuxtLink> zurücknehmen oder dich über die im Impressum genannte Adresse an uns wenden. Danach senden wir keine Startbenachrichtigung und entfernen den Wartelisteneintrag sowie die zugehörige Discord-Meldung. Unbestätigte Anmeldungen werden spätestens 30 Tage nach Versand zur Löschung vorgemerkt. Bei einem Ausfall von Discord wird die Entfernung der Meldung erneut versucht.
       </p>
+      <h2
+        id="statistik"
+        class="mt-6 text-[1.25rem] font-bold"
+      >
+        Statistik mit Google Analytics
+      </h2>
+      <p class="mt-2 text-[1.125rem]">
+        Nur wenn du im Banner zustimmst, nutzen wir auf den öffentlichen Seiten dieser Website Google Analytics der Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland. So erfahren wir, welche Seiten gelesen werden, wie Besucher zu uns finden und wie oft jemand die App öffnet oder sich zur Warteliste anmeldet. Die App unter shliste.app/app misst nichts, deine Listen und Rezepte gehen nie an Google.
+      </p>
+      <p class="mt-2 text-[1.125rem]">
+        Verarbeitet werden dabei aufgerufene Seiten, Klicks auf „App öffnen“, die Anmeldung zur Warteliste (ohne E-Mail-Adresse), Angaben zu Gerät und Browser, die ungefähre Herkunft sowie die verweisende Seite. Google setzt dafür die Cookies „_ga“ und „_ga_XRRVDNBWGN“ mit einer Laufzeit von zwei Jahren. Werbefunktionen und Google Signals sind ausgeschaltet. Die Daten werden nach 14 Monaten gelöscht. Google kann Daten in den USA verarbeiten; Google ist nach dem EU-US Data Privacy Framework zertifiziert.
+      </p>
+      <p class="mt-2 text-[1.125rem]">
+        Rechtsgrundlage ist deine Einwilligung nach Artikel 6 Absatz 1 Buchstabe a DSGVO und § 25 Absatz 1 TDDDG. Deine Entscheidung, ob Zustimmung oder Ablehnung, speichern wir nur in deinem Browser und fragen nach 90 Tagen erneut. Du kannst sie jederzeit über „Cookie-Einstellungen“ im Footer oder <button
+          type="button"
+          class="legal-inline-button"
+          @click="openSettings"
+        >
+          hier
+        </button> ändern; bei einem Widerruf löschen wir die Cookies und die Messung endet sofort. Mehr dazu in der <a
+          href="https://policies.google.com/privacy"
+          rel="noopener noreferrer"
+          target="_blank"
+        >Datenschutzerklärung von Google</a>.
+      </p>
+
       <h2 class="mt-6 text-[1.25rem] font-bold">
         Deine Rechte
       </h2>
@@ -82,7 +109,7 @@ useSeoMeta({ title: 'Datenschutz' })
         Technische Dienstleister
       </h2>
       <p class="mt-2 text-[1.125rem]">
-        Unsere Server werden bei Hetzner betrieben. Für die Anmeldung nutzen wir Google, für Bestätigungs- und Einladungsmails Resend und für die beschriebenen Wartelistenmeldungen Discord. Bei Resend und Discord kann eine Verarbeitung außerhalb der EU stattfinden. Informationen der Anbieter findest du bei <a
+        Unsere Server werden bei Hetzner betrieben. Für die Anmeldung und, nur mit deiner Einwilligung, für die Statistik nutzen wir Google, für Bestätigungs- und Einladungsmails Resend und für die beschriebenen Wartelistenmeldungen Discord. Bei Resend und Discord kann eine Verarbeitung außerhalb der EU stattfinden. Informationen der Anbieter findest du bei <a
           href="https://resend.com/legal/privacy-policy"
           rel="noopener noreferrer"
           target="_blank"
@@ -108,5 +135,6 @@ useSeoMeta({ title: 'Datenschutz' })
 .legal-page h1 { font-size:clamp(2.5rem,5vw,4rem); line-height:1.1; margin-block:1.5rem 2rem; }
 .legal-page h2 { font-size:1.5rem; line-height:1.3; }
 .legal-page>a { display:inline-flex; align-items:center; min-height:44px; }
+.legal-inline-button { padding:0; border:0; background:none; font:inherit; color:var(--md-primary); text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
 @media(max-width:600px) { .legal-page { padding-block:1.5rem 3rem; } }
 </style>

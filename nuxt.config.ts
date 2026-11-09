@@ -105,6 +105,10 @@ export default defineNuxtConfig({
       googleClientId: process.env.NUXT_PUBLIC_GOOGLE_CLIENT_ID || '',
       // Web-Push VAPID (öffentlich). Leer = Push aus, SSE bleibt Vordergrund-Pfad.
       vapidPublicKey: process.env.NUXT_PUBLIC_VAPID_PUBLIC_KEY || '',
+      // Google-Analytics-Mess-ID der Website (öffentlich). Fester Default, weil
+      // prerenderte Seiten beim Image-Build entstehen, ohne Laufzeit-Env.
+      // Leer = keine Messung. Geladen wird nur nach Zustimmung im Banner.
+      gaMeasurementId: process.env.NUXT_PUBLIC_GA_MEASUREMENT_ID ?? 'G-XRRVDNBWGN',
     },
   },
 

@@ -83,6 +83,10 @@ const isNavActive = (to: string) => route.path === to || (to === '/rezeptideen' 
     </div>
 
     <MarketingFooter />
+    <!-- Nur im Browser: die Zustimmung liegt im localStorage, ein Server-Render davon wäre falsch. -->
+    <ClientOnly>
+      <ConsentBanner />
+    </ClientOnly>
   </div>
 </template>
 
