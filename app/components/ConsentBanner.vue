@@ -42,14 +42,14 @@ const { bannerVisible, accept, reject } = useAnalyticsConsent()
     <div class="consent-actions">
       <button
         type="button"
-        class="consent-button consent-button--outline"
+        class="consent-button consent-button--outline optical-center"
         @click="reject"
       >
         Ablehnen
       </button>
       <button
         type="button"
-        class="consent-button consent-button--solid"
+        class="consent-button consent-button--solid optical-center"
         @click="accept"
       >
         Akzeptieren
@@ -114,21 +114,41 @@ const { bannerVisible, accept, reject } = useAnalyticsConsent()
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
+/* Feste Höhe, weil optical-center (main.css) die zu hoch sitzende Zain nur so mittig rückt. */
 .consent-button {
-  min-height: 50px;
-  padding: 0 24px;
-  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 52px;
+  padding-inline: 28px;
+  border-radius: 18px;
   border: 2px solid var(--demo-accent);
-  font: inherit;
+  font-family: inherit;
   font-size: 1.188rem;
   font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background-color 160ms ease, color 160ms ease;
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
+.consent-button:hover { transform: translateY(-1px); }
+.consent-button:active { transform: translateY(0) scale(0.98); }
 .consent-button--outline { background: transparent; color: var(--demo-accent); }
-.consent-button--outline:hover { background: var(--demo-soft); }
+.consent-button--outline:hover { background: color-mix(in srgb, var(--demo-soft) 70%, transparent); }
 .consent-button--solid { background: var(--demo-accent); color: #FFFFFF; }
-.consent-button--solid:hover { background: color-mix(in srgb, var(--demo-accent) 86%, #000000); border-color: color-mix(in srgb, var(--demo-accent) 86%, #000000); }
+.consent-button--solid:hover {
+  background: color-mix(in srgb, var(--demo-accent) 88%, #000000);
+  border-color: color-mix(in srgb, var(--demo-accent) 88%, #000000);
+  box-shadow: 0 10px 22px -12px var(--demo-accent);
+}
+.consent-link { transition: color 160ms ease, text-decoration-color 160ms ease; }
+.consent-link:hover { text-decoration-color: transparent; }
+@media (prefers-reduced-motion: reduce) {
+  .consent-button,
+  .consent-button:hover,
+  .consent-button:active { transition: none; transform: none; }
+}
 .consent-button:focus-visible,
 .consent-link:focus-visible {
   outline: 2px solid var(--demo-accent);
@@ -152,7 +172,7 @@ const { bannerVisible, accept, reject } = useAnalyticsConsent()
   .consent-title { font-size: 1.438rem; line-height: 1.2; }
   .consent-text { font-size: 1.125rem; }
   .consent-hint { display: inline; }
-  .consent-button { min-height: 52px; border-radius: 18px; font-size: 1.25rem; }
+  .consent-button { height: 54px; font-size: 1.25rem; }
 }
 
 /* Desktop: eine Zeile, so breit wie der Inhalt der Seite. */
@@ -166,12 +186,12 @@ const { bannerVisible, accept, reject } = useAnalyticsConsent()
     right: auto;
     transform: translateX(-50%);
     box-sizing: border-box;
-    padding: 18px 18px 18px 24px;
+    padding: 22px 24px 22px 28px;
     bottom: calc(28px + env(safe-area-inset-bottom));
   }
   .consent-icon { width: 52px; height: 52px; }
   .consent-icon > .iconify { width: 26px; height: 26px; }
-  .consent-actions { grid-column: auto; display: flex; gap: 10px; }
-  .consent-button { min-width: 156px; }
+  .consent-actions { grid-column: auto; display: flex; gap: 12px; }
+  .consent-button { min-width: 168px; padding-inline: 32px; }
 }
 </style>
