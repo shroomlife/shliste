@@ -1,0 +1,167 @@
+{
+  "catalogId": "seidentofu-schokomousse",
+  "version": 1,
+  "slug": "seidentofu-schokomousse",
+  "title": "Seidentofu-Schokomousse",
+  "emoji": "🍮",
+  "kind": "suess",
+  "meal": "Dessert",
+  "status": "published",
+  "intro": "Zwei kleine Gläser warten im Kühlschrank aufs Abendessen. Oben knackt ein feiner Schokospan, darunter zieht der Löffel eine weiche Spur durch die dunkle Creme. Die Schokolade gibt ihr beim Abkühlen genau den Halt, den sie dafür braucht.",
+  "story": {
+    "eyebrow": "Zwei Gläser für später",
+    "sticker": [
+      "Löffel",
+      "für zwei"
+    ],
+    "ingredientNote": "Seidentofu gibt auf leichten Druck nach wie Pudding. Nimm für die Creme diese weiche Sorte und eine dunkle Schokolade, die dir auch pur schmeckt."
+  },
+  "servings": 2,
+  "prepMinutes": 10,
+  "cookMinutes": 5,
+  "restMinutes": 120,
+  "difficulty": "einfach",
+  "tags": [
+    "Ohne Backen",
+    "Zum Vorbereiten",
+    "Schokolade"
+  ],
+  "hero": {
+    "src": "/images/editorial/seidentofu-schokomousse/v1/hero.webp",
+    "alt": "Zwei niedrige Gläser mit dunkler Schokomousse, einem kleinen Wirbel und feinen Schokospänen."
+  },
+  "ingredients": [
+    {
+      "id": "tofu",
+      "amount": 200,
+      "unit": "g",
+      "name": "Seidentofu",
+      "note": "zimmerwarm, überschüssige Packungsflüssigkeit abgießen"
+    },
+    {
+      "id": "chocolate",
+      "amount": 80,
+      "unit": "g",
+      "name": "vegane Zartbitterschokolade",
+      "note": "etwa 60–70 % Kakao, davon 5 g für die Späne"
+    },
+    {
+      "id": "sugar",
+      "amount": 2,
+      "unit": "TL",
+      "name": "Puderzucker"
+    },
+    {
+      "id": "vanilla",
+      "amount": 0.25,
+      "unit": "TL",
+      "name": "Vanilleextrakt"
+    }
+  ],
+  "steps": [
+    {
+      "id": "melt",
+      "title": "Die Schokolade sanft schmelzen",
+      "instruction": "Lege ein kleines Stück Schokolade (etwa 5 g) für später beiseite. Hacke den Rest fein. Erhitze zwei Fingerbreit Wasser in einem kleinen Topf, bis es leise siedet. Setze eine trockene Metallschüssel so darauf, dass ihr Boden über dem Wasser bleibt. Gib die gehackte Schokolade hinein und rühre mit einem trockenen Teigschaber. Sobald nur noch wenige weiche Stückchen zu sehen sind, nimm die Schüssel herunter. Rühre sie in der Restwärme glatt.",
+      "illustration": {
+        "src": "/images/editorial/seidentofu-schokomousse/v1/step-1.webp",
+        "alt": "Schokolade schmilzt in einer Metallschüssel über einem kleinen Topf auf dem linken Kochfeld.",
+        "markers": [
+          {
+            "subject": "chocolate",
+            "label": "Schmelzende Schokolade",
+            "x": 39,
+            "y": 61
+          }
+        ]
+      }
+    },
+    {
+      "id": "puree",
+      "title": "Den Seidentofu seidig pürieren",
+      "instruction": "Während die Schokolade etwas abkühlt, gieße die lose Flüssigkeit vom Seidentofu ab. Gib den weichen Tofu mit Puderzucker und Vanille in einen schmalen, hohen Becher. Setze den Pürierstab bis zum Boden ein und mixe, bis die Creme auch am Rand ganz glatt ist. Streiche bei Bedarf mit einem Löffel am Becher entlang und mixe noch einmal kurz.",
+      "illustration": {
+        "src": "/images/editorial/seidentofu-schokomousse/v1/step-2.webp",
+        "alt": "Ein Pürierstab glättet die helle Seidentofucreme in einem hohen Becher.",
+        "markers": [
+          {
+            "subject": "tofu",
+            "label": "Seidentofucreme",
+            "x": 45,
+            "y": 75
+          }
+        ]
+      }
+    },
+    {
+      "id": "combine",
+      "title": "Aus zwei Farben wird eine",
+      "instruction": "Die Schokolade soll noch fließen und sich an einem sauberen Löffel lauwarm anfühlen. Gib sie in zwei bis drei Portionen zur Tofucreme und püriere nach jeder Zugabe kurz. Streiche Boden und Rand mit einem Teigschaber ab und mixe ein letztes Mal. Wenn keine hellen Schlieren mehr zu sehen sind, nimm zwei Esslöffel Creme für die Wirbel ab und gib sie in einen kleinen Spritzbeutel mit Sterntülle. Verteile die übrige Creme auf zwei niedrige Gläser mit je etwa 180 ml Inhalt. Decke die Gläser ab und stelle sie zusammen mit dem verschlossenen Spritzbeutel mindestens zwei Stunden kalt.",
+      "illustration": {
+        "src": "/images/editorial/seidentofu-schokomousse/v1/step-3.webp",
+        "alt": "Glatte Schokocreme fließt aus dem Mixbecher in ein niedriges Dessertglas.",
+        "markers": [
+          {
+            "subject": "cream",
+            "label": "Glatt gemixte Schokocreme",
+            "x": 42,
+            "y": 68
+          }
+        ]
+      }
+    },
+    {
+      "id": "serve",
+      "title": "Der erste Löffel gehört dir",
+      "instruction": "Hebe mit einem Teelöffel am Rand eines Glases eine kleine Portion ab. Behält sie auf dem Löffel ihre Form, ist die Mousse bereit. Fließt die Spur im Glas wieder zu, lass sie noch etwas kühlen. Spritze auf jedes Glas einen kleinen Wirbel aus der zurückbehaltenen Creme. Falls sie sich schwer herausdrücken lässt, wärme den Beutel kurz zwischen den Händen. Hoble mit einem Sparschäler feine Späne vom übrigen Schokostück oder hacke es fein. Streue sie über die Wirbel und serviere die Mousse kühl.",
+      "illustration": {
+        "src": "/images/editorial/seidentofu-schokomousse/v1/step-4.webp",
+        "alt": "Zwei Gläser gekühlte Mousse mit Schokospänen. Eine kleine Portion auf dem Löffel hält ihre Form.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Seidentofu-Schokomousse",
+            "x": 30,
+            "y": 65
+          },
+          {
+            "subject": "shavings",
+            "label": "Schokospäne",
+            "x": 22,
+            "y": 49
+          },
+          {
+            "subject": "spoon",
+            "label": "Gekühlte Mousse",
+            "x": 51,
+            "y": 83
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Wenn die Schokolade beim Mixen sofort anzieht",
+      "text": "Sehr kalter Tofu kann die flüssige Schokolade zu kleinen Flocken erstarren lassen. Fülle die Creme dann in eine Metallschüssel und rühre sie kurz über dem noch warmen Wasserbad, bis die Flocken schmelzen. Im Mixbecher noch einmal glatt pürieren, dann abfüllen."
+    },
+    {
+      "title": "Ein Wirbel ohne Spritzbeutel",
+      "text": "Verteile gleich die ganze Creme auf die Gläser. Streiche sie nach dem Kühlen mit dem Rücken eines Teelöffels von außen nach innen und hebe den Löffel in der Mitte an. So bekommt jedes Glas eine kleine Spitze."
+    }
+  ],
+  "storage": "Bewahre die Mousse abgedeckt im Kühlschrank auf. Du kannst sie am Vorabend zubereiten. Die Späne erst kurz vor dem Servieren darübergeben, damit sie beim Abdecken ihre Form behalten.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "Veganes Mousse au Chocolate · Bianca Zapatka",
+    "url": "https://biancazapatka.com/de/veganes-mousse-au-chocolate/"
+  },
+  "sources": [
+    {
+      "title": "Bianca Zapatka · Veganes Mousse au Chocolate",
+      "url": "https://biancazapatka.com/de/veganes-mousse-au-chocolate/",
+      "note": "Basis aus Seidentofu, dunkler Schokolade, Zucker und Vanille. Unsere Fassung für zwei Gläser wird mit Schokoladenspänen serviert."
+    }
+  ],
+  "researchedAt": "2026-11-04"
+}

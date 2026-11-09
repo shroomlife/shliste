@@ -1,0 +1,106 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Trockene Holzfläche links neben der Spüle, die Abtropffläche liegt rechts unter dem Dachfenster. Enger, fester Ausschnitt mit kleinem Regenbogenreflex."
+    }
+  },
+  "steps": {
+    "spread": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "pale",
+          "label": "Gewürzter Reis",
+          "ingredients": [
+            "rice",
+            "oil",
+            "soy"
+          ],
+          "position": "helle Körner in der linken Blechhälfte"
+        }
+      ]
+    },
+    "roast": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "crust",
+          "label": "Goldene Reiskruste",
+          "ingredients": [
+            "rice"
+          ],
+          "position": "auf dem Holzspatel"
+        }
+      ]
+    },
+    "shave": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "ribbon",
+          "label": "Gurkenband",
+          "ingredients": [
+            "cucumber"
+          ],
+          "position": "das hochgehobene Band"
+        },
+        {
+          "id": "rocket",
+          "label": "Rucola",
+          "ingredients": [
+            "rocket"
+          ],
+          "position": "hinter dem Gurkenhaufen"
+        },
+        {
+          "id": "mint",
+          "label": "Minze",
+          "ingredients": [
+            "mint"
+          ],
+          "position": "neben dem Rucola"
+        }
+      ]
+    },
+    "dress": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "lime",
+          "label": "Limette",
+          "ingredients": [
+            "lime"
+          ],
+          "position": "Schnittfläche links neben der Glasschale"
+        },
+        {
+          "id": "chili",
+          "label": "Chiliring",
+          "ingredients": [
+            "chili"
+          ],
+          "position": "auf der Oberfläche des Dressings"
+        }
+      ]
+    },
+    "serve": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "dish": true,
+          "position": "als Hügel in der türkisblauen Schale"
+        },
+        {
+          "id": "slice",
+          "label": "Gurkenscheibe",
+          "ingredients": [
+            "cucumber"
+          ],
+          "position": "rechts auf dem Reis"
+        }
+      ]
+    }
+  }
+}

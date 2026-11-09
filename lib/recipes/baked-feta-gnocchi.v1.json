@@ -1,0 +1,250 @@
+{
+  "catalogId": "baked-feta-gnocchi",
+  "version": 1,
+  "slug": "baked-feta-gnocchi",
+  "title": "Baked-Feta-Gnocchi",
+  "emoji": "🍅",
+  "kind": "herzhaft",
+  "meal": "Hauptgericht",
+  "status": "published",
+  "intro": "Erst duftet es nach warmen Tomaten und Knoblauch. Dann zieht ein Löffel durch die Form, und aus den einzelnen Zutaten wird eine cremige Sauce. Die Gnocchi bleiben mittendrin – das Abendessen kommt direkt aus dem Ofen auf den Tisch.",
+  "story": {
+    "eyebrow": "Eine Form, zwei Gabeln",
+    "sticker": [
+      "Tomatenglück",
+      "aus dem Ofen"
+    ],
+    "ingredientNote": "Nimm frische, eifreie Kartoffelgnocchi aus dem Kühlregal und einen veganen Feta, der laut Packung zum Überbacken geeignet ist. Sehr trockene Gnocchi oder selbst gemachte rohe Kartoffelklößchen brauchen einen anderen Ablauf."
+  },
+  "servings": 2,
+  "prepMinutes": 10,
+  "cookMinutes": 30,
+  "difficulty": "einfach",
+  "tags": [
+    "Aus dem Ofen",
+    "Mit Tomaten",
+    "Wenig Abwasch"
+  ],
+  "hero": {
+    "src": "/images/editorial/baked-feta-gnocchi/v1/hero.webp",
+    "alt": "Baked-Feta-Gnocchi in einer dunklen rechteckigen Auflaufform: gerillte Kartoffelgnocchi in heller Tomatencreme mit roten Tomatenhälften und Basilikum."
+  },
+  "ingredients": [
+    {
+      "id": "gnocchi",
+      "amount": 500,
+      "unit": "g",
+      "name": "frische Kartoffelgnocchi",
+      "note": "aus dem Kühlregal, vegan und ohne Ei"
+    },
+    {
+      "id": "tomatoes",
+      "amount": 400,
+      "unit": "g",
+      "name": "Kirschtomaten"
+    },
+    {
+      "id": "feta",
+      "amount": 150,
+      "unit": "g",
+      "name": "veganer Feta",
+      "note": "abgetropft, zum Überbacken geeignet"
+    },
+    {
+      "id": "garlic",
+      "amount": 2,
+      "unit": "Zehen",
+      "name": "Knoblauch"
+    },
+    {
+      "id": "oil",
+      "amount": 2,
+      "unit": "EL",
+      "name": "Olivenöl"
+    },
+    {
+      "id": "basil",
+      "amount": 0.5,
+      "unit": "Bund",
+      "name": "Basilikum"
+    },
+    {
+      "id": "salt",
+      "amount": 0.25,
+      "unit": "TL",
+      "name": "Salz",
+      "note": "erst am Ende nach Geschmack zugeben; der Feta bringt schon Salz mit"
+    },
+    {
+      "id": "pepper",
+      "amount": 1,
+      "unit": "Prise",
+      "name": "schwarzer Pfeffer"
+    },
+    {
+      "id": "water",
+      "amount": 50,
+      "unit": "ml",
+      "name": "heißes Wasser",
+      "note": "nur bei Bedarf zum Lockern der Sauce"
+    }
+  ],
+  "steps": [
+    {
+      "id": "prepare",
+      "title": "Die Tomaten öffnen, den Knoblauch fein machen",
+      "instruction": "Heize den Ofen auf 200 °C Ober-/Unterhitze oder 180 °C Umluft vor. Wasche die Tomaten und halbiere sie. Schäle den Knoblauch und hacke ihn fein. Wasche das Basilikum, tupfe es trocken und lege die Blätter für später beiseite. Stell eine flache Auflaufform von ungefähr 20 × 28 cm bereit; darin sollen die Gnocchi nicht zu einem hohen Berg werden.",
+      "illustration": {
+        "src": "/images/editorial/baked-feta-gnocchi/v1/step-1.webp",
+        "alt": "Halbierte rote Kirschtomaten und gehackter Knoblauch auf einem Holzbrett, dahinter eine Schale heller roher Gnocchi.",
+        "markers": [
+          {
+            "subject": "tomato-halves",
+            "label": "Halbierte Kirschtomaten",
+            "x": 32,
+            "y": 68
+          },
+          {
+            "subject": "minced-garlic",
+            "label": "Fein gehackter Knoblauch",
+            "x": 58,
+            "y": 71
+          },
+          {
+            "subject": "raw-gnocchi",
+            "label": "Rohe Gnocchi",
+            "x": 48,
+            "y": 29
+          }
+        ]
+      }
+    },
+    {
+      "id": "assemble",
+      "title": "Alles kommt in dieselbe Form",
+      "instruction": "Gib die Gnocchi ungekocht mit Tomaten, Knoblauch, Olivenöl und Pfeffer in die Form. Vermenge alles vorsichtig, sodass auch die Gnocchi etwas Öl abbekommen. Verteile die Mischung flach und drücke den Knoblauch zwischen die Tomaten, damit er nicht trocken obenauf liegt. Brich den veganen Feta in etwa zwei Zentimeter große Stücke und verteile sie darüber. Das Basilikum und das Salz kommen erst später dazu.",
+      "illustration": {
+        "src": "/images/editorial/baked-feta-gnocchi/v2/step-2.webp",
+        "alt": "Rohe Gnocchi und halbierte Kirschtomaten in einer dunklen Auflaufform, dazwischen weiße Stücke veganer Feta.",
+        "markers": [
+          {
+            "subject": "feta-pieces",
+            "label": "Veganer Feta",
+            "x": 27,
+            "y": 48
+          },
+          {
+            "subject": "raw-gnocchi",
+            "label": "Gnocchi vor dem Backen",
+            "x": 33,
+            "y": 60
+          }
+        ]
+      }
+    },
+    {
+      "id": "bake",
+      "title": "Warten, bis die Tomaten nachgeben",
+      "instruction": "Backe die Form auf der mittleren Schiene etwa 25–30 Minuten. Schau nach 20 Minuten erstmals hinein: Die Tomaten sollen zusammenfallen und Saft abgeben. Stelle die heiße Form mit Ofenhandschuhen auf einen hitzefesten Untersetzer. Teile ein Gnocchi mit einer Gabel und probiere es vorsichtig nach kurzem Abkühlen. Es soll bis in die Mitte weich sein. Ist es noch fest, wende die oberen Gnocchi in der Flüssigkeit und backe weitere fünf Minuten; bei einer trockenen Form gib zwei Esslöffel heißes Wasser dazu.",
+      "illustration": {
+        "src": "/images/editorial/baked-feta-gnocchi/v1/step-3.webp",
+        "alt": "Gebackene Gnocchi, weich gewordene Tomatenhälften und geschmolzener veganer Feta in der Auflaufform auf einem Korkuntersetzer.",
+        "markers": [
+          {
+            "subject": "soft-center",
+            "label": "Weiche Gnocchi-Mitte",
+            "x": 43,
+            "y": 72
+          },
+          {
+            "subject": "soft-tomatoes",
+            "label": "Weiche Ofentomaten",
+            "x": 49,
+            "y": 57
+          },
+          {
+            "subject": "melted-feta",
+            "label": "Geschmolzener veganer Feta",
+            "x": 62,
+            "y": 52
+          }
+        ]
+      }
+    },
+    {
+      "id": "fold",
+      "title": "Jetzt wird aus allem eine Sauce",
+      "instruction": "Zerdrücke einige der weichen Tomaten und die verbliebenen Fetastücke mit der Rückseite eines Holzlöffels. Hebe die Gnocchi behutsam von unten durch die Mischung, bis Tomatensaft und Feta eine helle, cremige Sauce bilden. Lass einige Tomatenhälften erkennbar. Wenn die Sauce zu dick ist, rühre das übrige heiße Wasser esslöffelweise unter. Verwende insgesamt höchstens die bereitgestellten 50 ml und höre auf, sobald die Sauce die Gnocchi umhüllt.",
+      "illustration": {
+        "src": "/images/editorial/baked-feta-gnocchi/v1/step-4.webp",
+        "alt": "Ein Holzlöffel hebt Gnocchi durch eine helle orangefarbene Sauce aus Ofentomaten und veganem Feta.",
+        "markers": [
+          {
+            "subject": "sauce",
+            "label": "Tomaten-Feta-Sauce",
+            "x": 55,
+            "y": 65
+          },
+          {
+            "subject": "tender-gnocchi",
+            "label": "Gnocchi auf dem Löffel",
+            "x": 34,
+            "y": 59
+          }
+        ]
+      }
+    },
+    {
+      "id": "serve",
+      "title": "Basilikum drauf, die Gabeln dazu",
+      "instruction": "Zupfe die größeren Basilikumblätter klein und hebe sie unter. Probiere die Sauce, bevor du etwas vom bereitgestellten Salz zugibst. Verteile die kleinen Basilikumblätter obenauf und bring die Form auf ihrem Untersetzer an den Tisch. So bekommt ihr beide Gnocchi, Tomaten und Sauce direkt aus der warmen Form. Vorsicht: Die Griffe bleiben noch lange heiß.",
+      "illustration": {
+        "src": "/images/editorial/baked-feta-gnocchi/v1/step-5.webp",
+        "alt": "Die fertigen Baked-Feta-Gnocchi in ihrer dunklen Auflaufform mit Basilikum, cremiger Tomatensauce und einem Holzlöffel an der Seite.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Baked-Feta-Gnocchi",
+            "x": 44,
+            "y": 65
+          },
+          {
+            "subject": "basil",
+            "label": "Frisches Basilikum",
+            "x": 41,
+            "y": 53
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Dein Feta bestimmt die Cremigkeit",
+      "text": "Pflanzliche Feta-Alternativen schmelzen unterschiedlich. Bleiben weiche Stückchen übrig, zerdrücke sie in Schritt 4 gründlich mit den Tomaten. Eine nicht zum Erhitzen geeignete, sehr trockene Alternative wird auch durch längeres Backen nicht automatisch cremig."
+    },
+    {
+      "title": "Der Saft gehört zum Rezept",
+      "text": "Saftige, halbierte Kirschtomaten helfen den Gnocchi beim Garen. Eine sehr große Form lässt viel Flüssigkeit verdunsten. Nimm die angegebene Größe als Orientierung und prüfe zuerst die Konsistenz, bevor du Wasser hinzugibst."
+    }
+  ],
+  "storage": "Fülle Reste nach kurzem Ausdampfen in eine verschließbare Dose und stelle sie in den Kühlschrank. Beim Aufwärmen in einer Pfanne einen kleinen Schuss Wasser zugeben, behutsam rühren und alles vollständig erhitzen. Frisches Basilikum erst danach darübergeben.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "Alejandra Graf · AleCooks",
+    "url": "https://www.alecooks.com/vegan-baked-gnocchi-with-cherry-tomato-and-feta/"
+  },
+  "sources": [
+    {
+      "title": "AleCooks · Vegan Baked Gnocchi with Cherry Tomatoes and Feta",
+      "url": "https://www.alecooks.com/vegan-baked-gnocchi-with-cherry-tomato-and-feta/",
+      "note": "Inspiration: Gnocchi und Tomaten direkt mit veganem Feta backen und anschließend vermengen. Eigene Mengen für zwei, halbierte Tomaten, gehackter Knoblauch, frisches Basilikum erst am Ende und gesonderte Garprobe."
+    },
+    {
+      "title": "PlantYou · Vegan Baked Feta Gnocchi",
+      "url": "https://plantyou.com/vegan-baked-feta-gnocchi/",
+      "note": "Vergleich der Ofenmethode bei 200 °C und des Verrührens zu cremiger Tomatensauce. Die dortige Tofu-Cashew-Fetamischung wird hier nicht verwendet."
+    }
+  ],
+  "researchedAt": "2026-11-05"
+}

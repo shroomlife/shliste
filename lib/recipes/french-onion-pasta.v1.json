@@ -1,0 +1,58 @@
+{
+  "catalogId": "french-onion-pasta",
+  "slug": "french-onion-pasta",
+  "version": 1,
+  "status": "published",
+  "title": "French Onion Pasta",
+  "previousTitles": ["French-Onion-Pasta"],
+  "emoji": "🧅",
+  "kind": "herzhaft",
+  "meal": "Hauptgericht",
+  "story": { "eyebrow": "Ein Topf voll Gemütlichkeit", "sticker": ["Ein Topf.", "Ganz viel", "Gemütlichkeit."], "ingredientNote": "Für die beiden Schalen beim Karamellisieren ein paar goldbraune Zwiebeln beiseitelegen. Sie kommen zum Schluss mit Thymian obenauf." },
+  "intro": "Aus einer Handvoll Zwiebeln wird ein kleines Abendessen zum Glücklichsein. Langsam goldbraun geschmort, mit Thymian und einer samtigen Sauce, schmiegen sie sich um jede einzelne Nudel. Ein Topf, ein bisschen Geduld und ganz viel gemütlicher Küchenduft.",
+  "servings": 2,
+  "prepMinutes": 15,
+  "cookMinutes": 55,
+  "difficulty": "einfach",
+  "tags": ["One Pot", "Wohlfühlessen", "Ohne Alkohol", "Herbstküche"],
+  "cookTest": "ausstehend",
+  "researchedAt": "2026-11-03",
+  "hero": { "src": "/images/editorial/french-onion-pasta/v2/hero.webp", "alt": "Zwei blaue Keramikschalen mit cremigen Rigatoni, karamellisierten Zwiebeln und Thymian auf einem hell gedeckten Tisch." },
+  "ingredients": [
+    { "id": "onions", "amount": 600, "unit": "g", "name": "gelbe Zwiebeln", "note": "Gewicht vor dem Schälen" },
+    { "id": "butter", "amount": 20, "unit": "g", "name": "pflanzliche Butter" },
+    { "id": "oil", "amount": 1, "unit": "EL", "name": "Olivenöl" },
+    { "id": "garlic", "amount": 2, "unit": "", "name": "Knoblauchzehen" },
+    { "id": "thyme", "amount": 0.5, "unit": "TL", "name": "getrockneter Thymian" },
+    { "id": "pasta", "amount": 250, "unit": "g", "name": "Rigatoni ohne Ei", "note": "Kochzeit etwa 10–12 Minuten" },
+    { "id": "stock", "amount": 650, "unit": "ml", "name": "milde Gemüsebrühe", "note": "heiß; je nach Pasta zusätzlich 100–200 ml heißes Wasser bereithalten" },
+    { "id": "cream", "amount": 100, "unit": "ml", "name": "Hafercuisine", "note": "ungesüßt" },
+    { "id": "yeast", "amount": 2, "unit": "EL", "name": "Hefeflocken" },
+    { "id": "vinegar", "amount": 1, "unit": "TL", "name": "Apfelessig" },
+    { "id": "salt", "amount": null, "unit": "", "name": "Salz und frisch gemahlener schwarzer Pfeffer" },
+    { "id": "garnish", "amount": null, "unit": "", "name": "ein paar frische Thymianblättchen", "note": "optional zum Servieren" }
+  ],
+  "steps": [
+    { "id": "slice", "title": "Die Zwiebeln fein schneiden", "minutes": 15, "instruction": "Zwiebeln schälen, längs halbieren und auf der flachen Schnittseite in etwa 2–3 mm dünne Halbringe schneiden. Gleichmäßig dünne Scheiben garen später zusammen. Knoblauch schälen und fein hacken. Einen breiten Topf mit schwerem Boden bereitstellen, etwa 24–26 cm Durchmesser. Gemüsebrühe und zusätzliches Wasser heiß bereithalten.", "illustration": { "markers": [{"label": "Halbe Zwiebel", "x": 37, "y": 61, "subject": "half"}, {"label": "Zwiebelstreifen", "x": 57, "y": 49, "subject": "strips"}], "src": "/images/editorial/french-onion-pasta/v2/step-1.webp", "alt": "Eine Hand hält eine halbierte Zwiebel sicher auf einem Holzbrett; daneben liegen gleichmäßig dünne Zwiebelhalbringe." } },
+    { "id": "soften", "title": "Erst weich, noch nicht braun", "minutes": 10, "instruction": "Pflanzliche Butter und Olivenöl im Topf bei mittlerer Hitze erwärmen. Die Zwiebeln mit einer kleinen Prise Salz dazugeben und gründlich wenden. Etwa 8–10 Minuten offen anschwitzen, dabei regelmäßig umrühren. Sie sollen deutlich zusammenfallen und weich und glasig werden. Bräunen einzelne Ränder schon stark, die Hitze etwas reduzieren.", "illustration": { "markers": [{"label": "Glasige Zwiebeln", "x": 43, "y": 68, "subject": "soft"}], "src": "/images/editorial/french-onion-pasta/v2/step-2.webp", "alt": "Helle, glasige Zwiebelstreifen fallen im blauen Topf auf dem schwarzen Kochfeld zusammen." } },
+    { "id": "caramelize", "title": "Jetzt kommt die goldene Geduld", "minutes": 30, "instruction": "Auf mittlere bis niedrige Hitze zurückschalten und die Zwiebeln weitere 25–35 Minuten langsam karamellisieren lassen. Alle paar Minuten umrühren und den Topfboden mit dem Kochlöffel lösen. Richtig sind weiche, gold- bis bernsteinbraune Zwiebeln mit süßlichem Duft. Klebt ein brauner Film am Boden, 1–2 EL vom bereitgestellten heißen Wasser zugeben und lösen. Schwarze Stellen und beißender Geruch bedeuten zu viel Hitze. Entscheidend ist die Farbe, nicht die Minute auf der Uhr.", "illustration": { "markers": [{"label": "Karamellisierte Zwiebeln", "x": 42, "y": 68, "subject": "gold"}], "src": "/images/editorial/french-onion-pasta/v2/step-3.webp", "alt": "Dieselben Zwiebeln sind nun tief goldbraun und weich; ein Holzlöffel zeigt den braunen, nicht verbrannten Bratensatz." } },
+    { "id": "aromatics", "title": "Knoblauch und Thymian dazu", "minutes": 1, "instruction": "Den gehackten Knoblauch und ½ TL getrockneten Thymian unter die karamellisierten Zwiebeln rühren. Etwa 30–60 Sekunden bei niedriger bis mittlerer Hitze mitgaren, bis es angenehm duftet. Der Knoblauch soll dabei keine dunkle Farbe bekommen.", "illustration": { "markers": [{"label": "Knoblauch und Thymian", "x": 51, "y": 48, "subject": "aromatics"}], "src": "/images/editorial/french-onion-pasta/v2/step-4.webp", "alt": "Fein gehackter Knoblauch und Thymian werden zu den goldbraunen Zwiebeln in den Topf gegeben." } },
+    { "id": "deglaze", "title": "Den Geschmack vom Boden lösen", "minutes": 2, "instruction": "Zunächst etwa 150 ml der heißen Gemüsebrühe vorsichtig in den Topf gießen. Mit einem Holzlöffel über den Boden streichen, damit sich der braune Bratensatz vollständig löst. Kurz aufkochen lassen. Die Flüssigkeit wird goldbraun: Genau dieser Geschmack gehört in die Sauce.", "illustration": { "markers": [{"label": "Gemüsebrühe", "x": 31, "y": 49, "subject": "broth"}], "src": "/images/editorial/french-onion-pasta/v2/step-5.webp", "alt": "Heiße Gemüsebrühe wird in den Zwiebeltopf gegossen; ein Holzlöffel löst den Bratensatz." } },
+    { "id": "simmer", "title": "Die Pasta kocht direkt mit", "minutes": 12, "instruction": "Rigatoni und die restlichen 500 ml Brühe dazugeben. Aufkochen, dann bei mittlerer Hitze offen sanft köcheln lassen. Alle 1–2 Minuten umrühren und Nudeln, die oben liegen, in die Flüssigkeit wenden. Ab 2 Minuten vor Ende der Packungskochzeit probieren. Ist der Topf schon trocken, die Pasta aber noch hart, jeweils etwa 50 ml heißes Wasser nachgießen. Am Ende soll die Pasta noch etwas Biss haben und von wenig stärkehaltiger Flüssigkeit umgeben sein.", "illustration": { "markers": [{"label": "Rigatoni", "x": 42, "y": 64, "subject": "rigatoni"}], "src": "/images/editorial/french-onion-pasta/v2/step-6.webp", "alt": "Kurze Rigatoni garen zwischen Zwiebeln in goldbrauner Brühe im gleichen blauen Topf." } },
+    { "id": "finish", "title": "Alles wird wunderbar cremig", "minutes": 2, "instruction": "Die Hitze auf niedrig stellen. Hafercuisine und Hefeflocken einrühren und etwa 1–2 Minuten sanft erwärmen, bis die Sauce an den Nudeln haftet. Dann den Herd ausschalten und den Apfelessig einrühren. Mit Pfeffer und erst jetzt nach Bedarf mit Salz abschmecken. Zu dick? Einen kleinen Schluck heißes Wasser unterrühren. Zu dünn? Eine Minute stehen lassen; die Sauce dickt beim Abkühlen nach.", "illustration": { "markers": [{"label": "Hafercuisine", "x": 38, "y": 61, "subject": "cream"}], "src": "/images/editorial/french-onion-pasta/v2/step-7.webp", "alt": "Hafercuisine wird eingerührt; die Rigatoni sind anschließend von einer seidigen Zwiebelsauce überzogen." } },
+    { "id": "serve", "title": "Zwei Schalen, ein gemütlicher Abend", "instruction": "Die Pasta direkt auf zwei Schalen verteilen. Nach Wunsch mit frischen Thymianblättchen und etwas schwarzem Pfeffer bestreuen. Am besten sofort genießen, solange die Sauce weich und fließend ist. Dazu passt ein einfacher grüner Salat.", "illustration": { "markers": [{"label": "French Onion Pasta", "x": 26, "y": 62, "subject": "dish"}], "src": "/images/editorial/french-onion-pasta/v3/step-8.webp", "alt": "Die fertige French Onion Pasta in zwei blauen Schalen, mit goldbraunen Zwiebeln und frischem Thymian." } }
+  ],
+  "tips": [
+    { "title": "Ein breiter Topf hilft", "text": "Die Zwiebeln brauchen Fläche, damit Feuchtigkeit verdampfen kann. In einem schmalen Topf dauert die Karamellisierung länger. Höhere Hitze ersetzt die Zeit nicht." },
+    { "title": "Jede Pasta trinkt anders", "text": "Die Brühe ist eine Ausgangsmenge. Topfbreite und Pastaform verändern den Bedarf. Deshalb heißes Wasser bereithalten und kleine Mengen nachgießen. Kochzeiten verändern sich beim Wechsel der Nudelsorte." },
+    { "title": "Lieber ohne Hafer?", "text": "Ungesüßte Sojacuisine funktioniert als pflanzliche Alternative. Die Zutaten auf der Verpackung prüfen; die Allergenangaben ändern sich entsprechend." },
+    { "title": "Was steckt drin?", "text": "Die Grundfassung enthält glutenhaltiges Getreide. Gemüsebrühe kann Sellerie enthalten. Maßgeblich sind die Zutatenlisten deiner verwendeten Produkte." }
+  ],
+  "storage": "Reste zügig abkühlen lassen, abgedeckt im Kühlschrank aufbewahren und innerhalb von 2 Tagen verbrauchen. In einem kleinen Topf mit etwas Wasser oder Hafercuisine unter Rühren vollständig durcherhitzen. Die Pasta wird beim Aufbewahren weicher.",
+  "inspiration": { "title": "Zucker&Jagdwurst", "url": "https://www.zuckerjagdwurst.com/en/recipes/vegan-french-onion-pasta" },
+  "sources": [
+    { "title": "Delish · Viral Recipes", "url": "https://www.delish.com/cooking/recipe-ideas/g71664808/viral-recipes/", "note": "Trendbeleg, Juni 2026" },
+    { "title": "Zucker&Jagdwurst · Vegan French Onion Pasta", "url": "https://www.zuckerjagdwurst.com/en/recipes/vegan-french-onion-pasta", "note": "Fachlicher Vergleich der pflanzlichen Umsetzung" },
+    { "title": "Wandering Chickpea · One Pot French Onion Pasta", "url": "https://wanderingchickpea.com/2021/11/06/one-pot-french-onion-pasta/", "note": "Fachlicher Vergleich der One-Pot-Technik; unsere Fassung ist vollständig vegan und alkoholfrei" }
+  ]
+}

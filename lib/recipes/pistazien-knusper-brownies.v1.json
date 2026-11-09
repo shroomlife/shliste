@@ -1,0 +1,302 @@
+{
+  "catalogId": "pistazien-knusper-brownies",
+  "version": 1,
+  "slug": "pistazien-knusper-brownies",
+  "title": "Pistazien-Knusper-Brownies",
+  "emoji": "💚",
+  "kind": "suess",
+  "meal": "Dessert",
+  "status": "published",
+  "intro": "Erst die feine Schokoladendecke, dann knusprige Pistazienfäden und darunter ein saftiger Brownie. Diese kleinen Quadrate bringen drei unterschiedliche Texturen zusammen. Plane genug Zeit zum Auskühlen ein – die klaren Schichten sind das Warten wert.",
+  "story": {
+    "eyebrow": "Schokoladenglanz. Pistazienknusper. Ein kleines Stück Glück.",
+    "sticker": [
+      "Drei Schichten",
+      "zum Verlieben"
+    ],
+    "ingredientNote": "Für eine quadratische Form von etwa 20 × 20 cm und neun reichhaltige Stücke. Verwende gesüßte vegane Pistaziencreme und ungebackene, ungesüßte Kadayif-Teigfäden. Die Zeit von etwa 3½ Stunden enthält Auskühlen und Kühlen; Rösten und Schokoladencreme kannst du in den Wartezeiten vorbereiten."
+  },
+  "servings": 9,
+  "prepMinutes": 30,
+  "cookMinutes": 30,
+  "restMinutes": 150,
+  "difficulty": "mittel",
+  "tags": [
+    "Drei feine Schichten",
+    "Mit Pistazien",
+    "Zum Teilen"
+  ],
+  "hero": {
+    "src": "/images/editorial/pistazien-knusper-brownies/v1/hero.webp",
+    "alt": "Drei Pistazien-Knusper-Brownies auf einem salbeigrünen Teller mit saftigem dunklem Boden, grün-goldenen Teigfäden und einer dünnen Schokoladendecke."
+  },
+  "ingredients": [
+    {
+      "id": "dark-chocolate",
+      "amount": 200,
+      "unit": "g",
+      "name": "vegane Zartbitterschokolade",
+      "note": "für den Brownieboden; fein gehackt"
+    },
+    {
+      "id": "butter-base",
+      "amount": 90,
+      "unit": "g",
+      "name": "vegane Blockbutter",
+      "note": "für den Brownieboden; keine fettreduzierte Streichcreme"
+    },
+    {
+      "id": "icing-sugar",
+      "amount": 90,
+      "unit": "g",
+      "name": "Puderzucker",
+      "note": "für den Brownieboden"
+    },
+    {
+      "id": "brown-sugar",
+      "amount": 115,
+      "unit": "g",
+      "name": "hellbrauner Zucker",
+      "note": "für den Brownieboden"
+    },
+    {
+      "id": "milk",
+      "amount": 150,
+      "unit": "ml",
+      "name": "Pflanzenmilch",
+      "note": "z. B. ungesüßte Sojamilch; lauwarm"
+    },
+    {
+      "id": "flour",
+      "amount": 160,
+      "unit": "g",
+      "name": "Weizenmehl Type 405",
+      "note": "für den Brownieboden"
+    },
+    {
+      "id": "cocoa",
+      "amount": 40,
+      "unit": "g",
+      "name": "Backkakao",
+      "note": "ungesüßt, alkalisiert (Dutch Process)"
+    },
+    {
+      "id": "baking-powder",
+      "amount": 0.125,
+      "unit": "TL",
+      "name": "Backpulver",
+      "note": "⅛ TL; die kleine Menge ist beabsichtigt"
+    },
+    {
+      "id": "salt",
+      "amount": 0.25,
+      "unit": "TL",
+      "name": "Salz",
+      "note": "für den Brownieboden"
+    },
+    {
+      "id": "kataifi",
+      "amount": 150,
+      "unit": "g",
+      "name": "Kadayif-Teigfäden",
+      "note": "ungebacken, ungesüßt und vegan; auch als Kataifi erhältlich"
+    },
+    {
+      "id": "coconut",
+      "amount": 50,
+      "unit": "g",
+      "name": "Kokosraspel",
+      "note": "fein und ungesüßt"
+    },
+    {
+      "id": "butter-crunch",
+      "amount": 2,
+      "unit": "EL",
+      "name": "vegane Blockbutter",
+      "note": "für die Pfanne, etwa 28 g"
+    },
+    {
+      "id": "pistachio",
+      "amount": 200,
+      "unit": "g",
+      "name": "gesüßte vegane Pistaziencreme",
+      "note": "kein reines Pistazienmus; zimmerwarm und gut durchgerührt"
+    },
+    {
+      "id": "milk-chocolate",
+      "amount": 170,
+      "unit": "g",
+      "name": "vegane Schokolade nach Vollmilchart",
+      "note": "für die Schokoladendecke; fein gehackt"
+    },
+    {
+      "id": "cream",
+      "amount": 60,
+      "unit": "ml",
+      "name": "vegane Schlagsahne",
+      "note": "flüssig und unaufgeschlagen, für die Schokoladendecke"
+    }
+  ],
+  "steps": [
+    {
+      "id": "chocolate",
+      "title": "Ein glänzender Anfang",
+      "instruction": "Heize den Ofen auf 170 °C Ober-/Unterhitze vor. Lege eine quadratische Backform von etwa 20 × 20 cm mit zwei überkreuzten Streifen Backpapier aus; lasse an zwei Seiten genug Papier zum späteren Herausheben überstehen. Schmelze die Zartbitterschokolade mit den 90 g veganer Blockbutter langsam über einem sanft dampfenden Wasserbad. Der Schüsselboden soll das Wasser nicht berühren. Nimm die Schüssel herunter, sobald alles glatt ist. Rühre Puderzucker, hellbraunen Zucker und die lauwarme Pflanzenmilch ein, bis die Mischung gleichmäßig und glänzend ist.",
+      "illustration": {
+        "src": "/images/editorial/pistazien-knusper-brownies/v1/step-1.webp",
+        "alt": "Glänzende dunkle Schokoladenmischung in einer hitzefesten Schüssel auf der Arbeitsfläche; eine Hand rührt sie mit einem Schneebesen.",
+        "markers": [
+          {
+            "subject": "base",
+            "label": "Schokoladenmischung",
+            "x": 43,
+            "y": 62
+          }
+        ]
+      }
+    },
+    {
+      "id": "batter",
+      "title": "Nur so lange rühren, wie nötig",
+      "instruction": "Siebe Mehl, Backkakao, Backpulver und Salz über die Schokoladenmischung. Hebe alles mit einem Teigschaber unter, bis keine trockenen Mehlnester mehr zu sehen sind. Der Teig soll dick und streichfähig sein. Rühre jetzt nicht länger als nötig. Gib ihn in die vorbereitete Form und streiche ihn bis in die Ecken gleichmäßig glatt. Die Backpulvermenge bleibt bewusst klein: Wir möchten einen dichten, saftigen Brownieboden.",
+      "illustration": {
+        "src": "/images/editorial/pistazien-knusper-brownies/v1/step-2.webp",
+        "alt": "Dicker dunkler Brownieteig wird in einer quadratischen, mit Backpapier ausgelegten Metallform gleichmäßig glatt gestrichen.",
+        "markers": [
+          {
+            "subject": "batter",
+            "label": "Brownieteig",
+            "x": 42,
+            "y": 56
+          }
+        ]
+      }
+    },
+    {
+      "id": "bake",
+      "title": "Die Mitte darf saftig bleiben",
+      "instruction": "Backe den Boden auf der mittleren Schiene etwa 25–30 Minuten. Prüfe ab Minute 25: Die Ränder sollen fest sein und die Mitte beim leichten Bewegen der Form nicht mehr flüssig schwappen. An einem Holzstäbchen dürfen feuchte Krümel haften, aber kein flüssiger Teig. Stelle die heiße Form mit Ofenhandschuhen auf ein Gitter oder eine hitzefeste Unterlage und lasse den Boden vollständig auskühlen, ungefähr 60–90 Minuten. Er darf auch in der Mitte nicht mehr warm sein, bevor die Pistazienschicht daraufkommt. Bereite währenddessen den Knusper vor.",
+      "illustration": {
+        "src": "/images/editorial/pistazien-knusper-brownies/v1/step-3.webp",
+        "alt": "Gebackener dunkler Brownieboden ohne Belag in derselben quadratischen Metallform mit Backpapier, auf einem Abkühlgitter über einer hitzefesten Unterlage.",
+        "markers": [
+          {
+            "subject": "brownie",
+            "label": "Gebackener Brownieboden",
+            "x": 43,
+            "y": 55
+          }
+        ]
+      }
+    },
+    {
+      "id": "toast",
+      "title": "Goldene Fäden statt weicher Füllung",
+      "instruction": "Schneide die Kadayif-Teigfäden in etwa 1–2 cm kurze Stücke und lockere sie auf. Schmelze die 2 EL vegane Blockbutter in einer großen Pfanne bei mittlerer Hitze. Gib die Teigfäden hinein und röste sie unter häufigem Wenden rundum goldbraun und knusprig, meist etwa 8–12 Minuten. Drehe die Hitze herunter, falls einzelne Stellen zu schnell dunkel werden. Nimm die Pfanne vom Herd und rühre die Kokosraspel unter. Lass die Mischung einige Minuten abkühlen, bis sie nur noch lauwarm ist.",
+      "illustration": {
+        "src": "/images/editorial/pistazien-knusper-brownies/v1/step-4.webp",
+        "alt": "Kurze goldbraun geröstete Kadayif-Teigfäden werden mit einem Holzlöffel in einer flachen schwarzen Pfanne auf dem feststehenden Kochfeld gewendet; noch ohne Pistaziencreme.",
+        "markers": [
+          {
+            "subject": "kataifi",
+            "label": "Goldbraune Kadayif-Fäden",
+            "x": 44,
+            "y": 72
+          }
+        ]
+      }
+    },
+    {
+      "id": "pistachio-layer",
+      "title": "Der Knusper bekommt seine Schicht",
+      "instruction": "Verrühre die lauwarmen Kadayif-Kokos-Fäden mit der gut durchgerührten Pistaziencreme in einer Schüssel, bis die Fäden gleichmäßig überzogen sind. Sie sollen als knusprige Struktur sichtbar bleiben. Prüfe noch einmal, ob der Brownieboden vollständig kalt ist. Verteile die Mischung dann bis an die Ränder auf dem Boden in seiner Form und drücke sie mit einem Löffelrücken oder einer kleinen Palette sanft zu einer ebenen Schicht zusammen. Nicht zu fest pressen; die Fäden sollen ihren Biss behalten.",
+      "illustration": {
+        "src": "/images/editorial/pistazien-knusper-brownies/v1/step-5.webp",
+        "alt": "Eine strukturierte grün-goldene Pistazien-Kadayif-Schicht wird auf dem ausgekühlten Brownieboden in der quadratischen Form gleichmäßig verteilt; noch ohne Schokoladendecke.",
+        "markers": [
+          {
+            "subject": "filling",
+            "label": "Pistazien-Knusper-Schicht",
+            "x": 40,
+            "y": 50
+          }
+        ]
+      }
+    },
+    {
+      "id": "ganache",
+      "title": "Eine kleine Schüssel Schokoladenglanz",
+      "instruction": "Gib die fein gehackte vegane Schokolade nach Vollmilchart in eine saubere, trockene Schüssel. Erwärme die flüssige vegane Schlagsahne in einem kleinen Topf, bis am Rand die ersten Bläschen erscheinen. Gieße sie über die Schokolade und warte eine Minute. Rühre dann langsam von der Mitte nach außen, bis eine glatte, glänzende Creme entsteht. Falls kleine Stückchen bleiben, stelle die Schüssel kurz über ein warmes Wasserbad und rühre weiter. Es darf kein Wasser in die Schokolade gelangen. Lass die Creme kurz abkühlen, bis sie noch gut streichfähig, aber nicht mehr heiß ist.",
+      "illustration": {
+        "src": "/images/editorial/pistazien-knusper-brownies/v1/step-6.webp",
+        "alt": "Eine Hand rührt glatte mittelbraune Schokoladencreme in einer kleinen Glasschüssel; die Creme glänzt und ist noch streichfähig.",
+        "markers": [
+          {
+            "subject": "ganache",
+            "label": "Schokoladencreme",
+            "x": 44,
+            "y": 65
+          }
+        ]
+      }
+    },
+    {
+      "id": "finish",
+      "title": "Eine glatte Decke und etwas Geduld",
+      "instruction": "Verteile die Schokoladencreme dünn und gleichmäßig über der Pistazienschicht. Streiche sie mit einer Palette oder einem Löffelrücken bis in die Ecken. Stelle die Form für mindestens 60 Minuten in den Kühlschrank, bis die Schokoladendecke fest genug zum Schneiden ist. Je nach Schokolade und Raumtemperatur kann das länger dauern. Drücke zum Prüfen vorsichtig an einer Ecke: Die Oberfläche soll nicht mehr fließen oder am Finger hängen bleiben.",
+      "illustration": {
+        "src": "/images/editorial/pistazien-knusper-brownies/v1/step-7.webp",
+        "alt": "Die mittelbraune Schokoladendecke wird in derselben quadratischen Form glatt gestrichen; am noch offenen Rand ist die grün-goldene Knusperschicht erkennbar.",
+        "markers": [
+          {
+            "subject": "topping",
+            "label": "Schokoladendecke",
+            "x": 42,
+            "y": 55
+          }
+        ]
+      }
+    },
+    {
+      "id": "serve",
+      "title": "Drei Schichten, ein schöner Anschnitt",
+      "instruction": "Hebe den vollständig gekühlten Brownieblock an den Papierstreifen aus der Form auf ein Brett. Schneide ihn mit einem scharfen Messer in neun gleich große Quadrate. Erwärme die Klinge bei Bedarf kurz in heißem Wasser und trockne sie vor jedem Schnitt gründlich ab; wische sie zwischendurch sauber. So bleiben Boden, Knusperschicht und Schokoladendecke erkennbar. Richte die Stücke auf Tellern an. Für einen weicheren Schokobiss können sie vor dem Essen etwa 10 Minuten außerhalb des Kühlschranks stehen.",
+      "illustration": {
+        "src": "/images/editorial/pistazien-knusper-brownies/v1/step-8.webp",
+        "alt": "Drei fertige Browniequadrate auf einem hellen salbeigrünen Teller: zwei hinten gestapelt und eines vorne, mit dunklem Boden, grün-goldener Knusperschicht und dünner Schokoladendecke wie im Titelbild.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Pistazien-Knusper-Brownies",
+            "x": 50,
+            "y": 62
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Die richtige Pistaziencreme",
+      "text": "Die Vorlage verwendet eine gesüßte Pistaziencreme. Reines Pistazienmus hat ein anderes Verhältnis von Zucker und Fett und ergibt deshalb nicht dieselbe Füllung. Prüfe bei Creme, Teigfäden und beiden Schokoladen, dass sie ohne Milch und Ei hergestellt sind."
+    },
+    {
+      "title": "Erst kalt schichten",
+      "text": "Ein warmer Brownieboden macht die Knusperschicht weich. Gib dem Boden Zeit, auch in der Mitte vollständig abzukühlen. Ebenso sollte die Schokoladencreme beim Aufstreichen nur noch lauwarm sein. Eine kleinere Form macht den Boden dicker und verändert die Backzeit; bleibe möglichst bei 20 × 20 cm."
+    }
+  ],
+  "storage": "Bewahre die Stücke in einer gut schließenden Dose im Kühlschrank auf und verbrauche sie möglichst innerhalb von 3–4 Tagen. Am ersten Tag ist die Kadayif-Schicht am knusprigsten; sie wird mit der Zeit etwas weicher. Nimm nur die Portion heraus, die du gleich servieren möchtest.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "Vegan Dubai Chocolate Brownies · Pastry by Saloni / Edward & Sons",
+    "url": "https://store.edwardandsons.com/blogs/recipes/vegan-dubai-chocolate-brownies"
+  },
+  "sources": [
+    {
+      "title": "Pastry by Saloni für Edward & Sons · Vegan Dubai Chocolate Brownies",
+      "url": "https://store.edwardandsons.com/blogs/recipes/vegan-dubai-chocolate-brownies",
+      "note": "Mengen und drei Schichten der veganen Vorlage beibehalten. Sämtliche Schokoladen, Butter, Milch, Sahne, Creme und Teigfäden ausdrücklich vegan. 8 × 8 Zoll metrisch als etwa 20 × 20 cm; neun Stücke aus der angegebenen Spanne 9–12. Garzeichen, Handgriffe und Abkühlzeiten für eine verständliche deutsche Anleitung ergänzt. Kokosraspel der Vorlage erhalten."
+    }
+  ],
+  "researchedAt": "2026-11-06"
+}

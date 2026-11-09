@@ -1,0 +1,83 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Arbeitsplatte links von der Spüle unter der Dachschräge."
+    },
+    "hob": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-2.webp",
+      "framing": "Linkes Kochfeld unter der Edelstahlhaube."
+    }
+  },
+  "steps": {
+    "melt": {
+      "scene": "hob",
+      "subjects": [
+        {
+          "id": "chocolate",
+          "position": "Am Rand des Schokoladenspiegels",
+          "label": "Schmelzende Schokolade",
+          "ingredients": [
+            "chocolate"
+          ]
+        }
+      ]
+    },
+    "puree": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "tofu",
+          "position": "Im unteren Teil des Mixbechers",
+          "label": "Seidentofucreme",
+          "ingredients": [
+            "tofu",
+            "sugar",
+            "vanilla"
+          ]
+        }
+      ]
+    },
+    "combine": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "cream",
+          "position": "Im vorderen Glas",
+          "label": "Glatt gemixte Schokocreme",
+          "ingredients": [
+            "tofu",
+            "chocolate"
+          ]
+        }
+      ]
+    },
+    "serve": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "position": "Vorderes Glas",
+          "dish": true
+        },
+        {
+          "id": "shavings",
+          "position": "Linker Rand der vorderen Portion",
+          "label": "Schokospäne",
+          "ingredients": [
+            "chocolate"
+          ]
+        },
+        {
+          "id": "spoon",
+          "position": "Auf dem Löffel im Vordergrund",
+          "label": "Gekühlte Mousse",
+          "ingredients": [
+            "chocolate",
+            "tofu"
+          ]
+        }
+      ]
+    }
+  }
+}

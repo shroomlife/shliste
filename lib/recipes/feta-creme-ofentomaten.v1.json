@@ -1,0 +1,228 @@
+{
+  "catalogId": "feta-creme-ofentomaten",
+  "version": 1,
+  "slug": "feta-creme-ofentomaten",
+  "title": "Feta-Creme mit Ofentomaten",
+  "emoji": "🥣",
+  "kind": "herzhaft",
+  "meal": "Snack",
+  "status": "published",
+  "intro": "Die Tomaten werden im Ofen weich und süß, während du eine kühle, samtige Creme anrührst. Auf dem Teller treffen beide zusammen: ein Löffel warmer Tomatensaft, kleine Thymianblättchen und etwas Brot zum Auftunken. Eine Vorspeise zum Teilen – und zum Noch-einmal-Zugreifen.",
+  "story": {
+    "eyebrow": "Warm trifft kühl. Alle greifen zu.",
+    "sticker": [
+      "Zum Dippen",
+      "und Teilen"
+    ],
+    "ingredientNote": "Nimm einen milden, cremigen veganen Feta und dickflüssigen, ungesüßten Sojajoghurt ohne Vanille. Die Creme wird kalt zubereitet; die warmen Tomaten kommen erst direkt vor dem Essen darauf."
+  },
+  "servings": 4,
+  "prepMinutes": 15,
+  "cookMinutes": 25,
+  "restMinutes": 5,
+  "difficulty": "einfach",
+  "tags": [
+    "Zum Teilen",
+    "Warm & cremig",
+    "Mit Ofentomaten"
+  ],
+  "hero": {
+    "src": "/images/editorial/feta-creme-ofentomaten/v1/hero.webp",
+    "alt": "Samtige helle Feta-Creme auf einem flachen gesprenkelten Teller mit braunem Rand, darauf rote Ofentomaten, etwas goldener Tomatensaft und kleine Thymianblätter."
+  },
+  "ingredients": [
+    {
+      "id": "tomatoes",
+      "amount": 400,
+      "unit": "g",
+      "name": "Kirschtomaten",
+      "note": "klein und möglichst gleich groß"
+    },
+    {
+      "id": "feta",
+      "amount": 200,
+      "unit": "g",
+      "name": "veganer Feta",
+      "note": "mild, gut abgetropft"
+    },
+    {
+      "id": "yogurt",
+      "amount": 100,
+      "unit": "g",
+      "name": "Sojajoghurt",
+      "note": "dickflüssig, ungesüßt; zunächst 80 g verwenden"
+    },
+    {
+      "id": "oil",
+      "amount": 2,
+      "unit": "EL",
+      "name": "Olivenöl",
+      "note": "1 EL für die Tomaten, 1 EL für die Creme"
+    },
+    {
+      "id": "garlic",
+      "amount": 1,
+      "unit": "kleine",
+      "name": "Knoblauchzehe"
+    },
+    {
+      "id": "lemon",
+      "amount": 1,
+      "unit": "TL",
+      "name": "Zitronensaft",
+      "note": "frisch gepresst"
+    },
+    {
+      "id": "thyme",
+      "amount": 3,
+      "unit": "Zweige",
+      "name": "frischer Thymian",
+      "note": "2 für den Ofen, 1 für die Garnitur"
+    },
+    {
+      "id": "pepper",
+      "amount": 2,
+      "unit": "Prisen",
+      "name": "schwarzer Pfeffer",
+      "note": "frisch gemahlen"
+    },
+    {
+      "id": "salt",
+      "amount": 1,
+      "unit": "Prise",
+      "name": "Salz",
+      "note": "nur nach dem Abschmecken, falls nötig"
+    },
+    {
+      "id": "bread",
+      "amount": 4,
+      "unit": "Scheiben",
+      "name": "Sauerteigbrot",
+      "note": "zum Servieren, nach Wunsch geröstet"
+    }
+  ],
+  "steps": [
+    {
+      "id": "roast-start",
+      "title": "Die Tomaten bekommen ihren Ofenmoment",
+      "instruction": "Heize den Backofen auf 200 °C Ober-/Unterhitze vor. Wasche die Tomaten, entferne alle Stiele und tupfe die Früchte trocken. Gib sie ganz in eine kleine Auflaufform, in der sie in einer Lage Platz haben. Vermenge sie mit einem Esslöffel Olivenöl und einer Prise Pfeffer. Lege zwei gewaschene Thymianzweige dazwischen. Röste die Tomaten auf mittlerer Schiene etwa 20–25 Minuten; die Garprobe folgt in Schritt 3. Währenddessen bereitest du die Creme zu.",
+      "illustration": {
+        "src": "/images/editorial/feta-creme-ofentomaten/v1/step-1.webp",
+        "alt": "Ganze rohe Kirschtomaten ohne Stiele liegen mit etwas Öl und zwei Thymianzweigen in einer kleinen hellen rechteckigen Auflaufform.",
+        "markers": [
+          {
+            "subject": "tomatoes",
+            "label": "Rohe Kirschtomaten",
+            "x": 37,
+            "y": 53
+          },
+          {
+            "subject": "thyme",
+            "label": "Thymian für den Ofen",
+            "x": 42,
+            "y": 50
+          }
+        ]
+      }
+    },
+    {
+      "id": "blend-cream",
+      "title": "Eine Creme, die am Löffel bleibt",
+      "instruction": "Lass den veganen Feta gut abtropfen und brich ihn in kleine Stücke. Schäle den Knoblauch und reibe ihn fein. Gib Feta, zunächst 80 g Sojajoghurt, den zweiten Esslöffel Olivenöl, Knoblauch, Zitronensaft und die übrige Prise Pfeffer in einen schmalen hohen Mixbecher. Püriere mit dem Stabmixer in kurzen Intervallen, bis die Creme glatt ist. Schalte ihn aus, bevor du etwas vom Rand abstreifst. Falls die Creme zu fest zum Verstreichen ist, ergänze den restlichen Joghurt teelöffelweise. Sie soll weiche Rillen halten und nicht vom Löffel laufen. Probiere erst jetzt und salze nur, wenn nötig. Stelle die Creme abgedeckt kalt, bis die Tomaten bereit sind.",
+      "illustration": {
+        "src": "/images/editorial/feta-creme-ofentomaten/v1/step-2.webp",
+        "alt": "Eine dunkelbraune Hand hält den Stabmixer in einem schmalen Becher mit glatter heller Feta-Creme; es sind keine Tomaten darin.",
+        "markers": [
+          {
+            "subject": "cream",
+            "label": "Feta-Joghurt-Creme",
+            "x": 49,
+            "y": 74
+          }
+        ]
+      }
+    },
+    {
+      "id": "rest-tomatoes",
+      "title": "Saftig, weich und nicht mehr glühend heiß",
+      "instruction": "Schau nach den Tomaten: Die Haut soll faltig sein, an einigen Stellen aufplatzen und leichte braune Röststellen zeigen. Drücke eine Tomate vorsichtig mit dem Löffel an; sie soll weich nachgeben. Sind sie noch prall und fest, röste sie ein paar Minuten weiter. Nimm die Form mit Ofenhandschuhen heraus und stelle sie auf eine hitzefeste Unterlage. Lass die Tomaten etwa fünf Minuten abkühlen, bis sie warm statt kochend heiß sind. Entferne die beiden Thymianstiele. Bewahre den Saft in der Form auf, schütte ihn noch nicht zur Creme.",
+      "minutes": 5,
+      "illustration": {
+        "src": "/images/editorial/feta-creme-ofentomaten/v1/step-3.webp",
+        "alt": "Die gleiche Auflaufform steht auf einem Korkuntersetzer; die Tomaten sind weich und faltig, daneben sammelt sich etwas goldroter Saft.",
+        "markers": [
+          {
+            "subject": "roasted-tomatoes",
+            "label": "Weiche Ofentomaten",
+            "x": 43,
+            "y": 58
+          }
+        ]
+      }
+    },
+    {
+      "id": "spread-cream",
+      "title": "Ein weiches Bett für die Tomaten",
+      "instruction": "Streiche die kühle Creme mit der Rückseite eines Esslöffels auf einen flachen Servierteller von etwa 26 cm Durchmesser. Ziehe den Löffel in einem weiten Kreis durch die Mitte, sodass eine flache Mulde mit einem etwas höheren Cremerand entsteht. Die Mitte darf dünner sein, der Teller soll dort aber noch bedeckt bleiben. Röste das Brot nach Wunsch im Toaster und zupfe die Blättchen vom dritten Thymianzweig ab.",
+      "illustration": {
+        "src": "/images/editorial/feta-creme-ofentomaten/v1/step-4.webp",
+        "alt": "Eine hellolivfarbene Hand verstreicht die helle Creme mit einem Löffel auf dem runden gesprenkelten Servierteller; in der Mitte entsteht eine flache Mulde.",
+        "markers": [
+          {
+            "subject": "cream",
+            "label": "Kühle Feta-Creme",
+            "x": 36,
+            "y": 65
+          }
+        ]
+      }
+    },
+    {
+      "id": "serve",
+      "title": "Jetzt kommt alles zusammen",
+      "instruction": "Hebe die warmen Tomaten mit einem Löffel aus der Form und setze sie behutsam in die Mitte der Creme. Lass außen einen breiten hellen Rand sichtbar. Verteile zunächst einen Esslöffel des Bratensafts darüber; gib nur etwas mehr dazu, wenn die Creme ihre Form behält und sich keine große Pfütze bildet. Streue die frischen Thymianblättchen auf und serviere sofort mit dem Brot. Die Menge reicht für vier kleine Vorspeisenportionen oder als Dip zum Teilen.",
+      "illustration": {
+        "src": "/images/editorial/feta-creme-ofentomaten/v1/step-5.webp",
+        "alt": "Fertige Feta-Creme mit Ofentomaten auf demselben flachen Teller: rote weiche Tomaten liegen mittig auf der hellen Creme, verziert mit wenigen Thymianblättern.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Feta-Creme mit Ofentomaten",
+            "x": 43,
+            "y": 58
+          },
+          {
+            "subject": "cream",
+            "label": "Samtige Feta-Creme",
+            "x": 31,
+            "y": 70
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Die Konsistenz vor dem Anrichten prüfen",
+      "text": "Pflanzliche Feta-Produkte und Joghurts unterscheiden sich stark. Verwende dickflüssigen Joghurt und gib den zurückgehaltenen Rest nur bei Bedarf dazu. Ist die Creme nach dem Mixen etwas weich geworden, hilft eine kurze Pause im Kühlschrank. Sehr wässrigen Joghurt vorher in einem feinen, mit einem sauberen Tuch ausgelegten Sieb abtropfen lassen."
+    },
+    {
+      "title": "Warm auf kühl, erst zum Schluss",
+      "text": "Die Tomaten sollen beim Servieren angenehm warm sein. Direkt aus dem Ofen könnten sie die Creme sehr weich machen. Bereite Teller und Brot vor und setze die Tomaten erst auf, wenn alle essen möchten. Übrigen Tomatensaft kannst du separat zum Brot reichen."
+    }
+  ],
+  "storage": "Übrige Creme und Tomaten möglichst getrennt in geschlossenen Behältern im Kühlschrank aufbewahren und spätestens am nächsten Tag essen. Tomaten zuvor zügig abkühlen lassen. Für eine zweite Portion nur die Tomaten wieder erwärmen und kurz abkühlen lassen; die Creme kalt dazu servieren. Bereits angerichtete Reste werden weicher und lassen sich kalt als Brotaufstrich essen.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "Whipped Feta mit Ofentomaten · Romy London",
+    "url": "https://plantbasednews.org/veganrecipes/snacks/vegan-whipped-feta-slow-roasted-tomatoes/"
+  },
+  "sources": [
+    {
+      "title": "Romy London / Romina Callwitz · Vegan Whipped Feta With Slow Roasted Tomatoes",
+      "url": "https://plantbasednews.org/veganrecipes/snacks/vegan-whipped-feta-slow-roasted-tomatoes/",
+      "note": "Von der Autorin bei Plant Based News veröffentlicht. Grundlage für kalte vegane Feta-Joghurt-Creme mit separat gerösteten Tomaten. Eigene reduzierte Fassung ohne Paprika und Pinienkerne, mit Zitronensaft, dosiertem Joghurt und Öl sowie ausführlicher Konsistenz- und Garprobe. Vier Vorspeisenportionen; kein praktischer Kochtest behauptet. Originalfoto von Romy London angesehen und als visuelle Textreferenz für das eigene Recraft-Titelbild verwendet."
+    }
+  ],
+  "researchedAt": "2026-11-05"
+}

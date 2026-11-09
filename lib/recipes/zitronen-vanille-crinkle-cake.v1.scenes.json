@@ -1,0 +1,95 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Holzarbeitsfläche links der festen Spüle, Fenster rechts oben, Dachschräge links oben. Durchgehend dieselbe salbeigrüne rechteckige Form. Heiße Form auf Korkunterlage."
+    }
+  },
+  "steps": {
+    "fold": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "filo",
+          "label": "Gefalteter Filoteig",
+          "position": "Am finalen Bild bei 43% Breite und 53% Höhe geprüft.",
+          "ingredients": [
+            "filo"
+          ]
+        }
+      ]
+    },
+    "butter": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "butter",
+          "label": "Geschmolzene vegane Butter",
+          "position": "Am finalen Bild bei 55% Breite und 41% Höhe geprüft.",
+          "ingredients": [
+            "butter"
+          ]
+        }
+      ]
+    },
+    "custard": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "custard",
+          "label": "Kokos-Vanille-Guss",
+          "position": "Am finalen Bild bei 43% Breite und 58% Höhe geprüft.",
+          "ingredients": [
+            "milk",
+            "starch",
+            "sugar-custard",
+            "vanilla",
+            "cardamom"
+          ]
+        }
+      ]
+    },
+    "bake": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "custard",
+          "label": "Guss zwischen den Falten",
+          "position": "Am finalen Bild bei 49% Breite und 57% Höhe geprüft.",
+          "ingredients": [
+            "milk",
+            "starch",
+            "sugar-custard",
+            "vanilla",
+            "cardamom"
+          ]
+        }
+      ]
+    },
+    "syrup": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "syrup",
+          "label": "Zuckersirup",
+          "position": "Am finalen Bild bei 51% Breite und 43% Höhe geprüft.",
+          "ingredients": [
+            "sugar-syrup",
+            "water"
+          ]
+        }
+      ]
+    },
+    "serve": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "label": "Kokos-Vanille-Crinkle-Cake",
+          "position": "Am finalen Bild bei 63% Breite und 70% Höhe geprüft.",
+          "dish": true
+        }
+      ]
+    }
+  }
+}

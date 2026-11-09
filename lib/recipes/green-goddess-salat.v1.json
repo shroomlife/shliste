@@ -1,0 +1,271 @@
+{
+  "catalogId": "green-goddess-salat",
+  "version": 1,
+  "slug": "green-goddess-salat",
+  "title": "Green-Goddess-Salat",
+  "emoji": "🌿",
+  "kind": "herzhaft",
+  "meal": "Salat",
+  "status": "published",
+  "intro": "Erst das leise Klacken des Messers, dann duftet es nach Basilikum und Zitrone. Aus Kohl und Gurke wird eine Schüssel voller kleiner, knackiger Bissen. Das grüne Tahini-Dressing verbindet alles – cremig genug, um an jedem Stückchen hängen zu bleiben.",
+  "story": {
+    "eyebrow": "Klein geschnitten. Groß im Geschmack.",
+    "sticker": [
+      "Grün",
+      "macht Lust"
+    ],
+    "ingredientNote": "Nimm helles, mildes Tahini und rühre es im Glas gründlich auf. Die Schnittgröße macht den Unterschied: Kohl und Gurke sollen später zusammen auf einen Löffel passen."
+  },
+  "servings": 2,
+  "prepMinutes": 25,
+  "cookMinutes": 0,
+  "difficulty": "einfach",
+  "tags": [
+    "Ohne Kochen",
+    "Knackig & frisch",
+    "Kräuter & Zitrone"
+  ],
+  "hero": {
+    "src": "/images/editorial/green-goddess-salat/v2/hero.webp",
+    "alt": "Fein geschnittener Green-Goddess-Salat in einer flachen hellblauen Schale, mit kleinen Basilikumblättern und einem silbernen Servierlöffel."
+  },
+  "ingredients": [
+    {
+      "id": "cabbage",
+      "amount": 350,
+      "unit": "g",
+      "name": "Weißkohl",
+      "note": "ohne Strunk und äußere feste Blätter gewogen"
+    },
+    {
+      "id": "cucumber",
+      "amount": 250,
+      "unit": "g",
+      "name": "Salatgurke"
+    },
+    {
+      "id": "scallions",
+      "amount": 2,
+      "unit": "",
+      "name": "Frühlingszwiebeln"
+    },
+    {
+      "id": "chives",
+      "amount": 10,
+      "unit": "g",
+      "name": "Schnittlauch",
+      "note": "ein wenig für oben zurückbehalten"
+    },
+    {
+      "id": "basil",
+      "amount": 20,
+      "unit": "g",
+      "name": "Basilikum",
+      "note": "Blätter, davon drei kleine für die Garnitur"
+    },
+    {
+      "id": "spinach",
+      "amount": 30,
+      "unit": "g",
+      "name": "Babyspinat"
+    },
+    {
+      "id": "tahini",
+      "amount": 40,
+      "unit": "g",
+      "name": "helles Tahini",
+      "note": "Sesammus, gut aufgerührt"
+    },
+    {
+      "id": "lemon",
+      "amount": 3,
+      "unit": "EL",
+      "name": "Zitronensaft",
+      "note": "frisch gepresst, aus etwa 1 Zitrone"
+    },
+    {
+      "id": "oil",
+      "amount": 1,
+      "unit": "EL",
+      "name": "Olivenöl"
+    },
+    {
+      "id": "garlic",
+      "amount": 1,
+      "unit": "kleine",
+      "name": "Knoblauchzehe"
+    },
+    {
+      "id": "yeast",
+      "amount": 1,
+      "unit": "EL",
+      "name": "Hefeflocken"
+    },
+    {
+      "id": "salt",
+      "amount": 0.25,
+      "unit": "TL",
+      "name": "Salz",
+      "note": "plus etwas zum Abschmecken"
+    },
+    {
+      "id": "water",
+      "amount": 60,
+      "unit": "ml",
+      "name": "kaltes Wasser",
+      "note": "zuerst 30 ml, den Rest nach Bedarf"
+    }
+  ],
+  "steps": [
+    {
+      "id": "chop-cabbage",
+      "title": "Der feine Schnitt macht den Anfang",
+      "instruction": "Entferne die äußeren festen Blätter und den harten Strunk vom Kohl. Spüle das benötigte Stück ab und trockne es gut; wiege 350 g ab. Lege es mit einer flachen Schnittseite stabil aufs Brett. Schneide es in etwa drei Millimeter schmale Streifen und diese quer in kurze, ungefähr fünf Millimeter große Stückchen. Gib den Kohl in eine große Salatschüssel. Lange Kohlstreifen noch einmal nachschneiden, damit später nichts vom Löffel hängt.",
+      "illustration": {
+        "src": "/images/editorial/green-goddess-salat/v1/step-1.webp",
+        "alt": "Ein kleines entstrunktes Kohlstück und fein geschnittener Weißkohl auf einem Holzbrett, das Messer liegt sicher daneben.",
+        "markers": [
+          {
+            "subject": "chopped-cabbage",
+            "label": "Fein geschnittener Weißkohl",
+            "x": 53,
+            "y": 60
+          },
+          {
+            "subject": "cabbage-wedge",
+            "label": "Weißkohl ohne Strunk",
+            "x": 24,
+            "y": 61
+          }
+        ]
+      }
+    },
+    {
+      "id": "chop-greens",
+      "title": "Gurke und Kräuter bringen Frische",
+      "instruction": "Wasche Gurke, Frühlingszwiebeln, Schnittlauch, Basilikum und Spinat. Lass alles gut abtropfen und tupfe es trocken. Schneide die Gurke längs in etwa fünf Millimeter dicke Scheiben, dann in Streifen und kleine Würfel. Bei einem sehr wässrigen Kerngehäuse streife die weichen Kerne vorher mit einem Teelöffel heraus. Entferne die Wurzelenden der Frühlingszwiebeln und schneide den weißen und hellgrünen Teil in dünne Ringe. Hacke den zarten dunkelgrünen Teil für das Dressing grob. Schneide den Schnittlauch fein, behalte eine kleine Prise zurück und gib den Rest mit Gurke und Zwiebelringen zum Kohl. Lege drei kleine Basilikumblätter für oben beiseite.",
+      "illustration": {
+        "src": "/images/editorial/green-goddess-salat/v1/step-2.webp",
+        "alt": "Kleine Gurkenwürfel, feine Frühlingszwiebelringe und Schnittlauch liegen getrennt auf dem Brett.",
+        "markers": [
+          {
+            "subject": "cucumber-dice",
+            "label": "Gurkenwürfel",
+            "x": 30,
+            "y": 61
+          },
+          {
+            "subject": "scallion-rings",
+            "label": "Feine Zwiebelringe",
+            "x": 49,
+            "y": 56
+          },
+          {
+            "subject": "chives",
+            "label": "Schnittlauch",
+            "x": 64,
+            "y": 65
+          },
+          {
+            "subject": "scallion-tops",
+            "label": "Zwiebelgrün fürs Dressing",
+            "x": 62,
+            "y": 47
+          }
+        ]
+      }
+    },
+    {
+      "id": "blend",
+      "title": "Aus Kräutern wird grüne Creme",
+      "instruction": "Schäle den Knoblauch und hacke ihn grob. Rühre das Tahini im Glas auf, bevor du es abwiegst. Gib Zitronensaft, Olivenöl, 30 ml kaltes Wasser, Tahini, Knoblauch, Hefeflocken und einen Viertelteelöffel Salz in einen schmalen, hohen Mixbecher. Füge Spinat, die übrigen Basilikumblätter und das gehackte Zwiebelgrün hinzu. Püriere alles mit einem Stabmixer zu einer gleichmäßigen grünen Creme. Schalte ihn aus, bevor du bei Bedarf den Becherrand mit einem Löffel abstreifst. Gib das übrige Wasser esslöffelweise nur so weit dazu, bis das Dressing in einem breiten Band vom Löffel fließt.",
+      "illustration": {
+        "src": "/images/editorial/green-goddess-salat/v1/step-3.webp",
+        "alt": "Eine dunkelbraune Hand hält den Stabmixer in einem hohen Becher mit glattem grünem Kräuter-Tahini-Dressing.",
+        "markers": [
+          {
+            "subject": "dressing",
+            "label": "Kräuter-Tahini-Dressing",
+            "x": 50,
+            "y": 77
+          }
+        ]
+      }
+    },
+    {
+      "id": "dress",
+      "title": "Jedes Stück bekommt ein bisschen Grün",
+      "instruction": "Rühre das geschnittene Gemüse einmal locker durch. Gib zunächst etwa zwei Drittel des Dressings dazu und hebe es mit zwei Salatlöffeln von unten nach oben unter. Prüfe, ob alle Stückchen einen dünnen grünen Überzug haben. Ergänze das übrige Dressing nach und nach, bis der Salat saftig ist, aber keine Sauce am Schüsselboden steht. Falls etwas übrig bleibt, bewahre es separat auf. Nicht zerdrücken: Gurke und Kohl sollen ihren Biss behalten.",
+      "illustration": {
+        "src": "/images/editorial/green-goddess-salat/v1/step-4.webp",
+        "alt": "Eine hellolivfarbene Hand gießt grünes Dressing über die fein geschnittenen Zutaten in der hellblauen Schüssel.",
+        "markers": [
+          {
+            "subject": "dressing",
+            "label": "Dressing nach und nach",
+            "x": 44,
+            "y": 56
+          },
+          {
+            "subject": "raw-cabbage",
+            "label": "Noch unvermischter Kohl",
+            "x": 33,
+            "y": 69
+          }
+        ]
+      }
+    },
+    {
+      "id": "serve",
+      "title": "Frisch auf den Tisch",
+      "instruction": "Probiere einen Löffel mit Kohl, Gurke und Dressing und schmecke bei Bedarf mit wenig Salz ab. Streiche den Salat in der Schüssel locker glatt oder verteile ihn auf zwei Teller. Streue den zurückbehaltenen Schnittlauch darüber und lege die drei kleinen Basilikumblätter auf. Serviere ihn direkt, solange die Gurke noch knackig ist. Als frische Beilage reicht die Menge auch für vier kleinere Portionen.",
+      "illustration": {
+        "src": "/images/editorial/green-goddess-salat/v1/step-5.webp",
+        "alt": "Fertiger fein geschnittener Green-Goddess-Salat in derselben hellblauen Schüssel mit Basilikum und einem Servierlöffel.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Green-Goddess-Salat",
+            "x": 43,
+            "y": 71
+          },
+          {
+            "subject": "basil-leaves",
+            "label": "Frisches Basilikum",
+            "x": 34,
+            "y": 57
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Wenn Tahini erst einmal fest wird",
+      "text": "Sesammus kann beim Kontakt mit Zitronensaft zunächst anziehen. Das ist kein Grund, mehr Öl zu verwenden: Weiter pürieren und das bereitgestellte Wasser esslöffelweise ergänzen. Die Creme soll glatt und gießfähig werden."
+    },
+    {
+      "title": "Für später knackig halten",
+      "text": "Du kannst das Gemüse und das Dressing getrennt vorbereiten und verschlossen kaltstellen. Vermische nur so viel, wie du direkt essen möchtest. So bleibt die Gurke länger knackig und zieht weniger Wasser."
+    }
+  ],
+  "storage": "Gemüse und Dressing getrennt in sauberen, geschlossenen Behältern im Kühlschrank aufbewahren und möglichst am nächsten Tag verwenden. Angemachten Salat ebenfalls sofort kaltstellen und spätestens am nächsten Tag essen; die Gurke wird dabei weicher. Übriges Dressing vor der Verwendung umrühren.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "Green Goddess Salad · Baked by Melissa",
+    "url": "https://www.bakedbymelissa.com/blogs/recipes/green-goddess-salad"
+  },
+  "sources": [
+    {
+      "title": "Melissa Ben-Ishay · Green Goddess Salad",
+      "url": "https://www.bakedbymelissa.com/blogs/recipes/green-goddess-salad",
+      "note": "Vorbild für fein geschnittenen Kohl, Gurke, Frühlingszwiebeln und ein grünes Basilikum-Spinat-Dressing. Eigene Fassung für zwei Portionen mit Tahini statt Cashews und angepassten Mengen. Originalfoto als Referenz für Schnitt und Struktur geprüft und bei der Erstellung einer eigenen Bildvorlage verwendet; Titelbild anschließend mit Recraft und App-Prompt gestaltet."
+    },
+    {
+      "title": "Suzy Karadsheh · Vegan Green Goddess Dressing with Tahini",
+      "url": "https://www.themediterraneandish.com/vegan-green-goddess-dressing/",
+      "note": "Methodenvergleich für Kräuter, Tahini, Zitronensaft und schrittweises Verdünnen mit Wasser. Unsere Fassung verwendet Basilikum und Babyspinat."
+    }
+  ],
+  "researchedAt": "2026-11-05"
+}

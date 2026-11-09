@@ -1,0 +1,142 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Holzarbeitsfläche links der Spüle, Dachschräge und Fenster rechts oben. Gleiche dunkelgraue quadratische Backform und Backpapiergriffe; zum Servieren salbeigrüner Teller wie im Titelbild."
+    },
+    "stove": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-2.webp",
+      "framing": "Feste schwarze Glaskochfläche unter Edelstahlhaube. Flache schwarze Pfanne auf linker Kochzone."
+    }
+  },
+  "steps": {
+    "chocolate": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "base",
+          "label": "Schokoladenmischung",
+          "position": "Bei 43% Bildbreite und 62% Bildhöhe; am finalen Bild geprüft.",
+          "ingredients": [
+            "dark-chocolate",
+            "butter-base",
+            "icing-sugar",
+            "brown-sugar",
+            "milk"
+          ]
+        }
+      ]
+    },
+    "batter": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "batter",
+          "label": "Brownieteig",
+          "position": "Bei 42% Bildbreite und 56% Bildhöhe; am finalen Bild geprüft.",
+          "ingredients": [
+            "dark-chocolate",
+            "butter-base",
+            "icing-sugar",
+            "brown-sugar",
+            "milk",
+            "flour",
+            "cocoa",
+            "baking-powder",
+            "salt"
+          ]
+        }
+      ]
+    },
+    "bake": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "brownie",
+          "label": "Gebackener Brownieboden",
+          "position": "Bei 43% Bildbreite und 55% Bildhöhe; am finalen Bild geprüft.",
+          "ingredients": [
+            "dark-chocolate",
+            "butter-base",
+            "icing-sugar",
+            "brown-sugar",
+            "milk",
+            "flour",
+            "cocoa",
+            "baking-powder",
+            "salt"
+          ]
+        }
+      ]
+    },
+    "toast": {
+      "scene": "stove",
+      "subjects": [
+        {
+          "id": "kataifi",
+          "label": "Goldbraune Kadayif-Fäden",
+          "position": "Bei 44% Bildbreite und 72% Bildhöhe; am finalen Bild geprüft.",
+          "ingredients": [
+            "kataifi",
+            "butter-crunch"
+          ]
+        }
+      ]
+    },
+    "pistachio-layer": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "filling",
+          "label": "Pistazien-Knusper-Schicht",
+          "position": "Bei 40% Bildbreite und 50% Bildhöhe; am finalen Bild geprüft.",
+          "ingredients": [
+            "kataifi",
+            "butter-crunch",
+            "coconut",
+            "pistachio"
+          ]
+        }
+      ]
+    },
+    "ganache": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "ganache",
+          "label": "Schokoladencreme",
+          "position": "Bei 44% Bildbreite und 65% Bildhöhe; am finalen Bild geprüft.",
+          "ingredients": [
+            "milk-chocolate",
+            "cream"
+          ]
+        }
+      ]
+    },
+    "finish": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "topping",
+          "label": "Schokoladendecke",
+          "position": "Bei 42% Bildbreite und 55% Bildhöhe; am finalen Bild geprüft.",
+          "ingredients": [
+            "milk-chocolate",
+            "cream"
+          ]
+        }
+      ]
+    },
+    "serve": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "label": "Pistazien-Knusper-Brownies",
+          "position": "Bei 50% Bildbreite und 62% Bildhöhe; am finalen Bild geprüft.",
+          "dish": true
+        }
+      ]
+    }
+  }
+}

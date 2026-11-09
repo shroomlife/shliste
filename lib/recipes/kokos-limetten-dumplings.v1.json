@@ -1,0 +1,234 @@
+{
+  "catalogId": "kokos-limetten-dumplings",
+  "version": 1,
+  "slug": "kokos-limetten-dumplings",
+  "title": "Kokos-Limetten-Dumpling-Auflauf",
+  "emoji": "🥟",
+  "kind": "herzhaft",
+  "meal": "Hauptgericht",
+  "status": "published",
+  "intro": "Bei diesem Abendessen lohnt sich der erste Löffel Sauce. Unter dem Deckel werden die Teigtaschen weich, während Ingwer und rote Currypaste durch die Kokosmilch ziehen. Die Limette kommt mit auf den Tisch, damit jede Portion so frisch schmeckt, wie du sie magst.",
+  "story": {
+    "eyebrow": "Eine Form für zwei",
+    "sticker": [
+      "Kokos",
+      "& Limette"
+    ],
+    "ingredientNote": "Die Gyoza kommen direkt aus dem Tiefkühler in die Form. Eine vegane Gemüsefüllung und eine Currypaste ohne Garnelenpaste passen hier zusammen."
+  },
+  "servings": 2,
+  "prepMinutes": 15,
+  "cookMinutes": 35,
+  "difficulty": "einfach",
+  "tags": [
+    "Aus dem Ofen",
+    "Gemüse-Gyoza",
+    "Kokosmilch",
+    "Für zwei"
+  ],
+  "hero": {
+    "src": "/images/editorial/kokos-limetten-dumplings/v1/hero.webp",
+    "alt": "Gefaltete Gemüse-Gyoza mit Pak Choi in orangefarbener Kokossauce, mit Frühlingszwiebeln und Chiliöl."
+  },
+  "ingredients": [
+    {
+      "id": "gyoza",
+      "amount": 300,
+      "unit": "g",
+      "name": "vegane Gemüse-Gyoza",
+      "note": "tiefgekühlt, etwa 12 Stück, zum Dämpfen geeignet"
+    },
+    {
+      "id": "coconut",
+      "amount": 300,
+      "unit": "ml",
+      "name": "ungesüßte Kokosmilch",
+      "note": "aus der Dose, vor dem Abmessen glatt rühren"
+    },
+    {
+      "id": "pakchoi",
+      "amount": 150,
+      "unit": "g",
+      "name": "Pak Choi"
+    },
+    {
+      "id": "curry",
+      "amount": 2,
+      "unit": "TL",
+      "name": "vegane rote Currypaste",
+      "note": "je nach Schärfe zunächst die Hälfte verwenden"
+    },
+    {
+      "id": "soy",
+      "amount": 1,
+      "unit": "EL",
+      "name": "Sojasauce"
+    },
+    {
+      "id": "ginger",
+      "amount": 10,
+      "unit": "g",
+      "name": "frischer Ingwer"
+    },
+    {
+      "id": "garlic",
+      "amount": 1,
+      "unit": "",
+      "name": "Knoblauchzehe"
+    },
+    {
+      "id": "lime",
+      "amount": 1,
+      "unit": "",
+      "name": "Limette"
+    },
+    {
+      "id": "onion",
+      "amount": 1,
+      "unit": "",
+      "name": "Frühlingszwiebel"
+    },
+    {
+      "id": "chili",
+      "amount": 1,
+      "unit": "TL",
+      "name": "veganes Chiliöl",
+      "note": "nach Geschmack"
+    }
+  ],
+  "steps": [
+    {
+      "id": "prep",
+      "title": "Pak Choi und Aromaten vorbereiten",
+      "instruction": "Heize den Ofen auf 180 °C Ober-/Unterhitze oder 160 °C Umluft vor. Löse die Pak-Choi-Blätter einzeln und wasche auch den Ansatz. Schneide die hellen Stiele quer in etwa 5 mm breite Stücke, die grünen Blätter in fingerbreite Streifen. Reibe Ingwer und geschälten Knoblauch fein. Schneide die Frühlingszwiebel in dünne Ringe und lege sie fürs Anrichten beiseite.",
+      "illustration": {
+        "src": "/images/editorial/kokos-limetten-dumplings/v1/step-1.webp",
+        "alt": "Auf dem Brett liegen helle Pak-Choi-Stücke, grüne Blattstreifen und die vorbereiteten Aromaten.",
+        "markers": [
+          {
+            "subject": "stems",
+            "label": "Pak-Choi-Stiele",
+            "x": 29,
+            "y": 47
+          },
+          {
+            "subject": "greens",
+            "label": "Grüne Blattstreifen",
+            "x": 53,
+            "y": 43
+          },
+          {
+            "subject": "rings",
+            "label": "Frühlingszwiebel",
+            "x": 64,
+            "y": 59
+          }
+        ]
+      }
+    },
+    {
+      "id": "sauce",
+      "title": "Die Kokossauce glatt rühren",
+      "instruction": "Gib die Currypaste mit 2 EL der abgemessenen Kokosmilch in eine etwa 24 × 18 cm große Auflaufform. Verstreiche beides, bis keine Klümpchen mehr zu sehen sind. Rühre die übrige Kokosmilch, Ingwer, Knoblauch und Sojasauce ein. Halbiere die Limette und gib zunächst 1 TL Saft dazu. Probiere die Sauce und würze nach Geschmack mit etwas mehr Currypaste.",
+      "illustration": {
+        "src": "/images/editorial/kokos-limetten-dumplings/v1/step-2.webp",
+        "alt": "Ein kleiner Schneebesen verrührt die orangefarbene Kokossauce direkt in der Auflaufform.",
+        "markers": [
+          {
+            "subject": "sauce",
+            "label": "Kokos-Currysauce",
+            "x": 30,
+            "y": 61
+          },
+          {
+            "subject": "lime",
+            "label": "Limette",
+            "x": 9,
+            "y": 44
+          }
+        ]
+      }
+    },
+    {
+      "id": "nest",
+      "title": "Die gefrorenen Gyoza in die Sauce setzen",
+      "instruction": "Verteile die hellen Pak-Choi-Stücke in der Sauce. Setze die gefrorenen Gyoza dicht nebeneinander mit der gefalteten Naht nach oben hinein. Sie sollen in einer Lage liegen und mit der unteren Hälfte in der Sauce stehen. Falls die Form etwas größer ist, ergänze esslöffelweise Wasser. Benetze die Teigspitzen mit etwas Sauce und verteile die grünen Blattstreifen locker dazwischen. Verschließe die Form mit einem passenden ofenfesten Deckel oder dicht am Rand angedrückter Folie.",
+      "illustration": {
+        "src": "/images/editorial/kokos-limetten-dumplings/v1/step-3.webp",
+        "alt": "Gefaltete Gyoza stehen in einer Lage in der Sauce, mit grünen Pak-Choi-Streifen dazwischen.",
+        "markers": [
+          {
+            "subject": "gyoza",
+            "label": "Gemüse-Gyoza",
+            "x": 43,
+            "y": 55
+          }
+        ]
+      }
+    },
+    {
+      "id": "steam",
+      "title": "Unter dem Deckel gar ziehen lassen",
+      "instruction": "Backe die abgedeckte Form auf der mittleren Schiene für etwa 30–35 Minuten. Nimm sie mit Ofenhandschuhen heraus und öffne den Deckel von dir weg. Die Sauce soll am Rand blubbern. Halbiere eine Teigtasche aus der Mitte. Der Teig soll weich bis zur Naht und die Füllung bis in den Kern dampfend heiß sein. Ist der Kern noch kühl oder die Naht fest, decke die Form wieder zu und gare weitere 5 Minuten. Beachte auch die Garhinweise auf deiner Packung.",
+      "illustration": {
+        "src": "/images/editorial/kokos-limetten-dumplings/v1/step-4.webp",
+        "alt": "Die weichen Teigtaschen nach dem Backen, eine davon geöffnet für die Garprobe.",
+        "markers": [
+          {
+            "subject": "filling",
+            "label": "Gemüsefüllung",
+            "x": 65,
+            "y": 82
+          }
+        ]
+      }
+    },
+    {
+      "id": "serve",
+      "title": "Mit Limette und Frühlingszwiebel an den Tisch",
+      "instruction": "Verteile die Frühlingszwiebelringe über den heißen Dumplings. Gib nach Geschmack ein paar Tropfen Chiliöl darüber. Schneide die übrige Limette in Spalten und reiche sie dazu. Stelle die Form auf einen hitzefesten Untersetzer und schöpfe beim Verteilen reichlich Sauce über jede Portion.",
+      "illustration": {
+        "src": "/images/editorial/kokos-limetten-dumplings/v1/step-5.webp",
+        "alt": "Der fertige Auflauf mit weichen Gyoza, grünen Frühlingszwiebeln und Chiliöl.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Kokos-Limetten-Dumpling-Auflauf",
+            "x": 46,
+            "y": 61
+          },
+          {
+            "subject": "pakchoi",
+            "label": "Pak Choi",
+            "x": 41,
+            "y": 70
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Die Form macht einen Unterschied",
+      "text": "Lege die gefrorenen Gyoza probeweise nebeneinander in die noch leere Form. Passen sie in einer Lage mit wenig Zwischenraum hinein, ist die Grundfläche richtig. Der Deckel hält den Dampf an den Teigrändern."
+    },
+    {
+      "title": "Wenn jemand mild essen möchte",
+      "text": "Verrühre zuerst nur einen Teelöffel Currypaste mit der Kokosmilch. Stell das Chiliöl separat auf den Tisch, damit alle ihre Portion selbst würzen können."
+    }
+  ],
+  "storage": "Fülle übrige Gyoza und Sauce möglichst getrennt in flache Behälter, lass sie zügig abkühlen und stelle sie zugedeckt kalt. Am nächsten Tag zusammen mit einem kleinen Schluck Wasser zugedeckt erhitzen, bis auch die Mitte der Teigtaschen wieder dampfend heiß ist.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "Delish",
+    "url": "https://www.delish.com/cooking/recipe-ideas/a71560963/coconut-lime-dumpling-bake-recipe/"
+  },
+  "sources": [
+    {
+      "title": "Delish · Coconut-Lime Dumpling Bake",
+      "url": "https://www.delish.com/cooking/recipe-ideas/a71560963/coconut-lime-dumpling-bake-recipe/",
+      "note": "Anregung für die abgedeckte Ofenmethode, Pak Choi und das Servierbild. Eigene pflanzliche Fassung für zwei."
+    }
+  ],
+  "researchedAt": "2026-11-04"
+}

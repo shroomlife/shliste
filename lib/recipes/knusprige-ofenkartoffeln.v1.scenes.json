@@ -1,0 +1,116 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Trockene Arbeitsfläche links der Spüle unter der Dachschräge."
+    }
+  },
+  "steps": {
+    "cut": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "halves",
+          "position": "Links vorne auf dem Brett",
+          "label": "Kartoffelhälften",
+          "ingredients": [
+            "potatoes"
+          ]
+        },
+        {
+          "id": "quarters",
+          "position": "Rechts auf dem Brett",
+          "label": "Kartoffelviertel",
+          "ingredients": [
+            "potatoes"
+          ]
+        }
+      ]
+    },
+    "spread": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "oiled",
+          "position": "Auf dem Backpapier",
+          "label": "Kartoffeln mit Rosmarin",
+          "ingredients": [
+            "potatoes",
+            "oil",
+            "rosemary"
+          ]
+        }
+      ]
+    },
+    "dip": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dip",
+          "position": "In der Schale",
+          "label": "Schnittlauchdip",
+          "ingredients": [
+            "yogurt",
+            "chives"
+          ]
+        },
+        {
+          "id": "chives",
+          "position": "Links der Schale",
+          "label": "Schnittlauch",
+          "ingredients": [
+            "chives"
+          ]
+        },
+        {
+          "id": "lemon",
+          "position": "Vor dem Schnittlauch",
+          "label": "Zitrone",
+          "ingredients": [
+            "lemon"
+          ]
+        }
+      ]
+    },
+    "roast": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "center",
+          "position": "An der Gabelspitze",
+          "label": "Weiche Mitte",
+          "ingredients": [
+            "potatoes"
+          ]
+        },
+        {
+          "id": "edge",
+          "position": "Links vorne",
+          "label": "Gebräunte Schnittfläche",
+          "ingredients": [
+            "potatoes"
+          ]
+        }
+      ]
+    },
+    "serve": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "position": "Auf dem Terrakottateller",
+          "dish": true
+        },
+        {
+          "id": "dip",
+          "position": "Im Schälchen hinten rechts",
+          "label": "Schnittlauchdip",
+          "ingredients": [
+            "yogurt",
+            "chives"
+          ]
+        }
+      ]
+    }
+  }
+}

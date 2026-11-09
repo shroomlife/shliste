@@ -1,0 +1,125 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Arbeitsplatte links von der Spüle unter der Dachschräge."
+    },
+    "hob": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-2.webp",
+      "framing": "Linkes Kochfeld unter der Edelstahlhaube."
+    }
+  },
+  "steps": {
+    "mill": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "flour",
+          "position": "Im Mixbecher",
+          "label": "Hafermehl",
+          "ingredients": [
+            "oats"
+          ]
+        },
+        {
+          "id": "flakes",
+          "position": "Auf der Untertasse links",
+          "label": "Haferflocken",
+          "ingredients": [
+            "oats"
+          ]
+        }
+      ]
+    },
+    "blend": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "base",
+          "position": "Im Mixbecher",
+          "label": "Bananenmilch",
+          "ingredients": [
+            "bananas",
+            "milk",
+            "vanilla"
+          ]
+        },
+        {
+          "id": "banana",
+          "position": "Rechts vom Becher",
+          "label": "Banane zum Servieren",
+          "ingredients": [
+            "bananas"
+          ]
+        }
+      ]
+    },
+    "fold": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "batter",
+          "position": "Im breiten Band unter dem Löffel",
+          "label": "Hafer-Bananen-Teig",
+          "ingredients": [
+            "oats",
+            "milk",
+            "bananas",
+            "flax",
+            "baking",
+            "vanilla"
+          ]
+        }
+      ]
+    },
+    "cook": {
+      "scene": "hob",
+      "subjects": [
+        {
+          "id": "bubbles",
+          "position": "Auf dem linken Pancake",
+          "label": "Offene Bläschen",
+          "ingredients": [
+            "oats",
+            "bananas"
+          ]
+        },
+        {
+          "id": "golden",
+          "position": "Auf dem rechten Pancake",
+          "label": "Goldbraune Seite",
+          "ingredients": [
+            "oats",
+            "bananas"
+          ]
+        }
+      ]
+    },
+    "stack": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "position": "In der Mitte des Dreierstapels",
+          "dish": true
+        },
+        {
+          "id": "topping",
+          "position": "Oben auf dem Stapel",
+          "label": "Bananenscheiben",
+          "ingredients": [
+            "bananas"
+          ]
+        },
+        {
+          "id": "syrup",
+          "position": "Vorn auf dem Teller",
+          "label": "Ahornsirup",
+          "ingredients": [
+            "syrup"
+          ]
+        }
+      ]
+    }
+  }
+}

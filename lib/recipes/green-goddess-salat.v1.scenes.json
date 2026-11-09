@@ -1,0 +1,139 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Trockene Holzarbeitsfläche links der Edelstahlspüle, Dachschräge oben links, Dachfenster und Abtropfblech oben rechts. Kein Herd in dieser Ansicht. Ab Schritt 2 zusätzlich eigene vorhergehende Schrittbilder als direkte Kamerareferenz."
+    }
+  },
+  "steps": {
+    "chop-cabbage": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "chopped-cabbage",
+          "label": "Fein geschnittener Weißkohl",
+          "position": "Bei 53% Bildbreite und 60% Bildhöhe, am fertigen Export visuell geprüft.",
+          "ingredients": [
+            "cabbage"
+          ]
+        },
+        {
+          "id": "cabbage-wedge",
+          "label": "Weißkohl ohne Strunk",
+          "position": "Bei 24% Bildbreite und 61% Bildhöhe, am fertigen Export visuell geprüft.",
+          "ingredients": [
+            "cabbage"
+          ]
+        }
+      ]
+    },
+    "chop-greens": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "cucumber-dice",
+          "label": "Gurkenwürfel",
+          "position": "Bei 30% Bildbreite und 61% Bildhöhe, am fertigen Export visuell geprüft.",
+          "ingredients": [
+            "cucumber"
+          ]
+        },
+        {
+          "id": "scallion-rings",
+          "label": "Feine Zwiebelringe",
+          "position": "Bei 49% Bildbreite und 56% Bildhöhe, am fertigen Export visuell geprüft.",
+          "ingredients": [
+            "scallions"
+          ]
+        },
+        {
+          "id": "chives",
+          "label": "Schnittlauch",
+          "position": "Bei 64% Bildbreite und 65% Bildhöhe, am fertigen Export visuell geprüft.",
+          "ingredients": [
+            "chives"
+          ]
+        },
+        {
+          "id": "scallion-tops",
+          "label": "Zwiebelgrün fürs Dressing",
+          "position": "Bei 62% Bildbreite und 47% Bildhöhe, am fertigen Export visuell geprüft.",
+          "ingredients": [
+            "scallions"
+          ]
+        }
+      ]
+    },
+    "blend": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dressing",
+          "label": "Kräuter-Tahini-Dressing",
+          "position": "Bei 50% Bildbreite und 77% Bildhöhe, am fertigen Export visuell geprüft.",
+          "ingredients": [
+            "basil",
+            "spinach",
+            "tahini",
+            "lemon",
+            "oil",
+            "garlic",
+            "yeast",
+            "salt",
+            "water",
+            "scallions"
+          ]
+        }
+      ]
+    },
+    "dress": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dressing",
+          "label": "Dressing nach und nach",
+          "position": "Bei 44% Bildbreite und 56% Bildhöhe, am fertigen Export visuell geprüft.",
+          "ingredients": [
+            "basil",
+            "spinach",
+            "tahini",
+            "lemon",
+            "oil",
+            "garlic",
+            "yeast",
+            "salt",
+            "water",
+            "scallions"
+          ]
+        },
+        {
+          "id": "raw-cabbage",
+          "label": "Noch unvermischter Kohl",
+          "position": "Bei 33% Bildbreite und 69% Bildhöhe, am fertigen Export visuell geprüft.",
+          "ingredients": [
+            "cabbage"
+          ]
+        }
+      ]
+    },
+    "serve": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "label": "Green-Goddess-Salat",
+          "position": "Bei 43% Bildbreite und 71% Bildhöhe, am fertigen Export visuell geprüft.",
+          "dish": true
+        },
+        {
+          "id": "basil-leaves",
+          "label": "Frisches Basilikum",
+          "position": "Bei 34% Bildbreite und 57% Bildhöhe, am fertigen Export visuell geprüft.",
+          "ingredients": [
+            "basil"
+          ]
+        }
+      ]
+    }
+  }
+}

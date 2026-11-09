@@ -1,0 +1,109 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Feste Holzarbeitsfläche links der Spüle unter Dachschräge und Dachfenster. Schritt 2 referenziert den korrigierten Schritt 1. Schritt 3, 5 und 6 nutzen zusätzlich das finale Titelbild für Form und Anzahl der Gurken; Garnitur nur in Schritt 6."
+    }
+  },
+  "steps": {
+    "diagonal": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "cucumber",
+          "label": "Schräge Einschnitte",
+          "position": "Bei 29% Bildbreite und 54% Bildhöhe; am finalen Bild visuell geprüft.",
+          "ingredients": [
+            "cucumber"
+          ]
+        }
+      ]
+    },
+    "crosswise": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "cucumber",
+          "label": "Gerade Querschnitte",
+          "position": "Bei 28% Bildbreite und 54% Bildhöhe; am finalen Bild visuell geprüft.",
+          "ingredients": [
+            "cucumber"
+          ]
+        }
+      ]
+    },
+    "drain": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "cucumber",
+          "label": "Abgetropfte Fächergurken",
+          "position": "Bei 32% Bildbreite und 65% Bildhöhe; am finalen Bild visuell geprüft.",
+          "ingredients": [
+            "cucumber"
+          ]
+        }
+      ]
+    },
+    "dressing": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dressing",
+          "label": "Harissa-Dressing",
+          "position": "Bei 45% Bildbreite und 60% Bildhöhe; am finalen Bild visuell geprüft.",
+          "ingredients": [
+            "harissa",
+            "agave",
+            "garlic",
+            "lemon"
+          ]
+        }
+      ]
+    },
+    "coat": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "cucumber",
+          "label": "Gurken mit Dressing",
+          "position": "Bei 59% Bildbreite und 63% Bildhöhe; am finalen Bild visuell geprüft.",
+          "ingredients": [
+            "cucumber",
+            "harissa",
+            "agave",
+            "garlic",
+            "lemon"
+          ]
+        }
+      ]
+    },
+    "serve": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "label": "Gurkensalat mit Harissa und Dill",
+          "position": "Bei 43% Bildbreite und 58% Bildhöhe; am finalen Bild visuell geprüft.",
+          "dish": true
+        },
+        {
+          "id": "feta",
+          "label": "Vegane Fetabrösel",
+          "position": "Bei 35% Bildbreite und 59% Bildhöhe; am finalen Bild visuell geprüft.",
+          "ingredients": [
+            "feta"
+          ]
+        },
+        {
+          "id": "dill",
+          "label": "Frische Dillspitzen",
+          "position": "Bei 43% Bildbreite und 47% Bildhöhe; am finalen Bild visuell geprüft.",
+          "ingredients": [
+            "dill"
+          ]
+        }
+      ]
+    }
+  }
+}

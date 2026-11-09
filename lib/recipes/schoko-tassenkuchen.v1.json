@@ -1,0 +1,195 @@
+{
+  "catalogId": "schoko-tassenkuchen",
+  "version": 1,
+  "slug": "schoko-tassenkuchen",
+  "title": "Schoko-Tassenkuchen",
+  "emoji": "🍫",
+  "kind": "suess",
+  "meal": "Dessert",
+  "status": "published",
+  "intro": "Eine Tasse, ein Löffel und ein kleiner Moment nur für dich. Unter den weichen Schokostückchen wartet ein warmer Kakaokuchen, den du direkt aus der Tasse löffelst. Schnell zusammengerührt – und nach zwei Minuten Ruhe genau richtig für die erste gemütliche Pause.",
+  "story": {
+    "eyebrow": "Deine kleine Schokopause.",
+    "sticker": [
+      "Eine Tasse",
+      "voll Glück"
+    ],
+    "ingredientNote": "Verwende gestrichene Messlöffel: 1 EL entspricht 15 ml, 1 TL 5 ml. Dazu brauchst du eine mikrowellengeeignete Tasse mit etwa 300 ml Inhalt, ohne Metallrand."
+  },
+  "servings": 1,
+  "prepMinutes": 5,
+  "cookMinutes": 2,
+  "restMinutes": 2,
+  "difficulty": "einfach",
+  "tags": [
+    "Mikrowelle",
+    "Für eine Person",
+    "Warm & schokoladig"
+  ],
+  "hero": {
+    "src": "/images/editorial/schoko-tassenkuchen/v1/hero.webp",
+    "alt": "Schoko-Tassenkuchen mit weichen Schokostückchen in einer elfenbeinfarbenen Tasse auf einem kleinen Teller, daneben liegt ein Löffel."
+  },
+  "ingredients": [
+    {
+      "id": "flour",
+      "amount": 2,
+      "unit": "EL",
+      "name": "Weizenmehl",
+      "note": "Type 405, gestrichen abgemessen"
+    },
+    {
+      "id": "cocoa",
+      "amount": 2,
+      "unit": "EL",
+      "name": "Backkakao",
+      "note": "ungesüßt, gestrichen abgemessen"
+    },
+    {
+      "id": "sugar",
+      "amount": 2,
+      "unit": "EL",
+      "name": "Zucker",
+      "note": "gestrichen abgemessen"
+    },
+    {
+      "id": "baking-powder",
+      "amount": 0.25,
+      "unit": "TL",
+      "name": "Backpulver"
+    },
+    {
+      "id": "salt",
+      "amount": 1,
+      "unit": "Prise",
+      "name": "Salz"
+    },
+    {
+      "id": "oil",
+      "amount": 1,
+      "unit": "EL",
+      "name": "neutrales Rapsöl"
+    },
+    {
+      "id": "oat-milk",
+      "amount": 3,
+      "unit": "EL",
+      "name": "Hafermilch",
+      "note": "45 ml"
+    },
+    {
+      "id": "vanilla",
+      "amount": 0.5,
+      "unit": "TL",
+      "name": "Vanilleextrakt"
+    },
+    {
+      "id": "chocolate",
+      "amount": 2,
+      "unit": "EL",
+      "name": "vegane Zartbitter-Schokodrops",
+      "note": "1 EL in den Teig, 1 EL obenauf"
+    }
+  ],
+  "steps": [
+    {
+      "id": "mix-dry",
+      "title": "Ein guter Anfang in deiner Tasse",
+      "instruction": "Stelle eine mikrowellengeeignete Tasse mit etwa 300 ml Inhalt bereit. Miss Mehl, Backkakao und Zucker mit gestrichenen Messlöffeln ab und gib alles mit Backpulver und Salz hinein. Verrühre die trockenen Zutaten mit einer Gabel, bis die Mischung gleichmäßig hellbraun ist. Zerdrücke sichtbare Kakaoklümpchen am Tassenrand; am Boden soll kein weißes Mehl zurückbleiben.",
+      "illustration": {
+        "src": "/images/editorial/schoko-tassenkuchen/v1/step-1.webp",
+        "alt": "Eine dunkelbraune Hand verrührt die trockene hellbraune Kakao-Mehl-Mischung mit einer Gabel in der elfenbeinfarbenen Tasse.",
+        "markers": [
+          {
+            "subject": "dry-mix",
+            "label": "Kakao-Mehl-Mischung",
+            "x": 43,
+            "y": 65
+          }
+        ]
+      }
+    },
+    {
+      "id": "mix-batter",
+      "title": "Jetzt wird es schokoladig",
+      "instruction": "Gib Rapsöl, Hafermilch und Vanilleextrakt dazu. Rühre mit einem Löffel auch am Boden und entlang der Innenwand, bis keine trockenen Nester mehr zu sehen sind. Der Teig soll dickflüssig und glatt sein. Hebe einen Esslöffel Schokodrops unter und streue den zweiten darüber. Die Tasse darf vor dem Garen höchstens zur Hälfte gefüllt sein. Ist sie voller, fülle den Teig in eine größere mikrowellengeeignete Tasse um.",
+      "illustration": {
+        "src": "/images/editorial/schoko-tassenkuchen/v1/step-2.webp",
+        "alt": "Eine hellolivfarbene Hand streut dunkle Schokodrops auf den glatt gerührten Teig; die Tasse bleibt deutlich unterhalb der Hälfte gefüllt.",
+        "markers": [
+          {
+            "subject": "batter",
+            "label": "Schokoteig",
+            "x": 39,
+            "y": 65
+          },
+          {
+            "subject": "chocolate",
+            "label": "Vegane Schokodrops",
+            "x": 48,
+            "y": 68
+          }
+        ]
+      }
+    },
+    {
+      "id": "microwave",
+      "title": "Kurz garen, aufmerksam prüfen",
+      "instruction": "Nimm den Löffel heraus. Gare die Tasse offen bei 800 Watt zunächst 60 Sekunden in der Mikrowelle, ohne Grillfunktion. Nimm die heiße Tasse mit Topflappen heraus und stelle sie auf eine hitzefeste Unterlage. Prüfe vorsichtig: Die Oberfläche soll aufgegangen sein, und zwischen den Schokostückchen darf kein flüssiger Teig mehr stehen. Stecke ein Holzstäbchen mittig in den Kuchen, möglichst an den Schokodrops vorbei. Feuchte Krümel sind richtig; haftet noch roher Teig daran, gare jeweils weitere 10–15 Sekunden und prüfe erneut. Geschmolzene Schokolade allein ist kein Zeichen für rohen Teig. Je nach Gerät und Tassenform kann die Gesamtzeit variieren.",
+      "illustration": {
+        "src": "/images/editorial/schoko-tassenkuchen/v1/step-3.webp",
+        "alt": "Der gegarte Schoko-Tassenkuchen steht auf einem Korkuntersetzer; seine Oberfläche ist aufgegangen und gesetzt, daneben liegt ein Holzstäbchen mit wenigen feuchten Krümeln.",
+        "markers": [
+          {
+            "subject": "cooked-cake",
+            "label": "Gegarter Kuchen",
+            "x": 39,
+            "y": 49
+          }
+        ]
+      }
+    },
+    {
+      "id": "serve",
+      "title": "Zwei Minuten für den ersten Löffel",
+      "instruction": "Lass den fertig gegarten Kuchen auf der hitzefesten Unterlage zwei Minuten ruhen: Die Krume setzt sich, und die geschmolzene Schokolade kühlt etwas ab. Stelle die Tasse dann auf einen kleinen Teller und löffle den Kuchen warm direkt daraus. Er darf innen saftig sein, soll aber keine flüssige Teigschicht haben.",
+      "minutes": 2,
+      "illustration": {
+        "src": "/images/editorial/schoko-tassenkuchen/v1/step-4.webp",
+        "alt": "Fertiger Schoko-Tassenkuchen in derselben elfenbeinfarbenen Tasse auf einem kleinen Teller; ein Löffel liegt zum Servieren bereit.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Schoko-Tassenkuchen",
+            "x": 41,
+            "y": 47
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Die Tasse entscheidet mit",
+      "text": "Eine eher breite Tasse mit geraden Wänden erleichtert das Rühren bis zum Boden. Sehr schmale oder dickwandige Becher verändern die Garzeit. Verwende nur Geschirr, das ausdrücklich für die Mikrowelle geeignet ist, und lass Gabel und Löffel beim Garen draußen."
+    },
+    {
+      "title": "Lieber kurz nachgaren",
+      "text": "Ein Tassenkuchen trocknet bei zu langer Garzeit schnell aus. Stelle möglichst 800 Watt ein und nähere dich dem Garpunkt in kleinen Schritten. Wenn du mehrere Portionen machst, bereite sie in einzelnen Tassen zu und gare diese nacheinander."
+    }
+  ],
+  "storage": "Am besten frisch und noch warm genießen. Falls etwas übrig bleibt, vollständig abkühlen lassen und abgedeckt im Kühlschrank bis zum nächsten Tag aufbewahren. Zum Aufwärmen etwas Hafermilch darüberträufeln und in kurzen Intervallen erwärmen; die Krume wird dabei fester als frisch.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "Chocolate Vegan Mug Cake · Nora Cooks",
+    "url": "https://www.noracooks.com/vegan-mug-cake/"
+  },
+  "sources": [
+    {
+      "title": "Nora Taylor · Chocolate Vegan Mug Cake",
+      "url": "https://www.noracooks.com/vegan-mug-cake/",
+      "note": "Pflanzliche Basis und Löffelverhältnisse übernommen; mit Hafermilch und Rapsöl konkretisiert, Salz auf eine Prise gesetzt. Eigene ausführliche Anleitung mit 300-ml-Tasse, aufgeteilter Schokolade, 800-Watt-Startwert, Garprobe und Ruhezeit. Kein flüssiger Rohteig als Ziel. Originalfoto als visuelle Referenz für dunkle Krume und Schokostückchen angesehen; eigenes Titelbild mit Recraft und App-Prompt."
+    }
+  ],
+  "researchedAt": "2026-11-05"
+}

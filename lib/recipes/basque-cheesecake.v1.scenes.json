@@ -1,0 +1,93 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Arbeitsplatte links von der Spüle unter der Dachschräge."
+    },
+    "hob": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-2.webp",
+      "framing": "Linkes Kochfeld unter der Edelstahlhaube."
+    }
+  },
+  "steps": {
+    "line": {
+      "scene": "worktop",
+      "subjects": []
+    },
+    "mix": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "cream",
+          "position": "Auf der sichtbaren Oberfläche",
+          "label": "Vanillecreme",
+          "ingredients": [
+            "cream",
+            "yogurt"
+          ]
+        }
+      ]
+    },
+    "fill": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "filling",
+          "position": "Auf der sichtbaren Oberfläche",
+          "label": "Füllung",
+          "ingredients": [
+            "cream",
+            "yogurt",
+            "starch"
+          ]
+        }
+      ]
+    },
+    "bake": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "cake",
+          "position": "Auf der sichtbaren Oberfläche",
+          "label": "Gebackene Füllung",
+          "ingredients": [
+            "cream",
+            "yogurt",
+            "starch"
+          ]
+        }
+      ]
+    },
+    "compote": {
+      "scene": "hob",
+      "subjects": [
+        {
+          "id": "berries",
+          "position": "Auf der sichtbaren Oberfläche",
+          "label": "Heidelbeeren",
+          "ingredients": [
+            "berries"
+          ]
+        }
+      ]
+    },
+    "slice": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "position": "Auf der sichtbaren Oberfläche",
+          "dish": true
+        },
+        {
+          "id": "compote",
+          "position": "Auf der sichtbaren Oberfläche",
+          "label": "Heidelbeerkompott",
+          "ingredients": [
+            "berries"
+          ]
+        }
+      ]
+    }
+  }
+}

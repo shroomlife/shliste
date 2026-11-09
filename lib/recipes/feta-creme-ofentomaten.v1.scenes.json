@@ -1,0 +1,109 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Trockene Holzarbeitsfläche links der Edelstahlspüle, Dachschräge oben links, Dachfenster und Abtropfblech rechts. Schritt 1 nutzt die feste Küchenreferenz; Schritt 2 und 3 denselben eigenen ersten Schritt. Schritt 4 nutzt Schritt 3 und das finale Titelbild für den Teller; Schritt 5 nutzt Schritt 4 und das finale Titelbild für die fertige Anrichtung."
+    }
+  },
+  "steps": {
+    "roast-start": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "tomatoes",
+          "label": "Rohe Kirschtomaten",
+          "position": "Bei 37% Bildbreite und 53% Bildhöhe; am finalen Export visuell geprüft.",
+          "ingredients": [
+            "tomatoes"
+          ]
+        },
+        {
+          "id": "thyme",
+          "label": "Thymian für den Ofen",
+          "position": "Bei 42% Bildbreite und 50% Bildhöhe; am finalen Export visuell geprüft.",
+          "ingredients": [
+            "thyme"
+          ]
+        }
+      ]
+    },
+    "blend-cream": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "cream",
+          "label": "Feta-Joghurt-Creme",
+          "position": "Bei 49% Bildbreite und 74% Bildhöhe; am finalen Export visuell geprüft.",
+          "ingredients": [
+            "feta",
+            "yogurt",
+            "oil",
+            "garlic",
+            "lemon",
+            "pepper",
+            "salt"
+          ]
+        }
+      ]
+    },
+    "rest-tomatoes": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "roasted-tomatoes",
+          "label": "Weiche Ofentomaten",
+          "position": "Bei 43% Bildbreite und 58% Bildhöhe; am finalen Export visuell geprüft.",
+          "ingredients": [
+            "tomatoes",
+            "oil",
+            "pepper"
+          ]
+        }
+      ]
+    },
+    "spread-cream": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "cream",
+          "label": "Kühle Feta-Creme",
+          "position": "Bei 36% Bildbreite und 65% Bildhöhe; am finalen Export visuell geprüft.",
+          "ingredients": [
+            "feta",
+            "yogurt",
+            "oil",
+            "garlic",
+            "lemon",
+            "pepper",
+            "salt"
+          ]
+        }
+      ]
+    },
+    "serve": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "label": "Feta-Creme mit Ofentomaten",
+          "position": "Bei 43% Bildbreite und 58% Bildhöhe; am finalen Export visuell geprüft.",
+          "dish": true
+        },
+        {
+          "id": "cream",
+          "label": "Samtige Feta-Creme",
+          "position": "Bei 31% Bildbreite und 70% Bildhöhe; am finalen Export visuell geprüft.",
+          "ingredients": [
+            "feta",
+            "yogurt",
+            "oil",
+            "garlic",
+            "lemon",
+            "pepper",
+            "salt"
+          ]
+        }
+      ]
+    }
+  }
+}

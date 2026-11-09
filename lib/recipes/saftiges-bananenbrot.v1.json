@@ -1,0 +1,249 @@
+{
+  "catalogId": "saftiges-bananenbrot",
+  "version": 1,
+  "slug": "saftiges-bananenbrot",
+  "title": "Saftiges Bananenbrot",
+  "emoji": "🍌",
+  "kind": "suess",
+  "meal": "Frühstück",
+  "status": "published",
+  "intro": "Die Bananen auf der Obstschale haben schon bessere Tage gesehen? Genau jetzt sind sie richtig. Aus ihren braunen Punkten wird ein duftendes Bananenbrot mit zarter Krume, goldener Kruste und kleinen Walnussstückchen. Für den ersten Kaffee, eine Pause am Nachmittag und die Scheibe, die du für morgen zurücklegst.",
+  "story": {
+    "eyebrow": "Aus braunen Punkten wird eine gute Pause.",
+    "sticker": [
+      "Eine Scheibe",
+      "Gemütlichkeit"
+    ],
+    "ingredientNote": "Die Menge ergibt ein Kastenbrot mit etwa zehn Scheiben. Wiege die Bananen ohne Schale ab und nimm wirklich reife, weiche Früchte. Eine Kastenform von etwa 23 × 13 cm, ein Teigschaber und ein Kuchengitter liegen am besten schon bereit."
+  },
+  "servings": 10,
+  "prepMinutes": 15,
+  "cookMinutes": 60,
+  "restMinutes": 45,
+  "difficulty": "einfach",
+  "tags": [
+    "Mit reifen Bananen",
+    "Zum Vorbacken",
+    "Mit Walnüssen"
+  ],
+  "hero": {
+    "src": "/images/editorial/saftiges-bananenbrot/v1/hero.webp",
+    "alt": "Ein goldbraunes Bananenbrot mit Walnüssen und zwei abgeschnittenen Scheiben auf einer länglichen hellen Platte mit blauem Rand; die Schnittflächen zeigen eine zarte goldbeige Krume."
+  },
+  "ingredients": [
+    {
+      "id": "banana",
+      "amount": 240,
+      "unit": "g",
+      "name": "sehr reife Banane",
+      "note": "geschält gewogen; etwa 2 große Bananen mit vielen braunen Punkten"
+    },
+    {
+      "id": "flax",
+      "amount": 14,
+      "unit": "g",
+      "name": "geschrotete Leinsamen",
+      "note": "fein gemahlen, etwa 2 EL"
+    },
+    {
+      "id": "water",
+      "amount": 75,
+      "unit": "ml",
+      "name": "Wasser",
+      "note": "für die Leinsamen"
+    },
+    {
+      "id": "oil",
+      "amount": 80,
+      "unit": "ml",
+      "name": "neutrales Rapsöl"
+    },
+    {
+      "id": "sugar",
+      "amount": 130,
+      "unit": "g",
+      "name": "brauner Zucker"
+    },
+    {
+      "id": "milk",
+      "amount": 60,
+      "unit": "ml",
+      "name": "Hafermilch",
+      "note": "ungesüßt"
+    },
+    {
+      "id": "flour",
+      "amount": 250,
+      "unit": "g",
+      "name": "Weizenmehl Type 405"
+    },
+    {
+      "id": "soda",
+      "amount": 1,
+      "unit": "TL",
+      "name": "Natron",
+      "note": "gestrichen; kein gehäufter Löffel"
+    },
+    {
+      "id": "salt",
+      "amount": 0.5,
+      "unit": "TL",
+      "name": "Salz",
+      "note": "gestrichen"
+    },
+    {
+      "id": "nutmeg",
+      "amount": 0.25,
+      "unit": "TL",
+      "name": "Muskatnuss",
+      "note": "fein gerieben"
+    },
+    {
+      "id": "walnuts",
+      "amount": 90,
+      "unit": "g",
+      "name": "Walnusskerne",
+      "note": "grob gehackt; 70 g in den Teig, 20 g obenauf"
+    }
+  ],
+  "steps": [
+    {
+      "id": "prepare",
+      "title": "Aus reifen Bananen wird etwas Gutes",
+      "instruction": "Heize den Backofen auf 175 °C Ober-/Unterhitze vor. Lege eine Kastenform von etwa 23 × 13 cm mit Backpapier aus; an den langen Seiten darf etwas Papier als Griff überstehen. Verrühre die gemahlenen Leinsamen mit dem Wasser in einer kleinen Schale und lass sie 5–10 Minuten quellen, bis die Mischung gelartig wird. Wiege die geschälten Bananen ab und zerdrücke sie in einer großen Schüssel mit einer Gabel. Kleine weiche Stückchen sind in Ordnung, feste Brocken nicht. Hacke die Walnüsse grob und lege 20 g für später beiseite.",
+      "illustration": {
+        "src": "/images/editorial/saftiges-bananenbrot/v1/step-1.webp",
+        "alt": "Eine dunkelbraune Hand zerdrückt reife Banane in einer großen hellen Schüssel; daneben steht eine kleine Glasschale mit gequollenen Leinsamen.",
+        "markers": [
+          {
+            "subject": "banana",
+            "label": "Zerdrückte Banane",
+            "x": 44,
+            "y": 70
+          },
+          {
+            "subject": "flax",
+            "label": "Gequollene Leinsamen",
+            "x": 77,
+            "y": 72
+          }
+        ]
+      }
+    },
+    {
+      "id": "wet",
+      "title": "Erst wird alles weich und glänzend",
+      "instruction": "Gib Öl, Zucker, Hafermilch und die gequollenen Leinsamen zur zerdrückten Banane. Rühre mit einem Löffel gründlich um, bis eine gleichmäßige, dickflüssige Mischung entsteht. Streife dabei auch den Schüsselboden ab, damit dort kein Zucker oder Leinsamengel zurückbleibt. Kleine Bananenfasern und dunkle Leinsamenpunkte dürfen sichtbar bleiben. Noch kommt kein Mehl dazu.",
+      "illustration": {
+        "src": "/images/editorial/saftiges-bananenbrot/v1/step-2.webp",
+        "alt": "In derselben hellen Schüssel liegt eine gleichmäßig verrührte goldbeige Bananenmischung mit feinen Leinsamenpunkten; ein Holzlöffel liegt darin.",
+        "markers": [
+          {
+            "subject": "wet",
+            "label": "Bananen-Leinsamen-Mischung",
+            "x": 40,
+            "y": 65
+          }
+        ]
+      }
+    },
+    {
+      "id": "fold",
+      "title": "Nur so lange rühren, wie der Teig es braucht",
+      "instruction": "Vermische Mehl, Natron, Salz und Muskat in einer zweiten Schüssel mit einem Schneebesen. So verteilt sich das Natron, bevor es auf die feuchten Zutaten trifft. Gib die trockene Mischung zur Banane. Ziehe einen Teigschaber vom Boden nach oben durch den Teig und drehe die Schüssel dabei weiter. Sobald nur noch wenige Mehlspuren sichtbar sind, hebe die 70 g Walnüsse unter. Höre auf, sobald kein trockenes Mehl mehr zu sehen ist. Der Teig ist dick und fällt schwer vom Schaber; nicht mit dem Handmixer glatt schlagen.",
+      "illustration": {
+        "src": "/images/editorial/saftiges-bananenbrot/v1/step-3.webp",
+        "alt": "Eine hellolivfarbene Hand hebt mit einem salbeigrünen Teigschaber einen dicken hellbeigen Teig mit wenigen Walnussstückchen an; kein trockenes Mehl bleibt sichtbar.",
+        "markers": [
+          {
+            "subject": "batter",
+            "label": "Teig mit Walnüssen",
+            "x": 45,
+            "y": 63
+          }
+        ]
+      }
+    },
+    {
+      "id": "fill",
+      "title": "Ein kleiner Vorrat an Vorfreude",
+      "instruction": "Fülle den Teig direkt in die vorbereitete Form und streiche die Oberfläche sanft glatt, ohne ihn festzudrücken. Verteile die zurückgelegten 20 g Walnüsse darauf und drücke sie nur leicht an. Die Form ist ungefähr halb bis zu zwei Dritteln gefüllt; oben muss Platz zum Aufgehen bleiben. Stelle sie auf den Rost im mittleren Bereich des heißen Ofens. Backe das Bananenbrot etwa 50–60 Minuten und öffne den Ofen in den ersten 40 Minuten möglichst nicht. Die Form bleibt bis zur Garprobe im Ofen.",
+      "illustration": {
+        "src": "/images/editorial/saftiges-bananenbrot/v1/step-4.webp",
+        "alt": "Roher hellbeiger Teig mit wenigen Walnussstücken auf der Oberfläche liegt in einer dunklen, mit Backpapier ausgelegten Kastenform; über dem Teig bleibt sichtbar Platz.",
+        "markers": [
+          {
+            "subject": "batter",
+            "label": "Teig vor dem Backen",
+            "x": 46,
+            "y": 55
+          },
+          {
+            "subject": "walnuts",
+            "label": "Walnüsse auf dem Teig",
+            "x": 57,
+            "y": 60
+          }
+        ]
+      }
+    },
+    {
+      "id": "cool",
+      "title": "Die goldene Kruste ist erst der Anfang",
+      "instruction": "Prüfe das Brot ab etwa 50 Minuten: Die Oberfläche soll goldbraun sein und darf längs aufreißen. Stecke ein Holzstäbchen tief in die Mitte. Es darf mit wenigen feuchten Krümeln herauskommen, aber ohne glänzenden rohen Teig. Bei klebrigem Teig weitere fünf Minuten backen und erneut prüfen. Wird die Oberfläche vorher zu dunkel, decke sie locker mit Alufolie ab. Nimm die Form mit Ofenhandschuhen heraus und stelle sie auf eine hitzefeste Unterlage. Lass das Brot 15 Minuten in der Form ruhen. Hebe es dann am Papier heraus, löse das Papier und lass es auf einem Kuchengitter mindestens weitere 30 Minuten abkühlen. Vor dem Anschneiden sollte es höchstens noch leicht warm sein.",
+      "illustration": {
+        "src": "/images/editorial/saftiges-bananenbrot/v1/step-5.webp",
+        "alt": "Ein ganzes goldbraunes Bananenbrot mit einer natürlichen Längsrille und gerösteten Walnüssen liegt ohne Form und ohne Backpapier auf einem Kuchengitter.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Saftiges Bananenbrot",
+            "x": 45,
+            "y": 56
+          }
+        ]
+      }
+    },
+    {
+      "id": "serve",
+      "title": "Die erste Scheibe gehört dir",
+      "instruction": "Setze das abgekühlte Bananenbrot auf ein Schneidebrett. Schneide mit einem Brotmesser und ruhigen Sägebewegungen etwa zehn Scheiben; drücke die weiche Krume dabei nicht zusammen. Zum Anrichten kannst du zunächst zwei Scheiben abschneiden und zusammen mit dem übrigen Brot auf eine längliche Platte legen. Die Schnittfläche soll weich, feinporig und gleichmäßig gebacken aussehen. Den Rest erst bei Bedarf schneiden, damit er saftig bleibt.",
+      "illustration": {
+        "src": "/images/editorial/saftiges-bananenbrot/v1/step-6.webp",
+        "alt": "Das Bananenbrot steht auf einer länglichen elfenbeinfarbenen Platte mit schmalem blauem Rand; zwei Scheiben davor zeigen die goldbeige Krume und kleine Walnussstücke.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Saftiges Bananenbrot",
+            "x": 49,
+            "y": 52
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Abwiegen statt Bananen zählen",
+      "text": "Zwei Bananen können sehr unterschiedlich groß sein. Die geschälte Menge bestimmt, wie feucht der Teig wird. Zusätzliche Banane macht ihn nicht automatisch saftiger, sondern kann eine schwer durchbackende Mitte ergeben. Übrige Stücke lieber einfrieren oder direkt essen."
+    },
+    {
+      "title": "Die Pause gehört zum Rezept",
+      "text": "Frisch aus dem Ofen ist die Krume noch empfindlich. Beim Abkühlen wird das Brot stabiler und lässt sich sauberer schneiden. Liegt nach 45 Minuten noch deutliche Wärme in der Mitte, gönne ihm etwas länger auf dem Gitter. Für schöne Scheiben erst vollständig abkühlen lassen."
+    }
+  ],
+  "storage": "Das vollständig abgekühlte Brot luftdicht verpacken und bei kühler Raumtemperatur innerhalb von zwei Tagen essen. Bei warmer Küche im Kühlschrank lagern. Einzelne Scheiben lassen sich gut getrennt einfrieren und bei Bedarf auftauen oder im Toaster erwärmen. Noch warmes Brot nicht dicht einpacken, damit sich kein Kondenswasser sammelt.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "Best Vegan Banana Bread · Nora Cooks",
+    "url": "https://www.noracooks.com/banana-bread/"
+  },
+  "sources": [
+    {
+      "title": "Nora Taylor · Best Vegan Banana Bread",
+      "url": "https://www.noracooks.com/banana-bread/",
+      "note": "Grundlage für Bananenbrot mit Leinsamen, neutralem Öl und Walnüssen. Eigene metrische Übertragung, Hafermilch, konkrete Formgröße, getrennte Trockenmischung und ausführliche Konsistenz-, Gar- und Abkühlhinweise. Originalfoto als visuelle Referenz betrachtet; eigene Illustration im App-Stil, ohne das Originalfoto zu veröffentlichen. Praktischer Backtest ausstehend."
+    }
+  ],
+  "researchedAt": "2026-11-05"
+}

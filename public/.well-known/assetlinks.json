@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.shroomlife.shliste",
+      "sha256_cert_fingerprints": [
+        "64:B2:F7:05:A4:CF:E6:A9:67:35:6A:07:D1:EC:3B:90:F6:2E:BA:97:70:70:FD:82:C5:82:CA:C7:83:58:F7:29",
+        "4A:E7:17:57:D2:FE:61:46:7B:19:5E:08:0D:94:CB:C7:44:01:CA:39:90:F4:C3:B0:E5:38:E1:85:76:40:9D:78"
+      ]
+    }
+  }
+]

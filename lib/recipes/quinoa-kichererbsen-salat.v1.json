@@ -1,0 +1,280 @@
+{
+  "catalogId": "quinoa-kichererbsen-salat",
+  "version": 1,
+  "slug": "quinoa-kichererbsen-salat",
+  "title": "Quinoa-Kichererbsen-Salat",
+  "emoji": "🍋",
+  "kind": "herzhaft",
+  "meal": "Salat",
+  "status": "published",
+  "intro": "Ein Löffel voller kleiner Kontraste: lockere Quinoa, knackige Gurke, cremige Kichererbsen und Pistazien. Minze, Petersilie und ein feines Zitronendressing machen daraus einen frischen Salat zum Teilen. In etwa 35 Minuten fertig, wenn die Quinoa bereits gekocht und kalt ist.",
+  "story": {
+    "eyebrow": "Frische Kräuter. Kleine Körner. Gemeinsam genießen.",
+    "sticker": [
+      "Ein Löffel",
+      "Frische"
+    ],
+    "ingredientNote": "Für vier kleine Beilagenportionen. Die 185 g Quinoa werden gekocht und vollständig abgekühlt gewogen. Die Zeitangabe beginnt mit kalter Quinoa und enthält 20 Minuten zum Durchziehen. Wenn du sie frisch kochst, plane dafür zusätzlich die Gar- und Abkühlzeit ein."
+  },
+  "servings": 4,
+  "prepMinutes": 15,
+  "cookMinutes": 0,
+  "restMinutes": 20,
+  "difficulty": "einfach",
+  "tags": [
+    "Frisch & zitronig",
+    "Mit Pistazien",
+    "Zum Teilen"
+  ],
+  "hero": {
+    "src": "/images/editorial/quinoa-kichererbsen-salat/v1/hero.webp",
+    "alt": "Quinoa-Kichererbsen-Salat mit Gurkenwürfeln, Kräutern, veganem Feta und Pistazien in einer flachen elfenbeinfarbenen Schale mit gewelltem Rand auf einem hell gedeckten Tisch."
+  },
+  "ingredients": [
+    {
+      "id": "quinoa",
+      "amount": 185,
+      "unit": "g",
+      "name": "Quinoa, gekocht und vollständig abgekühlt",
+      "note": "Gargewicht, nicht 185 g trockene Quinoa; ohne weitere Würzung"
+    },
+    {
+      "id": "chickpeas",
+      "amount": 165,
+      "unit": "g",
+      "name": "Kichererbsen aus der Dose",
+      "note": "Abtropfgewicht; abspülen und gut abtropfen lassen"
+    },
+    {
+      "id": "cucumber",
+      "amount": 150,
+      "unit": "g",
+      "name": "Gurke",
+      "note": "gewaschen, mit Schale"
+    },
+    {
+      "id": "onion",
+      "amount": 75,
+      "unit": "g",
+      "name": "rote Zwiebel",
+      "note": "geschält gewogen"
+    },
+    {
+      "id": "parsley",
+      "amount": 15,
+      "unit": "g",
+      "name": "Petersilie",
+      "note": "frisch"
+    },
+    {
+      "id": "mint",
+      "amount": 10,
+      "unit": "g",
+      "name": "Minze",
+      "note": "frische Blätter"
+    },
+    {
+      "id": "feta",
+      "amount": 75,
+      "unit": "g",
+      "name": "veganer Feta",
+      "note": "zerbröselt"
+    },
+    {
+      "id": "pistachios",
+      "amount": 40,
+      "unit": "g",
+      "name": "Pistazienkerne",
+      "note": "ohne Schale"
+    },
+    {
+      "id": "oil",
+      "amount": 3,
+      "unit": "EL",
+      "name": "Olivenöl",
+      "note": "45 ml"
+    },
+    {
+      "id": "lemon",
+      "amount": 2,
+      "unit": "EL",
+      "name": "Zitronensaft",
+      "note": "30 ml, frisch gepresst"
+    },
+    {
+      "id": "maple",
+      "amount": 0.5,
+      "unit": "EL",
+      "name": "Ahornsirup",
+      "note": "7,5 ml, entspricht 1½ TL"
+    },
+    {
+      "id": "garlic",
+      "amount": 1,
+      "unit": "",
+      "name": "Knoblauchzehe",
+      "note": "geschält"
+    },
+    {
+      "id": "salt",
+      "amount": 0.5,
+      "unit": "TL",
+      "name": "Salz",
+      "note": "bei sehr salzigem veganem Feta zunächst einen Teil zurückhalten"
+    },
+    {
+      "id": "pepper",
+      "amount": 0.25,
+      "unit": "TL",
+      "name": "schwarzer Pfeffer",
+      "note": "frisch gemahlen"
+    }
+  ],
+  "steps": [
+    {
+      "id": "vegetables",
+      "title": "Kleine Würfel, viel Frische",
+      "instruction": "Wiege 185 g bereits gegarte, vollständig kalte Quinoa ab und lockere sie mit einer Gabel. Das ist ausdrücklich das Gewicht nach dem Kochen. Spüle die Kichererbsen in einem Sieb ab, lass sie gut abtropfen und wiege 165 g ab. Wasche die Gurke, trockne sie und schneide sie erst längs in Streifen, dann in etwa 5–8 mm kleine Würfel. Schäle die rote Zwiebel und würfle sie etwas feiner. So landet später von allem etwas auf der Gabel. Halte die Zutaten vorerst getrennt bereit.",
+      "illustration": {
+        "src": "/images/editorial/quinoa-kichererbsen-salat/v1/step-1.webp",
+        "alt": "Kleine Gurkenwürfel und feinere rote Zwiebelwürfel in getrennten Häufchen auf einem Holzbrett; dahinter stehen abgekühlte Quinoa und abgetropfte Kichererbsen in kleinen Schalen.",
+        "markers": [
+          {
+            "subject": "quinoa",
+            "label": "Gekochte Quinoa",
+            "x": 29,
+            "y": 29
+          },
+          {
+            "subject": "chickpeas",
+            "label": "Abgetropfte Kichererbsen",
+            "x": 51,
+            "y": 29
+          },
+          {
+            "subject": "cucumber",
+            "label": "Kleine Gurkenwürfel",
+            "x": 32,
+            "y": 63
+          },
+          {
+            "subject": "onion",
+            "label": "Feine Zwiebelwürfel",
+            "x": 61,
+            "y": 65
+          }
+        ]
+      }
+    },
+    {
+      "id": "herbs",
+      "title": "Ein grüner Duft auf dem Brett",
+      "instruction": "Wasche Petersilie und Minze und trockne beides gründlich, damit kein zusätzliches Wasser im Salat landet. Zupfe die Minzblätter von den festen Stielen. Hacke die Petersilie samt zarten Stielen und die Minzblätter fein. Hacke die Pistazienkerne separat grob: Kleine Stücke geben Biss, sie sollen kein Mehl werden. Zerbrösle den veganen Feta in kleine, unregelmäßige Stücke. Lege Kräuter, Nüsse und Feta bis zum Mischen bereit.",
+      "illustration": {
+        "src": "/images/editorial/quinoa-kichererbsen-salat/v1/step-2.webp",
+        "alt": "Petersilie und Minze liegen zum Hacken auf dem Holzbrett bereit, daneben grob gehackte Pistazien und eine Schale mit veganen Fetabröseln.",
+        "markers": [
+          {
+            "subject": "parsley",
+            "label": "Petersilie",
+            "x": 23,
+            "y": 60
+          },
+          {
+            "subject": "mint",
+            "label": "Minze",
+            "x": 42,
+            "y": 61
+          },
+          {
+            "subject": "pistachios",
+            "label": "Gehackte Pistazien",
+            "x": 62,
+            "y": 63
+          },
+          {
+            "subject": "feta",
+            "label": "Vegane Fetabrösel",
+            "x": 44,
+            "y": 26
+          }
+        ]
+      }
+    },
+    {
+      "id": "dressing",
+      "title": "Zitrone verbindet alles",
+      "instruction": "Hacke den Knoblauch sehr fein oder reibe ihn. Miss Olivenöl, Zitronensaft und Ahornsirup in eine kleine Schüssel ab. Gib Knoblauch, Salz und Pfeffer dazu und verrühre alles mit einem kleinen Schneebesen, bis sich die Zutaten verbinden und das Dressing leicht trüb wird. Falls dein veganer Feta sehr salzig ist, halte zunächst einen Teil des abgemessenen Salzes zurück. Rühre das Dressing direkt vor dem Zugeben noch einmal durch, da sich Öl und Saft wieder trennen können.",
+      "illustration": {
+        "src": "/images/editorial/quinoa-kichererbsen-salat/v1/step-3.webp",
+        "alt": "Eine Hand rührt hellgoldenes Zitronen-Olivenöl-Dressing mit feinen Knoblauchstückchen und Pfeffer in einer kleinen Glasschüssel.",
+        "markers": [
+          {
+            "subject": "dressing",
+            "label": "Zitronendressing",
+            "x": 35,
+            "y": 74
+          }
+        ]
+      }
+    },
+    {
+      "id": "combine",
+      "title": "Alles findet zusammen",
+      "instruction": "Gib die kalte Quinoa, Kichererbsen, Gurke, rote Zwiebel, Petersilie, Minze, veganen Feta und Pistazien in eine große Schüssel. Verteile das frisch aufgerührte Dressing darüber. Hebe den Salat mit zwei Löffeln vorsichtig von unten nach oben durch, bis er gleichmäßig leicht glänzt. Drücke dabei weder die Kichererbsen noch den Feta klein. Probiere einen Löffel mit mehreren Zutaten und gib bei Bedarf das zurückgehaltene Salz dazu.",
+      "illustration": {
+        "src": "/images/editorial/quinoa-kichererbsen-salat/v1/step-4.webp",
+        "alt": "Zwei Löffel heben Quinoa, Kichererbsen, kleine Gurken- und Zwiebelwürfel, gehackte Kräuter, Pistazien und vegane Fetabrösel in einer großen Glasschüssel untereinander.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Quinoa-Kichererbsen-Salat",
+            "x": 43,
+            "y": 58
+          }
+        ]
+      }
+    },
+    {
+      "id": "serve",
+      "title": "Kurz ziehen lassen, dann teilen",
+      "instruction": "Decke die Schüssel ab und stelle den Salat 15–20 Minuten in den Kühlschrank. In dieser Zeit verteilt sich das Zitronendressing zwischen den Körnern. Hebe ihn vor dem Servieren noch einmal locker durch und richte ihn in einer flachen Schale an. Die Menge ergibt vier kleine Beilagenportionen oder zwei größere Portionen. Serviere ihn kühl; die Gurke bleibt knackig und die Pistazien geben einen feinen Biss.",
+      "illustration": {
+        "src": "/images/editorial/quinoa-kichererbsen-salat/v1/step-5.webp",
+        "alt": "Fertiger Quinoa-Kichererbsen-Salat mit kleinen Gurkenwürfeln, roten Zwiebelstückchen, Kräutern, veganem Feta und Pistazien in einer elfenbeinfarbenen Schale mit gewelltem Rand, passend zum Titelbild.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Quinoa-Kichererbsen-Salat",
+            "x": 40,
+            "y": 57
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Gargewicht statt Trockengewicht",
+      "text": "185 g gekochte Quinoa sind deutlich weniger als 185 g trockene Körner. Koche für dieses Rezept ungefähr 70 g trockene Quinoa nach Packungsanleitung. Lass sie ausdampfen, kühle sie zügig ab und wiege anschließend die benötigten 185 g ab. Je nach Sorte bleibt etwas übrig. Fertig gegarte, ungewürzte Quinoa eignet sich ebenfalls."
+    },
+    {
+      "title": "Für morgen vorbereiten",
+      "text": "Für besonders knackige Pistazien kannst du sie abgewogen getrennt aufbewahren und erst vor dem Essen unterheben. Der übrige Salat darf bereits durchziehen. Verwende möglichst trockene Kräuter und gut abgetropfte Kichererbsen, damit das Dressing nicht verwässert."
+    }
+  ],
+  "storage": "Reste abgedeckt im Kühlschrank aufbewahren und innerhalb von 3–4 Tagen verbrauchen. Die Haltbarkeit zuvor gekochter Quinoa zählt ab ihrem Kochtag mit. Vor dem Essen locker durchmischen. Gurke und Kräuter werden mit der Zeit weicher; zum Einfrieren eignet sich dieser Salat deshalb nicht gut.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "Jennifer Aniston Salad · Jessica in the Kitchen",
+    "url": "https://jessicainthekitchen.com/jennifer-aniston-salad/"
+  },
+  "sources": [
+    {
+      "title": "Jessica Hylton · Jessica in the Kitchen, 17. Februar 2025",
+      "url": "https://jessicainthekitchen.com/jennifer-aniston-salad/",
+      "note": "Bereits vegane Vorlage: sämtliche Zutatenmengen und Dressingverhältnisse unverändert übernommen. Vier kleine Portionen. Die Zeitangabe berücksichtigt zusätzlich die im Originalablauf genannten 15–20 Minuten Kühlung und setzt bereits gekochte, kalte Quinoa voraus. Eigene deutsche Anleitung; Originalfotografie als Referenz für eine eigene Kompositionsvorlage genutzt."
+    }
+  ],
+  "researchedAt": "2026-11-06"
+}

@@ -1,0 +1,221 @@
+{
+  "catalogId": "basque-cheesecake",
+  "version": 1,
+  "slug": "basque-cheesecake",
+  "title": "Basque Cheesecake",
+  "emoji": "🍰",
+  "kind": "suess",
+  "meal": "Dessert",
+  "status": "published",
+  "intro": "Das erste Stück verrät, warum sich die Nacht im Kühlschrank lohnt. Unter der dunklen, leicht herben Oberfläche sitzt eine helle Vanillecreme, die sich kalt sauber schneiden lässt. Ein Löffel säuerlicher Heidelbeeren gehört bei uns direkt auf den Teller.",
+  "story": {
+    "eyebrow": "Für morgen backen",
+    "sticker": [
+      "Dunkel",
+      "& cremig"
+    ],
+    "ingredientNote": "Die kleine, hohe Form bestimmt die Backzeit. Mit einem backfesten Frischkäse auf Soja- oder Nussbasis lässt sich die Füllung nach dem Kühlen gut schneiden."
+  },
+  "servings": 8,
+  "prepMinutes": 20,
+  "cookMinutes": 60,
+  "restMinutes": 360,
+  "difficulty": "mittel",
+  "tags": [
+    "Zum Vorbereiten",
+    "Ohne Boden",
+    "Heidelbeeren"
+  ],
+  "hero": {
+    "src": "/images/editorial/basque-cheesecake/v1/hero.webp",
+    "alt": "Basque Cheesecake mit dunkler Oberfläche, einem hellen angeschnittenen Stück und Heidelbeerkompott."
+  },
+  "ingredients": [
+    {
+      "id": "cream",
+      "amount": 680,
+      "unit": "g",
+      "name": "veganer Frischkäse natur",
+      "note": "zum Backen geeignete Sorte auf Soja- oder Nussbasis, weich"
+    },
+    {
+      "id": "yogurt",
+      "amount": 245,
+      "unit": "g",
+      "name": "dickcremiger veganer Vanillejoghurt"
+    },
+    {
+      "id": "sugar",
+      "amount": 160,
+      "unit": "g",
+      "name": "Zucker",
+      "note": "150 g für den Kuchen, 10 g für die Beeren"
+    },
+    {
+      "id": "lemon",
+      "amount": 2,
+      "unit": "EL",
+      "name": "Zitronensaft",
+      "note": "je 1 EL für Kuchen und Kompott"
+    },
+    {
+      "id": "vanilla",
+      "amount": 2,
+      "unit": "TL",
+      "name": "Vanilleextrakt"
+    },
+    {
+      "id": "starch",
+      "amount": 45,
+      "unit": "g",
+      "name": "Maisstärke",
+      "note": "40 g für den Kuchen, 5 g für das Kompott"
+    },
+    {
+      "id": "salt",
+      "amount": 1,
+      "unit": "Prise",
+      "name": "Salz"
+    },
+    {
+      "id": "berries",
+      "amount": 280,
+      "unit": "g",
+      "name": "Heidelbeeren",
+      "note": "frisch oder tiefgekühlt"
+    },
+    {
+      "id": "water",
+      "amount": 2,
+      "unit": "TL",
+      "name": "kaltes Wasser"
+    }
+  ],
+  "steps": [
+    {
+      "id": "line",
+      "title": "Die kleine Form vorbereiten",
+      "instruction": "Heize den Ofen auf 205 °C Ober-/Unterhitze vor. Nimm eine hohe Springform mit 15–16 cm Durchmesser und mindestens 7 cm Randhöhe. Klemme Backpapier auf dem Boden ein und lege einen Streifen innen um den Rand. Lass ihn etwa 2 cm überstehen. Stelle die Form auf ein Backblech, bevor du sie füllst.",
+      "illustration": {
+        "src": "/images/editorial/basque-cheesecake/v1/step-1.webp",
+        "alt": "Eine kleine Springform mit Backpapierboden und überstehendem Papierkragen.",
+        "markers": []
+      }
+    },
+    {
+      "id": "mix",
+      "title": "Die Creme glatt rühren",
+      "instruction": "Streiche den weichen Frischkäse in einer großen Schüssel mit einem Teigschaber glatt. Rühre Vanillejoghurt, 150 g Zucker, 1 EL Zitronensaft, Vanille und Salz auf kleiner Stufe ein. Streiche zwischendurch am Schüsselrand entlang. Die Masse ist fertig für die Stärke, wenn am Schaber keine Frischkäsestückchen mehr hängen.",
+      "illustration": {
+        "src": "/images/editorial/basque-cheesecake/v1/step-2.webp",
+        "alt": "Helle Frischkäsecreme mit glatter Oberfläche in der Rührschüssel.",
+        "markers": [
+          {
+            "subject": "cream",
+            "label": "Vanillecreme",
+            "x": 39,
+            "y": 60
+          }
+        ]
+      }
+    },
+    {
+      "id": "fill",
+      "title": "Stärke einarbeiten und einfüllen",
+      "instruction": "Siebe 40 g Maisstärke in zwei Portionen über die Creme. Rühre nach jeder Zugabe kurz, bis die weißen Nester verschwunden sind. Fülle die Masse in die vorbereitete Form, streiche sie bis zum Rand und glätte die Oberfläche. Zwischen Creme und oberem Papierrand soll Platz zum Aufgehen bleiben.",
+      "illustration": {
+        "src": "/images/editorial/basque-cheesecake/v1/step-3.webp",
+        "alt": "Die helle Creme fließt in die kleine mit Papier ausgelegte Springform.",
+        "markers": [
+          {
+            "subject": "filling",
+            "label": "Füllung",
+            "x": 43,
+            "y": 57
+          }
+        ]
+      }
+    },
+    {
+      "id": "bake",
+      "title": "Auf den dunklen Deckel und die Mitte achten",
+      "instruction": "Backe den Kuchen auf der mittleren Schiene etwa 60 Minuten. Schau nach 50 Minuten zum ersten Mal. Die Oberfläche soll kräftig kastanienbraun sein, der Rand fest. Wenn du das Blech leicht anstößt, darf die Mitte als Ganzes zittern. Schlägt sie noch flüssige Wellen, gib ihr weitere 5 Minuten und prüfe erneut. Lass den Kuchen in der Form auf einem Gitter etwa 2 Stunden abkühlen. Decke ihn dann ab und stelle ihn mindestens 4 Stunden kalt, gern über Nacht.",
+      "illustration": {
+        "src": "/images/editorial/basque-cheesecake/v1/step-4.webp",
+        "alt": "Der gebackene Kuchen mit dunkelbrauner Oberfläche kühlt in der Form auf einem Gitter ab.",
+        "markers": [
+          {
+            "subject": "cake",
+            "label": "Gebackene Füllung",
+            "x": 46,
+            "y": 43
+          }
+        ]
+      }
+    },
+    {
+      "id": "compote",
+      "title": "Die Heidelbeeren gerade eben binden",
+      "instruction": "Während der Kuchen abkühlt, gib die Beeren mit 10 g Zucker und dem übrigen Esslöffel Zitronensaft in einen kleinen Topf. Erwärme sie bei mittlerer Hitze, bis Saft austritt. Verrühre die übrigen 5 g Stärke mit 2 TL kaltem Wasser und rühre sie in den köchelnden Saft. Lass das Kompott unter Rühren eine Minute aufkochen. Sobald der Saft die Beeren glänzend umhüllt, fülle alles in eine Schale und lass es abkühlen.",
+      "illustration": {
+        "src": "/images/editorial/basque-cheesecake/v1/step-5.webp",
+        "alt": "Dunkle Heidelbeeren in glänzendem violettem Saft im Topf.",
+        "markers": [
+          {
+            "subject": "berries",
+            "label": "Heidelbeeren",
+            "x": 41,
+            "y": 66
+          }
+        ]
+      }
+    },
+    {
+      "id": "slice",
+      "title": "Erst kalt anschneiden",
+      "instruction": "Löse den Springformring und ziehe den Papierstreifen langsam vom kalten Kuchen ab. Setze ihn auf eine Platte und schneide mit einem dünnen Messer acht schmale Stücke. Wische die Klinge zwischen den Schnitten ab. Gib das abgekühlte Kompott erst auf dem Teller über die Spitze jedes Stücks. So bleibt die dunkle Oberfläche beim Anschneiden sichtbar.",
+      "illustration": {
+        "src": "/images/editorial/basque-cheesecake/v1/step-6.webp",
+        "alt": "Ein Stück mit heller Schnittfläche und Heidelbeerkompott vor dem angeschnittenen Kuchen.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Basque Cheesecake",
+            "x": 44,
+            "y": 73
+          },
+          {
+            "subject": "compote",
+            "label": "Heidelbeerkompott",
+            "x": 48,
+            "y": 62
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Welcher Frischkäse hält die Form?",
+      "text": "Nimm einen neutralen, festen Frischkäse auf Soja- oder Nussbasis. Ein Aufstrich, dessen Festigkeit vor allem von Kokosfett kommt, kann beim Backen ölig werden. Lass den Frischkäse vor dem Anrühren so weit weich werden, dass er sich gut verstreichen lässt."
+    },
+    {
+      "title": "Die Mitte sinkt beim Abkühlen ein",
+      "text": "Ein flacher Krater gehört zu diesem Kuchen. Lass den Ring beim Abkühlen geschlossen. Die Stärke und die kalte Füllung geben dem Stück erst später genug Halt fürs Messer."
+    }
+  ],
+  "storage": "Lagere den Kuchen abgedeckt im Kühlschrank und das Kompott in einem eigenen verschlossenen Behälter. Am nächsten Tag kannst du beide direkt kalt servieren.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "The Yummy Vegan",
+    "url": "https://theyummyvegan.com/blog/basquestylecheesecake"
+  },
+  "sources": [
+    {
+      "title": "Devorah Bowen · Basque Style Cheesecake",
+      "url": "https://theyummyvegan.com/blog/basquestylecheesecake",
+      "note": "Vegane Vorlage für die kleine Form, Frischkäsefüllung, Kühlzeit und Heidelbeerkompott."
+    }
+  ],
+  "researchedAt": "2026-11-04"
+}

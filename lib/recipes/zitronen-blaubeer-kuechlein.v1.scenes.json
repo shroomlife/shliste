@@ -1,0 +1,138 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Feste Holzarbeitsfläche links der Edelstahlspüle, Dachschräge und Fenster oben rechts unverändert. Schritt 5 und 6 zusätzlich mit finalem Titelbild als Gefäß-, Schichten- und Portionsreferenz."
+    },
+    "stove": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-2.webp",
+      "framing": "Kleiner blauer Topf auf der linken Kochzone unter der unveränderten Edelstahlhaube; Holz links, Dachschräge links."
+    }
+  },
+  "steps": {
+    "batter": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "batter",
+          "label": "Zitronenteig",
+          "position": "Bei 42% Bildbreite und 65% Bildhöhe; am finalen Bild visuell geprüft.",
+          "ingredients": [
+            "flour",
+            "sugar",
+            "baking-powder",
+            "baking-soda",
+            "salt",
+            "milk",
+            "oil",
+            "lemon",
+            "vanilla"
+          ]
+        }
+      ]
+    },
+    "bake": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "cake",
+          "label": "Ausgekühlter Zitronenkuchen",
+          "position": "Bei 43% Bildbreite und 53% Bildhöhe; am finalen Bild visuell geprüft.",
+          "ingredients": [
+            "flour",
+            "sugar",
+            "baking-powder",
+            "baking-soda",
+            "salt",
+            "milk",
+            "oil",
+            "lemon",
+            "vanilla"
+          ]
+        }
+      ]
+    },
+    "compote": {
+      "scene": "stove",
+      "subjects": [
+        {
+          "id": "compote",
+          "label": "Blaubeerkompott",
+          "position": "Bei 44% Bildbreite und 66% Bildhöhe; am finalen Bild visuell geprüft.",
+          "ingredients": [
+            "berries",
+            "sugar",
+            "lemon"
+          ]
+        }
+      ]
+    },
+    "cream": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "cream",
+          "label": "Aufgeschlagene Pflanzencreme",
+          "position": "Bei 42% Bildbreite und 58% Bildhöhe; am finalen Bild visuell geprüft.",
+          "ingredients": [
+            "cream",
+            "icing-sugar",
+            "lemon"
+          ]
+        }
+      ]
+    },
+    "layer": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "cake",
+          "label": "Lockere Kuchenwürfel",
+          "position": "Bei 32% Bildbreite und 76% Bildhöhe; am finalen Bild visuell geprüft.",
+          "ingredients": [
+            "flour",
+            "sugar",
+            "baking-powder",
+            "baking-soda",
+            "salt",
+            "milk",
+            "oil",
+            "lemon",
+            "vanilla"
+          ]
+        },
+        {
+          "id": "compote",
+          "label": "Kaltes Blaubeerkompott",
+          "position": "Bei 32% Bildbreite und 67% Bildhöhe; am finalen Bild visuell geprüft.",
+          "ingredients": [
+            "berries",
+            "sugar",
+            "lemon"
+          ]
+        },
+        {
+          "id": "cream",
+          "label": "Die erste Cremehaube",
+          "position": "Bei 32% Bildbreite und 61% Bildhöhe; am finalen Bild visuell geprüft.",
+          "ingredients": [
+            "cream",
+            "icing-sugar",
+            "lemon"
+          ]
+        }
+      ]
+    },
+    "finish": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "label": "Zitronen-Blaubeer-Küchlein",
+          "position": "Bei 32% Bildbreite und 63% Bildhöhe; am finalen Bild visuell geprüft.",
+          "dish": true
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Trockene Holzarbeitsfläche links der Spüle unter dem Dachfenster. Gleiche Kamera, leicht schräg von oben. Heiße Form auf Korkuntersetzer."
+    }
+  },
+  "steps": {
+    "prep": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "stems",
+          "label": "Pak-Choi-Stiele",
+          "ingredients": [
+            "pakchoi"
+          ],
+          "position": "helle Stücke links"
+        },
+        {
+          "id": "greens",
+          "label": "Grüne Blattstreifen",
+          "ingredients": [
+            "pakchoi"
+          ],
+          "position": "oben rechts auf dem Brett"
+        },
+        {
+          "id": "rings",
+          "label": "Frühlingszwiebel",
+          "ingredients": [
+            "onion"
+          ],
+          "position": "Ringe neben den Blättern"
+        }
+      ]
+    },
+    "sauce": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "sauce",
+          "label": "Kokos-Currysauce",
+          "ingredients": [
+            "coconut",
+            "curry"
+          ],
+          "position": "in der Form"
+        },
+        {
+          "id": "lime",
+          "label": "Limette",
+          "ingredients": [
+            "lime"
+          ],
+          "position": "links neben der Form"
+        }
+      ]
+    },
+    "nest": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "gyoza",
+          "label": "Gemüse-Gyoza",
+          "ingredients": [
+            "gyoza"
+          ],
+          "position": "gefaltete Teigtasche in der Mitte"
+        }
+      ]
+    },
+    "steam": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "filling",
+          "label": "Gemüsefüllung",
+          "ingredients": [
+            "gyoza"
+          ],
+          "position": "Schnittfläche auf dem Löffel"
+        }
+      ]
+    },
+    "serve": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "dish": true,
+          "position": "angerichtete Gyoza in Kokossauce"
+        },
+        {
+          "id": "pakchoi",
+          "label": "Pak Choi",
+          "ingredients": [
+            "pakchoi"
+          ],
+          "position": "welkes Blatt am vorderen Formrand"
+        }
+      ]
+    }
+  }
+}

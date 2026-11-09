@@ -1,0 +1,238 @@
+{
+  "catalogId": "zitronen-vanille-crinkle-cake",
+  "version": 1,
+  "slug": "kokos-vanille-crinkle-cake",
+  "title": "Kokos-Vanille-Crinkle-Cake",
+  "emoji": "🥥",
+  "kind": "suess",
+  "meal": "Dessert",
+  "status": "published",
+  "intro": "Goldene Filofalten, leise knuspernde Spitzen und dazwischen eine weiche Creme mit Kokos, Vanille und Kardamom. Dieser Crinkle Cake kommt in einer großen Form auf den Tisch – zum Teilen, noch ein Stück Abschneiden und gemütlich Sitzenbleiben.",
+  "story": {
+    "eyebrow": "Goldene Falten. Warme Vanille. Ein Stück zum Teilen.",
+    "sticker": [
+      "Feine Falten",
+      "großes Kuchenglück"
+    ],
+    "ingredientNote": "Für eine flache Form von etwa 30 × 22 cm und sechs großzügige Stücke. Nimm Kokosdrink aus dem Getränkekarton und gestrichene Esslöffel Maisstärke. Der Kuchen wird in drei Runden gebacken: 8 Minuten pur, 10 Minuten mit Butter, etwa 20 Minuten mit Guss. Die Anzeige enthält 15 Minuten Ruhezeit."
+  },
+  "servings": 6,
+  "prepMinutes": 20,
+  "cookMinutes": 38,
+  "restMinutes": 15,
+  "difficulty": "mittel",
+  "tags": [
+    "Mit Vanille",
+    "Knusprige Filofalten",
+    "Zum Teilen"
+  ],
+  "hero": {
+    "src": "/images/editorial/kokos-vanille-crinkle-cake/v1/hero.webp",
+    "alt": "Goldener Kokos-Vanille-Crinkle-Cake mit gefalteten Filoblättern, feinen Pistazien und wenigen Rosenblüten in einer salbeigrünen Form, dazu ein Stück auf einem kleinen hellen Teller."
+  },
+  "ingredients": [
+    {
+      "id": "filo",
+      "amount": 470,
+      "unit": "g",
+      "name": "veganer Filoteig",
+      "note": "aufgetaut, falls tiefgekühlt"
+    },
+    {
+      "id": "butter",
+      "amount": 125,
+      "unit": "g",
+      "name": "vegane Blockbutter",
+      "note": "geschmolzen"
+    },
+    {
+      "id": "milk",
+      "amount": 260,
+      "unit": "ml",
+      "name": "Kokosdrink",
+      "note": "aus dem Getränkekarton, keine dicke Kokosmilch; 250 ml plus 2 TL wie in der Vorlage"
+    },
+    {
+      "id": "sugar-custard",
+      "amount": 125,
+      "unit": "g",
+      "name": "feiner heller Rohrzucker",
+      "note": "für den Guss"
+    },
+    {
+      "id": "vanilla",
+      "amount": 2,
+      "unit": "TL",
+      "name": "Vanillepaste"
+    },
+    {
+      "id": "starch",
+      "amount": 3,
+      "unit": "EL",
+      "name": "Maisstärke",
+      "note": "gestrichen, etwa 24 g"
+    },
+    {
+      "id": "cardamom",
+      "amount": 0.5,
+      "unit": "TL",
+      "name": "gemahlener Kardamom"
+    },
+    {
+      "id": "sugar-syrup",
+      "amount": 250,
+      "unit": "g",
+      "name": "feiner heller Rohrzucker",
+      "note": "für den Sirup"
+    },
+    {
+      "id": "water",
+      "amount": 125,
+      "unit": "ml",
+      "name": "Wasser",
+      "note": "für den Sirup"
+    },
+    {
+      "id": "pistachios",
+      "amount": null,
+      "unit": "",
+      "name": "Pistazienstifte",
+      "note": "optional, zum Bestreuen"
+    },
+    {
+      "id": "rose",
+      "amount": null,
+      "unit": "",
+      "name": "getrocknete essbare Rosenblüten",
+      "note": "optional, sparsam; ausdrücklich in Lebensmittelqualität"
+    }
+  ],
+  "steps": [
+    {
+      "id": "fold",
+      "title": "Eine Form voller kleiner Falten",
+      "instruction": "Heize den Ofen auf 180 °C Ober-/Unterhitze vor. Lege eine flache Auflaufform von ungefähr 30 × 22 cm bereit. Breite den Filoteig aus und decke den noch nicht verwendeten Stapel mit einem sauberen, leicht feuchten Tuch ab. Falte jedes Blatt von einer kurzen Seite aus locker wie eine Ziehharmonika; etwa zwei Zentimeter breite Falten sind ein guter Anfang. Setze die gefalteten Streifen nebeneinander in die Form, mit den Faltenkanten nach oben. Verteile sie locker über die ganze Fläche. Kleine Risse sind nicht schlimm; drücke den Teig nicht zu einem festen Block zusammen.",
+      "illustration": {
+        "src": "/images/editorial/kokos-vanille-crinkle-cake/v1/step-1.webp",
+        "alt": "Rohe, helle Filoteigblätter werden locker in parallelen Ziehharmonikafalten in eine salbeigrüne rechteckige Auflaufform gelegt.",
+        "markers": [
+          {
+            "subject": "filo",
+            "label": "Gefalteter Filoteig",
+            "x": 43,
+            "y": 53
+          }
+        ]
+      }
+    },
+    {
+      "id": "butter",
+      "title": "Erst knuspern, dann Butter",
+      "instruction": "Backe die gefüllte Form auf der mittleren Schiene zunächst etwa 8 Minuten ohne Guss. Die oberen Teigkanten sollen etwas trockener und leicht knusprig werden, aber noch hell bleiben. Schmelze währenddessen die vegane Blockbutter bei niedriger Hitze. Nimm die Form mit Ofenhandschuhen heraus und stelle sie auf eine hitzefeste Unterlage. Verteile die gesamte geschmolzene Butter in einem dünnen Strahl über den Falten, auch an den Rändern. Backe die Form weitere 10 Minuten. Bereite in dieser Zeit den Guss aus dem nächsten Schritt zu.",
+      "illustration": {
+        "src": "/images/editorial/kokos-vanille-crinkle-cake/v1/step-2.webp",
+        "alt": "Geschmolzene vegane Butter wird über die noch hellen, kurz vorgebackenen Filofalten gegossen; die heiße Form steht auf einer Korkunterlage.",
+        "markers": [
+          {
+            "subject": "butter",
+            "label": "Geschmolzene vegane Butter",
+            "x": 55,
+            "y": 41
+          }
+        ]
+      }
+    },
+    {
+      "id": "custard",
+      "title": "Vanille zwischen den Falten",
+      "instruction": "Rühre die Maisstärke zuerst mit etwa 60 ml des kalten, insgesamt abgemessenen Kokosdrinks in einem Messkrug glatt. Es dürfen keine trockenen Klümpchen bleiben. Gib den restlichen Kokosdrink, die 125 g Zucker für den Guss, Vanillepaste und Kardamom dazu. Verrühre alles gründlich mit einem Schneebesen. Dieser Guss wird nicht vorgekocht: Er bleibt flüssig und bindet später im Ofen. Rühre direkt vor dem Eingießen noch einmal bis zum Boden durch, weil sich die Stärke beim Stehen absetzen kann.",
+      "illustration": {
+        "src": "/images/editorial/kokos-vanille-crinkle-cake/v1/step-3.webp",
+        "alt": "Ein flüssiger heller Kokos-Vanille-Guss mit feinen Vanillepunkten wird in einem gläsernen Messkrug glatt gerührt.",
+        "markers": [
+          {
+            "subject": "custard",
+            "label": "Kokos-Vanille-Guss",
+            "x": 43,
+            "y": 58
+          }
+        ]
+      }
+    },
+    {
+      "id": "bake",
+      "title": "Goldene Spitzen, weiche Mitte",
+      "instruction": "Hole die Form nach der zweiten Backrunde mit Ofenhandschuhen heraus. Gieße den nochmals verrührten Guss langsam und gleichmäßig zwischen die Falten. Die Spitzen dürfen aus der Flüssigkeit herausschauen. Schiebe die Form zurück in den Ofen und backe sie weitere etwa 20 Minuten. Die Oberfläche soll goldbraun sein, der Guss in der Mitte sichtbar gebunden und nicht mehr milchig-flüssig. Falls nötig, gib dem Kuchen einige Minuten länger. Werden einzelne Spitzen zu dunkel, decke sie locker mit Backpapier ab. Koche während dieser letzten Backrunde den Sirup aus dem nächsten Schritt.",
+      "illustration": {
+        "src": "/images/editorial/kokos-vanille-crinkle-cake/v1/step-4.webp",
+        "alt": "Heller Kokos-Vanille-Guss läuft zwischen die nun goldenen Filofalten, während die oberen Teigkanten frei bleiben.",
+        "markers": [
+          {
+            "subject": "custard",
+            "label": "Guss zwischen den Falten",
+            "x": 49,
+            "y": 57
+          }
+        ]
+      }
+    },
+    {
+      "id": "syrup",
+      "title": "Ein feiner Glanz zum Schluss",
+      "instruction": "Gib die 250 g Zucker für den Sirup und 125 ml Wasser in einen kleinen Topf. Erwärme beides unter Rühren, bis sich der Zucker gelöst hat. Lass den Sirup dann bei niedriger bis mittlerer Hitze ungefähr 10 Minuten sanft köcheln. Er soll klar bis leicht goldfarben und noch gut gießbar sein, nicht zu dunklem Karamell werden. Nimm ihn vom Herd. Wenn der Kuchen fertig gebacken ist, stelle die heiße Form auf eine hitzefeste Unterlage. Verteile den warmen Sirup langsam über die ganze Oberfläche und lass ihn in die Falten ziehen. Vorsicht: Heißer Zuckersirup kann stark verbrennen.",
+      "illustration": {
+        "src": "/images/editorial/kokos-vanille-crinkle-cake/v1/step-5.webp",
+        "alt": "Ein dünner Strahl heller Zuckersirup wird aus einem kleinen Topf über den fertig gebackenen Crinkle Cake verteilt; noch ohne Garnitur.",
+        "markers": [
+          {
+            "subject": "syrup",
+            "label": "Zuckersirup",
+            "x": 51,
+            "y": 43
+          }
+        ]
+      }
+    },
+    {
+      "id": "serve",
+      "title": "Das erste Stück darf noch warm sein",
+      "instruction": "Lass den Kuchen ungefähr 15 Minuten ruhen, damit der Sirup einziehen kann und die Füllung etwas fester wird. Wenn du magst, streue wenige Pistazienstifte und essbare Rosenblüten darüber. Schneide den Kuchen mit einem scharfen Messer vorsichtig in sechs großzügige Stücke; für kleinere Dessertportionen kannst du ihn feiner teilen. Hebe die Stücke mit einem Pfannenwender oder Kuchenheber heraus. Lauwarm sind die Falten oben besonders schön knusprig und die Mitte weich. Auf dem Bild siehst du ein angerichtetes Stück neben der übrigen Form.",
+      "illustration": {
+        "src": "/images/editorial/kokos-vanille-crinkle-cake/v1/step-6.webp",
+        "alt": "Fertiger Kokos-Vanille-Crinkle-Cake in derselben salbeigrünen Form; ein rechteckiges Eckstück liegt vorne auf einem kleinen hellen Teller, mit wenigen Pistazien und Rosenblüten wie im Titelbild.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Kokos-Vanille-Crinkle-Cake",
+            "x": 63,
+            "y": 70
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Falten brauchen Luft",
+      "text": "Lass zwischen den Teigwellen etwas Platz. Wird der Teig fest zusammengedrückt, kann der Guss schlechter hineinlaufen. Ein paar eingerissene Blätter kannst du einfach mitfalten. Öffne die Packung erst kurz vor dem Falten, damit die dünnen Blätter nicht austrocknen."
+    },
+    {
+      "title": "Kokosdrink ist nicht Kokosmilch",
+      "text": "Die Vorlage nutzt einen dünnflüssigen Kokosdrink. Dicke Kokosmilch aus der Dose verändert das Verhältnis von Fett und Flüssigkeit. Rühre die Stärke kalt an und den Guss vor dem Eingießen nochmals auf. Die Formgröße und dein Ofen beeinflussen die letzte Backrunde: Prüfe auch die Füllung in der Mitte."
+    }
+  ],
+  "storage": "Am besten schmeckt der Kuchen am Backtag. Lass Reste auskühlen und bewahre sie abgedeckt im Kühlschrank für bis zu 3 Tage auf. Die Filofalten werden dabei weicher. Einzelne Stücke kannst du bei 160 °C etwa 8–12 Minuten im Ofen erwärmen; decke zu dunkle Spitzen locker ab.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "Coconut Crinkle Phool Khaja · Nisha Parmar / Rude Health",
+    "url": "https://rudehealth.com/blogs/recipes/coconut-and-cardamom-crinkle-phool-khaja"
+  },
+  "sources": [
+    {
+      "title": "Nisha Parmar für Rude Health · Coconut Crinkle Phool Khaja",
+      "url": "https://rudehealth.com/blogs/recipes/coconut-and-cardamom-crinkle-phool-khaja",
+      "note": "Vegane Originalvariante, Mengen und 8+10+20 Minuten Backfolge beibehalten. Kokosdrink 250 ml plus 2 TL zusammen als 260 ml. Stärke mit einem größeren Anteil dieser unveränderten Gesamtflüssigkeit angerührt, damit sie klumpenfrei wird. Optionaler Safran weggelassen; Pistazien und Rosenblüten bleiben optional. Formmaß und 15 Minuten Ruhe als praktische Orientierung ergänzt. Die vormals vorgemerkte Zitronenidee erhält einen passenden Kokos-Vanille-Namen; stabile Katalog-ID bleibt erhalten."
+    }
+  ],
+  "researchedAt": "2026-11-06"
+}

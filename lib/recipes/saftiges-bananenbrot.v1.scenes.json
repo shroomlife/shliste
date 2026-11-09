@@ -1,0 +1,126 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Feste trockene Holzarbeitsfläche links der Edelstahlspüle; Dachschräge und Dachfenster unverändert. Schritt 1 nutzt die Küchenreferenz. Schritt 2 nutzt Schritt 1, Schritt 3 nutzt Schritt 2. Schritt 4 nutzt Schritt 1, Schritt 5 nutzt Schritt 4 und das finale Titelbild, Schritt 6 nutzt Schritt 5 und das finale Titelbild."
+    }
+  },
+  "steps": {
+    "prepare": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "banana",
+          "label": "Zerdrückte Banane",
+          "position": "Bei 44% Bildbreite und 70% Bildhöhe; am fertigen Bild visuell geprüft.",
+          "ingredients": [
+            "banana"
+          ]
+        },
+        {
+          "id": "flax",
+          "label": "Gequollene Leinsamen",
+          "position": "Bei 77% Bildbreite und 72% Bildhöhe; am fertigen Bild visuell geprüft.",
+          "ingredients": [
+            "flax",
+            "water"
+          ]
+        }
+      ]
+    },
+    "wet": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "wet",
+          "label": "Bananen-Leinsamen-Mischung",
+          "position": "Bei 40% Bildbreite und 65% Bildhöhe; am fertigen Bild visuell geprüft.",
+          "ingredients": [
+            "banana",
+            "flax",
+            "water",
+            "oil",
+            "sugar",
+            "milk"
+          ]
+        }
+      ]
+    },
+    "fold": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "batter",
+          "label": "Teig mit Walnüssen",
+          "position": "Bei 45% Bildbreite und 63% Bildhöhe; am fertigen Bild visuell geprüft.",
+          "ingredients": [
+            "banana",
+            "flax",
+            "water",
+            "oil",
+            "sugar",
+            "milk",
+            "flour",
+            "soda",
+            "salt",
+            "nutmeg",
+            "walnuts"
+          ]
+        }
+      ]
+    },
+    "fill": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "batter",
+          "label": "Teig vor dem Backen",
+          "position": "Bei 46% Bildbreite und 55% Bildhöhe; am fertigen Bild visuell geprüft.",
+          "ingredients": [
+            "banana",
+            "flax",
+            "water",
+            "oil",
+            "sugar",
+            "milk",
+            "flour",
+            "soda",
+            "salt",
+            "nutmeg",
+            "walnuts"
+          ]
+        },
+        {
+          "id": "walnuts",
+          "label": "Walnüsse auf dem Teig",
+          "position": "Bei 57% Bildbreite und 60% Bildhöhe; am fertigen Bild visuell geprüft.",
+          "ingredients": [
+            "walnuts"
+          ]
+        }
+      ]
+    },
+    "cool": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "label": "Saftiges Bananenbrot",
+          "position": "Bei 45% Bildbreite und 56% Bildhöhe; am fertigen Bild visuell geprüft.",
+          "dish": true
+        }
+      ]
+    },
+    "serve": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "label": "Saftiges Bananenbrot",
+          "position": "Bei 49% Bildbreite und 52% Bildhöhe; am fertigen Bild visuell geprüft.",
+          "dish": true
+        }
+      ]
+    }
+  }
+}

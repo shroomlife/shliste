@@ -1,0 +1,235 @@
+{
+  "catalogId": "hafer-bananen-pancakes",
+  "version": 1,
+  "slug": "hafer-bananen-pancakes",
+  "title": "Hafer-Bananen-Pancakes",
+  "emoji": "🥞",
+  "kind": "suess",
+  "meal": "Frühstück",
+  "status": "published",
+  "intro": "Die Banane mit den braunen Punkten hat heute den besten Platz am Frühstückstisch. Sie macht den Haferteig weich und süß. Ihre festere Nachbarin kommt in Scheiben zwischen die warmen Pancakes, genau dorthin, wo sich der Ahornsirup sammelt.",
+  "story": {
+    "eyebrow": "Aus der Frühstückspfanne",
+    "sticker": [
+      "Morgen",
+      "zu zweit"
+    ],
+    "ingredientNote": "Für sechs kleine Pancakes brauchst du zwei unterschiedlich reife Bananen. Die gefleckte lässt sich leicht pürieren, die festere hält beim Schneiden ihre Form."
+  },
+  "servings": 2,
+  "prepMinutes": 10,
+  "cookMinutes": 15,
+  "difficulty": "einfach",
+  "tags": [
+    "Frühstück",
+    "Aus der Pfanne",
+    "Mit Hafer"
+  ],
+  "hero": {
+    "src": "/images/editorial/hafer-bananen-pancakes/v1/hero.webp",
+    "alt": "Drei goldbraune Hafer-Bananen-Pancakes mit Bananenscheiben und Ahornsirup auf einem cremefarbenen Teller."
+  },
+  "ingredients": [
+    {
+      "id": "oats",
+      "amount": 120,
+      "unit": "g",
+      "name": "zarte Haferflocken"
+    },
+    {
+      "id": "bananas",
+      "amount": 2,
+      "unit": "Stück",
+      "name": "Bananen",
+      "note": "eine sehr reife für den Teig (etwa 110 g geschält), eine schnittfeste zum Servieren"
+    },
+    {
+      "id": "milk",
+      "amount": 220,
+      "unit": "ml",
+      "name": "Sojadrink natur",
+      "note": "ungesüßt, davon 20 ml zum Anpassen des Teigs zurückhalten"
+    },
+    {
+      "id": "flax",
+      "amount": 1,
+      "unit": "EL",
+      "name": "fein gemahlene Leinsamen"
+    },
+    {
+      "id": "baking",
+      "amount": 1,
+      "unit": "TL",
+      "name": "Backpulver",
+      "note": "gestrichen"
+    },
+    {
+      "id": "vanilla",
+      "amount": 0.5,
+      "unit": "TL",
+      "name": "Vanilleextrakt"
+    },
+    {
+      "id": "oil",
+      "amount": 1,
+      "unit": "TL",
+      "name": "neutrales Rapsöl",
+      "note": "für die Pfanne"
+    },
+    {
+      "id": "syrup",
+      "amount": 2,
+      "unit": "EL",
+      "name": "Ahornsirup",
+      "note": "zum Servieren"
+    },
+    {
+      "id": "sugar",
+      "amount": 0.5,
+      "unit": "TL",
+      "name": "Puderzucker",
+      "note": "nach Belieben zum Bestäuben"
+    }
+  ],
+  "steps": [
+    {
+      "id": "mill",
+      "title": "Aus Flocken wird feines Mehl",
+      "instruction": "Mahle die Haferflocken im trockenen Standmixer, bis du kaum noch einzelne Flocken erkennst. Schalte den Mixer aus, lass den Mehlstaub kurz absinken und gib das Hafermehl in eine Schüssel. Verteile Backpulver und gemahlene Leinsamen mit einem Schneebesen darin.",
+      "illustration": {
+        "src": "/images/editorial/hafer-bananen-pancakes/v1/step-1.webp",
+        "alt": "Fein gemahlener Hafer im Mixbehälter, daneben ganze Haferflocken zum Vergleich.",
+        "markers": [
+          {
+            "subject": "flour",
+            "label": "Hafermehl",
+            "x": 48,
+            "y": 56
+          },
+          {
+            "subject": "flakes",
+            "label": "Haferflocken",
+            "x": 26,
+            "y": 68
+          }
+        ]
+      }
+    },
+    {
+      "id": "blend",
+      "title": "Die gesprenkelte Banane kommt in den Teig",
+      "instruction": "Schäle die weichere Banane und brich sie in Stücke. Püriere sie im selben Mixbehälter mit 200 ml Sojadrink und der Vanille. Sobald die Mischung glatt ist, kannst du aufhören. Die zweite Banane bleibt für die Teller ganz.",
+      "illustration": {
+        "src": "/images/editorial/hafer-bananen-pancakes/v1/step-2.webp",
+        "alt": "Helle Bananenmilch im Mixbehälter neben einer gesprenkelten Schale und der zweiten Banane.",
+        "markers": [
+          {
+            "subject": "base",
+            "label": "Bananenmilch",
+            "x": 46,
+            "y": 41
+          },
+          {
+            "subject": "banana",
+            "label": "Banane zum Servieren",
+            "x": 69,
+            "y": 69
+          }
+        ]
+      }
+    },
+    {
+      "id": "fold",
+      "title": "So dick darf der Teig sein",
+      "instruction": "Gieße die Bananenmilch zum Hafermehl und rühre mit einem Löffel vom Rand zur Mitte, bis keine trockenen Stellen mehr zu sehen sind. Hebe den Löffel an. Der Teig soll als breites Band zurückfallen und langsam verlaufen. Bleibt er als fester Klecks liegen, rühre schluckweise etwas vom übrigen Sojadrink ein.",
+      "illustration": {
+        "src": "/images/editorial/hafer-bananen-pancakes/v1/step-3.webp",
+        "alt": "Haferteig fällt in einem breiten Band vom Löffel zurück in die Schüssel.",
+        "markers": [
+          {
+            "subject": "batter",
+            "label": "Hafer-Bananen-Teig",
+            "x": 40,
+            "y": 56
+          }
+        ]
+      }
+    },
+    {
+      "id": "cook",
+      "title": "Erst wenden, wenn der Rand matt wird",
+      "instruction": "Erwärme eine große beschichtete Pfanne bei mittlerer Hitze und verstreiche einen dünnen Film Rapsöl darin. Setze für zwei Pancakes je ein Sechstel des Teigs mit Abstand hinein. Streiche jeden Klecks auf etwa 10 cm Breite. Nach 2–3 Minuten sollten am Rand matte Stellen und oben kleine offene Bläschen zu sehen sein. Schiebe einen dünnen Wender ganz darunter und drehe den Pancake einmal um. Backe die zweite Seite noch 1–2 Minuten. Die Mitte soll auf leichten Druck zurückfedern. Backe die übrigen vier genauso.",
+      "illustration": {
+        "src": "/images/editorial/hafer-bananen-pancakes/v1/step-4.webp",
+        "alt": "Zwei Pancakes in der Pfanne. Einer zeigt offene Bläschen, der andere seine goldbraune Unterseite.",
+        "markers": [
+          {
+            "subject": "bubbles",
+            "label": "Offene Bläschen",
+            "x": 35,
+            "y": 67
+          },
+          {
+            "subject": "golden",
+            "label": "Goldbraune Seite",
+            "x": 53,
+            "y": 67
+          }
+        ]
+      }
+    },
+    {
+      "id": "stack",
+      "title": "Drei übereinander, Banane dazwischen",
+      "instruction": "Schneide die zweite Banane in dicke Scheiben. Staple auf zwei hellen Tellern jeweils drei warme Pancakes. Lege einige Scheiben zwischen die Lagen und die restlichen obenauf. Wenn du magst, siebe einen Hauch Puderzucker darüber. Lass zuletzt je einen Esslöffel Ahornsirup über die obere Kante laufen und serviere die Pancakes noch warm.",
+      "illustration": {
+        "src": "/images/editorial/hafer-bananen-pancakes/v1/step-5.webp",
+        "alt": "Ein Stapel aus drei goldenen Pancakes mit Bananenscheiben und Ahornsirup auf einem hellen Teller.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Hafer-Bananen-Pancakes",
+            "x": 46,
+            "y": 61
+          },
+          {
+            "subject": "topping",
+            "label": "Bananenscheiben",
+            "x": 41,
+            "y": 40
+          },
+          {
+            "subject": "syrup",
+            "label": "Ahornsirup",
+            "x": 54,
+            "y": 77
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Der erste Pancake verrät dir die Hitze",
+      "text": "Wird die Unterseite schon dunkel, während die Oberseite noch glänzt, zieh die Pfanne kurz vom Kochfeld. Backe die nächste Runde eine Stufe niedriger. Reißt der Pancake am Wender, warte noch einen Moment, bis sich der Rand leicht löst."
+    },
+    {
+      "title": "Die letzte Runde soll genauso locker werden",
+      "text": "Hafer und Leinsamen binden beim Stehen weiter Flüssigkeit. Falls der Teig vor der letzten Runde nur noch vom Löffel plumpst, hilft ein kleiner Schluck vom zurückbehaltenen Sojadrink."
+    }
+  ],
+  "storage": "Lass übrige Pancakes einzeln auf einem Gitter auskühlen. Lege sie mit Backpapier dazwischen in eine verschließbare Dose und friere sie portionsweise ein. Zum Frühstück in der Pfanne bei kleiner Hitze erwärmen. Frische Banane und Sirup erst danach dazugeben.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "Veggiekins · Remy Park",
+    "url": "https://veggiekinsblog.com/2019/03/15/banana-oat-pancakes/"
+  },
+  "sources": [
+    {
+      "title": "Remy Park · Easy Vegan Banana Oat Pancakes",
+      "url": "https://veggiekinsblog.com/2019/03/15/banana-oat-pancakes/",
+      "note": "Vorlage für gemahlene Haferflocken, Bananenmilch und die Bindung mit Leinsamen. Eigene Fassung mit zwei Bananen, Sojadrink und Ahornsirup zum Servieren."
+    }
+  ],
+  "researchedAt": "2026-11-04"
+}

@@ -1,0 +1,82 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Feste Kamera auf die trockene Holzarbeitsfläche links der Edelstahlspüle. Dachschräge oben links, Fenster und Abtropfblech oben rechts. Keine Herdansicht. Ab Schritt 2 dient zusätzlich das eigene erste Schrittbild als direkte Kamerareferenz."
+    }
+  },
+  "steps": {
+    "mix": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "oat-mixture",
+          "label": "Haferflocken in Hafercreme",
+          "position": "Bei 34% Bildbreite und 57% Bildhöhe, am fertigen Export visuell geprüft.",
+          "ingredients": [
+            "oats",
+            "milk",
+            "yogurt",
+            "cinnamon"
+          ]
+        }
+      ]
+    },
+    "chill": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "soaking-oats",
+          "label": "Haferbasis zum Kaltstellen",
+          "position": "Bei 32% Bildbreite und 66% Bildhöhe, am fertigen Export visuell geprüft.",
+          "ingredients": [
+            "oats",
+            "milk",
+            "yogurt",
+            "cinnamon"
+          ]
+        }
+      ]
+    },
+    "dice": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "apple-cubes",
+          "label": "Frische Apfelwürfel",
+          "position": "Bei 32% Bildbreite und 62% Bildhöhe, am fertigen Export visuell geprüft.",
+          "ingredients": [
+            "apple"
+          ]
+        },
+        {
+          "id": "cored-apple",
+          "label": "Entkernter Apfel",
+          "position": "Bei 57% Bildbreite und 61% Bildhöhe, am fertigen Export visuell geprüft.",
+          "ingredients": [
+            "apple"
+          ]
+        }
+      ]
+    },
+    "serve": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "label": "Apfel-Zimt-Overnight-Oats",
+          "position": "Bei 32% Bildbreite und 65% Bildhöhe, am fertigen Export visuell geprüft.",
+          "dish": true
+        },
+        {
+          "id": "apple-topping",
+          "label": "Apfelwürfel",
+          "position": "Bei 31% Bildbreite und 44% Bildhöhe, am fertigen Export visuell geprüft.",
+          "ingredients": [
+            "apple"
+          ]
+        }
+      ]
+    }
+  }
+}

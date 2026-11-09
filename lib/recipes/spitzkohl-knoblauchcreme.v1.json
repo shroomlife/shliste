@@ -1,0 +1,286 @@
+{
+  "catalogId": "spitzkohl-knoblauchcreme",
+  "version": 1,
+  "slug": "spitzkohl-knoblauchcreme",
+  "title": "Spitzkohl in Knoblauchcreme",
+  "emoji": "🥬",
+  "kind": "herzhaft",
+  "meal": "Hauptgericht",
+  "status": "published",
+  "intro": "Ein kleiner Kohlkopf, goldene Schnittflächen und eine Sauce, für die du das letzte Stück Brot aufhebst. Erst bekommt der Spitzkohl Farbe in der Pfanne, dann wird er im Ofen zart. Knoblauch, ein Hauch Rauchpaprika und frische Petersilie machen daraus ein gemütliches Essen für zwei.",
+  "story": {
+    "eyebrow": "Goldene Blätter. Noch ein Stück Brot.",
+    "sticker": [
+      "Zart aus",
+      "dem Ofen"
+    ],
+    "ingredientNote": "Die Menge reicht für zwei Personen mit Brot. Wähle einen kleinen Spitzkohl, damit vier Spalten nebeneinander in eine 28-cm-Pfanne passen. Pfanne und Griffe müssen ausdrücklich ofenfest sein; alternativ brauchst du zusätzlich eine passende Auflaufform."
+  },
+  "servings": 2,
+  "prepMinutes": 20,
+  "cookMinutes": 50,
+  "restMinutes": 2,
+  "difficulty": "einfach",
+  "tags": [
+    "Aus Pfanne & Ofen",
+    "Mit Knoblauch",
+    "Zum Auftunken"
+  ],
+  "hero": {
+    "src": "/images/editorial/spitzkohl-knoblauchcreme/v1/hero.webp",
+    "alt": "Vier goldbraun angebratene Spitzkohlspalten in heller Knoblauchcreme, mit etwas Petersilie, in einer flachen petrolblauen Pfanne auf dem gedeckten Tisch."
+  },
+  "ingredients": [
+    {
+      "id": "cabbage",
+      "amount": 600,
+      "unit": "g",
+      "name": "Spitzkohl",
+      "note": "etwa 1 kleiner Kopf; vier gleichmäßige Längsspalten"
+    },
+    {
+      "id": "oil",
+      "amount": 2,
+      "unit": "EL",
+      "name": "Rapsöl",
+      "note": "zum Anbraten, auf zwei Durchgänge verteilt"
+    },
+    {
+      "id": "onion",
+      "amount": 1,
+      "unit": "kleine",
+      "name": "Zwiebel",
+      "note": "etwa 80 g"
+    },
+    {
+      "id": "garlic",
+      "amount": 3,
+      "unit": "",
+      "name": "Knoblauchzehen"
+    },
+    {
+      "id": "butter",
+      "amount": 10,
+      "unit": "g",
+      "name": "vegane Butter"
+    },
+    {
+      "id": "broth",
+      "amount": 150,
+      "unit": "ml",
+      "name": "Gemüsebrühe",
+      "note": "kalt; 2 EL zum Anrühren der Stärke zurückhalten"
+    },
+    {
+      "id": "cream",
+      "amount": 200,
+      "unit": "ml",
+      "name": "Hafercuisine",
+      "note": "ungesüßte pflanzliche Kochcreme"
+    },
+    {
+      "id": "yeast",
+      "amount": 2,
+      "unit": "EL",
+      "name": "Hefeflocken"
+    },
+    {
+      "id": "paprika",
+      "amount": 1,
+      "unit": "TL",
+      "name": "geräuchertes Paprikapulver",
+      "note": "mild"
+    },
+    {
+      "id": "soy",
+      "amount": 1,
+      "unit": "TL",
+      "name": "Sojasauce"
+    },
+    {
+      "id": "starch",
+      "amount": 5,
+      "unit": "g",
+      "name": "Speisestärke"
+    },
+    {
+      "id": "lemon",
+      "amount": 1,
+      "unit": "EL",
+      "name": "Zitronensaft",
+      "note": "frisch gepresst, erst zum Schluss"
+    },
+    {
+      "id": "parsley",
+      "amount": 2,
+      "unit": "Stängel",
+      "name": "glatte Petersilie"
+    },
+    {
+      "id": "salt",
+      "amount": 0.25,
+      "unit": "TL",
+      "name": "Salz",
+      "note": "nach Geschmack; die Brühe ist bereits gewürzt"
+    },
+    {
+      "id": "pepper",
+      "amount": 2,
+      "unit": "Prisen",
+      "name": "schwarzer Pfeffer"
+    },
+    {
+      "id": "bread",
+      "amount": 150,
+      "unit": "g",
+      "name": "Bauernbrot",
+      "note": "zum Servieren, ohne tierische Zutaten"
+    }
+  ],
+  "steps": [
+    {
+      "id": "cut",
+      "title": "Vier Spalten, die zusammenhalten",
+      "instruction": "Entferne beschädigte äußere Blätter, wasche den Kohl und trockne ihn gut ab. Halbiere ihn auf einem stabilen Schneidebrett längs durch den Strunk und teile beide Hälften nochmals längs. Schneide nur das trockene Ende und sehr harte Strunkteile weg: Ein dünner Strunkansatz soll an jeder Spalte bleiben und die Blätter zusammenhalten. Tupfe vor allem die Schnittflächen trocken. Schäle Zwiebel und Knoblauch; würfle die Zwiebel fein und hacke den Knoblauch. Heize den Backofen auf 180 °C Umluft vor. Lege eine ofenfeste Pfanne mit etwa 28 cm Durchmesser und hitzefesten Griffen bereit.",
+      "illustration": {
+        "src": "/images/editorial/spitzkohl-knoblauchcreme/v1/step-1.webp",
+        "alt": "Vier rohe längliche Spitzkohlviertel mit sichtbaren hellen Blattschichten und schmalem Strunkansatz liegen auf einem Holzbrett; daneben liegen fein geschnittene Zwiebel und Knoblauch getrennt.",
+        "markers": [
+          {
+            "subject": "cabbage",
+            "label": "Rohe Spitzkohlspalten",
+            "x": 40,
+            "y": 50
+          },
+          {
+            "subject": "onion",
+            "label": "Zwiebelwürfel",
+            "x": 29,
+            "y": 75
+          },
+          {
+            "subject": "garlic",
+            "label": "Fein gehackter Knoblauch",
+            "x": 47,
+            "y": 75
+          }
+        ]
+      }
+    },
+    {
+      "id": "sear",
+      "title": "Die goldenen Schnittflächen machen den Unterschied",
+      "instruction": "Erhitze einen Esslöffel Öl in der Pfanne bei mittlerer bis hoher Hitze. Lege zwei Kohlspalten mit einer Schnittfläche nach unten hinein. Lass sie etwa 3–4 Minuten möglichst ungestört braten, bis die Fläche goldbraune Stellen zeigt. Wende sie mit einer Zange behutsam auf die zweite Schnittfläche und brate diese ebenfalls 3–4 Minuten. Hebe beide Spalten auf einen Teller. Wiederhole das mit dem übrigen Öl und den beiden anderen Spalten. Innen darf der Kohl noch fest sein; im Ofen gart er später durch. Bei dunklem Rauch die Hitze sofort reduzieren.",
+      "illustration": {
+        "src": "/images/editorial/spitzkohl-knoblauchcreme/v1/step-2.webp",
+        "alt": "Zwei Spitzkohlspalten liegen in einer flachen petrolblauen Pfanne auf der festen linken Kochstelle; ihre sichtbaren Schnittflächen sind goldbraun, die Blattschichten noch fest.",
+        "markers": [
+          {
+            "subject": "cabbage",
+            "label": "Angebratener Spitzkohl",
+            "x": 42,
+            "y": 64
+          }
+        ]
+      }
+    },
+    {
+      "id": "cream",
+      "title": "Knoblauchduft und eine samtige Sauce",
+      "instruction": "Nimm alle Kohlspalten aus der Pfanne und reduziere die Hitze auf mittel. Lass die vegane Butter schmelzen. Dünste die Zwiebel 3–4 Minuten weich und glasig, dann den Knoblauch etwa 30 Sekunden mit; er soll nicht braun werden. Verrühre die Speisestärke mit zwei Esslöffeln der kalten Brühe in einer Tasse. Gib die restliche Brühe zur Zwiebel und löse mit einem Holzlöffel die goldbraunen Bratspuren vom Boden. Rühre Hafercuisine, Hefeflocken, Paprika und Sojasauce ein. Rühre die Stärkemischung nochmals durch, gieße sie dazu und lass die Sauce unter Rühren etwa eine Minute sanft köcheln. Sie soll leicht am Löffel haften. Würze mit Pfeffer und probiere, ob noch etwas Salz nötig ist.",
+      "illustration": {
+        "src": "/images/editorial/spitzkohl-knoblauchcreme/v1/step-3.webp",
+        "alt": "Eine hellolivfarbene Hand rührt mit einem Holzlöffel eine leicht gebundene beige Knoblauchcreme in derselben petrolblauen Pfanne; darin liegen keine Kohlspalten.",
+        "markers": [
+          {
+            "subject": "cream",
+            "label": "Knoblauchcreme",
+            "x": 40,
+            "y": 65
+          }
+        ]
+      }
+    },
+    {
+      "id": "braise",
+      "title": "Jetzt darf der Ofen übernehmen",
+      "instruction": "Schalte die Kochstelle aus. Setze alle vier angebratenen Kohlspalten behutsam zurück in die Sauce, möglichst nebeneinander und mit einer gebräunten Schnittfläche nach oben. Löffle etwas Sauce zwischen die Blattschichten; die gebräunten Oberseiten sollen noch gut zu sehen sein. Schiebe die Pfanne auf die mittlere Schiene und gare den Kohl ohne Deckel etwa 25–30 Minuten. Wasche währenddessen die Petersilie, trockne sie und hacke die Blättchen fein. Halte sie und den Zitronensaft noch zurück – beides kommt erst nach dem Backen dazu.",
+      "illustration": {
+        "src": "/images/editorial/spitzkohl-knoblauchcreme/v1/step-4.webp",
+        "alt": "Eine dunkelbraune Hand löffelt etwas helle Sauce über vier angebratene Kohlspalten in derselben Pfanne; die goldbraunen Flächen bleiben sichtbar und es ist noch keine Petersilie darauf.",
+        "markers": [
+          {
+            "subject": "cabbage",
+            "label": "Kohl vor dem Schmoren",
+            "x": 45,
+            "y": 70
+          },
+          {
+            "subject": "cream",
+            "label": "Sauce zwischen den Blättern",
+            "x": 29,
+            "y": 75
+          }
+        ]
+      }
+    },
+    {
+      "id": "check",
+      "title": "Zart bis zum kleinen Strunkansatz",
+      "instruction": "Nimm die Pfanne mit Ofenhandschuhen heraus und stelle sie auf einen hitzefesten Untersetzer. Prüfe die dickste Stelle einer Spalte mit einem kleinen Messer: Es soll mit wenig Widerstand bis zum Strunkansatz hineingleiten. Ist der Kohl dort noch hart, gare ihn weitere 5–10 Minuten. Wird die Oberfläche dabei zu dunkel, lege einen ofenfesten Deckel locker auf. Die Sauce darf am Rand blubbern, soll aber cremig bleiben. Ist sie zu stark eingekocht, rühre esslöffelweise heißes Wasser am Pfannenrand ein. Sind die Blätter weich und die Schnittflächen gebräunt, ist der Kohl bereit.",
+      "illustration": {
+        "src": "/images/editorial/spitzkohl-knoblauchcreme/v1/step-5.webp",
+        "alt": "Die Pfanne steht auf einem Korkuntersetzer an der Arbeitsfläche; vier gegarte Kohlspalten mit weicheren Blättern und goldbraunen Rändern liegen in einer leicht eingekochten hellen Sauce, ohne frische Garnitur.",
+        "markers": [
+          {
+            "subject": "cabbage",
+            "label": "Zarter Ofen-Spitzkohl",
+            "x": 42,
+            "y": 55
+          }
+        ]
+      }
+    },
+    {
+      "id": "serve",
+      "title": "Ein bisschen Frische zum Schluss",
+      "instruction": "Lass die Pfanne zwei Minuten auf dem Untersetzer stehen. Rühre den Zitronensaft vorsichtig in die Sauce zwischen den Spalten und probiere nochmals. Streue die fein gehackte Petersilie darüber. Serviere je zwei Kohlspalten mit reichlich Knoblauchcreme und dem Brot zum Auftunken. Für den Tisch bleibt die Pfanne auf einer hitzefesten Unterlage; auch die Griffe sind noch heiß. So bleibt die gebräunte Blattstruktur sichtbar und die Sauce sammelt sich darunter.",
+      "illustration": {
+        "src": "/images/editorial/spitzkohl-knoblauchcreme/v1/step-6.webp",
+        "alt": "Vier zarte Spitzkohlspalten liegen mit goldbraunen Schnittflächen in einer hellen Knoblauchcreme; fein gehackte Petersilie vollendet das Gericht in der petrolblauen Pfanne mit zwei kurzen Griffen.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Spitzkohl in Knoblauchcreme",
+            "x": 45,
+            "y": 55
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Die passende Form macht es leichter",
+      "text": "Wenn deine Pfanne nicht in den Ofen darf, bereite Kohl und Sauce darin vor und setze anschließend alles in eine vorgewärmte, ofenfeste Auflaufform um. Sie soll die vier Spalten in einer Lage aufnehmen. Eine zu große Form lässt die Sauce schneller verdampfen."
+    },
+    {
+      "title": "Hell geröstet statt dunkel verbrannt",
+      "text": "Trockene Schnittflächen und etwas Geduld ergeben schöne Bratstellen. Wende die Spalten nicht ständig und gare sie lieber in zwei Durchgängen. Schwarze Rückstände vor der Saucenzubereitung vorsichtig aus der etwas abgekühlten Pfanne wischen; sie würden die Creme bitter machen."
+    }
+  ],
+  "storage": "Reste zügig abkühlen lassen, in einem geschlossenen Behälter in den Kühlschrank stellen und innerhalb von zwei Tagen essen. Mit einem kleinen Schuss Wasser in einer zugedeckten Pfanne langsam wieder vollständig erhitzen. Dabei nur behutsam wenden, damit die weichen Kohlspalten zusammenbleiben. Das Brot getrennt aufbewahren.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "Spitzkohl-Wedges in Knoblauch-Parmesan-Soße · LECKER",
+    "url": "https://www.lecker.de/super-einfach-und-koestlich-butterzarter-spitzkohl-mit-wuerzig-cremiger-sosse-133395.html"
+  },
+  "sources": [
+    {
+      "title": "Max Bergmann / LECKER · Spitzkohl-Wedges mit Knoblauch-Parmesansoße",
+      "url": "https://www.lecker.de/super-einfach-und-koestlich-butterzarter-spitzkohl-mit-wuerzig-cremiger-sosse-133395.html",
+      "note": "Grundlage für Anbraten und anschließendes Schmoren der Kohlspalten in Sauce. Eigene vollständig pflanzliche Ausarbeitung mit Gemüsebrühe, veganer Butter, Hafercuisine und Hefeflocken statt Hühnerbrühe, Butter, Sahne und Parmesan. Angepasste Flüssigkeitsmenge und Stärke für die Bindung; konkrete Kohlgröße, Garprobe, Hitze- und Anrichthinweise. Originalbild von LECKER / Bauer Media Group / Max Bergmann betrachtet und als visuelle Textreferenz genutzt. Kochtest ausstehend."
+    }
+  ],
+  "researchedAt": "2026-11-06"
+}

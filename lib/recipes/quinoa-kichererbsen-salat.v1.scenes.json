@@ -1,0 +1,124 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Feste Holzarbeitsfläche links der Spüle, Dachschräge und Fenster rechts oben. Beim Mischen Glasschüssel; erst zum Servieren elfenbeinfarbene Schale mit gewelltem Rand wie im Titelbild. Kein Herd nötig."
+    }
+  },
+  "steps": {
+    "vegetables": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "quinoa",
+          "label": "Gekochte Quinoa",
+          "position": "Bei 29% Bildbreite und 29% Bildhöhe; am finalen Bild geprüft.",
+          "ingredients": [
+            "quinoa"
+          ]
+        },
+        {
+          "id": "chickpeas",
+          "label": "Abgetropfte Kichererbsen",
+          "position": "Bei 51% Bildbreite und 29% Bildhöhe; am finalen Bild geprüft.",
+          "ingredients": [
+            "chickpeas"
+          ]
+        },
+        {
+          "id": "cucumber",
+          "label": "Kleine Gurkenwürfel",
+          "position": "Bei 32% Bildbreite und 63% Bildhöhe; am finalen Bild geprüft.",
+          "ingredients": [
+            "cucumber"
+          ]
+        },
+        {
+          "id": "onion",
+          "label": "Feine Zwiebelwürfel",
+          "position": "Bei 61% Bildbreite und 65% Bildhöhe; am finalen Bild geprüft.",
+          "ingredients": [
+            "onion"
+          ]
+        }
+      ]
+    },
+    "herbs": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "parsley",
+          "label": "Petersilie",
+          "position": "Bei 23% Bildbreite und 60% Bildhöhe; am finalen Bild geprüft.",
+          "ingredients": [
+            "parsley"
+          ]
+        },
+        {
+          "id": "mint",
+          "label": "Minze",
+          "position": "Bei 42% Bildbreite und 61% Bildhöhe; am finalen Bild geprüft.",
+          "ingredients": [
+            "mint"
+          ]
+        },
+        {
+          "id": "pistachios",
+          "label": "Gehackte Pistazien",
+          "position": "Bei 62% Bildbreite und 63% Bildhöhe; am finalen Bild geprüft.",
+          "ingredients": [
+            "pistachios"
+          ]
+        },
+        {
+          "id": "feta",
+          "label": "Vegane Fetabrösel",
+          "position": "Bei 44% Bildbreite und 26% Bildhöhe; am finalen Bild geprüft.",
+          "ingredients": [
+            "feta"
+          ]
+        }
+      ]
+    },
+    "dressing": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dressing",
+          "label": "Zitronendressing",
+          "position": "Bei 35% Bildbreite und 74% Bildhöhe; am finalen Bild geprüft.",
+          "ingredients": [
+            "oil",
+            "lemon",
+            "maple",
+            "garlic",
+            "salt",
+            "pepper"
+          ]
+        }
+      ]
+    },
+    "combine": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "label": "Quinoa-Kichererbsen-Salat",
+          "position": "Bei 43% Bildbreite und 58% Bildhöhe; am finalen Bild geprüft.",
+          "dish": true
+        }
+      ]
+    },
+    "serve": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "label": "Quinoa-Kichererbsen-Salat",
+          "position": "Bei 40% Bildbreite und 57% Bildhöhe; am finalen Bild geprüft.",
+          "dish": true
+        }
+      ]
+    }
+  }
+}

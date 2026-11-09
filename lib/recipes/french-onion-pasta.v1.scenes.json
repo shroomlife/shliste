@@ -1,0 +1,124 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Fester Blick auf die Holzarbeitsfläche links neben der Spüle unter dem Dachfenster."
+    },
+    "hob": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-2.webp",
+      "framing": "Feste Herdkamera. Einziges schwarzes Kochfeld hinten unter der Edelstahlhaube über dem Ofen; der blaue Emailletopf bleibt auf derselben Kochzone. Fenster und Efeututen liegen außerhalb des Ausschnitts."
+    }
+  },
+  "steps": {
+    "slice": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "half",
+          "position": "auf der flachen Schnittseite unter der Hand, links auf dem Brett",
+          "ingredients": [
+            "onions"
+          ],
+          "label": "Halbe Zwiebel"
+        },
+        {
+          "id": "strips",
+          "position": "als klar getrennter Haufen rechts auf dem Brett",
+          "ingredients": [
+            "onions"
+          ],
+          "label": "Zwiebelstreifen"
+        }
+      ]
+    },
+    "soften": {
+      "scene": "hob",
+      "subjects": [
+        {
+          "id": "soft",
+          "position": "helle, glasige Streifen in der linken Hälfte des Topfs",
+          "ingredients": [
+            "onions"
+          ],
+          "label": "Glasige Zwiebeln"
+        }
+      ]
+    },
+    "caramelize": {
+      "scene": "hob",
+      "subjects": [
+        {
+          "id": "gold",
+          "position": "bernsteinbraune weiche Streifen links vom Holzlöffel im Topf",
+          "ingredients": [
+            "onions"
+          ],
+          "label": "Karamellisierte Zwiebeln"
+        }
+      ]
+    },
+    "aromatics": {
+      "scene": "hob",
+      "subjects": [
+        {
+          "id": "aromatics",
+          "position": "gehackter Knoblauch und Thymian gemeinsam an der Öffnung der kleinen Schale über dem Topf",
+          "ingredients": [
+            "garlic",
+            "thyme"
+          ],
+          "label": "Knoblauch und Thymian"
+        }
+      ]
+    },
+    "deglaze": {
+      "scene": "hob",
+      "subjects": [
+        {
+          "id": "broth",
+          "position": "goldene Flüssigkeit im durchsichtigen Kännchen links über dem Topf",
+          "ingredients": [
+            "stock"
+          ],
+          "label": "Gemüsebrühe"
+        }
+      ]
+    },
+    "simmer": {
+      "scene": "hob",
+      "subjects": [
+        {
+          "id": "rigatoni",
+          "position": "kurze gerillte Röhren in der goldenen Brühe, vorne im Topf",
+          "ingredients": [
+            "pasta"
+          ],
+          "label": "Rigatoni"
+        }
+      ]
+    },
+    "finish": {
+      "scene": "hob",
+      "subjects": [
+        {
+          "id": "cream",
+          "position": "heller Gießstrahl unter dem weißen Kännchen links über der Pasta",
+          "ingredients": [
+            "cream"
+          ],
+          "label": "Hafercuisine"
+        }
+      ]
+    },
+    "serve": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "position": "fertiges Gericht in der vorderen der zwei blauen Schalen auf der Arbeitsfläche",
+          "dish": true
+        }
+      ]
+    }
+  }
+}

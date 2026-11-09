@@ -1,0 +1,76 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Trockene Holzfläche unter der Dachschräge links neben der Spüle, Fensterlicht von rechts."
+    }
+  },
+  "steps": {
+    "prepare": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "yogurt",
+          "label": "Vanille-Sojajoghurt",
+          "ingredients": [
+            "yogurt"
+          ],
+          "position": "helle Spitze in der Schale"
+        },
+        {
+          "id": "espresso",
+          "label": "Espresso",
+          "ingredients": [
+            "espresso"
+          ],
+          "position": "kleine Tasse rechts"
+        }
+      ]
+    },
+    "swirl": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "coffee",
+          "label": "Kaffeecreme",
+          "ingredients": [
+            "yogurt",
+            "espresso"
+          ],
+          "position": "helle und dunkle Schlieren"
+        }
+      ]
+    },
+    "nest": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "biscuit",
+          "label": "Karamellkeks",
+          "ingredients": [
+            "biscuits"
+          ],
+          "position": "Keks vorne links"
+        }
+      ]
+    },
+    "dust": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "dish": true,
+          "position": "Creme im Zentrum der Schale"
+        },
+        {
+          "id": "cocoa",
+          "label": "Backkakao",
+          "ingredients": [
+            "cocoa"
+          ],
+          "position": "Kakaofläche zwischen den Keksen"
+        }
+      ]
+    }
+  }
+}

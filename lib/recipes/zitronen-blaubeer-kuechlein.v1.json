@@ -1,0 +1,256 @@
+{
+  "catalogId": "zitronen-blaubeer-kuechlein",
+  "version": 1,
+  "slug": "zitronen-blaubeer-kuechlein",
+  "title": "Zitronen-Blaubeer-Küchlein",
+  "emoji": "🫐",
+  "kind": "suess",
+  "meal": "Dessert",
+  "status": "published",
+  "intro": "Ein Löffel bis ganz nach unten: erst die weiche Creme, dann die fruchtigen Blaubeeren und schließlich ein Stück duftender Zitronenkuchen. Vier kleine Gläser für einen langen Nachmittag – oder für den süßen Abschluss eines gemeinsamen Essens.",
+  "story": {
+    "eyebrow": "Ein Glas voll Sonnengelb und Beerenglück.",
+    "sticker": [
+      "Schicht für",
+      "Schicht Glück"
+    ],
+    "ingredientNote": "Für vier großzügige Dessertgläser à etwa 350 ml. Du brauchst eine runde 18-cm-Backform, ein Kuchengitter, einen kleinen Topf und einen Handmixer. Der Kuchen wird in der Backform gebacken; die Dessertgläser kommen erst beim kalten Schichten zum Einsatz. Die Zeit enthält vollständiges Auskühlen und 15 Minuten im Kühlschrank."
+  },
+  "servings": 4,
+  "prepMinutes": 30,
+  "cookMinutes": 30,
+  "restMinutes": 60,
+  "difficulty": "einfach",
+  "tags": [
+    "Zum Vorbereiten",
+    "Zitrone & Beeren",
+    "Kuchen im Glas"
+  ],
+  "hero": {
+    "src": "/images/editorial/zitronen-blaubeer-kuechlein/v1/hero.webp",
+    "alt": "Vier klare Dessertgläser mit goldenen Zitronenkuchenwürfeln, violettem Blaubeerkompott und weißer Pflanzencreme, garniert mit Blaubeeren und Zitronenabrieb."
+  },
+  "ingredients": [
+    {
+      "id": "flour",
+      "amount": 120,
+      "unit": "g",
+      "name": "Weizenmehl",
+      "note": "Type 405"
+    },
+    {
+      "id": "sugar",
+      "amount": 95,
+      "unit": "g",
+      "name": "Zucker",
+      "note": "75 g für den Teig, 20 g für das Kompott"
+    },
+    {
+      "id": "baking-powder",
+      "amount": 1,
+      "unit": "TL",
+      "name": "Backpulver",
+      "note": "gestrichen, etwa 4 g"
+    },
+    {
+      "id": "baking-soda",
+      "amount": 0.25,
+      "unit": "TL",
+      "name": "Natron",
+      "note": "gestrichen, etwa 1 g"
+    },
+    {
+      "id": "salt",
+      "amount": 1,
+      "unit": "Prise",
+      "name": "Salz"
+    },
+    {
+      "id": "milk",
+      "amount": 120,
+      "unit": "ml",
+      "name": "Sojamilch",
+      "note": "ungesüßt, zimmerwarm"
+    },
+    {
+      "id": "oil",
+      "amount": 60,
+      "unit": "ml",
+      "name": "Rapsöl",
+      "note": "neutral im Geschmack"
+    },
+    {
+      "id": "lemon",
+      "amount": 1,
+      "unit": "große",
+      "name": "Bio-Zitrone",
+      "note": "benötigt: 2 TL feiner Abrieb und 50 ml Saft; bei wenig Saft eine zweite bereithalten"
+    },
+    {
+      "id": "vanilla",
+      "amount": 1,
+      "unit": "TL",
+      "name": "Vanilleextrakt"
+    },
+    {
+      "id": "berries",
+      "amount": 250,
+      "unit": "g",
+      "name": "frische Blaubeeren",
+      "note": "12 schöne Beeren zum Garnieren zurücklegen, den Rest einkochen"
+    },
+    {
+      "id": "cream",
+      "amount": 150,
+      "unit": "ml",
+      "name": "vegane Schlagsahne",
+      "note": "ungesüßt, ausdrücklich aufschlagbar, gut gekühlt"
+    },
+    {
+      "id": "icing-sugar",
+      "amount": 10,
+      "unit": "g",
+      "name": "Puderzucker"
+    }
+  ],
+  "steps": [
+    {
+      "id": "batter",
+      "title": "Ein Teig, der nach Zitrone duftet",
+      "instruction": "Heize den Ofen auf 175 °C Ober-/Unterhitze vor. Lege den Boden einer runden 18-cm-Form mit Backpapier aus und den Rand mit einem schmalen Papierstreifen. Wasche die Zitrone heiß, trockne sie und reibe nur die gelbe Schale fein ab. Stelle 1 TL Abrieb abgedeckt für die Creme und Garnitur zurück. Presse den Saft aus. Verrühre die Sojamilch mit 40 ml Zitronensaft und lass sie fünf Minuten stehen; kleine Flocken sind dabei normal. Mische Mehl, Backpulver, Natron, 75 g Zucker und Salz in einer Schüssel. Gib Öl, Vanille und 1 TL Abrieb zur Sojamilch, dann alles zu den trockenen Zutaten. Hebe mit einem Teigschaber nur so lange unter, bis kein trockenes Mehl mehr sichtbar ist.",
+      "illustration": {
+        "src": "/images/editorial/zitronen-blaubeer-kuechlein/v1/step-1.webp",
+        "alt": "Eine Hand mit mittelbraunem Hautton hebt hellen Zitronenteig mit einem Teigschaber in einer cremefarbenen Schüssel unter; kleine Zitronenschalenpunkte sind sichtbar.",
+        "markers": [
+          {
+            "subject": "batter",
+            "label": "Zitronenteig",
+            "x": 42,
+            "y": 65
+          }
+        ]
+      }
+    },
+    {
+      "id": "bake",
+      "title": "Goldgelb backen, in Ruhe auskühlen",
+      "instruction": "Fülle den Teig sofort in die vorbereitete Form und streiche ihn eben. Backe ihn auf der mittleren Schiene etwa 25–30 Minuten. Während der Kuchen backt beziehungsweise auskühlt, bereite das Kompott aus Schritt 3 zu. Prüfe den Kuchen schon ab Minute 20 mit einem Holzstäbchen in der Mitte: Feuchte Krümel sind in Ordnung, flüssiger Teig nicht. Ist er schon durchgebacken, nimm ihn heraus; die Garprobe entscheidet, nicht die Uhr. Haftet noch flüssiger Teig am Stäbchen, backe weitere 3–5 Minuten und prüfe erneut. Lass den Kuchen zehn Minuten in der Form stehen. Löse ihn dann vorsichtig, ziehe das Papier ab und lass ihn auf einem Gitter vollständig auskühlen, etwa weitere 35 Minuten. Erst wenn auch die Mitte kühl ist, schneidest du ihn in etwa 1,5 cm große Würfel.",
+      "illustration": {
+        "src": "/images/editorial/zitronen-blaubeer-kuechlein/v1/step-2.webp",
+        "alt": "Ein kleiner runder goldgelber Zitronenkuchen kühlt ohne Form auf einem Gitter an der Arbeitsfläche aus; noch keine Creme und keine Beeren.",
+        "markers": [
+          {
+            "subject": "cake",
+            "label": "Ausgekühlter Zitronenkuchen",
+            "x": 43,
+            "y": 53
+          }
+        ]
+      }
+    },
+    {
+      "id": "compote",
+      "title": "Aus Beeren wird eine violette Schicht",
+      "instruction": "Wasche die Blaubeeren und lege zwölf trockene, schöne Beeren für später zurück. Gib die übrigen Beeren mit 20 g Zucker und den restlichen 10 ml Zitronensaft in einen kleinen Topf. Erhitze sie bei mittlerer Hitze und rühre regelmäßig. Sobald Saft austritt, lass alles etwa 8–10 Minuten sanft köcheln. Zerdrücke einen Teil der Beeren mit dem Löffel. Das Kompott soll langsam und dickflüssig vom Löffel fließen; eine gezogene Spur am Topfboden bleibt kurz sichtbar. Prüfe einen kleinen Löffel Kompott auf einem Teller und lass ihn kurz abkühlen: Es soll sich kein wässriger Rand bilden. Ist es noch dünnflüssig, lass es unter Rühren einige Minuten weiter einkochen und prüfe erneut. Entscheidend ist die Konsistenz, nicht die genaue Kochdauer. Fülle das Kompott in eine flache Schale und lass es vollständig abkühlen. Warmes Kompott würde später die Creme schmelzen.",
+      "illustration": {
+        "src": "/images/editorial/zitronen-blaubeer-kuechlein/v1/step-3.webp",
+        "alt": "Eine dunkelbraune Hand rührt dickflüssiges violettes Blaubeerkompott mit erkennbaren Beeren in einem kleinen blauen Topf auf der linken Kochstelle.",
+        "markers": [
+          {
+            "subject": "compote",
+            "label": "Blaubeerkompott",
+            "x": 44,
+            "y": 66
+          }
+        ]
+      }
+    },
+    {
+      "id": "cream",
+      "title": "Eine kühle, weiche Cremewolke",
+      "instruction": "Gib die gut gekühlte vegane Schlagsahne in eine kühle, hohe Rührschüssel. Schlage sie nach Packungsangabe mit dem Handmixer auf. Sobald sie an Volumen gewinnt, siebe den Puderzucker dazu und schlage weiter, bis weiche Spitzen stehen bleiben. Hebe einen halben Teelöffel des zurückgelegten Zitronenabriebs mit einem Löffel unter; die andere Hälfte ist für die Garnitur. Die Creme soll leicht und löffelbar bleiben. Stelle sie bis zum Schichten kalt. Prüfe vorher nochmals, dass Kuchen und Kompott wirklich abgekühlt sind.",
+      "illustration": {
+        "src": "/images/editorial/zitronen-blaubeer-kuechlein/v1/step-4.webp",
+        "alt": "In einer hohen cremefarbenen Schüssel hält aufgeschlagene weiße Pflanzencreme weiche Spitzen; ein ruhender Schneebesen zeigt die Konsistenz.",
+        "markers": [
+          {
+            "subject": "cream",
+            "label": "Aufgeschlagene Pflanzencreme",
+            "x": 42,
+            "y": 58
+          }
+        ]
+      }
+    },
+    {
+      "id": "layer",
+      "title": "Drei Schichten, vier kleine Freuden",
+      "instruction": "Stelle vier saubere Dessertgläser mit jeweils etwa 350 ml bereit. Verteile die abgekühlten Kuchenwürfel gleichmäßig auf die Gläser, ohne sie festzudrücken. Gib das gesamte kalte Kompott mit einem kleinen Löffel darüber und verteile es vorsichtig bis an die Glaswand. Lass darüber Platz für die Creme und Garnitur. So entsteht über dem lockeren Kuchen eine gut sichtbare violette Schicht. Verteile anschließend die Creme gleichmäßig auf alle vier Gläser und forme mit dem Löffel eine weiche Haube. Lass oben etwas Platz für die Beeren. Die Reihenfolge bleibt in jedem Glas gleich: Kuchen, Kompott, Creme. Wie hoch die Gläser gefüllt sind, hängt davon ab, wie locker der Kuchen und wie luftig die Creme geworden sind.",
+      "illustration": {
+        "src": "/images/editorial/zitronen-blaubeer-kuechlein/v1/step-5.webp",
+        "alt": "Vier gerade Dessertgläser zeigen unten goldene Kuchenwürfel und darüber violettes Kompott; eine hellbraune Hand setzt gerade auf eines der Gläser die erste weiße Cremehaube.",
+        "markers": [
+          {
+            "subject": "cake",
+            "label": "Lockere Kuchenwürfel",
+            "x": 32,
+            "y": 76
+          },
+          {
+            "subject": "compote",
+            "label": "Kaltes Blaubeerkompott",
+            "x": 32,
+            "y": 67
+          },
+          {
+            "subject": "cream",
+            "label": "Die erste Cremehaube",
+            "x": 32,
+            "y": 61
+          }
+        ]
+      }
+    },
+    {
+      "id": "finish",
+      "title": "Noch zwölf Beeren und ein wenig Sonnengelb",
+      "instruction": "Setze auf jede Cremehaube drei der zurückgelegten Blaubeeren. Verteile den übrigen halben Teelöffel Zitronenabrieb darüber. Stelle die Gläser für mindestens 15 Minuten in den Kühlschrank, damit sich die Schichten setzen. Serviere sie anschließend kühl mit langen Dessertlöffeln. Beim Essen darf der Löffel bis zum Boden reichen: So kommen der saftige Kuchen, die fruchtige Schicht und die luftige Creme zusammen.",
+      "illustration": {
+        "src": "/images/editorial/zitronen-blaubeer-kuechlein/v1/step-6.webp",
+        "alt": "Vier fertige Zitronen-Blaubeer-Küchlein in klaren geraden Gläsern: jeweils goldener Kuchen, violettes Kompott und weiße Creme mit drei Blaubeeren und wenig Zitronenabrieb.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Zitronen-Blaubeer-Küchlein",
+            "x": 32,
+            "y": 63
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Die Creme muss aufschlagbar sein",
+      "text": "Pflanzliche Kochcreme ist hier kein Ersatz. Beachte die Kühlzeit auf deiner Packung. Ist deine Schlagsahne bereits gesüßt, lass den zusätzlichen Puderzucker zunächst weg und schmecke nach dem Aufschlagen ab."
+    },
+    {
+      "title": "Vorbereiten ohne Hektik",
+      "text": "Backe den Kuchen und koche das Kompott am Vortag. Bewahre beide vollständig abgekühlt und getrennt abgedeckt auf, das Kompott im Kühlschrank. Die Creme erst am Tag des Servierens aufschlagen und die Gläser zusammensetzen. Für kleinere Portionen dieselbe Menge auf sechs Gläser verteilen."
+    }
+  ],
+  "storage": "Fertige Gläser abgedeckt im Kühlschrank aufbewahren und möglichst innerhalb von 24 Stunden essen; die Kuchenwürfel werden mit der Zeit weicher. Für längere Vorbereitung Kuchen und Kompott getrennt lagern und erst am Serviertag mit der frischen Creme schichten.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "Lemon Blueberry Cake · Bianca Zapatka",
+    "url": "https://biancazapatka.com/en/lemon-blueberry-cake/"
+  },
+  "sources": [
+    {
+      "title": "Bianca Zapatka · Vegan Lemon Blueberry Cake",
+      "url": "https://biancazapatka.com/en/lemon-blueberry-cake/",
+      "note": "Inspiration für Zitronenkuchen und Blaubeerfüllung. Eigene Glasdessert-Adaption: verkleinerter Kuchen, weniger Zucker, pflanzliche Schlagsahne statt Butter-Frischkäse-Frosting, konkrete Schichtmengen und Kühlfolge. Originalfoto betrachtet; Textbeschreibung der goldenen Krume und hellen Creme als visuelle Anregung für das selbst generierte Titelbild. Kein Originalfoto veröffentlicht."
+    }
+  ],
+  "researchedAt": "2026-11-06"
+}

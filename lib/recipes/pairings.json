@@ -1,0 +1,483 @@
+{
+  "french-onion-pasta": {
+    "profile": [
+      "cremig",
+      "geschmort",
+      "würzig"
+    ],
+    "related": [
+      {
+        "id": "baked-feta-gnocchi",
+        "relation": "ähnlich",
+        "reason": "Auch die Gnocchi schmiegen sich in eine cremige Sauce."
+      },
+      {
+        "id": "green-goddess-salat",
+        "relation": "dazu",
+        "reason": "Knackiges Grün und frische Kräuter ergänzen die süßen Schmorzwiebeln."
+      },
+      {
+        "id": "seidentofu-schokomousse",
+        "relation": "danach",
+        "reason": "Kühle, dunkle Schokomousse zum Löffeln nach der warmen Pasta."
+      }
+    ]
+  },
+  "kokos-limetten-dumplings": {
+    "profile": [
+      "cremig",
+      "zitrisch",
+      "würzig"
+    ],
+    "related": [
+      {
+        "id": "baked-feta-gnocchi",
+        "relation": "ähnlich",
+        "reason": "Ein weiterer Auflauf mit weichem Kern und cremiger Sauce."
+      },
+      {
+        "id": "crispy-rice-salad",
+        "relation": "dazu",
+        "reason": "Knuspriger Reis greift die Limette aus den Dumplings auf."
+      },
+      {
+        "id": "zitronen-blaubeer-kuechlein",
+        "relation": "danach",
+        "reason": "Zitrone und Beeren führen die frische Note weiter."
+      }
+    ]
+  },
+  "crispy-rice-salad": {
+    "profile": [
+      "knusprig",
+      "zitrisch",
+      "frisch"
+    ],
+    "related": [
+      {
+        "id": "harissa-gurkensalat",
+        "relation": "ähnlich",
+        "reason": "Gurke und Schärfe treffen hier auf frischen Dill."
+      },
+      {
+        "id": "kokos-limetten-dumplings",
+        "relation": "dazu",
+        "reason": "Warme Kokossauce und knuspriger Reis teilen sich die Limettennote."
+      },
+      {
+        "id": "seidentofu-schokomousse",
+        "relation": "danach",
+        "reason": "Samtige Schokolade rundet das pikante Dressing ab."
+      }
+    ]
+  },
+  "baked-feta-gnocchi": {
+    "profile": [
+      "cremig",
+      "geröstet",
+      "fruchtig"
+    ],
+    "related": [
+      {
+        "id": "french-onion-pasta",
+        "relation": "ähnlich",
+        "reason": "Sauce und Pasta garen gemeinsam und werden schön sämig."
+      },
+      {
+        "id": "green-goddess-salat",
+        "relation": "dazu",
+        "reason": "Ein frischer Kräutersalat neben den heißen Ofengnocchi."
+      },
+      {
+        "id": "joghurt-keks-tiramisu",
+        "relation": "danach",
+        "reason": "Ein kühles Löffeldessert mit Kaffee zum Abschluss."
+      }
+    ]
+  },
+  "green-goddess-salat": {
+    "profile": [
+      "frisch",
+      "kräutrig",
+      "knackig"
+    ],
+    "related": [
+      {
+        "id": "quinoa-kichererbsen-salat",
+        "relation": "ähnlich",
+        "reason": "Ein weiterer Salat mit knackiger Gurke und frischem Dressing."
+      },
+      {
+        "id": "french-onion-pasta",
+        "relation": "dazu",
+        "reason": "Die Schmorzwiebel-Pasta verträgt einen frischen Gegenpart."
+      },
+      {
+        "id": "zitronen-blaubeer-kuechlein",
+        "relation": "danach",
+        "reason": "Zitronenküchlein bringen etwas Süßes und Frisches auf den Tisch."
+      }
+    ]
+  },
+  "harissa-gurkensalat": {
+    "profile": [
+      "scharf",
+      "knackig",
+      "kräutrig"
+    ],
+    "related": [
+      {
+        "id": "crispy-rice-salad",
+        "relation": "ähnlich",
+        "reason": "Auch der Reissalat setzt auf Gurke und ein pikantes Dressing."
+      },
+      {
+        "id": "knusprige-ofenkartoffeln",
+        "relation": "dazu",
+        "reason": "Heiße Rosmarinkartoffeln passen zu den kühlen Fächergurken."
+      },
+      {
+        "id": "seidentofu-schokomousse",
+        "relation": "danach",
+        "reason": "Eine kühle Schokocreme nach der Harissa-Schärfe."
+      }
+    ]
+  },
+  "quinoa-kichererbsen-salat": {
+    "profile": [
+      "nussig",
+      "zitrisch",
+      "knackig"
+    ],
+    "related": [
+      {
+        "id": "green-goddess-salat",
+        "relation": "ähnlich",
+        "reason": "Grünes Gemüse und Kräuterdressing für die nächste Salatschüssel."
+      },
+      {
+        "id": "feta-creme-ofentomaten",
+        "relation": "dazu",
+        "reason": "Warme Ofentomaten und cremiger Dip ergänzen die Quinoa."
+      },
+      {
+        "id": "pistazien-knusper-brownies",
+        "relation": "danach",
+        "reason": "Die Pistazie aus dem Salat taucht im Brownie wieder auf."
+      }
+    ]
+  },
+  "feta-creme-ofentomaten": {
+    "profile": [
+      "cremig",
+      "geröstet",
+      "fruchtig"
+    ],
+    "related": [
+      {
+        "id": "baked-feta-gnocchi",
+        "relation": "ähnlich",
+        "reason": "Tomate und veganer Feta kommen hier als warmes Hauptgericht wieder."
+      },
+      {
+        "id": "knusprige-ofenkartoffeln",
+        "relation": "dazu",
+        "reason": "Die knusprigen Kartoffelecken lassen sich in die Creme dippen."
+      },
+      {
+        "id": "zitronen-vanille-crinkle-cake",
+        "relation": "danach",
+        "reason": "Feine Filoteigschichten und warme Vanille zum Abschluss."
+      }
+    ]
+  },
+  "knusprige-ofenkartoffeln": {
+    "profile": [
+      "knusprig",
+      "geröstet",
+      "kräutrig"
+    ],
+    "related": [
+      {
+        "id": "spitzkohl-knoblauchcreme",
+        "relation": "ähnlich",
+        "reason": "Auch beim Spitzkohl bringen geröstete Kanten viel Geschmack."
+      },
+      {
+        "id": "feta-creme-ofentomaten",
+        "relation": "dazu",
+        "reason": "Die Feta-Creme ist ein zweiter Dip für die Kartoffeln."
+      },
+      {
+        "id": "basque-cheesecake",
+        "relation": "danach",
+        "reason": "Nach den knusprigen Kartoffeln folgt ein cremiges Kuchenstück."
+      }
+    ]
+  },
+  "spitzkohl-knoblauchcreme": {
+    "profile": [
+      "geröstet",
+      "cremig",
+      "würzig"
+    ],
+    "related": [
+      {
+        "id": "knusprige-ofenkartoffeln",
+        "relation": "ähnlich",
+        "reason": "Goldene Kartoffelkanten für alle, die Röstaromen mögen."
+      },
+      {
+        "id": "harissa-gurkensalat",
+        "relation": "dazu",
+        "reason": "Kühle Gurken und Dill ergänzen die warme Knoblauchcreme."
+      },
+      {
+        "id": "zitronen-blaubeer-kuechlein",
+        "relation": "danach",
+        "reason": "Ein fruchtiges Küchlein nach dem würzigen Kohl."
+      }
+    ]
+  },
+  "joghurt-keks-tiramisu": {
+    "profile": [
+      "cremig",
+      "kaffee",
+      "kakao"
+    ],
+    "related": [
+      {
+        "id": "seidentofu-schokomousse",
+        "relation": "ähnlich",
+        "reason": "Auch die Mousse wird kühl aus dem Glas gelöffelt."
+      },
+      {
+        "id": "pistazien-knusper-brownies",
+        "relation": "dazu",
+        "reason": "Ein kleines Stück Pistazienknusper zum Kaffee."
+      },
+      {
+        "id": "french-onion-pasta",
+        "relation": "davor",
+        "reason": "Cremige Pasta als warmer Auftakt vor dem kühlen Dessert."
+      }
+    ]
+  },
+  "zitronen-blaubeer-kuechlein": {
+    "profile": [
+      "fruchtig",
+      "zitrisch",
+      "cremig"
+    ],
+    "related": [
+      {
+        "id": "zitronen-vanille-crinkle-cake",
+        "relation": "ähnlich",
+        "reason": "Vanillecreme in einer knusprigen Kuchenvariante."
+      },
+      {
+        "id": "hafer-bananen-pancakes",
+        "relation": "dazu",
+        "reason": "Zusammen mit Pancakes wird daraus ein süßer Brunch."
+      },
+      {
+        "id": "green-goddess-salat",
+        "relation": "davor",
+        "reason": "Ein knackiger Kräutersalat vor dem fruchtigen Küchlein."
+      }
+    ]
+  },
+  "basque-cheesecake": {
+    "profile": [
+      "cremig",
+      "gebacken",
+      "geröstet"
+    ],
+    "related": [
+      {
+        "id": "zitronen-vanille-crinkle-cake",
+        "relation": "ähnlich",
+        "reason": "Auch dieser Ofenkuchen verbindet Creme und gebräunte Ränder."
+      },
+      {
+        "id": "zitronen-blaubeer-kuechlein",
+        "relation": "dazu",
+        "reason": "Blaubeere und Zitrone bringen Frische auf den Kuchenteller."
+      },
+      {
+        "id": "knusprige-ofenkartoffeln",
+        "relation": "davor",
+        "reason": "Rosmarinkartoffeln als herzhaftes Gericht vor dem Käsekuchen."
+      }
+    ]
+  },
+  "schoko-tassenkuchen": {
+    "profile": [
+      "schokoladig",
+      "gebacken",
+      "saftig"
+    ],
+    "related": [
+      {
+        "id": "pistazien-knusper-brownies",
+        "relation": "ähnlich",
+        "reason": "Mehr Schokolade, diesmal mit Pistazien und Biss."
+      },
+      {
+        "id": "seidentofu-schokomousse",
+        "relation": "dazu",
+        "reason": "Ein Löffel kühle Mousse passt zum warmen Tassenkuchen."
+      },
+      {
+        "id": "crispy-rice-salad",
+        "relation": "davor",
+        "reason": "Ein frischer Reissalat vor dem warmen Schokodessert."
+      }
+    ]
+  },
+  "hafer-bananen-pancakes": {
+    "profile": [
+      "fruchtig",
+      "haferig",
+      "fluffig"
+    ],
+    "related": [
+      {
+        "id": "saftiges-bananenbrot",
+        "relation": "ähnlich",
+        "reason": "Reife Bananen machen auch das Frühstücksbrot süß."
+      },
+      {
+        "id": "apfel-zimt-overnight-oats",
+        "relation": "dazu",
+        "reason": "Kühle Apfel-Zimt-Oats neben warmen Pancakes beim Brunch."
+      },
+      {
+        "id": "zitronen-blaubeer-kuechlein",
+        "relation": "dazu",
+        "reason": "Ein fruchtiges Küchlein als kleine Ergänzung zum Brunch."
+      }
+    ]
+  },
+  "apfel-zimt-overnight-oats": {
+    "profile": [
+      "fruchtig",
+      "haferig",
+      "cremig"
+    ],
+    "related": [
+      {
+        "id": "hafer-bananen-pancakes",
+        "relation": "ähnlich",
+        "reason": "Hafer und Obst schmecken auch als warmer Pancake."
+      },
+      {
+        "id": "saftiges-bananenbrot",
+        "relation": "dazu",
+        "reason": "Eine Scheibe Bananenbrot zum Frühstücksglas."
+      },
+      {
+        "id": "zitronen-blaubeer-kuechlein",
+        "relation": "dazu",
+        "reason": "Blaubeeren und Zitrone ergänzen die Apfelnote beim Brunch."
+      }
+    ]
+  },
+  "saftiges-bananenbrot": {
+    "profile": [
+      "fruchtig",
+      "gebacken",
+      "saftig"
+    ],
+    "related": [
+      {
+        "id": "hafer-bananen-pancakes",
+        "relation": "ähnlich",
+        "reason": "Eine zweite Frühstücksidee mit reifen Bananen."
+      },
+      {
+        "id": "apfel-zimt-overnight-oats",
+        "relation": "dazu",
+        "reason": "Apfel und Zimt ergänzen das saftige Brot beim Frühstück."
+      },
+      {
+        "id": "joghurt-keks-tiramisu",
+        "relation": "dazu",
+        "reason": "Für die Kaffeetafel: Bananenbrot und ein kleines Tiramisu."
+      }
+    ]
+  },
+  "zitronen-vanille-crinkle-cake": {
+    "profile": [
+      "kokos",
+      "vanille",
+      "knusprig",
+      "suess"
+    ],
+    "related": [
+      {
+        "id": "zitronen-blaubeer-kuechlein",
+        "relation": "ähnlich",
+        "reason": "Wenn du cremige Desserts magst, probiere auch die Küchlein mit Beeren."
+      },
+      {
+        "id": "basque-cheesecake",
+        "relation": "dazu",
+        "reason": "Zwei Texturen für die Kaffeetafel: knuspriger Filo und cremiger Käsekuchen."
+      },
+      {
+        "id": "feta-creme-ofentomaten",
+        "relation": "davor",
+        "reason": "Warme Ofentomaten mit veganer Feta-Creme als herzhafter Auftakt."
+      }
+    ]
+  },
+  "pistazien-knusper-brownies": {
+    "profile": [
+      "schokoladig",
+      "nussig",
+      "knusprig"
+    ],
+    "related": [
+      {
+        "id": "schoko-tassenkuchen",
+        "relation": "ähnlich",
+        "reason": "Eine schnelle Alternative für den nächsten Schokomoment."
+      },
+      {
+        "id": "seidentofu-schokomousse",
+        "relation": "dazu",
+        "reason": "Knuspriger Brownie trifft auf kühle, glatte Mousse."
+      },
+      {
+        "id": "quinoa-kichererbsen-salat",
+        "relation": "davor",
+        "reason": "Pistazien verbinden den Quinoasalat mit dem Dessert."
+      }
+    ]
+  },
+  "seidentofu-schokomousse": {
+    "profile": [
+      "schokoladig",
+      "cremig",
+      "kühl"
+    ],
+    "related": [
+      {
+        "id": "joghurt-keks-tiramisu",
+        "relation": "ähnlich",
+        "reason": "Noch ein cremiges Dessert zum Löffeln, diesmal mit Kaffee."
+      },
+      {
+        "id": "pistazien-knusper-brownies",
+        "relation": "dazu",
+        "reason": "Ein Stück Pistazien-Brownie setzt einen knusprigen Kontrast."
+      },
+      {
+        "id": "french-onion-pasta",
+        "relation": "davor",
+        "reason": "Erst warme Zwiebelpasta, dann kühle Schokolade."
+      }
+    ]
+  }
+}

@@ -1,0 +1,225 @@
+{
+  "catalogId": "knusprige-ofenkartoffeln",
+  "version": 1,
+  "slug": "knusprige-ofenkartoffeln",
+  "title": "Knusprige Ofenkartoffeln",
+  "emoji": "🥔",
+  "kind": "herzhaft",
+  "meal": "Hauptgericht",
+  "status": "published",
+  "intro": "Wer das Blech auf den Tisch bringt, darf die erste Kartoffel probieren. Am besten eine mit dunkelgoldener Schnittfläche, noch so heiß, dass der kühle Schnittlauchdip gerade recht kommt.",
+  "story": {
+    "eyebrow": "Vom Blech in die Mitte",
+    "sticker": [
+      "Goldene",
+      "Ecken"
+    ],
+    "ingredientNote": "Kleine festkochende Kartoffeln mit dünner Schale behalten beim Rösten ihre Form. Ein dicker, ungesüßter Sojajoghurt ergibt einen Dip, der an den Ecken hängen bleibt."
+  },
+  "servings": 2,
+  "prepMinutes": 10,
+  "cookMinutes": 40,
+  "difficulty": "einfach",
+  "tags": [
+    "Vom Blech",
+    "Rosmarin",
+    "Mit Dip"
+  ],
+  "hero": {
+    "src": "/images/editorial/knusprige-ofenkartoffeln/v1/hero.webp",
+    "alt": "Ein Terrakottateller voller goldbrauner Rosmarinkartoffeln, dahinter ein Schälchen heller Kräuterdip."
+  },
+  "ingredients": [
+    {
+      "id": "potatoes",
+      "amount": 700,
+      "unit": "g",
+      "name": "kleine festkochende Kartoffeln"
+    },
+    {
+      "id": "oil",
+      "amount": 2,
+      "unit": "EL",
+      "name": "Olivenöl"
+    },
+    {
+      "id": "rosemary",
+      "amount": 2,
+      "unit": "Zweige",
+      "name": "frischer Rosmarin"
+    },
+    {
+      "id": "salt",
+      "amount": 0.5,
+      "unit": "TL",
+      "name": "Salz",
+      "note": "auf Kartoffeln und Dip verteilen"
+    },
+    {
+      "id": "yogurt",
+      "amount": 200,
+      "unit": "g",
+      "name": "Sojajoghurt natur",
+      "note": "ungesüßt, möglichst stichfest"
+    },
+    {
+      "id": "chives",
+      "amount": 0.5,
+      "unit": "Bund",
+      "name": "Schnittlauch"
+    },
+    {
+      "id": "lemon",
+      "amount": 1,
+      "unit": "TL",
+      "name": "Zitronensaft"
+    },
+    {
+      "id": "pepper",
+      "amount": 1,
+      "unit": "Prise",
+      "name": "schwarzer Pfeffer"
+    }
+  ],
+  "steps": [
+    {
+      "id": "cut",
+      "title": "Kleine halbieren, große vierteln",
+      "instruction": "Heize den Ofen auf 200 °C Ober-/Unterhitze vor. Bürste die Kartoffeln unter Wasser sauber und trockne sie mit einem Geschirrtuch ab. Lass die dünne Schale dran. Halbiere kleine Kartoffeln der Länge nach und viertle größere. Orientiere dich an der dicksten Stelle: Mit etwa zwei bis drei Zentimetern garen die Stücke ungefähr gleich schnell.",
+      "illustration": {
+        "src": "/images/editorial/knusprige-ofenkartoffeln/v1/step-1.webp",
+        "alt": "Kleine Kartoffeln mit Schale auf einem Brett, daneben halbierte und geviertelte Stücke.",
+        "markers": [
+          {
+            "subject": "halves",
+            "label": "Kartoffelhälften",
+            "x": 24,
+            "y": 65
+          },
+          {
+            "subject": "quarters",
+            "label": "Kartoffelviertel",
+            "x": 54,
+            "y": 52
+          }
+        ]
+      }
+    },
+    {
+      "id": "spread",
+      "title": "Jedes Stück bekommt Platz auf dem Blech",
+      "instruction": "Streife die Rosmarinnadeln von den Zweigen und lege ein paar Spitzen zum Servieren beiseite. Hacke die übrigen Nadeln fein. Mische sie in einer großen Schüssel mit Olivenöl, der Hälfte des Salzes und den Kartoffeln. Wende die Stücke, bis auch die Schnittflächen dünn glänzen. Belege ein Blech mit Backpapier und setze die Stücke mit der Schale nach unten darauf. Lass etwa einen Fingerbreit Platz dazwischen. Schiebe das Blech auf die mittlere Schiene und stelle einen Timer auf 30 Minuten.",
+      "illustration": {
+        "src": "/images/editorial/knusprige-ofenkartoffeln/v1/step-2.webp",
+        "alt": "Mit Öl und Rosmarin benetzte rohe Kartoffelstücke liegen mit etwas Abstand auf dem Backblech.",
+        "markers": [
+          {
+            "subject": "oiled",
+            "label": "Kartoffeln mit Rosmarin",
+            "x": 40,
+            "y": 69
+          }
+        ]
+      }
+    },
+    {
+      "id": "dip",
+      "title": "Den Schnittlauchdip anrühren",
+      "instruction": "Während die Kartoffeln rösten, schneide den Schnittlauch mit einem scharfen Messer oder einer Küchenschere in feine Röllchen. Verrühre den Sojajoghurt mit Zitronensaft, dem übrigen Salz und Pfeffer. Hebe den Schnittlauch unter und stelle den Dip bis zum Essen kalt. So bleibt er dick genug, um an einer heißen Kartoffelecke zu haften.",
+      "illustration": {
+        "src": "/images/editorial/knusprige-ofenkartoffeln/v1/step-3.webp",
+        "alt": "Feine Schnittlauchröllchen im hellen Sojajoghurtdip, daneben Schnittlauch und Zitrone.",
+        "markers": [
+          {
+            "subject": "dip",
+            "label": "Schnittlauchdip",
+            "x": 47,
+            "y": 56
+          },
+          {
+            "subject": "chives",
+            "label": "Schnittlauch",
+            "x": 20,
+            "y": 55
+          },
+          {
+            "subject": "lemon",
+            "label": "Zitrone",
+            "x": 26,
+            "y": 68
+          }
+        ]
+      }
+    },
+    {
+      "id": "roast",
+      "title": "Goldene Kanten, weiche Mitte",
+      "instruction": "Schau nach 30 Minuten aufs Blech. Die Schnittflächen sollten Farbe bekommen und die dünnen Kanten dunkler werden. Bräunt die hintere Reihe schneller, drehe das Blech um 180 Grad. Prüfe nach insgesamt etwa 35–40 Minuten das dickste Stück mit einer Gabel. Gleitet sie leicht bis zur Mitte und sind die Kanten goldbraun, sind die Kartoffeln fertig. Spürst du noch Widerstand, gib ihnen weitere fünf Minuten. Stelle das heiße Blech auf einen hitzefesten Untersetzer.",
+      "illustration": {
+        "src": "/images/editorial/knusprige-ofenkartoffeln/v1/step-4.webp",
+        "alt": "Eine Gabel prüft ein gegartes Kartoffelstück zwischen goldbraun gerösteten Kartoffeln.",
+        "markers": [
+          {
+            "subject": "center",
+            "label": "Weiche Mitte",
+            "x": 46,
+            "y": 64
+          },
+          {
+            "subject": "edge",
+            "label": "Gebräunte Schnittfläche",
+            "x": 24,
+            "y": 76
+          }
+        ]
+      }
+    },
+    {
+      "id": "serve",
+      "title": "Heiß vom Blech in den kühlen Dip",
+      "instruction": "Löse die Kartoffeln mit einem flachen Wender vom Papier und häufe sie locker auf einen flachen Teller. Zupfe die zurückbehaltenen Rosmarinspitzen darüber. Rühre den kalten Dip noch einmal kurz durch und stelle ihn in einem eigenen Schälchen dazu. Serviere gleich, solange die Schnittflächen noch knuspern.",
+      "illustration": {
+        "src": "/images/editorial/knusprige-ofenkartoffeln/v1/step-5.webp",
+        "alt": "Ein Terrakottateller voller goldbrauner Rosmarinkartoffeln, dahinter ein Schälchen heller Kräuterdip.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Knusprige Ofenkartoffeln",
+            "x": 37,
+            "y": 50
+          },
+          {
+            "subject": "dip",
+            "label": "Schnittlauchdip",
+            "x": 64,
+            "y": 40
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Wenn das Blech zu klein ist",
+      "text": "Nimm lieber zwei Bleche, als die Kartoffeln übereinanderzulegen. Bei 180 °C Umluft kannst du beide zugleich rösten. Tausche die Bleche nach etwa 25 Minuten, damit beide Ladungen gleichmäßig Farbe bekommen."
+    },
+    {
+      "title": "Ein Stück probieren",
+      "text": "Zwei gleich große Stücke können je nach Kartoffelsorte unterschiedlich schnell garen. Wenn du unsicher bist, teile das dickste mit einer Gabel. Die Mitte soll gleichmäßig weich sein, auch direkt unter der Schale."
+    }
+  ],
+  "storage": "Lass übrige Kartoffeln kurz ausdampfen und stelle sie in einer verschlossenen Dose kalt. Bewahre den Dip getrennt im Kühlschrank auf. Zum Aufwärmen die Kartoffeln wieder flach auf ein Blech legen und bei 200 °C erhitzen, bis sie innen heiß sind und die Ränder wieder knuspern.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "Rosmarinkartoffeln mit Kräuterquark · Veganuary",
+    "url": "https://veganuary.com/de/rezepte/rosmarinkartoffeln-mit-kraeuterquark/"
+  },
+  "sources": [
+    {
+      "title": "Veganuary · Rosmarinkartoffeln mit Kräuterquark",
+      "url": "https://veganuary.com/de/rezepte/rosmarinkartoffeln-mit-kraeuterquark/",
+      "note": "Vorlage für Rosmarinkartoffeln mit Schale und Schnittlauch-Sojadip. Eigene Fassung mit gebräunten Schnittflächen und frischer Zitrone."
+    }
+  ],
+  "researchedAt": "2026-11-04"
+}

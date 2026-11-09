@@ -1,0 +1,169 @@
+{
+  "catalogId": "joghurt-keks-tiramisu",
+  "version": 1,
+  "slug": "joghurt-keks-tiramisu",
+  "title": "Joghurt-Keks-Tiramisu",
+  "emoji": "☕",
+  "kind": "suess",
+  "meal": "Dessert",
+  "status": "published",
+  "intro": "Das Dessert für morgen passt heute noch zwischen Abendessen und Abwasch. Zehn Minuten brauchst du für die Creme und die Kekse. Im Kühlschrank werden ihre eingetauchten Kanten weich, und kurz vor dem ersten Löffel kommt eine dünne Schicht Kakao darüber.",
+  "story": {
+    "eyebrow": "Ein Dessert aus dem Kühlschrank",
+    "sticker": [
+      "Kaffee",
+      "& Kakao"
+    ],
+    "ingredientNote": "Für die Standfestigkeit zählt der Joghurt. Nimm einen dickcremigen Vanille-Sojajoghurt nach griechischer Art oder eine pflanzliche Skyr-Alternative mit Vanille."
+  },
+  "servings": 2,
+  "prepMinutes": 10,
+  "cookMinutes": 0,
+  "restMinutes": 240,
+  "difficulty": "einfach",
+  "tags": [
+    "Ohne Backen",
+    "Zum Vorbereiten",
+    "Kaffee",
+    "Ohne Alkohol"
+  ],
+  "hero": {
+    "src": "/images/editorial/joghurt-keks-tiramisu/v1/hero.webp",
+    "alt": "Kaffeecreme mit aufrecht stehenden Karamellkeksen und Kakao in einer niedrigen runden Glasschale für zwei."
+  },
+  "ingredients": [
+    {
+      "id": "yogurt",
+      "amount": 350,
+      "unit": "g",
+      "name": "dickcremiger Vanille-Sojajoghurt",
+      "note": "gekühlt, nach griechischer Art"
+    },
+    {
+      "id": "espresso",
+      "amount": 25,
+      "unit": "ml",
+      "name": "Espresso",
+      "note": "abgekühlt, gern entkoffeiniert"
+    },
+    {
+      "id": "biscuits",
+      "amount": 8,
+      "unit": "",
+      "name": "vegane Karamellkekse",
+      "note": "kleine rechteckige Kekse, insgesamt etwa 60 g"
+    },
+    {
+      "id": "cocoa",
+      "amount": 1,
+      "unit": "TL",
+      "name": "ungesüßter Backkakao"
+    }
+  ],
+  "steps": [
+    {
+      "id": "prepare",
+      "title": "Mit kaltem Espresso starten",
+      "instruction": "Brühe einen kleinen Espresso und miss 25 ml ab. Gieße ihn zum Abkühlen in eine kleine Tasse. Gib den kalten Vanille-Sojajoghurt in eine niedrige, runde Glasschale mit etwa 14 cm Durchmesser und mindestens 500 ml Inhalt. Ziehe mit dem Löffel eine Spur durch den Joghurt. Bleibt sie kurz stehen, ist er dick genug für die Kekse.",
+      "illustration": {
+        "src": "/images/editorial/joghurt-keks-tiramisu/v1/step-1.webp",
+        "alt": "Eine Glasschale mit dickem Vanille-Sojajoghurt und eine kleine Tasse Espresso stehen nebeneinander.",
+        "markers": [
+          {
+            "subject": "yogurt",
+            "label": "Vanille-Sojajoghurt",
+            "x": 39,
+            "y": 46
+          },
+          {
+            "subject": "espresso",
+            "label": "Espresso",
+            "x": 66,
+            "y": 64
+          }
+        ]
+      }
+    },
+    {
+      "id": "swirl",
+      "title": "Den Kaffee löffelweise einziehen lassen",
+      "instruction": "Sobald der Espresso abgekühlt ist, rühre ihn teelöffelweise mit wenigen Zügen unter den Joghurt. Probiere zwischendurch. Sobald dir die Kaffeenote schmeckt und der Löffel noch eine Spur zieht, hör auf. Ein paar dunklere Schlieren dürfen bleiben. Wenn dein Joghurt schon nach der Hälfte weich wird, behalte den übrigen Espresso zum Trinken.",
+      "illustration": {
+        "src": "/images/editorial/joghurt-keks-tiramisu/v1/step-2.webp",
+        "alt": "Ein Löffel zieht braune Espressoschlieren durch die dicke, hellbeige Creme.",
+        "markers": [
+          {
+            "subject": "coffee",
+            "label": "Kaffeecreme",
+            "x": 40,
+            "y": 56
+          }
+        ]
+      }
+    },
+    {
+      "id": "nest",
+      "title": "Die Kekse hochkant einsetzen",
+      "instruction": "Stelle vier Karamellkekse mit der langen Kante nach unten in die Creme. Drücke sie ganz hinein und streiche etwas Joghurt darüber. Setze die übrigen vier versetzt dazwischen und lass ihre oberen Kanten herausragen. Zwischen benachbarten Keksen sollte immer ein wenig Creme sitzen. Decke die Schale so ab, dass der Deckel die Kekse nicht berührt.",
+      "illustration": {
+        "src": "/images/editorial/joghurt-keks-tiramisu/v1/step-3.webp",
+        "alt": "Rechteckige Karamellkekse stehen aufrecht im Kaffeejoghurt. Eine Hand setzt den letzten ein.",
+        "markers": [
+          {
+            "subject": "biscuit",
+            "label": "Karamellkeks",
+            "x": 33,
+            "y": 53
+          }
+        ]
+      }
+    },
+    {
+      "id": "dust",
+      "title": "Kalt ziehen lassen und mit Kakao abschließen",
+      "instruction": "Stelle die abgedeckte Schale für mindestens 4 Stunden in den Kühlschrank, gern auch über Nacht. Prüfe mit einem Teelöffel an einer eingetauchten Kekskante. Lässt sie sich leicht durchstechen, ist das Dessert löffelfertig. Gib den Backkakao erst kurz vor dem Servieren in ein feines Sieb und klopfe ihn dünn über die Oberfläche.",
+      "illustration": {
+        "src": "/images/editorial/joghurt-keks-tiramisu/v1/step-4.webp",
+        "alt": "Das fertige Dessert in der runden Schale mit Kakao auf der Creme und vier sichtbaren Keksen.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Joghurt-Keks-Tiramisu",
+            "x": 43,
+            "y": 51
+          },
+          {
+            "subject": "cocoa",
+            "label": "Backkakao",
+            "x": 43,
+            "y": 48
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Falls dein Joghurt zu weich ist",
+      "text": "Lass ihn vorab in einem mit einem sauberen Tuch ausgelegten Sieb im Kühlschrank abtropfen. Wiege die 350 g erst danach ab. So bleibt die Creme auch mit etwas Kaffee löffelfest."
+    },
+    {
+      "title": "Wann der Kakao draufkommt",
+      "text": "Wenn du die Schale am Vorabend füllst, stell das Sieb schon bereit und warte mit dem Bestäuben bis zum Essen. So bleibt der Kakao oben trocken und duftet beim ersten Löffel."
+    }
+  ],
+  "storage": "Abgedeckt im Kühlschrank aufbewahren und innerhalb von zwei Tagen essen. Die Kekse werden mit der Zeit immer weicher. Falls du nur eine Portion servierst, bestäube auch nur diese mit Kakao.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "Everything Delish",
+    "url": "https://everything-delish.com/viral-japanese-cheesecake/"
+  },
+  "sources": [
+    {
+      "title": "Everything Delish · Viral Japanese Cheesecake: Tiramisu Style",
+      "url": "https://everything-delish.com/viral-japanese-cheesecake/",
+      "note": "Vorbild für die aufrechten Kekse in Kaffeejoghurt, die Kühlzeit und den Kakaoabschluss."
+    }
+  ],
+  "researchedAt": "2026-11-04"
+}

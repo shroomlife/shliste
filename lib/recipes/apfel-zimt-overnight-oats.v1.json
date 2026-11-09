@@ -1,0 +1,179 @@
+{
+  "catalogId": "apfel-zimt-overnight-oats",
+  "version": 1,
+  "slug": "apfel-zimt-overnight-oats",
+  "title": "Apfel-Zimt-Overnight-Oats",
+  "emoji": "🍎",
+  "kind": "suess",
+  "meal": "Frühstück",
+  "status": "published",
+  "intro": "Abends kurz rühren, morgens den Apfel schneiden. Im Kühlschrank werden die Haferflocken weich und cremig, während du längst etwas anderes machst. Zwei Gläser, ein Hauch Zimt und ein frischer Biss – so darf der Tag anfangen.",
+  "story": {
+    "eyebrow": "Heute gerührt. Morgen gelöffelt.",
+    "sticker": [
+      "Morgen",
+      "ist schon da"
+    ],
+    "ingredientNote": "Zarte Haferflocken werden über Nacht besonders weich. Der Apfel kommt erst morgens dazu: So bleiben seine Würfel frisch und knackig."
+  },
+  "servings": 2,
+  "prepMinutes": 10,
+  "cookMinutes": 0,
+  "restMinutes": 480,
+  "difficulty": "einfach",
+  "tags": [
+    "Zum Vorbereiten",
+    "Ohne Kochen",
+    "Apfel & Zimt"
+  ],
+  "hero": {
+    "src": "/images/editorial/apfel-zimt-overnight-oats/v1/hero.webp",
+    "alt": "Zwei klare Frühstücksgläser mit cremigen Haferflocken und kleinen frischen Apfelwürfeln auf hellem Leinen."
+  },
+  "ingredients": [
+    {
+      "id": "oats",
+      "amount": 80,
+      "unit": "g",
+      "name": "zarte Haferflocken"
+    },
+    {
+      "id": "milk",
+      "amount": 200,
+      "unit": "ml",
+      "name": "Hafermilch",
+      "note": "plus bei Bedarf 1–2 EL pro Glas zum Lockern"
+    },
+    {
+      "id": "yogurt",
+      "amount": 100,
+      "unit": "g",
+      "name": "Sojajoghurt Natur",
+      "note": "ungesüßt"
+    },
+    {
+      "id": "cinnamon",
+      "amount": 0.5,
+      "unit": "TL",
+      "name": "gemahlener Zimt"
+    },
+    {
+      "id": "apple",
+      "amount": 1,
+      "unit": "",
+      "name": "Apfel",
+      "note": "etwa 180 g, süß-säuerlich und mit roter Schale"
+    }
+  ],
+  "steps": [
+    {
+      "id": "mix",
+      "title": "Am Abend die Basis anrühren",
+      "instruction": "Gib Haferflocken, 200 ml Hafermilch, Sojajoghurt und Zimt in eine kleine Rührschüssel. Rühre mit einem Löffel gründlich bis zum Boden und am Rand entlang. Alle Flocken sollen feucht sein, der Joghurt soll keine weißen Klümpchen mehr bilden. Die Mischung ist jetzt noch locker und etwas flüssig – über Nacht nehmen die Flocken die Flüssigkeit auf.",
+      "illustration": {
+        "src": "/images/editorial/apfel-zimt-overnight-oats/v1/step-1.webp",
+        "alt": "Eine dunkelbraune Hand verrührt Haferflocken, Hafermilch, Sojajoghurt und Zimt in einer kleinen Schüssel.",
+        "markers": [
+          {
+            "subject": "oat-mixture",
+            "label": "Haferflocken in Hafercreme",
+            "x": 34,
+            "y": 57
+          }
+        ]
+      }
+    },
+    {
+      "id": "chill",
+      "title": "Zwei Gläser dürfen schlafen",
+      "instruction": "Verteile die Mischung gleichmäßig auf zwei saubere, verschließbare Gläser mit jeweils etwa 350 ml Inhalt. Streiche die Ränder mit einem sauberen Tuch ab und schließe die Deckel. Oben bleibt Platz für den Apfel. Stelle die Gläser direkt in den Kühlschrank und lass sie etwa acht Stunden über Nacht quellen. Sie bleiben die ganze Zeit gekühlt, nicht auf der Arbeitsplatte.",
+      "illustration": {
+        "src": "/images/editorial/apfel-zimt-overnight-oats/v1/step-2.webp",
+        "alt": "Zwei identische verschlossene Gläser mit noch lockerer Hafermischung, oben bleibt Platz für den Apfel.",
+        "markers": [
+          {
+            "subject": "soaking-oats",
+            "label": "Haferbasis zum Kaltstellen",
+            "x": 32,
+            "y": 66
+          }
+        ]
+      }
+    },
+    {
+      "id": "dice",
+      "title": "Morgens kommt der frische Biss",
+      "instruction": "Wasche den Apfel und trockne ihn ab. Viertle ihn, entferne das Kerngehäuse und lass die Schale dran. Schneide die Viertel zuerst in etwa einen Zentimeter dicke Scheiben, dann in Streifen und kleine Würfel. So passt später etwas Apfel zusammen mit der Creme auf einen Löffel. Teile die Würfel in zwei ungefähr gleich große Portionen.",
+      "illustration": {
+        "src": "/images/editorial/apfel-zimt-overnight-oats/v1/step-3.webp",
+        "alt": "Kleine Apfelwürfel mit roter Schale und ein entkerntes Apfelviertel auf dem Holzbrett; das Messer liegt daneben.",
+        "markers": [
+          {
+            "subject": "apple-cubes",
+            "label": "Frische Apfelwürfel",
+            "x": 32,
+            "y": 62
+          },
+          {
+            "subject": "cored-apple",
+            "label": "Entkernter Apfel",
+            "x": 57,
+            "y": 61
+          }
+        ]
+      }
+    },
+    {
+      "id": "serve",
+      "title": "Einmal rühren, dann frühstücken",
+      "instruction": "Öffne die gekühlten Gläser und rühre die Hafercreme jeweils bis zum Boden durch. Die Flocken sollen weich sein und die Mischung cremig vom Löffel gleiten. Ist sie dir zu fest, rühre zuerst einen Esslöffel Hafermilch pro Glas unter und bei Bedarf noch einen zweiten. Verteile die frischen Apfelwürfel darauf und serviere die Overnight-Oats kühl. Zum Mitnehmen den Deckel wieder schließen und bis zum Essen gekühlt halten.",
+      "illustration": {
+        "src": "/images/editorial/apfel-zimt-overnight-oats/v1/step-4.webp",
+        "alt": "Die fertigen Apfel-Zimt-Overnight-Oats in zwei offenen Gläsern mit frischen Apfelwürfeln und einem Teelöffel dazwischen.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Apfel-Zimt-Overnight-Oats",
+            "x": 32,
+            "y": 65
+          },
+          {
+            "subject": "apple-topping",
+            "label": "Apfelwürfel",
+            "x": 31,
+            "y": 44
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Zart oder kernig?",
+      "text": "Mit zarten Haferflocken wird die Creme weich und gleichmäßig. Kernige Flocken behalten mehr Biss. Verwende sie, wenn du diese Textur magst, und prüfe morgens beim Rühren, ob noch etwas Hafermilch fehlt."
+    },
+    {
+      "title": "Die Süße kommt vom Apfel",
+      "text": "Ein süß-säuerlicher Apfel, etwa Elstar, passt gut zur milden Hafercreme. Ungesüßter Sojajoghurt hält den Geschmack frisch. Koste beim Frühstück erst einen Löffel mit Apfel, bevor du nach deinem Geschmack nachsüßt."
+    }
+  ],
+  "storage": "Bereite die Haferbasis am Vorabend zu und bewahre sie verschlossen im Kühlschrank bei höchstens 5 °C auf. Genieße sie am nächsten Morgen, innerhalb von etwa zwölf Stunden. Schneide den Apfel möglichst erst direkt davor. Auch unterwegs die Gläser gekühlt halten.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "Apple & Cinnamon Overnight Oats · Quaker",
+    "url": "https://www.quaker.co.uk/recipes/apple-cinnamon-overnight-oats"
+  },
+  "sources": [
+    {
+      "title": "Quaker · Apple & Cinnamon Overnight Oats",
+      "url": "https://www.quaker.co.uk/recipes/apple-cinnamon-overnight-oats",
+      "note": "Basisverhältnis von Haferflocken und Milch sowie Apfel und Zimt. Für zwei Portionen mit Hafermilch, ergänztem Sojajoghurt, weniger Zimt und morgens frisch geschnittenem Apfel ausgearbeitet. Originalfoto als visuelle Textreferenz für Glasform und Apfel verwendet."
+    },
+    {
+      "title": "Eat this! · Overnight Oats mit frischen Beeren",
+      "url": "https://www.eat-this.org/overnight-oats-mit-frischen-beeren/",
+      "note": "Ergänzender Methodenvergleich: pflanzliche Milch, Quellen über Nacht und Sojajoghurt für eine cremigere Konsistenz. Beeren, Banane und Chiasamen gehören nicht zu unserer Fassung."
+    }
+  ],
+  "researchedAt": "2026-11-05"
+}

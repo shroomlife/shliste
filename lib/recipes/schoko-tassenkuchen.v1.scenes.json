@@ -1,0 +1,88 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Trockene Holzarbeitsfläche links der Edelstahlspüle, Dachschräge oben links, Dachfenster und Abtropfblech rechts. Kein neuer Herd und keine erfundene Mikrowelle. Schritt 1 nutzt die feste Küchenreferenz und das Titelbild für die Tasse; weitere Schritte die eigene vorhergehende Szene, Garpunkt und Servieren zusätzlich das Recraft-Titelbild."
+    }
+  },
+  "steps": {
+    "mix-dry": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dry-mix",
+          "label": "Kakao-Mehl-Mischung",
+          "position": "Bei 43% Bildbreite und 65% Bildhöhe; im fertigen Bild visuell geprüft.",
+          "ingredients": [
+            "flour",
+            "cocoa",
+            "sugar",
+            "baking-powder",
+            "salt"
+          ]
+        }
+      ]
+    },
+    "mix-batter": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "batter",
+          "label": "Schokoteig",
+          "position": "Bei 39% Bildbreite und 65% Bildhöhe; im fertigen Bild visuell geprüft.",
+          "ingredients": [
+            "flour",
+            "cocoa",
+            "sugar",
+            "baking-powder",
+            "salt",
+            "oil",
+            "oat-milk",
+            "vanilla",
+            "chocolate"
+          ]
+        },
+        {
+          "id": "chocolate",
+          "label": "Vegane Schokodrops",
+          "position": "Bei 48% Bildbreite und 68% Bildhöhe; im fertigen Bild visuell geprüft.",
+          "ingredients": [
+            "chocolate"
+          ]
+        }
+      ]
+    },
+    "microwave": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "cooked-cake",
+          "label": "Gegarter Kuchen",
+          "position": "Bei 39% Bildbreite und 49% Bildhöhe; im fertigen Bild visuell geprüft.",
+          "ingredients": [
+            "flour",
+            "cocoa",
+            "sugar",
+            "baking-powder",
+            "salt",
+            "oil",
+            "oat-milk",
+            "vanilla",
+            "chocolate"
+          ]
+        }
+      ]
+    },
+    "serve": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "label": "Schoko-Tassenkuchen",
+          "position": "Bei 41% Bildbreite und 47% Bildhöhe; im fertigen Bild visuell geprüft.",
+          "dish": true
+        }
+      ]
+    }
+  }
+}

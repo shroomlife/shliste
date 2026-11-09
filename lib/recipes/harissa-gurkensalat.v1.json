@@ -1,0 +1,230 @@
+{
+  "catalogId": "harissa-gurkensalat",
+  "version": 1,
+  "slug": "harissa-gurkensalat",
+  "title": "Gurkensalat mit Harissa und Dill",
+  "emoji": "🥒",
+  "kind": "herzhaft",
+  "meal": "Salat",
+  "status": "published",
+  "intro": "Knackige Gurken, die sich in kleine Fächer öffnen. In ihren Falten sammelt sich ein süß-würziges Harissadressing; darüber kommen Dill und ein paar salzige Fetabrösel. Eine frische Beilage, die am besten direkt vom Brett auf den Tisch wandert.",
+  "story": {
+    "eyebrow": "Knackig. Würzig. Noch ein kleiner Fächer.",
+    "sticker": [
+      "Frisch mit",
+      "einem Twist"
+    ],
+    "ingredientNote": "Für vier Beilagenportionen. Verwende gerade Mini-Gurken mit dünner Schale, ein scharfes Messer und zwei gleich dicke Holzstäbchen als Schneidehilfe. Die 35 Minuten enthalten 15 Minuten zum Entwässern; in dieser Zeit rührst du das Dressing an. Das Gericht bleibt nah am Original, mit Agavendicksaft und veganem Feta."
+  },
+  "servings": 4,
+  "prepMinutes": 20,
+  "cookMinutes": 0,
+  "restMinutes": 15,
+  "difficulty": "mittel",
+  "tags": [
+    "Frisch & knackig",
+    "Mit Harissa",
+    "Als Beilage"
+  ],
+  "hero": {
+    "src": "/images/editorial/harissa-gurkensalat/v1/hero.webp",
+    "alt": "Vier Fächergurken mit rotem Harissadressing, veganen Fetabröseln und frischem Dill auf einer weißen ovalen Servierplatte."
+  },
+  "ingredients": [
+    {
+      "id": "cucumber",
+      "amount": 450,
+      "unit": "g",
+      "name": "Mini-Gurken",
+      "note": "etwa 4 gerade, feste Gurken mit dünner Schale"
+    },
+    {
+      "id": "salt",
+      "amount": 0.75,
+      "unit": "TL",
+      "name": "flockiges Kosher Salt",
+      "note": "zum Entwässern; bei feinem Tafelsalz deutlich weniger verwenden und vorsichtig abschmecken"
+    },
+    {
+      "id": "garlic",
+      "amount": 1,
+      "unit": "kleine",
+      "name": "Knoblauchzehe",
+      "note": "sehr fein gehackt"
+    },
+    {
+      "id": "harissa",
+      "amount": 2,
+      "unit": "EL",
+      "name": "Harissapaste",
+      "note": "mild wählen, wenn du wenig Schärfe magst; ohne tierische Zutaten"
+    },
+    {
+      "id": "agave",
+      "amount": 2,
+      "unit": "EL",
+      "name": "Agavendicksaft"
+    },
+    {
+      "id": "lemon",
+      "amount": 0.5,
+      "unit": "TL",
+      "name": "Bio-Zitronenabrieb",
+      "note": "fein gerieben; zusätzlich eine kleine Prise zum Garnieren"
+    },
+    {
+      "id": "feta",
+      "amount": 3,
+      "unit": "EL",
+      "name": "veganer Feta",
+      "note": "zerbröselt, etwa 30 g"
+    },
+    {
+      "id": "dill",
+      "amount": 1,
+      "unit": "EL",
+      "name": "Dillspitzen",
+      "note": "frisch, gewaschen und gut getrocknet"
+    }
+  ],
+  "steps": [
+    {
+      "id": "diagonal",
+      "title": "Ein kleiner Schnitt mit großer Wirkung",
+      "instruction": "Wasche die Gurken und trockne sie. Schneide die Enden knapp ab. Lege eine Gurke längs zwischen zwei gleich dicke Holzstäbchen auf ein rutschfestes Brett. Die Stäbchen liegen dicht an den beiden langen Seiten und dienen als Anschlag für das Messer. Schneide die Oberseite im Abstand von etwa 6 mm schräg im 45-Grad-Winkel ein. Stoppe jeweils an den Stäbchen: Unten muss die Gurke zusammenhängend bleiben. Halte die Finger seitlich außerhalb der Schnittlinie. Arbeite ruhig – die Gurke soll noch nicht auseinandergezogen werden.",
+      "illustration": {
+        "src": "/images/editorial/harissa-gurkensalat/v1/step-1.webp",
+        "alt": "Eine Mini-Gurke liegt längs zwischen zwei parallelen Holzstäbchen; eine Hand setzt mit dem Messer schräge Einschnitte, ohne die Gurke durchzuschneiden.",
+        "markers": [
+          {
+            "subject": "cucumber",
+            "label": "Schräge Einschnitte",
+            "x": 29,
+            "y": 54
+          }
+        ]
+      }
+    },
+    {
+      "id": "crosswise",
+      "title": "Umdrehen und quer einschneiden",
+      "instruction": "Drehe dieselbe Gurke um ihre Längsachse, sodass die eben eingeschnittene Seite unten liegt. Lass die Holzstäbchen an den Seiten liegen. Schneide jetzt im gleichen Abstand gerade quer zur Gurke, also im rechten Winkel zu ihrer Längsrichtung, wieder nur bis zu den Stäbchen. Hebe sie vorsichtig an beiden Enden an und ziehe sie nur leicht auseinander: Die verbundenen Scheiben öffnen sich wie eine Ziehharmonika. Bereite die übrigen Gurken genauso vor. Falls ein Stück abbricht, kommt es mit in den Salat; die Schnittform ist hübsch, aber kein Grund, etwas wegzuwerfen.",
+      "illustration": {
+        "src": "/images/editorial/harissa-gurkensalat/v1/step-2.webp",
+        "alt": "Die gewendete Gurke liegt zwischen denselben Holzstäbchen und wird nun gerade quer eingeschnitten; die Scheiben bleiben durch einen schmalen Gurkensteg verbunden.",
+        "markers": [
+          {
+            "subject": "cucumber",
+            "label": "Gerade Querschnitte",
+            "x": 28,
+            "y": 54
+          }
+        ]
+      }
+    },
+    {
+      "id": "drain",
+      "title": "Ein wenig Zeit für den knackigen Biss",
+      "instruction": "Lege die vier eingeschnittenen Gurken in eine große Schüssel. Verteile das Salz behutsam auch in den geöffneten Einschnitten und lass die Gurken etwa 15 Minuten stehen. Bereite währenddessen das Dressing aus Schritt 4 vor. Gieße anschließend die ausgetretene Flüssigkeit ab. Tupfe die Gurken mit einem sauberen Küchentuch vorsichtig trocken, auch zwischen den leicht geöffneten Falten, und trockne die Schüssel aus. So haftet das Dressing besser und wird nicht sofort wässrig. Ziehe die Gurken dabei nicht weit auseinander.",
+      "illustration": {
+        "src": "/images/editorial/harissa-gurkensalat/v1/step-3.webp",
+        "alt": "Vier noch ungewürzte Gurken-Ziehharmonikas liegen nach dem Abtropfen auf einem sauberen Küchentuch; eine Hand tupft sie sanft trocken.",
+        "markers": [
+          {
+            "subject": "cucumber",
+            "label": "Abgetropfte Fächergurken",
+            "x": 32,
+            "y": 65
+          }
+        ]
+      }
+    },
+    {
+      "id": "dressing",
+      "title": "Süße trifft auf sanfte Schärfe",
+      "instruction": "Verrühre Harissa, Agavendicksaft, den fein gehackten Knoblauch und einen halben Teelöffel Zitronenabrieb in einer kleinen Schale. Reibe von der gewaschenen Bio-Zitrone nur die gelbe Schale ab; die weiße Schicht schmeckt bitter. Die Sauce soll gleichmäßig rot und leicht zähflüssig sein. Probiere eine kleine Menge an einem Gurkenende. Harissa unterscheidet sich je nach Marke stark: Für empfindliche Mitessende von Anfang an eine milde Paste wählen. Der Zitronensaft wird in diesem Rezept nicht benötigt; bewahre die übrige Zitrone für ein anderes Gericht auf.",
+      "illustration": {
+        "src": "/images/editorial/harissa-gurkensalat/v1/step-4.webp",
+        "alt": "Eine kleine Glasschale enthält rotes Harissa-Agaven-Dressing mit sehr feinem Knoblauch und Zitronenabrieb; ein Löffel verrührt die dickflüssige Sauce.",
+        "markers": [
+          {
+            "subject": "dressing",
+            "label": "Harissa-Dressing",
+            "x": 45,
+            "y": 60
+          }
+        ]
+      }
+    },
+    {
+      "id": "coat",
+      "title": "Das Dressing findet jede Falte",
+      "instruction": "Gib die trockenen Gurken zurück in die trockene große Schüssel. Verteile das Dressing darüber. Hebe die Gurken mit zwei Löffeln behutsam um, bis die Schnittflächen leicht überzogen sind. Öffne die Falten dabei nur ein wenig, damit die Sauce hineinlaufen kann. Nicht kräftig durchrühren: Die Verbindungen zwischen den Scheiben sind empfindlich. Feta und Dill bleiben noch beiseite, damit die weißen Brösel und grünen Spitzen beim Anrichten frisch sichtbar bleiben.",
+      "illustration": {
+        "src": "/images/editorial/harissa-gurkensalat/v1/step-5.webp",
+        "alt": "Vier verbundene Gurken-Ziehharmonikas sind in einer breiten hellen Schüssel dünn mit rotem Dressing überzogen; noch ohne Feta, Dill oder fertige Garnitur.",
+        "markers": [
+          {
+            "subject": "cucumber",
+            "label": "Gurken mit Dressing",
+            "x": 59,
+            "y": 63
+          }
+        ]
+      }
+    },
+    {
+      "id": "serve",
+      "title": "Frisch auf die Platte, frisch an den Tisch",
+      "instruction": "Lege die Gurken in lockeren Bögen auf eine große, flache Platte. Löffle das in der Schüssel verbliebene Dressing darüber. Verteile den zerbröselten veganen Feta, die Dillspitzen und eine kleine zusätzliche Prise Zitronenabrieb auf den Gurken. Serviere den Salat möglichst gleich als Beilage für vier. Die Gurken sollen noch deutlich durch die Garnitur zu sehen sein. Zum Essen lassen sich kleine Stücke mit Messer und Gabel abteilen; die ganze Ziehharmonika muss nicht in einem Stück auf die Gabel.",
+      "illustration": {
+        "src": "/images/editorial/harissa-gurkensalat/v1/step-6.webp",
+        "alt": "Vier grüne Gurken-Ziehharmonikas auf einer weißen ovalen Platte, leicht mit rotem Harissadressing überzogen, mit kleinen weißen veganen Fetabröseln, Dill und feinem Zitronenabrieb.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Gurkensalat mit Harissa und Dill",
+            "x": 43,
+            "y": 58
+          },
+          {
+            "subject": "feta",
+            "label": "Vegane Fetabrösel",
+            "x": 35,
+            "y": 59
+          },
+          {
+            "subject": "dill",
+            "label": "Frische Dillspitzen",
+            "x": 43,
+            "y": 47
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Mit ruhiger Hand schneiden",
+      "text": "Die Stäbchen müssen niedriger als die Gurke sein, aber das vollständige Durchschneiden zuverlässig verhindern. Prüfe ihre Höhe vor dem ersten Schnitt. Für das typische Fächern braucht eine Seite schräge und die andere gerade Schnitte. Die Gurke erst nach beiden Schnittfolgen vorsichtig öffnen."
+    },
+    {
+      "title": "Vorbereiten ohne wässrige Sauce",
+      "text": "Du kannst die Gurken vorschneiden und das Dressing getrennt anrühren. Beides abgedeckt im Kühlschrank lagern. Erst vor dem Essen salzen, abtropfen lassen, trocken tupfen und mit der Sauce verbinden. Dill und veganen Feta zuletzt darübergeben."
+    }
+  ],
+  "storage": "Frisch schmeckt der Salat am knackigsten. Reste abgedeckt im Kühlschrank aufbewahren und innerhalb eines Tages essen. Die Gurken geben mit der Zeit weiter Wasser ab; vor dem Servieren vorsichtig mischen. Nach dem Aufbewahren sind sie etwas weicher als frisch angemacht.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "Viral Spiral Cucumber Salad · Delish",
+    "url": "https://www.delish.com/cooking/recipe-ideas/a60747612/viral-spiral-cucumber-salad-recipe/"
+  },
+  "sources": [
+    {
+      "title": "Taylor Ann Spencer · Delish, 18. Juni 2024",
+      "url": "https://www.delish.com/cooking/recipe-ideas/a60747612/viral-spiral-cucumber-salad-recipe/",
+      "note": "Nahe pflanzliche Umsetzung: Fächerschnitt, Dressing und Anrichtung erhalten. Nur Honig durch Agavendicksaft und Feta durch veganen Feta ersetzt; Gurkengewicht metrisch gerundet. Die Salzmenge folgt der konkreten Verwendung im Originalablauf; dessen Zutatenliste nennt abweichend mehr Salz. Eigene deutsche Anleitung mit präzisierten Handgriffen. Originalfoto betrachtet, eigene Illustration."
+    }
+  ],
+  "researchedAt": "2026-11-06"
+}

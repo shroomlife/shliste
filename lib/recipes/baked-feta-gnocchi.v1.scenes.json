@@ -1,0 +1,130 @@
+{
+  "scenes": {
+    "worktop": {
+      "reference": "/images/editorial/french-onion-pasta/v2/step-1.webp",
+      "framing": "Feste Kamera auf die trockene Holzarbeitsfläche links der Spüle, Dachschräge links, Dachfenster und Abtropfblech rechts. Keine Herdansicht."
+    }
+  },
+  "steps": {
+    "prepare": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "tomato-halves",
+          "label": "Halbierte Kirschtomaten",
+          "position": "Bei 32% Bildbreite und 68% Bildhöhe, am fertigen Export geprüft.",
+          "ingredients": [
+            "tomatoes"
+          ]
+        },
+        {
+          "id": "minced-garlic",
+          "label": "Fein gehackter Knoblauch",
+          "position": "Bei 58% Bildbreite und 71% Bildhöhe, am fertigen Export geprüft.",
+          "ingredients": [
+            "garlic"
+          ]
+        },
+        {
+          "id": "raw-gnocchi",
+          "label": "Rohe Gnocchi",
+          "position": "Bei 48% Bildbreite und 29% Bildhöhe, am fertigen Export geprüft.",
+          "ingredients": [
+            "gnocchi"
+          ]
+        }
+      ]
+    },
+    "assemble": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "feta-pieces",
+          "label": "Veganer Feta",
+          "position": "Bei 27% Bildbreite und 48% Bildhöhe, am fertigen Export geprüft.",
+          "ingredients": [
+            "feta"
+          ]
+        },
+        {
+          "id": "raw-gnocchi",
+          "label": "Gnocchi vor dem Backen",
+          "position": "Bei 33% Bildbreite und 60% Bildhöhe, am korrigierten v2-Export geprüft.",
+          "ingredients": [
+            "gnocchi"
+          ]
+        }
+      ]
+    },
+    "bake": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "soft-center",
+          "label": "Weiche Gnocchi-Mitte",
+          "position": "Bei 43% Bildbreite und 72% Bildhöhe, am fertigen Export geprüft.",
+          "ingredients": [
+            "gnocchi"
+          ]
+        },
+        {
+          "id": "soft-tomatoes",
+          "label": "Weiche Ofentomaten",
+          "position": "Bei 49% Bildbreite und 57% Bildhöhe, am fertigen Export geprüft.",
+          "ingredients": [
+            "tomatoes"
+          ]
+        },
+        {
+          "id": "melted-feta",
+          "label": "Geschmolzener veganer Feta",
+          "position": "Bei 62% Bildbreite und 52% Bildhöhe, am fertigen Export geprüft.",
+          "ingredients": [
+            "feta"
+          ]
+        }
+      ]
+    },
+    "fold": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "sauce",
+          "label": "Tomaten-Feta-Sauce",
+          "position": "Bei 55% Bildbreite und 65% Bildhöhe, am fertigen Export geprüft.",
+          "ingredients": [
+            "tomatoes",
+            "feta"
+          ]
+        },
+        {
+          "id": "tender-gnocchi",
+          "label": "Gnocchi auf dem Löffel",
+          "position": "Bei 34% Bildbreite und 59% Bildhöhe, am fertigen Export geprüft.",
+          "ingredients": [
+            "gnocchi"
+          ]
+        }
+      ]
+    },
+    "serve": {
+      "scene": "worktop",
+      "subjects": [
+        {
+          "id": "dish",
+          "label": "Baked-Feta-Gnocchi",
+          "position": "Bei 44% Bildbreite und 65% Bildhöhe, am fertigen Export geprüft.",
+          "dish": true
+        },
+        {
+          "id": "basil",
+          "label": "Frisches Basilikum",
+          "position": "Bei 41% Bildbreite und 53% Bildhöhe, am fertigen Export geprüft.",
+          "ingredients": [
+            "basil"
+          ]
+        }
+      ]
+    }
+  }
+}

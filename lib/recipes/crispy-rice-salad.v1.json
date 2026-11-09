@@ -1,0 +1,240 @@
+{
+  "catalogId": "crispy-rice-salad",
+  "version": 1,
+  "slug": "crispy-rice-salad",
+  "title": "Crispy Rice Salad",
+  "emoji": "🥒",
+  "kind": "herzhaft",
+  "meal": "Salat",
+  "status": "published",
+  "intro": "Das Schönste an dieser Schüssel hört man beim ersten Bissen. Unter den kühlen Gurkenbändern knuspert der Reis, die Minze duftet, und die Limette bringt gerade genug Säure mit. Während der Reis im Ofen röstet, ist Zeit für den ganzen Rest.",
+  "story": {
+    "eyebrow": "Vom Blech in die Salatschüssel",
+    "sticker": [
+      "Frisch",
+      "& knusprig"
+    ],
+    "ingredientNote": "Die Reismenge ist gekocht gewogen. Mit kaltem Reis aus dem Kühlschrank kannst du direkt loslegen."
+  },
+  "servings": 2,
+  "prepMinutes": 10,
+  "cookMinutes": 30,
+  "difficulty": "einfach",
+  "tags": [
+    "Knusperreis",
+    "Limette",
+    "Gurke",
+    "Vom Blech"
+  ],
+  "hero": {
+    "src": "/images/editorial/crispy-rice-salad/v1/hero.webp",
+    "alt": "Eine türkisfarbene Schale mit goldbraunem Reis, Rucola, Gurkenbändern und roter Chili auf blau gestreiftem Stoff."
+  },
+  "ingredients": [
+    {
+      "id": "rice",
+      "amount": 300,
+      "unit": "g",
+      "name": "gekochter Jasminreis",
+      "note": "kühlschrankkalt, entspricht etwa 100–120 g trockenem Reis"
+    },
+    {
+      "id": "oil",
+      "amount": 1,
+      "unit": "EL",
+      "name": "Rapsöl"
+    },
+    {
+      "id": "soy",
+      "amount": 1,
+      "unit": "EL",
+      "name": "Sojasauce",
+      "note": "1 TL für den Reis, 2 TL für das Dressing"
+    },
+    {
+      "id": "cucumber",
+      "amount": 0.5,
+      "unit": "",
+      "name": "Salatgurke",
+      "note": "etwa 180 g"
+    },
+    {
+      "id": "rocket",
+      "amount": 40,
+      "unit": "g",
+      "name": "Rucola"
+    },
+    {
+      "id": "mint",
+      "amount": 4,
+      "unit": "Stiele",
+      "name": "Minze"
+    },
+    {
+      "id": "lime",
+      "amount": 1,
+      "unit": "",
+      "name": "Limette",
+      "note": "für etwa 2 EL Saft"
+    },
+    {
+      "id": "syrup",
+      "amount": 1,
+      "unit": "TL",
+      "name": "Ahornsirup"
+    },
+    {
+      "id": "chili",
+      "amount": 0.5,
+      "unit": "",
+      "name": "milde rote Chilischote",
+      "note": "nach gewünschter Schärfe"
+    },
+    {
+      "id": "water",
+      "amount": 1,
+      "unit": "EL",
+      "name": "Wasser"
+    }
+  ],
+  "steps": [
+    {
+      "id": "spread",
+      "title": "Dem Reis Platz geben",
+      "instruction": "Heize den Ofen auf 200 °C Umluft oder 220 °C Ober-/Unterhitze vor. Belege ein großes Blech mit Backpapier. Lockere den kalten Reis mit den Fingern, mische ihn mit dem Rapsöl und 1 TL Sojasauce. Verteile ihn dünn auf dem Blech. Ein paar kleine Häufchen dürfen bleiben, dazwischen soll das Papier durchscheinen.",
+      "illustration": {
+        "src": "/images/editorial/crispy-rice-salad/v1/step-1.webp",
+        "alt": "Heller, leicht gewürzter Reis wird auf Backpapier zu einer dünnen Schicht verteilt.",
+        "markers": [
+          {
+            "subject": "pale",
+            "label": "Gewürzter Reis",
+            "x": 25,
+            "y": 63
+          }
+        ]
+      }
+    },
+    {
+      "id": "roast",
+      "title": "Die goldenen Kanten abwarten",
+      "instruction": "Schiebe das Blech auf die mittlere Schiene. Röste den Reis 25–30 Minuten und wende ihn nach etwa 15 Minuten mit einem flachen Pfannenwender. In der Zwischenzeit kannst du Gurke und Dressing vorbereiten. Schau gegen Ende öfter nach. Wenn die Spitzen goldbraun sind und sich kleine Krusten vom Papier lösen, nimm das Blech heraus. Der Reis soll auch in dickeren Häufchen durchgehend dampfend heiß sein. Lass ihn beim Anrichten kurz ausdampfen.",
+      "illustration": {
+        "src": "/images/editorial/crispy-rice-salad/v1/step-2.webp",
+        "alt": "Gebräunte Reiskörner und kleine Krusten auf dem Blech zeigen den gewünschten Röstgrad.",
+        "markers": [
+          {
+            "subject": "crust",
+            "label": "Goldene Reiskruste",
+            "x": 57,
+            "y": 60
+          }
+        ]
+      }
+    },
+    {
+      "id": "shave",
+      "title": "Gurkenbänder für die Schüssel",
+      "instruction": "Wasche Gurke, Rucola und Minze. Schleudere die Blätter trocken. Hoble mit dem Sparschäler einige lange Bänder von der Gurke und drehe sie dabei immer wieder. Schneide das übrige Stück schräg in dünne Scheiben. Zupfe die Minzblätter ab und zerreiße große Blätter mit den Fingern. Hebe ein paar Gurkenbänder fürs Anrichten auf.",
+      "illustration": {
+        "src": "/images/editorial/crispy-rice-salad/v1/step-3.webp",
+        "alt": "Ein Sparschäler, Gurkenscheiben, dünne Gurkenbänder und frische Blätter auf dem Holzbrett.",
+        "markers": [
+          {
+            "subject": "ribbon",
+            "label": "Gurkenband",
+            "x": 33,
+            "y": 46
+          },
+          {
+            "subject": "rocket",
+            "label": "Rucola",
+            "x": 54,
+            "y": 43
+          },
+          {
+            "subject": "mint",
+            "label": "Minze",
+            "x": 67,
+            "y": 57
+          }
+        ]
+      }
+    },
+    {
+      "id": "dress",
+      "title": "Limette, Salz und Schärfe ausbalancieren",
+      "instruction": "Presse die Limette aus. Rühre 2 EL Saft, die übrigen 2 TL Sojasauce, Ahornsirup und Wasser in einer kleinen Schale zusammen. Wasche die Chili und schneide sie in feine Ringe. Gib erst ein paar Ringe ins Dressing, rühre um und probiere an einer Gurkenscheibe. Gib nach Geschmack mehr Chili dazu.",
+      "illustration": {
+        "src": "/images/editorial/crispy-rice-salad/v1/step-4.webp",
+        "alt": "Feine rote Chiliringe im Limettendressing, daneben eine angeschnittene Limette.",
+        "markers": [
+          {
+            "subject": "lime",
+            "label": "Limette",
+            "x": 18,
+            "y": 56
+          },
+          {
+            "subject": "chili",
+            "label": "Chiliring",
+            "x": 37,
+            "y": 65
+          }
+        ]
+      }
+    },
+    {
+      "id": "serve",
+      "title": "Erst am Tisch darf es knuspern",
+      "instruction": "Mische Rucola, Minze und Gurkenscheiben kurz vor dem Essen mit der Hälfte des Dressings. Gib sie in eine weite Schale für zwei und verteile den warmen Knusperreis locker in der Mitte. Lege die Gurkenbänder darüber. Träufle beim Essen nach Geschmack vom übrigen Dressing dazu. So bleiben auch die letzten Löffel knusprig.",
+      "illustration": {
+        "src": "/images/editorial/crispy-rice-salad/v1/step-5.webp",
+        "alt": "Goldener Knusperreis, dünne Gurkenbänder und grüne Blätter in einer gemeinsamen türkisblauen Schale.",
+        "markers": [
+          {
+            "subject": "dish",
+            "label": "Crispy Rice Salad",
+            "x": 44,
+            "y": 51
+          },
+          {
+            "subject": "slice",
+            "label": "Gurkenscheibe",
+            "x": 56,
+            "y": 57
+          }
+        ]
+      }
+    }
+  ],
+  "tips": [
+    {
+      "title": "Wenn du den Reis frisch kochst",
+      "text": "Koche ihn nach Packungsangabe. Verteile ihn zum Abkühlen flach in einer sauberen Form und stelle ihn möglichst innerhalb einer Stunde kalt. Starte mit Schritt 1, sobald er kühlschrankkalt ist. Diese Vorlaufzeit kommt zu den 40 Minuten hinzu."
+    },
+    {
+      "title": "Wenn die Mitte noch weich ist",
+      "text": "Ziehe große Reishäufchen auseinander und verteile sie auf freie Stellen. Röste in kurzen Abständen weiter und prüfe dabei die Ränder. Ein Korn darf innen noch etwas Biss haben."
+    }
+  ],
+  "storage": "Bereite Gurke, gewaschene Blätter und Dressing bei Bedarf getrennt vor und stelle sie abgedeckt kalt. Gekochten, rasch gekühlten Reis innerhalb von 24 Stunden verwenden und nur einmal wieder erhitzen. Röste deshalb nur die Menge, die ihr direkt esst.",
+  "cookTest": "ausstehend",
+  "inspiration": {
+    "title": "LECKER",
+    "url": "https://www.lecker.de/crispy-rice-salad-knuspriger-reissalat-von-tiktok-130699.html"
+  },
+  "sources": [
+    {
+      "title": "LECKER · Crispy Rice Salad",
+      "url": "https://www.lecker.de/crispy-rice-salad-knuspriger-reissalat-von-tiktok-130699.html",
+      "note": "Vorbild für die Ofenmethode und die Kombination mit Gurke und Chili-Limetten-Dressing."
+    },
+    {
+      "title": "Food Standards Agency · Reis abkühlen und wieder erhitzen",
+      "url": "https://www.food.gov.uk/print/pdf/node/4286",
+      "note": "Grundlage für die Hinweise zu gekochtem Reis."
+    }
+  ],
+  "researchedAt": "2026-11-04"
+}
