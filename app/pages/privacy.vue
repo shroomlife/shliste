@@ -124,7 +124,7 @@ const { openSettings } = useAnalyticsConsent()
 
 <style scoped>
 .legal-page { padding-block:2.5rem 4rem; }
-.legal-page p { max-width:65ch; line-height:1.75; }
+.legal-page p { line-height:1.75; }
 .legal-page h1 { font-size:clamp(2.5rem,5vw,4rem); line-height:1.1; margin-block:1.5rem 2rem; }
 .legal-page h2 { font-size:1.5rem; line-height:1.3; }
 .legal-page>a { display:inline-flex; align-items:center; min-height:44px; }
