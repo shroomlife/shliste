@@ -35,3 +35,12 @@ public/video/**
 # Additional project-specific ignores
 Makefile
 helm-charts
+
+# Local working files and credentials never belong in release images.
+.git
+tmp
+audit
+.env*
+*.log
+output/imagegen
+*.tmp

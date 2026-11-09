@@ -26,3 +26,12 @@ logs
 !.env.example
 
 .keys
+
+# Private kitchen references and generated working originals
+/tmp/recipe-kitchen/
+/output/imagegen/
+/tmp/green-goddess-salat/original-reference.jpg
+/tmp/schoko-tassenkuchen/original-reference.jpg
+/tmp/feta-creme-ofentomaten/original-reference.jpg
+/tmp/saftiges-bananenbrot/original-reference.jpg
+/tmp/spitzkohl-knoblauchcreme/original-reference.webp
