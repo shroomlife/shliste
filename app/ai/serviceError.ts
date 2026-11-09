@@ -21,6 +21,14 @@ export function aiServiceError(payload: unknown): string | null {
       return 'Dieser Auftrag wurde bereits übermittelt oder konnte nicht eindeutig zugeordnet werden. Er wird nicht automatisch wiederholt.'
     case 'AI_DEADLINE_EXCEEDED':
       return 'Die KI-Anfrage hat zu lange gedauert. Ihr Ausgang ist unklar; sie wird nicht automatisch wiederholt.'
+    // Die Quelle taugt nicht: Ein neuer Versuch mit demselben Link ändert nichts,
+    // deshalb nennt der Text den anderen Weg statt "versuche es erneut".
+    case 'AI_SOURCE_NO_RECIPE':
+      return 'Leider konnten wir kein Rezept auslesen. Auf dieser Seite haben wir keine Zutaten mit Zubereitung gefunden. Du kannst das Rezept stattdessen fotografieren oder einsprechen.'
+    case 'AI_SOURCE_NO_CONTENT':
+      return 'Leider konnten wir aus dieser Seite keine Liste auslesen. Du kannst die Liste stattdessen fotografieren oder einsprechen.'
+    case 'AI_SOURCE_UNREADABLE':
+      return 'Diese Seite lässt sich nicht auslesen. Sie ist nicht erreichbar oder lässt keine automatischen Abrufe zu. Du kannst den Inhalt stattdessen fotografieren oder einsprechen.'
     default: return null
   }
 }

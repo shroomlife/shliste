@@ -15,6 +15,15 @@ describe('AI error ownership', () => {
     // Seit dem Wechsel auf Claude meldet die API Überlastung als 503 AI_PROVIDER_BUSY.
     expect(aiServiceError({ code: 'AI_PROVIDER_BUSY' })).toContain('gleich noch einmal')
   })
+  test('eine Quelle ohne Rezept nennt den anderen Weg und keinen neuen Versuch', () => {
+    // Der Servertext wird vom Code überstimmt, damit der Wortlaut in der App liegt.
+    const message = aiServiceError({ code: 'AI_SOURCE_NO_RECIPE', error: 'Leider konnten wir kein Rezept auslesen.' })!
+    expect(message).toStartWith('Leider konnten wir kein Rezept auslesen.')
+    expect(message).toContain('fotografieren')
+    expect(message).not.toContain('erneut')
+    expect(aiServiceError({ code: 'AI_SOURCE_NO_CONTENT' })).toContain('keine Liste')
+    expect(aiServiceError({ code: 'AI_SOURCE_UNREADABLE' })).toContain('lässt sich nicht auslesen')
+  })
   test('unknown payloads do not invent a budget diagnosis', () => {
     for (const payload of [null, 'error', {}, { code: 'UNKNOWN' }]) expect(aiServiceError(payload)).toBeNull()
   })
