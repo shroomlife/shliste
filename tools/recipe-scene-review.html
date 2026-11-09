@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bildpunkte prüfen</title>
+<style>
+  body { max-width: 820px; margin: auto; padding: 20px; font: 17px/1.5 system-ui; color: #392b34; background: #fffaf5; }
+  figure { position: relative; margin: 16px 0; }
+  img { display: block; width: 100%; cursor: crosshair; }
+  output { position: absolute; translate: -50% -50%; pointer-events: none; width: 24px; height: 24px; border-radius: 50%; background: #743656; border: 2px solid white; color: white; text-align: center; font: bold 16px/24px system-ui; }
+  button, select { font: inherit; min-height: 44px; margin: 4px; padding-inline: 12px; }
+</style>
+<main>
+  <h1 id="heading"></h1>
+  <p>Wähle ein Motiv und klicke im fertigen Bild auf die sichtbare Zutat. Prüfe jeden Vorschlag einzeln. Markiere vermischte oder verdeckte Zutaten als nicht erkennbar.</p>
+  <label>Motiv <select id="subject"></select></label>
+  <figure><img id="photo" alt="Zu prüfendes Schrittbild"><output id="pin" hidden>+</output></figure>
+  <p id="status" aria-live="polite"></p>
+  <button id="confirm" type="button">Punkt bestätigen</button>
+  <button id="absent" type="button">Nicht erkennbar</button>
+  <button id="save" type="button">Geprüfte Punkte herunterladen</button>
+</main>
+<script>
+  const model = /*MODEL*/null;
+  const get = id => document.getElementById(id);
+  const select = get('subject');
+  const image = get('photo');
+  const pin = get('pin');
+  const points = model.report.points;
+  const checked = new Set();
+  const keys = Object.keys(model.subjects);
+  get('heading').textContent = model.title + ' · ' + model.stepTitle;
+  image.src = model.image;
+  for (const key of keys) select.add(new Option(model.subjects[key].label, key));
+  function draw() {
+    const key = select.value;
+    const point = points[key];
+    pin.hidden = !point;
+    if (point) {
+      pin.style.left = point[0] + '%';
+      pin.style.top = point[1] + '%';
+    }
+    get('status').textContent = (point ? 'Bildpunkt bei ' + point.join(' / ') + ' %. ' : 'Kein Bildpunkt. ') + checked.size + ' von ' + keys.length + ' Motiven geprüft.';
+    get('confirm').disabled = !point;
+    get('save').disabled = checked.size !== keys.length;
+  }
+  function finishSubject() {
+    checked.add(select.value);
+    const next = keys.find(key => !checked.has(key));
+    if (next) select.value = next;
+    draw();
+  }
+  select.onchange = draw;
+  image.onclick = event => {
+    const rect = image.getBoundingClientRect();
+    points[select.value] = [
+      Math.round(1000 * (event.clientX - rect.left) / rect.width) / 10,
+      Math.round(1000 * (event.clientY - rect.top) / rect.height) / 10
+    ];
+    checked.delete(select.value);
+    draw();
+  };
+  get('confirm').onclick = finishSubject;
+  get('absent').onclick = () => { points[select.value] = null; finishSubject(); };
+  get('save').onclick = () => {
+    const blob = new Blob([JSON.stringify({ ...model.report, reviewed: true, points }, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = model.report.recipe + '-' + model.report.step + '-review.json';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  };
+  draw();
+</script>
+</html>

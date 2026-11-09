@@ -25,6 +25,14 @@ COPY . .
 # das entscheidet Nuxt selbst, nicht diese Variable.
 RUN bun run build
 
+RUN bun .output/server/index.mjs > /tmp/indexing-server.log 2>&1 & \
+    pid=$!; trap 'kill "$pid" 2>/dev/null || true' EXIT; \
+    for attempt in 1 2 3 4 5 6 7 8 9 10; do \
+      wget -q -O /dev/null http://127.0.0.1:3000/robots.txt && break; \
+      sleep 1; \
+    done; \
+    bun tools/check-indexing.ts http://127.0.0.1:3000 || { cat /tmp/indexing-server.log; exit 1; }
+
 # Dieselbe Bun-Fassung wie im Builder (siehe oben).
 FROM oven/bun:1.4.4-alpine AS runtime
 
