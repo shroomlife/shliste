@@ -87,6 +87,8 @@ const explore = [
           <div class="mt-7 flex flex-wrap gap-3">
             <UButton
               :to="primaryTo ?? '/app/lists'"
+              data-analytics-event="open_app"
+              data-analytics-location="page_hero"
               size="xl"
               class="rounded-full px-6 font-bold"
             >

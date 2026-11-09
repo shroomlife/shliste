@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import MarketingMysticAura from '~/components/MarketingMysticAura.vue'
 import RecipeBadgeConfetti from '~/components/RecipeBadgeConfetti.vue'
+import { trackEvent } from '~/utils/googleAnalytics'
 
 useSeoMeta({ title: 'Warteliste · shliste Premium', description: 'Zum Start der KI-Funktionen Bescheid bekommen. Trag dich mit deiner E-Mail in die shliste-Warteliste ein.' })
 const router = useRouter()
@@ -120,7 +121,10 @@ async function act(action: 'subscribe' | 'confirm' | 'unsubscribe') {
     const savedAt = remember(next)
     if (action === 'subscribe') beginResendCooldown(savedAt)
     else await clearMailLink()
+    // Nur der Schritt, nie die E-Mail. Ohne Zustimmung tut trackEvent nichts.
+    if (action === 'subscribe') trackEvent('generate_lead', { location: 'warteliste' })
     if (action === 'confirm' && !result.alreadyConfirmed) {
+      trackEvent('waitlist_confirm')
       clearTimeout(celebrationTimer)
       celebrating.value = true
       celebrationTimer = setTimeout(() => {
@@ -389,6 +393,8 @@ async function startAgain() {
                 </h2><p>Du bekommst von dieser Warteliste keine Nachricht mehr. Schön, wenn wir uns trotzdem wiedersehen.</p><NuxtLink
                   class="waitlist-primary"
                   to="/app/lists"
+                  data-analytics-event="open_app"
+                  data-analytics-location="waitlist"
                 >Zu deinen Listen<UIcon name="i-lucide-arrow-right" /></NuxtLink>
               </template>
             </div>

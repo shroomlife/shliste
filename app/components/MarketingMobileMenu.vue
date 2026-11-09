@@ -168,6 +168,8 @@ onBeforeUnmount(() => desktop?.removeEventListener('change', closeOnDesktop))
           <NuxtLink
             class="website-menu-start"
             to="/app/lists"
+            data-analytics-event="open_app"
+            data-analytics-location="mobile_menu"
             @click="open = false"
           >
             <span class="website-menu-start-icon"><UIcon

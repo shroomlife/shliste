@@ -130,6 +130,8 @@ const { readingRoot, activeSection } = useMarketingReading()
           <div class="story-cta">
             <span class="cta-basket"><UIcon name="i-lucide-shopping-basket" /></span><h2>Was steht auf deiner Liste?</h2><p>Starte lokal ohne Konto. Für KI und gemeinsame Listen brauchst du Anmeldung und Internet.</p><UButton
               to="/app/lists"
+              data-analytics-event="open_app"
+              data-analytics-location="story"
               icon="i-lucide-list-plus"
               size="xl"
               class="rounded-full"

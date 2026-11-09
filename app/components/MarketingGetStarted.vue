@@ -19,6 +19,8 @@
         <NuxtLink
           to="/app/lists"
           class="platform-option platform-option--browser"
+          data-analytics-event="open_app"
+          data-analytics-location="get_started"
           aria-labelledby="browser-option-title browser-option-cta"
           aria-describedby="browser-option-description"
         >
