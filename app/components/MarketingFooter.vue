@@ -72,7 +72,7 @@ const { openSettings } = useAnalyticsConsent()
             class="footer-consent"
             @click="openSettings"
           >
-            Cookie-Einstellungen
+            🍪 Cookies
           </button>
         </nav>
       </div>

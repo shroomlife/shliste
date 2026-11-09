@@ -40,19 +40,14 @@ const { openSettings } = useAnalyticsConsent()
         Mit Anmeldung über Google
       </h2>
       <p class="mt-2 text-[1.125rem]">
-        Meldest du dich an, übermittelt Google uns deine E-Mail-Adresse, deinen Anzeigenamen und
-        dein Profilbild. Diese Daten und deine Listen, Einträge und Rezepte werden auf einem
-        Server in Deutschland gespeichert, um sie zwischen deinen Geräten abzugleichen.
-        Rechtsgrundlage ist die Erfüllung des Nutzungsvertrags nach Artikel 6 Absatz 1 Buchstabe b DSGVO.
+        Meldest du dich an, übermittelt Google uns deine E-Mail-Adresse, deinen Anzeigenamen und dein Profilbild. Diese Daten und deine Listen, Einträge und Rezepte werden auf einem Server in Deutschland gespeichert, um sie zwischen deinen Geräten abzugleichen. Rechtsgrundlage ist die Erfüllung des Nutzungsvertrags nach Artikel 6 Absatz 1 Buchstabe b DSGVO.
       </p>
 
       <h2 class="mt-6 text-[1.25rem] font-bold">
         Geteilte Listen
       </h2>
       <p class="mt-2 text-[1.125rem]">
-        Teilst du eine Liste, sehen die eingeladenen Personen deren Inhalt sowie deinen Anzeigenamen
-        und dein Profilbild. Deine E-Mail-Adresse ist ausschließlich für den Eigentümer der Liste
-        sichtbar.
+        Teilst du eine Liste, sehen die eingeladenen Personen deren Inhalt sowie deinen Anzeigenamen und dein Profilbild. Deine E-Mail-Adresse ist ausschließlich für den Eigentümer der Liste sichtbar.
       </p>
 
       <h2
@@ -83,7 +78,7 @@ const { openSettings } = useAnalyticsConsent()
         Verarbeitet werden dabei aufgerufene Seiten, Klicks auf „App öffnen“, die Anmeldung zur Warteliste (ohne E-Mail-Adresse), Angaben zu Gerät und Browser, die ungefähre Herkunft sowie die verweisende Seite. Google setzt dafür die Cookies „_ga“ und „_ga_XRRVDNBWGN“ mit einer Laufzeit von zwei Jahren. Werbefunktionen und Google Signals sind ausgeschaltet. Die Daten werden nach 14 Monaten gelöscht. Google kann Daten in den USA verarbeiten; Google ist nach dem EU-US Data Privacy Framework zertifiziert.
       </p>
       <p class="mt-2 text-[1.125rem]">
-        Rechtsgrundlage ist deine Einwilligung nach Artikel 6 Absatz 1 Buchstabe a DSGVO und § 25 Absatz 1 TDDDG. Deine Entscheidung, ob Zustimmung oder Ablehnung, speichern wir nur in deinem Browser und fragen nach 90 Tagen erneut. Du kannst sie jederzeit über „Cookie-Einstellungen“ im Footer oder <button
+        Rechtsgrundlage ist deine Einwilligung nach Artikel 6 Absatz 1 Buchstabe a DSGVO und § 25 Absatz 1 TDDDG. Deine Entscheidung, ob Zustimmung oder Ablehnung, speichern wir nur in deinem Browser und fragen nach 90 Tagen erneut. Du kannst sie jederzeit über „🍪 Cookies“ im Footer oder <button
           type="button"
           class="legal-inline-button"
           @click="openSettings"
@@ -100,9 +95,7 @@ const { openSettings } = useAnalyticsConsent()
         Deine Rechte
       </h2>
       <p class="mt-2 text-[1.125rem]">
-        Du kannst Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung sowie
-        Datenübertragbarkeit verlangen und hast ein Beschwerderecht bei einer Aufsichtsbehörde.
-        Eine Anfrage genügt an die im Impressum genannte Adresse.
+        Du kannst Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung sowie Datenübertragbarkeit verlangen und hast ein Beschwerderecht bei einer Aufsichtsbehörde. Eine Anfrage genügt an die im Impressum genannte Adresse.
       </p>
 
       <h2 class="mt-6 text-[1.25rem] font-bold">
