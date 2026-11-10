@@ -222,5 +222,5 @@ async function openList() {
 @media(max-width:1000px){.together{grid-template-columns:minmax(0,1fr);align-items:start}.together>div{max-width:700px}}
 @media(max-width:420px){.guest-picker{grid-template-columns:repeat(3,minmax(44px,1fr));max-width:290px}.hero .button,.closing .button{width:100%}.shopping-card{padding:20px}.hero h1{font-size:clamp(2.5rem,10.5vw,2.8rem)}}
 @media(prefers-reduced-motion:reduce){.button,.guest-picker button{transition:none}}
-.together{align-items:start}.together :deep(.scene-screen){height:560px}.together :deep(.mini-scene-narration){min-height:86px;padding-block:18px}
+.together{align-items:start}.together :deep(.mini-scene-narration){min-height:86px;padding-block:18px}
 </style>
