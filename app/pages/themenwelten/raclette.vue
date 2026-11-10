@@ -209,6 +209,7 @@ async function openList() {
           class="button"
         ><span class="button-label">Euren Racletteabend planen</span><UIcon name="i-lucide-arrow-up" /></a>
       </div>
+      <MarketingWaitlistSection />
     </main>
   </MarketingChrome>
 </template>

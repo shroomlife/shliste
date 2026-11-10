@@ -134,7 +134,7 @@ function focus(event: FocusEvent) {
         ><path d="M16.5 17h7" /><path d="M16.5 23h7" /></g>
       </svg>
     </span>
-    <span class="app-cta-label optical-center">App</span>
+    <span class="app-cta-label optical-center">Zur App</span>
     <span
       class="app-cta-direction"
       aria-hidden="true"

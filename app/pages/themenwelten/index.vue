@@ -6,27 +6,29 @@ useSeoMeta({ title: 'Einkaufslisten Themenwelten: gemeinsam entspannt planen', d
   <MarketingChrome>
     <main
       id="inhalt"
-      class="mkt-content worlds"
     >
-      <p class="mkt-label">
-        Die shliste Themenwelten
-      </p><h1>Ihr habt etwas vor.<br><em>Wir denken mit.</em></h1><p class="lead">
-        Ein langer Abend am Tisch. Ein erstes Frühstück im Urlaub. Gute Ideen werden noch besser, wenn alle wissen, was fehlt.
-      </p>
-      <NuxtLink
-        to="/themenwelten/raclette"
-        class="featured"
-      ><img
-        src="/images/illustrations/plant-based-raclette.webp"
-        alt="Ein Raclettepfännchen mit buntem Gemüse neben einer Schale Kartoffeln. KI-generiert."
-        width="1536"
-        height="1024"
-      ><div><p class="mkt-label">Für Weihnachten, Silvester & einfach so</p><h2>Alle an einem Tisch.<br>Alles auf einer Liste.</h2><p>Eure Raclette-Einkaufsliste: Mengen planen, Lieblingspfännchen entdecken und gemeinsam mit shliste einkaufen.</p><strong><span>Racletteabend planen</span><UIcon name="i-lucide-arrow-up-right" /></strong></div></NuxtLink>
-      <section class="more">
+      <div class="mkt-content worlds">
         <p class="mkt-label">
-          Weitere Anlässe entdecken
-        </p><h2>Kleine Pläne für große Alltagsmomente.</h2><p>Diese Alltagsgeschichten bringen schon heute passende Listenideen mit.</p><div><NuxtLink to="/im-alltag/ferienwohnung-einkauf"><UIcon name="i-lucide-luggage" /><h3>Ankommen. Frühstücken. Urlaub.</h3><p>Was für die ersten Tage in der Ferienwohnung fehlt.</p><strong>Zur Alltagsgeschichte →</strong></NuxtLink><NuxtLink to="/im-alltag/umzug-erster-abend"><UIcon name="i-lucide-house" /><h3>Neue Wohnung. Erster Abend.</h3><p>Eine kleine Liste zwischen all den Umzugskartons.</p><strong>Zur Alltagsgeschichte →</strong></NuxtLink></div>
-      </section>
+          Die shliste Themenwelten
+        </p><h1>Ihr habt etwas vor.<br><em>Wir denken mit.</em></h1><p class="lead">
+          Ein langer Abend am Tisch. Ein erstes Frühstück im Urlaub. Gute Ideen werden noch besser, wenn alle wissen, was fehlt.
+        </p>
+        <NuxtLink
+          to="/themenwelten/raclette"
+          class="featured"
+        ><img
+          src="/images/illustrations/plant-based-raclette.webp"
+          alt="Ein Raclettepfännchen mit buntem Gemüse neben einer Schale Kartoffeln. KI-generiert."
+          width="1536"
+          height="1024"
+        ><div><p class="mkt-label">Für Weihnachten, Silvester & einfach so</p><h2>Alle an einem Tisch.<br>Alles auf einer Liste.</h2><p>Eure Raclette-Einkaufsliste: Mengen planen, Lieblingspfännchen entdecken und gemeinsam mit shliste einkaufen.</p><strong><span>Racletteabend planen</span><UIcon name="i-lucide-arrow-up-right" /></strong></div></NuxtLink>
+        <section class="more">
+          <p class="mkt-label">
+            Weitere Anlässe entdecken
+          </p><h2>Kleine Pläne für große Alltagsmomente.</h2><p>Diese Alltagsgeschichten bringen schon heute passende Listenideen mit.</p><div><NuxtLink to="/im-alltag/ferienwohnung-einkauf"><UIcon name="i-lucide-luggage" /><h3>Ankommen. Frühstücken. Urlaub.</h3><p>Was für die ersten Tage in der Ferienwohnung fehlt.</p><strong>Zur Alltagsgeschichte →</strong></NuxtLink><NuxtLink to="/im-alltag/umzug-erster-abend"><UIcon name="i-lucide-house" /><h3>Neue Wohnung. Erster Abend.</h3><p>Eine kleine Liste zwischen all den Umzugskartons.</p><strong>Zur Alltagsgeschichte →</strong></NuxtLink></div>
+        </section>
+      </div>
+      <MarketingWaitlistSection />
     </main>
   </MarketingChrome>
 </template>
