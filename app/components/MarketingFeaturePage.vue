@@ -26,99 +26,102 @@ useSeoMeta({ title: () => content.value.title, description: () => content.value.
   <MarketingChrome>
     <main
       id="inhalt"
-      class="feature-page mkt-shell"
+      class="feature-page"
     >
-      <NuxtLink
-        to="/im-alltag"
-        class="back-link"
-      ><UIcon name="i-lucide-book-open" /> Alle Beispiele und Anleitungen</NuxtLink>
-      <section
-        class="feature-intro"
-        aria-labelledby="feature-title"
-      >
-        <div class="feature-copy">
-          <p class="mkt-label">
-            {{ content.eyebrow }}
-          </p>
-          <h1 id="feature-title">
-            {{ content.title }}
-          </h1>
-          <p class="feature-lead">
-            {{ content.intro }}
-          </p>
-          <a
-            href="#anleitung"
-            class="feature-link"
-          ><span><UIcon name="i-lucide-list-checks" /></span> Schritt für Schritt entdecken</a>
-          <div class="feature-context">
-            <UIcon :name="feature === 'badge' ? 'i-lucide-chef-hat' : 'i-lucide-lock-keyhole'" />
-            <p>{{ feature === 'badge' ? 'Dein Rezept. Selbst gekocht. Zum Wiederfreuen.' : 'Deine Ideen bleiben hinter der Gerätebestätigung.' }}</p>
-          </div>
-        </div>
-        <div class="feature-visual">
-          <MarketingArticleScene :story-key="feature === 'badge' ? 'rezept-badges' : 'geheime-listen'" />
-        </div>
-      </section>
-      <div
-        id="anleitung"
-        class="feature-guide"
-      >
-        <aside
-          class="feature-guide-map"
-          aria-label="Wegweiser durch die Anleitung"
+      <div class="mkt-shell">
+        <NuxtLink
+          to="/im-alltag"
+          class="back-link"
+        ><UIcon name="i-lucide-book-open" /> Alle Beispiele und Anleitungen</NuxtLink>
+        <section
+          class="feature-intro"
+          aria-labelledby="feature-title"
         >
-          <p class="mkt-label">
-            So funktioniert’s
-          </p>
-          <h2>{{ feature === 'badge' ? 'Vom Kochen zum kleinen Glücksmoment.' : 'Eine Überraschung bleibt eine Überraschung.' }}</h2>
-          <nav aria-label="In dieser Anleitung">
+          <div class="feature-copy">
+            <p class="mkt-label">
+              {{ content.eyebrow }}
+            </p>
+            <h1 id="feature-title">
+              {{ content.title }}
+            </h1>
+            <p class="feature-lead">
+              {{ content.intro }}
+            </p>
             <a
-              v-for="(section, i) in content.sections"
-              :key="section.title"
-              :href="`#schritt-${i + 1}`"
-              :aria-current="activeSection === i ? 'location' : undefined"
-            ><span aria-hidden="true">{{ i + 1 }}</span><span>{{ section.title }}</span></a>
-          </nav>
-        </aside>
+              href="#anleitung"
+              class="feature-link"
+            ><span><UIcon name="i-lucide-list-checks" /></span> Schritt für Schritt entdecken</a>
+            <div class="feature-context">
+              <UIcon :name="feature === 'badge' ? 'i-lucide-chef-hat' : 'i-lucide-lock-keyhole'" />
+              <p>{{ feature === 'badge' ? 'Dein Rezept. Selbst gekocht. Zum Wiederfreuen.' : 'Deine Ideen bleiben hinter der Gerätebestätigung.' }}</p>
+            </div>
+          </div>
+          <div class="feature-visual">
+            <MarketingArticleScene :story-key="feature === 'badge' ? 'rezept-badges' : 'geheime-listen'" />
+          </div>
+        </section>
         <div
-          ref="readingRoot"
-          class="feature-reading"
+          id="anleitung"
+          class="feature-guide"
         >
-          <section
-            v-for="(section, i) in content.sections"
-            :id="`schritt-${i + 1}`"
-            :key="section.title"
-            class="feature-step"
-            data-reading-step
+          <aside
+            class="feature-guide-map"
+            aria-label="Wegweiser durch die Anleitung"
           >
-            <span
-              class="feature-marker"
-              aria-hidden="true"
-            >{{ String(i + 1).padStart(2, '0') }}</span>
-            <div><h2>{{ section.title }}</h2><p>{{ section.text }}</p></div>
-          </section>
-          <p
-            v-if="feature === 'secret'"
-            class="source-note"
+            <p class="mkt-label">
+              So funktioniert’s
+            </p>
+            <h2>{{ feature === 'badge' ? 'Vom Kochen zum kleinen Glücksmoment.' : 'Eine Überraschung bleibt eine Überraschung.' }}</h2>
+            <nav aria-label="In dieser Anleitung">
+              <a
+                v-for="(section, i) in content.sections"
+                :key="section.title"
+                :href="`#schritt-${i + 1}`"
+                :aria-current="activeSection === i ? 'location' : undefined"
+              ><span aria-hidden="true">{{ i + 1 }}</span><span>{{ section.title }}</span></a>
+            </nav>
+          </aside>
+          <div
+            ref="readingRoot"
+            class="feature-reading"
           >
-            Mehr zur Gerätebestätigung: <a
-              href="https://webkit.org/blog/11312/meet-face-id-and-touch-id-for-the-web/"
-              target="_blank"
-              rel="noopener"
-            >Face ID und Touch ID im Web bei WebKit</a>.
-          </p>
+            <section
+              v-for="(section, i) in content.sections"
+              :id="`schritt-${i + 1}`"
+              :key="section.title"
+              class="feature-step"
+              data-reading-step
+            >
+              <span
+                class="feature-marker"
+                aria-hidden="true"
+              >{{ String(i + 1).padStart(2, '0') }}</span>
+              <div><h2>{{ section.title }}</h2><p>{{ section.text }}</p></div>
+            </section>
+            <p
+              v-if="feature === 'secret'"
+              class="source-note"
+            >
+              Mehr zur Gerätebestätigung: <a
+                href="https://webkit.org/blog/11312/meet-face-id-and-touch-id-for-the-web/"
+                target="_blank"
+                rel="noopener"
+              >Face ID und Touch ID im Web bei WebKit</a>.
+            </p>
+          </div>
         </div>
       </div>
       <MarketingWaitlistSection />
-
-      <NuxtLink
-        :to="content.other"
-        class="feature-next"
-      >
-        <span class="feature-next-icon"><UIcon :name="feature === 'badge' ? 'i-lucide-lock-keyhole' : 'i-lucide-chef-hat'" /></span>
-        <span class="feature-next-copy"><small>Das passt dazu</small><strong>{{ content.otherLabel }}</strong></span>
-        <span class="feature-next-open"><UIcon name="i-lucide-book-open" /> Geschichte öffnen</span>
-      </NuxtLink>
+      <div class="mkt-shell">
+        <NuxtLink
+          :to="content.other"
+          class="feature-next"
+        >
+          <span class="feature-next-icon"><UIcon :name="feature === 'badge' ? 'i-lucide-lock-keyhole' : 'i-lucide-chef-hat'" /></span>
+          <span class="feature-next-copy"><small>Das passt dazu</small><strong>{{ content.otherLabel }}</strong></span>
+          <span class="feature-next-open"><UIcon name="i-lucide-book-open" /> Geschichte öffnen</span>
+        </NuxtLink>
+      </div>
     </main>
   </MarketingChrome>
 </template>

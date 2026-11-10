@@ -89,240 +89,243 @@ useHead(() => ({
     <main
       id="inhalt"
       ref="page"
-      class="recipe-page mkt-shell"
+      class="recipe-page"
     >
-      <NuxtLink
-        to="/rezeptideen"
-        class="recipe-back"
-      ><RecipeActionLabel icon="i-lucide-arrow-left">Alle Rezeptideen</RecipeActionLabel></NuxtLink>
-      <header class="recipe-hero">
-        <div class="recipe-intro">
-          <span class="recipe-eyebrow">{{ recipe.emoji }} {{ recipe.story?.eyebrow ?? recipe.meal }}</span>
-          <h1 ref="heading">
-            {{ recipe.title }}
-          </h1>
-          <p class="recipe-lead">
-            {{ recipe.intro }}
-          </p>
-          <ul
-            class="recipe-facts"
-            aria-label="Auf einen Blick"
-          >
-            <li><strong>{{ durationLabel(recipe) }}</strong><span>{{ recipe.restMinutes ? 'Inklusive Ruhezeit' : 'Gesamtzeit, ungefähr' }}</span></li><li><strong>{{ recipe.servings }} {{ recipe.servings === 1 ? 'Portion' : 'Portionen' }}</strong><span>Für deinen Tisch</span></li><li><strong>{{ recipe.difficulty }}</strong><span>Mit etwas Geduld</span></li>
-          </ul>
-          <div class="recipe-actions">
-            <RecipeSaveDialog :recipe="recipe" /><a
-              href="#zubereitung"
-              class="recipe-secondary"
-            ><RecipeActionLabel icon="i-lucide-cooking-pot">Loskochen</RecipeActionLabel></a>
-          </div>
-          <p
-            v-if="notice"
-            role="status"
-            class="sr-only"
-          >
-            {{ notice }}
-          </p>
-          <p class="recipe-fine">
-            100 % pflanzlich. Speichern fügt das Rezept deiner Sammlung hinzu.
-          </p>
-        </div>
-        <div class="recipe-hero-photo">
-          <EditorialImage
-            :image="recipe.hero"
-            eager
-            :zoom="false"
-          />
-          <div class="hero-heart-slot">
-            <WebsiteRecipeHeart
-              compact
-              class="hero-heart"
-              :active="favorites.includes(recipe.catalogId)"
-              :title="recipe.title"
-              @toggle="toggleFavorite(recipe.catalogId)"
-            />
-          </div>
-        </div>
-      </header>
-      <div class="recipe-tags">
-        <span
-          v-for="tag in recipe.tags"
-          :key="tag"
-        >{{ tag }}</span><button
-          type="button"
-          @click="printRecipe"
-        >
-          <RecipeActionLabel icon="i-lucide-printer">
-            Rezept drucken
-          </RecipeActionLabel>
-        </button>
-      </div>
-      <nav
-        ref="reader"
-        class="recipe-reader mkt-content"
-        :class="{ 'reader-visible': readerVisible }"
-        :inert="!readerVisible"
-        :aria-hidden="!readerVisible"
-        aria-label="Im Rezept"
-      >
-        <a
-          href="#inhalt"
-          class="reader-title"
-        ><img
-          :src="recipe.hero.src.replace('.webp', '-small.webp')"
-          alt=""
-          width="56"
-          height="36"
-        ><strong>{{ recipe.title }}</strong></a>
-        <a href="#zutaten">Zutaten</a><a href="#zubereitung">Schritte</a>
-        <WebsiteRecipeHeart
-          compact
-          class="reader-heart"
-          :active="favorites.includes(recipe.catalogId)"
-          :title="recipe.title"
-          @toggle="toggleFavorite(recipe.catalogId)"
-        />
-      </nav>
-      <div class="recipe-body">
-        <aside
-          id="zutaten"
-          class="ingredients-panel"
-          :class="{ unpinned: !ingredientsPinned }"
-          tabindex="0"
-          aria-label="Zutaten"
-        >
-          <span class="recipe-eyebrow">ALLES BEREITLEGEN</span><button
-            class="pin-ingredients"
-            :aria-pressed="ingredientsPinned"
-            aria-label="Zutatenliste beim Scrollen anheften"
-            @click="ingredientsPinned = !ingredientsPinned"
-          >
-            <UIcon :name="ingredientsPinned ? 'i-lucide-pin-off' : 'i-lucide-pin'" />{{ ingredientsPinned ? 'Lösen' : 'Anheften' }}
-          </button><h2>Das kommt rein.</h2><p>Für {{ recipe.servings }} {{ recipe.servings === 1 ? 'Portion' : 'Portionen' }}</p>
-          <ul>
-            <li
-              v-for="ingredient in recipe.ingredients"
-              :key="ingredient.id"
+      <div class="mkt-shell">
+        <NuxtLink
+          to="/rezeptideen"
+          class="recipe-back"
+        ><RecipeActionLabel icon="i-lucide-arrow-left">Alle Rezeptideen</RecipeActionLabel></NuxtLink>
+        <header class="recipe-hero">
+          <div class="recipe-intro">
+            <span class="recipe-eyebrow">{{ recipe.emoji }} {{ recipe.story?.eyebrow ?? recipe.meal }}</span>
+            <h1 ref="heading">
+              {{ recipe.title }}
+            </h1>
+            <p class="recipe-lead">
+              {{ recipe.intro }}
+            </p>
+            <ul
+              class="recipe-facts"
+              aria-label="Auf einen Blick"
             >
-              <span>{{ ingredientLabel({ ...ingredient, note: undefined }) }}</span><small v-if="ingredient.note">{{ ingredient.note }}</small>
-            </li>
-          </ul>
-          <div
-            v-if="recipe.story?.ingredientNote"
-            class="ingredient-note"
-          >
-            {{ recipe.emoji }} {{ recipe.story.ingredientNote }}
-          </div>
-        </aside>
-        <section
-          id="zubereitung"
-          class="recipe-method"
-          aria-labelledby="method-title"
-        >
-          <div class="method-heading">
-            <div>
-              <span class="recipe-eyebrow">NIMM DIR EINEN GEMÜTLICHEN MOMENT</span><h2 id="method-title">
-                So wird’s richtig gut.
-              </h2>
+              <li><strong>{{ durationLabel(recipe) }}</strong><span>{{ recipe.restMinutes ? 'Inklusive Ruhezeit' : 'Gesamtzeit, ungefähr' }}</span></li><li><strong>{{ recipe.servings }} {{ recipe.servings === 1 ? 'Portion' : 'Portionen' }}</strong><span>Für deinen Tisch</span></li><li><strong>{{ recipe.difficulty }}</strong><span>Mit etwas Geduld</span></li>
+            </ul>
+            <div class="recipe-actions">
+              <RecipeSaveDialog :recipe="recipe" /><a
+                href="#zubereitung"
+                class="recipe-secondary"
+              ><RecipeActionLabel icon="i-lucide-cooking-pot">Loskochen</RecipeActionLabel></a>
             </div>
+            <p
+              v-if="notice"
+              role="status"
+              class="sr-only"
+            >
+              {{ notice }}
+            </p>
+            <p class="recipe-fine">
+              100 % pflanzlich. Speichern fügt das Rezept deiner Sammlung hinzu.
+            </p>
           </div>
-          <article
-            v-for="(step, index) in recipe.steps"
-            :id="stepAnchor(step.id)"
-            :key="step.id"
-            class="method-step"
-          >
+          <div class="recipe-hero-photo">
             <EditorialImage
-              :image="step.illustration"
-              :step="illustratedSteps[index]"
-              :gallery="illustratedSteps"
-              class="step-photo"
+              :image="recipe.hero"
+              eager
+              :zoom="false"
             />
-            <div class="step-caption">
-              <div class="step-heading">
-                <span class="step-number"><span>{{ index + 1 }}</span></span>
-                <div>
-                  <h3>{{ step.title }}</h3>
-                  <span
-                    v-if="step.minutes"
-                    class="step-minutes"
-                  ><UIcon
-                    name="i-lucide-clock"
-                    mode="svg"
-                    aria-hidden="true"
-                  /> ca. {{ step.minutes }} {{ step.minutes === 1 ? 'Minute' : 'Minuten' }}</span>
-                </div>
-              </div>
-              <p>{{ step.instruction }}</p>
+            <div class="hero-heart-slot">
+              <WebsiteRecipeHeart
+                compact
+                class="hero-heart"
+                :active="favorites.includes(recipe.catalogId)"
+                :title="recipe.title"
+                @toggle="toggleFavorite(recipe.catalogId)"
+              />
             </div>
-          </article>
+          </div>
+        </header>
+        <div class="recipe-tags">
+          <span
+            v-for="tag in recipe.tags"
+            :key="tag"
+          >{{ tag }}</span><button
+            type="button"
+            @click="printRecipe"
+          >
+            <RecipeActionLabel icon="i-lucide-printer">
+              Rezept drucken
+            </RecipeActionLabel>
+          </button>
+        </div>
+        <nav
+          ref="reader"
+          class="recipe-reader mkt-content"
+          :class="{ 'reader-visible': readerVisible }"
+          :inert="!readerVisible"
+          :aria-hidden="!readerVisible"
+          aria-label="Im Rezept"
+        >
+          <a
+            href="#inhalt"
+            class="reader-title"
+          ><img
+            :src="recipe.hero.src.replace('.webp', '-small.webp')"
+            alt=""
+            width="56"
+            height="36"
+          ><strong>{{ recipe.title }}</strong></a>
+          <a href="#zutaten">Zutaten</a><a href="#zubereitung">Schritte</a>
+          <WebsiteRecipeHeart
+            compact
+            class="reader-heart"
+            :active="favorites.includes(recipe.catalogId)"
+            :title="recipe.title"
+            @toggle="toggleFavorite(recipe.catalogId)"
+          />
+        </nav>
+        <div class="recipe-body">
+          <aside
+            id="zutaten"
+            class="ingredients-panel"
+            :class="{ unpinned: !ingredientsPinned }"
+            tabindex="0"
+            aria-label="Zutaten"
+          >
+            <span class="recipe-eyebrow">ALLES BEREITLEGEN</span><button
+              class="pin-ingredients"
+              :aria-pressed="ingredientsPinned"
+              aria-label="Zutatenliste beim Scrollen anheften"
+              @click="ingredientsPinned = !ingredientsPinned"
+            >
+              <UIcon :name="ingredientsPinned ? 'i-lucide-pin-off' : 'i-lucide-pin'" />{{ ingredientsPinned ? 'Lösen' : 'Anheften' }}
+            </button><h2>Das kommt rein.</h2><p>Für {{ recipe.servings }} {{ recipe.servings === 1 ? 'Portion' : 'Portionen' }}</p>
+            <ul>
+              <li
+                v-for="ingredient in recipe.ingredients"
+                :key="ingredient.id"
+              >
+                <span>{{ ingredientLabel({ ...ingredient, note: undefined }) }}</span><small v-if="ingredient.note">{{ ingredient.note }}</small>
+              </li>
+            </ul>
+            <div
+              v-if="recipe.story?.ingredientNote"
+              class="ingredient-note"
+            >
+              {{ recipe.emoji }} {{ recipe.story.ingredientNote }}
+            </div>
+          </aside>
+          <section
+            id="zubereitung"
+            class="recipe-method"
+            aria-labelledby="method-title"
+          >
+            <div class="method-heading">
+              <div>
+                <span class="recipe-eyebrow">NIMM DIR EINEN GEMÜTLICHEN MOMENT</span><h2 id="method-title">
+                  So wird’s richtig gut.
+                </h2>
+              </div>
+            </div>
+            <article
+              v-for="(step, index) in recipe.steps"
+              :id="stepAnchor(step.id)"
+              :key="step.id"
+              class="method-step"
+            >
+              <EditorialImage
+                :image="step.illustration"
+                :step="illustratedSteps[index]"
+                :gallery="illustratedSteps"
+                class="step-photo"
+              />
+              <div class="step-caption">
+                <div class="step-heading">
+                  <span class="step-number"><span>{{ index + 1 }}</span></span>
+                  <div>
+                    <h3>{{ step.title }}</h3>
+                    <span
+                      v-if="step.minutes"
+                      class="step-minutes"
+                    ><UIcon
+                      name="i-lucide-clock"
+                      mode="svg"
+                      aria-hidden="true"
+                    /> ca. {{ step.minutes }} {{ step.minutes === 1 ? 'Minute' : 'Minuten' }}</span>
+                  </div>
+                </div>
+                <p>{{ step.instruction }}</p>
+              </div>
+            </article>
+          </section>
+        </div>
+        <section class="recipe-tips">
+          <span class="recipe-eyebrow">DIE KLEINEN DINGE, DIE HELFEN</span><h2>Damit es dir gelingt.</h2><div class="tips-grid">
+            <article
+              v-for="tip in recipe.tips"
+              :key="tip.title"
+            >
+              <h3>{{ tip.title }}</h3><p>{{ tip.text }}</p>
+            </article><article><h3>Für morgen aufheben</h3><p>{{ recipe.storage }}</p></article>
+          </div>
+        </section>
+        <section class="recipe-save-bottom">
+          <span aria-hidden="true">{{ recipe.emoji }}</span><h2>Das darf bleiben.</h2><p>Hol dir das Rezept in deine Sammlung. Zum Wiederfinden, Anpassen und gemeinsamen Kochen.</p><RecipeSaveDialog :recipe="recipe" />
         </section>
       </div>
-      <section class="recipe-tips">
-        <span class="recipe-eyebrow">DIE KLEINEN DINGE, DIE HELFEN</span><h2>Damit es dir gelingt.</h2><div class="tips-grid">
-          <article
-            v-for="tip in recipe.tips"
-            :key="tip.title"
-          >
-            <h3>{{ tip.title }}</h3><p>{{ tip.text }}</p>
-          </article><article><h3>Für morgen aufheben</h3><p>{{ recipe.storage }}</p></article>
-        </div>
-      </section>
-      <section class="recipe-save-bottom">
-        <span aria-hidden="true">{{ recipe.emoji }}</span><h2>Das darf bleiben.</h2><p>Hol dir das Rezept in deine Sammlung. Zum Wiederfinden, Anpassen und gemeinsamen Kochen.</p><RecipeSaveDialog :recipe="recipe" />
-      </section>
       <MarketingWaitlistSection />
-
-      <section
-        v-if="data?.recommendations.length"
-        class="related-recipes"
-        aria-labelledby="related-heading"
-      >
-        <span class="recipe-eyebrow">WEITER AM TISCH</span><h2 id="related-heading">
-          Was passt dazu?
-        </h2>
-        <div class="related-grid">
-          <NuxtLink
-            v-for="idea in data.recommendations"
-            :key="idea.id"
-            :to="idea.to"
-          >
-            <span class="related-kicker"><span aria-hidden="true">{{ idea.emoji }}</span>{{ idea.relation === 'ähnlich' ? 'Wenn dir das schmeckt' : 'Wie wäre es ' + idea.relation + '?' }}</span>
-            <h3>{{ idea.title }}</h3><p>{{ idea.reason }}</p>
-            <RecipeActionLabel
-              icon="i-lucide-arrow-right"
-              trailing
-            >{{ idea.ready ? 'Zum Rezept' : 'Rezeptidee ansehen' }}</RecipeActionLabel>
-          </NuxtLink>
-        </div>
-      </section>
-      <footer
-        v-if="recipe.inspiration"
-        id="quellen"
-        class="recipe-origin"
-      >
-        <a
-          :href="recipe.inspiration.url"
-          target="_blank"
-          rel="noopener noreferrer"
+      <div class="mkt-shell">
+        <section
+          v-if="data?.recommendations.length"
+          class="related-recipes"
+          aria-labelledby="related-heading"
         >
-          <span
-            class="origin-emblem"
-            aria-hidden="true"
-          ><UIcon
-            name="i-lucide-book-heart"
-            mode="svg"
-          /></span>
-          <span class="origin-copy"><small>Die Inspiration zu diesem Rezept</small><span>{{ recipe.inspiration.title }}</span></span>
-          <UIcon
-            class="origin-arrow"
-            name="i-lucide-arrow-up-right"
-            mode="svg"
-            aria-hidden="true"
-          />
-          <span class="sr-only"> · Originalrezept, öffnet in einem neuen Tab</span>
-        </a>
-      </footer>
+          <span class="recipe-eyebrow">WEITER AM TISCH</span><h2 id="related-heading">
+            Was passt dazu?
+          </h2>
+          <div class="related-grid">
+            <NuxtLink
+              v-for="idea in data.recommendations"
+              :key="idea.id"
+              :to="idea.to"
+            >
+              <span class="related-kicker"><span aria-hidden="true">{{ idea.emoji }}</span>{{ idea.relation === 'ähnlich' ? 'Wenn dir das schmeckt' : 'Wie wäre es ' + idea.relation + '?' }}</span>
+              <h3>{{ idea.title }}</h3><p>{{ idea.reason }}</p>
+              <RecipeActionLabel
+                icon="i-lucide-arrow-right"
+                trailing
+              >{{ idea.ready ? 'Zum Rezept' : 'Rezeptidee ansehen' }}</RecipeActionLabel>
+            </NuxtLink>
+          </div>
+        </section>
+        <footer
+          v-if="recipe.inspiration"
+          id="quellen"
+          class="recipe-origin"
+        >
+          <a
+            :href="recipe.inspiration.url"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span
+              class="origin-emblem"
+              aria-hidden="true"
+            ><UIcon
+              name="i-lucide-book-heart"
+              mode="svg"
+            /></span>
+            <span class="origin-copy"><small>Die Inspiration zu diesem Rezept</small><span>{{ recipe.inspiration.title }}</span></span>
+            <UIcon
+              class="origin-arrow"
+              name="i-lucide-arrow-up-right"
+              mode="svg"
+              aria-hidden="true"
+            />
+            <span class="sr-only"> · Originalrezept, öffnet in einem neuen Tab</span>
+          </a>
+        </footer>
+      </div>
     </main>
     <RecipePrintSheet :recipe="recipe" />
   </MarketingChrome>

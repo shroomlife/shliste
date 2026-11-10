@@ -17,6 +17,10 @@ const extras = ref('')
 const busy = ref(false)
 const message = ref('')
 const importedId = ref<string | null>(null)
+watch([guests, selected, extras], () => {
+  importedId.value = null
+  message.value = ''
+}, { deep: true })
 const groups = ['Die Basis', 'Für die Pfännchen', 'Dazu auf den Tisch']
 const items = computed(() => [...racletteIngredients.filter(item => selected.value.includes(item.id)).map(item => `${racletteAmount(item.grams, guests.value)} ${item.name}`), ...extras.value.split('\n').map(item => item.trim()).filter(Boolean)])
 const ideas = [
@@ -226,6 +230,10 @@ async function openList() {
           class="text-link"
         ><span>Noch mehr Ideen für eure Küche</span><UIcon name="i-lucide-book-open" /></NuxtLink>
       </section>
+      <RacletteHostingGuide
+        :extra-items="extras.split('\n').map(item => item.trim())"
+        @add-extra="item => { extras = [...extras.split('\n').filter(Boolean), item].join('\n') }"
+      />
       <section class="mkt-content preparation">
         <div>
           <p class="mkt-label">

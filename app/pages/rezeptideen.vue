@@ -76,242 +76,245 @@ useHead({ link: [{ rel: 'canonical', href: 'https://shliste.app/rezeptideen' }] 
   <MarketingChrome>
     <main
       id="inhalt"
-      class="cookbook mkt-shell"
+      class="cookbook"
     >
-      <section class="cookbook-intro">
-        <div class="cookbook-intro-copy">
-          <p class="cookbook-eyebrow">
-            Das shliste Rezeptbuch
-          </p><h1>Heute etwas<br><em>richtig Gutes.</em></h1><p class="cookbook-lead">
-            Für gemütliche Abende, süße Pausen und das kleine Glück, selbst zu kochen.
-          </p><p class="cookbook-subline">
-            Alles pflanzlich. Schritt für Schritt. Aus unserer Küche.
-          </p><a
-            href="#rezeptideen"
-            class="cookbook-jump"
-          >Dein nächstes Lieblingsrezept finden <UIcon name="i-lucide-arrow-down" /></a>
-        </div>
-        <section
-          v-if="slides.length"
-          ref="carousel"
-          class="cookbook-carousel"
-          aria-label="Ausgewählte Rezeptideen"
-          aria-roledescription="Karussell"
-          @pointerenter="hovered = $event.pointerType === 'mouse'"
-          @pointerleave="hovered = false"
-          @keydown.left.prevent="selectSlide((current - 1 + slides.length) % slides.length)"
-          @keydown.right.prevent="selectSlide((current + 1) % slides.length)"
-        >
-          <div class="slide-stack">
-            <NuxtLink
-              v-for="(slide, index) in slides"
-              :key="slide.id"
-              :to="slide.to"
-              class="cookbook-featured"
-              :class="{ 'slide-current': current === index }"
-              :inert="current !== index"
-              :aria-hidden="current !== index"
-              :aria-label="slide.title + ' · ' + slide.label"
-              @focus="paused = true"
+      <div class="mkt-shell">
+        <section class="cookbook-intro">
+          <div class="cookbook-intro-copy">
+            <p class="cookbook-eyebrow">
+              Das shliste Rezeptbuch
+            </p><h1>Heute etwas<br><em>richtig Gutes.</em></h1><p class="cookbook-lead">
+              Für gemütliche Abende, süße Pausen und das kleine Glück, selbst zu kochen.
+            </p><p class="cookbook-subline">
+              Alles pflanzlich. Schritt für Schritt. Aus unserer Küche.
+            </p><a
+              href="#rezeptideen"
+              class="cookbook-jump"
+            >Dein nächstes Lieblingsrezept finden <UIcon name="i-lucide-arrow-down" /></a>
+          </div>
+          <section
+            v-if="slides.length"
+            ref="carousel"
+            class="cookbook-carousel"
+            aria-label="Ausgewählte Rezeptideen"
+            aria-roledescription="Karussell"
+            @pointerenter="hovered = $event.pointerType === 'mouse'"
+            @pointerleave="hovered = false"
+            @keydown.left.prevent="selectSlide((current - 1 + slides.length) % slides.length)"
+            @keydown.right.prevent="selectSlide((current + 1) % slides.length)"
+          >
+            <div class="slide-stack">
+              <NuxtLink
+                v-for="(slide, index) in slides"
+                :key="slide.id"
+                :to="slide.to"
+                class="cookbook-featured"
+                :class="{ 'slide-current': current === index }"
+                :inert="current !== index"
+                :aria-hidden="current !== index"
+                :aria-label="slide.title + ' · ' + slide.label"
+                @focus="paused = true"
+              >
+                <EditorialImage
+                  :image="slide.image"
+                  :eager="index === 0"
+                  :zoom="false"
+                />
+                <div class="cookbook-featured-caption">
+                  <div><p>{{ slide.label }}</p><h2><RecipeActionLabel
+                    icon="i-lucide-arrow-right"
+                    trailing
+                  >{{ slide.title }}</RecipeActionLabel></h2></div>
+                  <span>{{ slide.detail }}</span>
+                </div>
+              </NuxtLink>
+            </div>
+            <div
+              v-if="slides.length > 1"
+              class="slide-controls"
             >
-              <EditorialImage
-                :image="slide.image"
-                :eager="index === 0"
-                :zoom="false"
-              />
-              <div class="cookbook-featured-caption">
-                <div><p>{{ slide.label }}</p><h2><RecipeActionLabel
-                  icon="i-lucide-arrow-right"
-                  trailing
-                >{{ slide.title }}</RecipeActionLabel></h2></div>
-                <span>{{ slide.detail }}</span>
+              <button
+                v-for="(slide, index) in slides"
+                :key="slide.id"
+                type="button"
+                :aria-label="'Motiv ' + (index + 1) + ': ' + slide.title"
+                :aria-pressed="current === index"
+                @focus="paused = true"
+                @click="selectSlide(index)"
+              >
+                <span />
+              </button>
+              <button
+                v-if="!reducedMotion"
+                type="button"
+                class="slide-play"
+                :aria-label="paused ? 'Bildwechsel starten' : 'Bildwechsel pausieren'"
+                @click="paused = !paused"
+              >
+                <UIcon
+                  :name="paused ? 'i-lucide-play' : 'i-lucide-pause'"
+                  mode="svg"
+                />
+              </button>
+            </div>
+          </section>
+        </section>
+        <section
+          id="rezeptideen"
+          class="cookbook-collection"
+        >
+          <div class="cookbook-section-heading">
+            <div>
+              <p class="cookbook-eyebrow">
+                Lass dich inspirieren
+              </p><h2>Worauf hast du Lust?</h2>
+              <p
+                v-if="catalog?.preview"
+                class="collection-count"
+              >
+                {{ catalog.recipes.length }} zum Nachkochen<span v-if="ideas.length > catalog.recipes.length"> · {{ ideas.length - catalog.recipes.length }} weitere {{ ideas.length - catalog.recipes.length === 1 ? 'Idee' : 'Ideen' }}</span>
+              </p>
+            </div>
+            <div class="cookbook-local-favorites">
+              <button
+                type="button"
+                :aria-pressed="favoritesOnly"
+                @click="setFilter('favoriten', favoritesOnly ? '' : '1')"
+              >
+                <UIcon
+                  name="i-lucide-heart"
+                  mode="svg"
+                  aria-hidden="true"
+                /><span>Meine Favoriten ({{ favorites.length }})</span>
+              </button>
+              <small>Nur in diesem Browser gespeichert.</small>
+            </div>
+          </div>
+          <div class="cookbook-filters">
+            <label class="cookbook-search"><UIcon name="i-lucide-search" /><input
+              v-model="search"
+              type="search"
+              aria-label="Rezepte und Zutaten suchen"
+              placeholder="Rezept oder Zutat suchen …"
+            ></label>
+            <div
+              class="cookbook-kind"
+              role="group"
+              aria-label="Rezeptart"
+            >
+              <button
+                v-for="kind in [{ value: '', label: 'Alles entdecken', icon: '' }, { value: 'herzhaft', label: 'Herzhaft', icon: 'i-lucide-cooking-pot' }, { value: 'suess', label: 'Süß', icon: 'i-lucide-cake-slice' }]"
+                :key="kind.value"
+                type="button"
+                :aria-pressed="readQuery('art') === kind.value"
+                @click="setFilter('art', kind.value)"
+              >
+                <UIcon
+                  v-if="kind.icon"
+                  :name="kind.icon"
+                  mode="svg"
+                  aria-hidden="true"
+                /><span>{{ kind.label }}</span>
+              </button>
+            </div>
+            <p
+              v-if="notice"
+              role="status"
+            >
+              {{ notice }}
+            </p>
+            <div class="cookbook-selects">
+              <div
+                v-for="field in filterFields"
+                :key="field.key"
+                class="cookbook-filter"
+              >
+                <label :for="`filter-${field.key}`">{{ field.label }}</label>
+                <USelect
+                  :id="`filter-${field.key}`"
+                  :model-value="readQuery(field.key) || 'all'"
+                  :items="field.items"
+                  :icon="field.icon"
+                  size="xl"
+                  class="w-full rounded-xl"
+                  @update:model-value="value => setFilter(field.key, value === 'all' ? '' : String(value))"
+                />
               </div>
-            </NuxtLink>
+            </div>
+          </div>
+          <div class="cookbook-resultline">
+            <p aria-live="polite">
+              {{ results.length }} {{ results.length === 1 ? 'Idee' : 'Ideen' }} <span v-if="readQuery('zeit') || readQuery('niveau')">· Rechercheideen ohne geprüfte Angaben werden ausgeblendet.</span>
+            </p><button
+              v-if="filtersActive"
+              type="button"
+              @click="router.replace({ query: {} })"
+            >
+              Filter zurücksetzen
+            </button>
           </div>
           <div
-            v-if="slides.length > 1"
-            class="slide-controls"
+            v-if="results.length"
+            class="cookbook-grid"
           >
-            <button
-              v-for="(slide, index) in slides"
-              :key="slide.id"
-              type="button"
-              :aria-label="'Motiv ' + (index + 1) + ': ' + slide.title"
-              :aria-pressed="current === index"
-              @focus="paused = true"
-              @click="selectSlide(index)"
+            <article
+              v-for="idea in results"
+              :key="idea.id"
+              class="cookbook-card"
+              :class="{ 'cookbook-card--ready': idea.recipe }"
             >
-              <span />
-            </button>
-            <button
-              v-if="!reducedMotion"
+              <NuxtLink
+                v-if="idea.recipe"
+                :to="`/rezepte/${idea.recipe.slug}`"
+                class="cookbook-card-image"
+              ><EditorialImage
+                :image="idea.recipe.hero"
+                :zoom="false"
+              /><span class="cookbook-card-badge">Rezept ansehen</span></NuxtLink>
+              <div
+                v-else
+                class="cookbook-idea-art"
+                :class="{ 'cookbook-idea-art--sweet': idea.kind === 'suess' }"
+              >
+                <span aria-hidden="true">{{ idea.emoji }}</span><span class="cookbook-idea-label">Eine Idee für bald</span>
+              </div>
+              <div class="cookbook-card-copy">
+                <div class="card-byline">
+                  <span class="cookbook-card-meal">{{ idea.meal }}<template v-if="idea.recipe"> · {{ durationLabel(idea.recipe) }} · {{ idea.recipe.difficulty }}</template></span><WebsiteRecipeHeart
+                    :active="favorites.includes(idea.id)"
+                    :title="idea.title"
+                    compact
+                    @toggle="toggleFavorite(idea.id)"
+                  />
+                </div><h3>
+                  <NuxtLink
+                    v-if="idea.recipe"
+                    :to="`/rezepte/${idea.recipe.slug}`"
+                  >{{ idea.title }}</NuxtLink><template v-else>
+                    {{ idea.title }}
+                  </template>
+                </h3><p>{{ idea.description }}</p>
+              </div>
+            </article>
+          </div>
+          <div
+            v-else
+            class="cookbook-empty"
+          >
+            <span aria-hidden="true">🥣</span><h3>{{ favoritesOnly && !favorites.length ? 'Deine Lieblingsideen haben hier Platz.' : 'Hier köchelt noch eine Idee.' }}</h3><p>{{ favoritesOnly && !favorites.length ? 'Tippe auf das Herz bei einer Rezeptidee, um sie auf diesem Gerät wiederzufinden.' : 'Zu dieser Auswahl gibt es noch kein passendes Rezept. Probiere einen anderen Filter.' }}</p><button
               type="button"
-              class="slide-play"
-              :aria-label="paused ? 'Bildwechsel starten' : 'Bildwechsel pausieren'"
-              @click="paused = !paused"
+              @click="router.replace({ query: {} })"
             >
-              <UIcon
-                :name="paused ? 'i-lucide-play' : 'i-lucide-pause'"
-                mode="svg"
-              />
+              Alle Ideen entdecken
             </button>
           </div>
         </section>
-      </section>
-      <section
-        id="rezeptideen"
-        class="cookbook-collection"
-      >
-        <div class="cookbook-section-heading">
-          <div>
-            <p class="cookbook-eyebrow">
-              Lass dich inspirieren
-            </p><h2>Worauf hast du Lust?</h2>
-            <p
-              v-if="catalog?.preview"
-              class="collection-count"
-            >
-              {{ catalog.recipes.length }} zum Nachkochen<span v-if="ideas.length > catalog.recipes.length"> · {{ ideas.length - catalog.recipes.length }} weitere {{ ideas.length - catalog.recipes.length === 1 ? 'Idee' : 'Ideen' }}</span>
-            </p>
-          </div>
-          <div class="cookbook-local-favorites">
-            <button
-              type="button"
-              :aria-pressed="favoritesOnly"
-              @click="setFilter('favoriten', favoritesOnly ? '' : '1')"
-            >
-              <UIcon
-                name="i-lucide-heart"
-                mode="svg"
-                aria-hidden="true"
-              /><span>Meine Favoriten ({{ favorites.length }})</span>
-            </button>
-            <small>Nur in diesem Browser gespeichert.</small>
-          </div>
-        </div>
-        <div class="cookbook-filters">
-          <label class="cookbook-search"><UIcon name="i-lucide-search" /><input
-            v-model="search"
-            type="search"
-            aria-label="Rezepte und Zutaten suchen"
-            placeholder="Rezept oder Zutat suchen …"
-          ></label>
-          <div
-            class="cookbook-kind"
-            role="group"
-            aria-label="Rezeptart"
-          >
-            <button
-              v-for="kind in [{ value: '', label: 'Alles entdecken', icon: '' }, { value: 'herzhaft', label: 'Herzhaft', icon: 'i-lucide-cooking-pot' }, { value: 'suess', label: 'Süß', icon: 'i-lucide-cake-slice' }]"
-              :key="kind.value"
-              type="button"
-              :aria-pressed="readQuery('art') === kind.value"
-              @click="setFilter('art', kind.value)"
-            >
-              <UIcon
-                v-if="kind.icon"
-                :name="kind.icon"
-                mode="svg"
-                aria-hidden="true"
-              /><span>{{ kind.label }}</span>
-            </button>
-          </div>
-          <p
-            v-if="notice"
-            role="status"
-          >
-            {{ notice }}
-          </p>
-          <div class="cookbook-selects">
-            <div
-              v-for="field in filterFields"
-              :key="field.key"
-              class="cookbook-filter"
-            >
-              <label :for="`filter-${field.key}`">{{ field.label }}</label>
-              <USelect
-                :id="`filter-${field.key}`"
-                :model-value="readQuery(field.key) || 'all'"
-                :items="field.items"
-                :icon="field.icon"
-                size="xl"
-                class="w-full rounded-xl"
-                @update:model-value="value => setFilter(field.key, value === 'all' ? '' : String(value))"
-              />
-            </div>
-          </div>
-        </div>
-        <div class="cookbook-resultline">
-          <p aria-live="polite">
-            {{ results.length }} {{ results.length === 1 ? 'Idee' : 'Ideen' }} <span v-if="readQuery('zeit') || readQuery('niveau')">· Rechercheideen ohne geprüfte Angaben werden ausgeblendet.</span>
-          </p><button
-            v-if="filtersActive"
-            type="button"
-            @click="router.replace({ query: {} })"
-          >
-            Filter zurücksetzen
-          </button>
-        </div>
-        <div
-          v-if="results.length"
-          class="cookbook-grid"
-        >
-          <article
-            v-for="idea in results"
-            :key="idea.id"
-            class="cookbook-card"
-            :class="{ 'cookbook-card--ready': idea.recipe }"
-          >
-            <NuxtLink
-              v-if="idea.recipe"
-              :to="`/rezepte/${idea.recipe.slug}`"
-              class="cookbook-card-image"
-            ><EditorialImage
-              :image="idea.recipe.hero"
-              :zoom="false"
-            /><span class="cookbook-card-badge">Rezept ansehen</span></NuxtLink>
-            <div
-              v-else
-              class="cookbook-idea-art"
-              :class="{ 'cookbook-idea-art--sweet': idea.kind === 'suess' }"
-            >
-              <span aria-hidden="true">{{ idea.emoji }}</span><span class="cookbook-idea-label">Eine Idee für bald</span>
-            </div>
-            <div class="cookbook-card-copy">
-              <div class="card-byline">
-                <span class="cookbook-card-meal">{{ idea.meal }}<template v-if="idea.recipe"> · {{ durationLabel(idea.recipe) }} · {{ idea.recipe.difficulty }}</template></span><WebsiteRecipeHeart
-                  :active="favorites.includes(idea.id)"
-                  :title="idea.title"
-                  compact
-                  @toggle="toggleFavorite(idea.id)"
-                />
-              </div><h3>
-                <NuxtLink
-                  v-if="idea.recipe"
-                  :to="`/rezepte/${idea.recipe.slug}`"
-                >{{ idea.title }}</NuxtLink><template v-else>
-                  {{ idea.title }}
-                </template>
-              </h3><p>{{ idea.description }}</p>
-            </div>
-          </article>
-        </div>
-        <div
-          v-else
-          class="cookbook-empty"
-        >
-          <span aria-hidden="true">🥣</span><h3>{{ favoritesOnly && !favorites.length ? 'Deine Lieblingsideen haben hier Platz.' : 'Hier köchelt noch eine Idee.' }}</h3><p>{{ favoritesOnly && !favorites.length ? 'Tippe auf das Herz bei einer Rezeptidee, um sie auf diesem Gerät wiederzufinden.' : 'Zu dieser Auswahl gibt es noch kein passendes Rezept. Probiere einen anderen Filter.' }}</p><button
-            type="button"
-            @click="router.replace({ query: {} })"
-          >
-            Alle Ideen entdecken
-          </button>
-        </div>
-      </section>
-      <MarketingThemeTeaser />
+        <MarketingThemeTeaser />
+      </div>
       <MarketingWaitlistSection />
-
-      <RecipeCollectionBridge />
+      <div class="mkt-shell">
+        <RecipeCollectionBridge />
+      </div>
     </main>
   </MarketingChrome>
 </template>
