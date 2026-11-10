@@ -51,4 +51,24 @@ useSeoMeta({ title: 'Einkaufslisten Themenwelten: gemeinsam entspannt planen', d
 .worlds h1,.worlds h2{text-wrap:balance}.featured{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)}.featured>div{min-width:0}.featured strong{display:inline-flex;align-items:center;gap:10px;min-height:44px;line-height:1.3}.featured strong>span{display:block;transform:translateY(.08em)}.featured strong>.iconify{width:20px;height:20px;flex:0 0 20px}.more a{display:flex;flex-direction:column;align-items:flex-start;min-width:0}.more a>strong{margin-top:auto;min-height:44px;display:flex;align-items:center}.worlds a:focus-visible{outline:3px solid var(--demo-accent);outline-offset:5px}.more a,.featured{transition:box-shadow .2s}.more a p{line-height:1.6}.featured img{min-width:0}@supports(text-box-trim:trim-both){.featured strong>span{text-box-trim:trim-both;text-box-edge:cap alphabetic;transform:none}}@media(hover:hover){.more a:hover,.featured:hover{box-shadow:0 12px 32px -22px var(--demo-accent)}}@media(max-width:700px){.featured{grid-template-columns:minmax(0,1fr)}}@media(max-width:420px){.worlds{padding-top:36px}.worlds h1{font-size:2.75rem}.lead{font-size:1.2rem}.more a{padding:24px}}@media(prefers-reduced-motion:reduce){.more a,.featured{transition:none}}
 .baking-feature{margin-bottom:28px}.more a>strong{gap:10px}.more a>strong>.iconify{width:20px;height:20px;flex:0 0 20px}
 .featured-image{display:block;overflow:hidden;min-width:0}.featured-image img{transition:transform 420ms cubic-bezier(.2,.75,.25,1)}.featured:focus-visible .featured-image img{transform:scale(1.025)}@media(hover:hover){.featured:hover .featured-image img{transform:scale(1.025)}}@media(prefers-reduced-motion:reduce){.featured-image img{transition:none!important;transform:none!important}}
+.featured-image { position: relative; isolation: isolate; }
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .featured-image::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(118deg, transparent 29%, #ffd0e93d 42%, #fff3ce66 48%, #bceee83d 53%, #d7c0fd38 58%, transparent 71%);
+  }
+  .featured:is(:hover, :focus-visible) .featured-image::after {
+    animation: world-prism 720ms cubic-bezier(.2,.6,.35,1) both;
+  }
+  @keyframes world-prism {
+    0% { opacity: 0; transform: translateX(-86%); }
+    28% { opacity: .8; }
+    72% { opacity: .65; }
+    100% { opacity: 0; transform: translateX(86%); }
+  }
+}
 </style>
