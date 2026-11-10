@@ -24,6 +24,8 @@ export interface EditorialMetadata {
   cookTest: 'ausstehend' | 'nachgekocht'
 }
 export interface CatalogRecipe extends EditorialMetadata {
+  yieldLabel?: string
+  variants?: RecipeVariant[]
   story?: { eyebrow: string, sticker: string[], ingredientNote: string }
   previousTitles?: string[]
   slug: string
@@ -36,6 +38,22 @@ export interface CatalogRecipe extends EditorialMetadata {
   inspiration?: { title: string, url: string }
   sources: { title: string, url: string, note: string }[]
   researchedAt: string
+}
+export interface RecipeVariant {
+  id: string
+  label: string
+  description: string
+  ingredients: CatalogRecipe['ingredients']
+  steps: CatalogRecipe['steps']
+  cookMinutes: number
+}
+
+/** Variant identity must survive saving and native-app handoff. */
+export function selectRecipeVariant(recipe: CatalogRecipe, variantId?: string): CatalogRecipe {
+  const variant = recipe.variants?.find(item => item.id === variantId) ?? recipe.variants?.[0]
+  if (!variant) return recipe
+  const { variants: _variants, ...base } = recipe
+  return { ...base, catalogId: `${recipe.catalogId}-${variant.id}`, title: `${recipe.title} · ${variant.label}`, ingredients: variant.ingredients, steps: variant.steps, cookMinutes: variant.cookMinutes }
 }
 export interface RecipeIdea {
   id: string
@@ -116,6 +134,13 @@ export function validateCatalogRecipe(value: unknown): CatalogRecipe {
   if (new Set(r.ingredients.map(i => i.id)).size !== r.ingredients.length || new Set(r.steps.map(s => s.id)).size !== r.steps.length) throw new Error('Doppelte Rezept-IDs')
   if (r.inspiration && !r.sources.some(source => source.url === r.inspiration?.url)) throw new Error('Unbekannte Rezeptinspiration')
   for (const s of r.sources) if (!s.title || !/^https:\/\//.test(s.url)) throw new Error('Ungültige Rezeptquelle')
+  if (r.variants !== undefined) {
+    if (!Array.isArray(r.variants) || !r.variants.length || new Set(r.variants.map(v => v.id)).size !== r.variants.length) throw new Error('Ungültige Rezeptvarianten')
+    for (const v of r.variants) {
+      if (!/^[a-z0-9-]+$/.test(v.id) || !v.label || typeof v.description !== 'string') throw new Error('Ungültige Rezeptvariante')
+      validateCatalogRecipe(selectRecipeVariant(r, v.id))
+    }
+  }
   // The plated dish uses the catalog title, including when an editor renames it.
   return {
     ...r,

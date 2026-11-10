@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { durationLabel, ingredientLabel, totalMinutes } from '~~/lib/editorial'
+import { durationLabel, ingredientLabel, totalMinutes, selectRecipeVariant } from '~~/lib/editorial'
 
 const route = useRoute()
 const { data, error } = await useFetch(`/api/recipe-catalog/v1/${encodeURIComponent(String(route.params.slug))}`)
 if (error.value || !data.value) throw createError({ statusCode: 404, statusMessage: 'Dieses Rezept ist noch nicht verfügbar.' })
-const recipe = computed(() => data.value!.recipe)
+const baseRecipe = computed(() => data.value!.recipe)
+const variantId = ref(typeof route.query.variante === 'string' ? route.query.variante : baseRecipe.value.variants?.[0]?.id)
+const recipe = computed(() => selectRecipeVariant(baseRecipe.value, variantId.value))
+const activeVariant = computed(() => baseRecipe.value.variants?.find(item => item.id === variantId.value) ?? baseRecipe.value.variants?.[0])
 const recipeUrl = computed(() => `https://shliste.app/rezepte/${recipe.value.slug}`)
 const stepAnchor = (id: string) => `schritt-${id}`
 const illustratedSteps = computed(() => recipe.value.steps.map((step, index) => ({
@@ -57,7 +60,7 @@ const ingredientsPinned = ref(true)
 function printRecipe() {
   window.print()
 }
-useSeoMeta({ title: () => `${recipe.value.title} – Schritt für Schritt · Shliste`, description: () => recipe.value.intro, robots: () => recipe.value.status === 'preview' ? 'noindex, nofollow' : 'index, follow', ogImage: () => `https://shliste.app${recipe.value.hero.src}` })
+useSeoMeta({ title: () => `${baseRecipe.value.title} – Schritt für Schritt · Shliste`, description: () => recipe.value.intro, robots: () => recipe.value.status === 'preview' ? 'noindex, nofollow' : 'index, follow', ogImage: () => `https://shliste.app${recipe.value.hero.src}` })
 useHead(() => ({
   link: [{ rel: 'canonical', href: recipeUrl.value }],
   script: [{ key: 'editorial-recipe', type: 'application/ld+json', innerHTML: JSON.stringify({
@@ -67,7 +70,7 @@ useHead(() => ({
     'image': `https://shliste.app${recipe.value.hero.src}`,
     'author': { '@type': 'Organization', 'name': 'shliste', 'url': 'https://shliste.app' },
     'isBasedOn': recipe.value.inspiration?.url,
-    'recipeCategory': recipe.value.meal, 'recipeYield': `${recipe.value.servings} Portionen`,
+    'recipeCategory': recipe.value.meal, 'recipeYield': recipe.value.yieldLabel ?? `${recipe.value.servings} Portionen`,
     'keywords': recipe.value.tags.length ? recipe.value.tags.join(', ') : undefined,
     'suitableForDiet': 'https://schema.org/VeganDiet',
     'prepTime': `PT${recipe.value.prepMinutes}M`, 'cookTime': `PT${recipe.value.cookMinutes}M`,
@@ -100,7 +103,7 @@ useHead(() => ({
           <div class="recipe-intro">
             <span class="recipe-eyebrow">{{ recipe.emoji }} {{ recipe.story?.eyebrow ?? recipe.meal }}</span>
             <h1 ref="heading">
-              {{ recipe.title }}
+              {{ baseRecipe.title }}
             </h1>
             <p class="recipe-lead">
               {{ recipe.intro }}
@@ -109,10 +112,13 @@ useHead(() => ({
               class="recipe-facts"
               aria-label="Auf einen Blick"
             >
-              <li><strong>{{ durationLabel(recipe) }}</strong><span>{{ recipe.restMinutes ? 'Inklusive Ruhezeit' : 'Gesamtzeit, ungefähr' }}</span></li><li><strong>{{ recipe.servings }} {{ recipe.servings === 1 ? 'Portion' : 'Portionen' }}</strong><span>Für deinen Tisch</span></li><li><strong>{{ recipe.difficulty }}</strong><span>Mit etwas Geduld</span></li>
+              <li><strong>{{ durationLabel(recipe) }}</strong><span>{{ recipe.restMinutes ? 'Inklusive Ruhezeit' : 'Gesamtzeit, ungefähr' }}</span></li><li><strong>{{ recipe.yieldLabel ?? `${recipe.servings} ${recipe.servings === 1 ? 'Portion' : 'Portionen'}` }}</strong><span>Für deinen Tisch</span></li><li><strong>{{ recipe.difficulty }}</strong><span>Mit etwas Geduld</span></li>
             </ul>
             <div class="recipe-actions">
-              <RecipeSaveDialog :recipe="recipe" /><a
+              <RecipeSaveDialog
+                :key="recipe.catalogId"
+                :recipe="recipe"
+              /><a
                 href="#zubereitung"
                 class="recipe-secondary"
               ><RecipeActionLabel icon="i-lucide-cooking-pot">Loskochen</RecipeActionLabel></a>
@@ -125,7 +131,7 @@ useHead(() => ({
               {{ notice }}
             </p>
             <p class="recipe-fine">
-              100 % pflanzlich. Speichern fügt das Rezept deiner Sammlung hinzu.
+              {{ baseRecipe.variants ? 'Deine ausgewählte Variante wird mit Zutaten und Schritten gespeichert.' : '100 % pflanzlich. Speichern fügt das Rezept deiner Sammlung hinzu.' }}
             </p>
           </div>
           <div class="recipe-hero-photo">
@@ -138,13 +144,49 @@ useHead(() => ({
               <WebsiteRecipeHeart
                 compact
                 class="hero-heart"
-                :active="favorites.includes(recipe.catalogId)"
+                :active="favorites.includes(baseRecipe.catalogId)"
                 :title="recipe.title"
-                @toggle="toggleFavorite(recipe.catalogId)"
+                @toggle="toggleFavorite(baseRecipe.catalogId)"
               />
             </div>
           </div>
         </header>
+        <section
+          v-if="baseRecipe.variants"
+          id="varianten"
+          class="recipe-variants"
+          aria-labelledby="variants-title"
+        >
+          <div>
+            <span class="recipe-eyebrow">EIN REZEPT. DEIN LIEBLINGSMOMENT.</span><h2 id="variants-title">
+              Welche Sorte darf es sein?
+            </h2><p>Zutaten, Backzeit und Anleitung wechseln mit. Gespeichert wird genau deine Auswahl.</p>
+          </div>
+          <fieldset>
+            <legend class="sr-only">
+              Plätzchenvariante auswählen
+            </legend><label
+              v-for="variant in baseRecipe.variants"
+              :key="variant.id"
+              :class="{ selected: activeVariant?.id === variant.id }"
+            ><input
+              v-model="variantId"
+              type="radio"
+              name="recipe-variant"
+              :value="variant.id"
+            ><UIcon :name="variant.id === 'schoko' ? 'i-lucide-candy' : variant.id === 'marmelade' ? 'i-lucide-cherry' : 'i-lucide-star'" /><span><strong>{{ variant.label }}</strong><small>{{ variant.description }}</small></span><UIcon
+              v-if="activeVariant?.id === variant.id"
+              name="i-lucide-circle-check"
+            /></label>
+          </fieldset>
+          <p
+            class="variant-status"
+            role="status"
+          >
+            {{ activeVariant?.label }}: {{ recipe.prepMinutes }} Min. vorbereiten · 30 Min. kühlen · {{ recipe.cookMinutes === 15 ? '12–15' : '10–12' }} Min. je Blech backen · etwa 20 Min. auskühlen.
+          </p>
+          <NuxtLink to="/themenwelten/plaetzchen-backen#backplan"><RecipeActionLabel icon="i-lucide-list-checks">Mehrere Sorten zusammen einkaufen? Zum Backplaner</RecipeActionLabel></NuxtLink>
+        </section>
         <div class="recipe-tags">
           <span
             v-for="tag in recipe.tags"
@@ -179,9 +221,9 @@ useHead(() => ({
           <WebsiteRecipeHeart
             compact
             class="reader-heart"
-            :active="favorites.includes(recipe.catalogId)"
+            :active="favorites.includes(baseRecipe.catalogId)"
             :title="recipe.title"
-            @toggle="toggleFavorite(recipe.catalogId)"
+            @toggle="toggleFavorite(baseRecipe.catalogId)"
           />
         </nav>
         <div class="recipe-body">
@@ -199,7 +241,7 @@ useHead(() => ({
               @click="ingredientsPinned = !ingredientsPinned"
             >
               <UIcon :name="ingredientsPinned ? 'i-lucide-pin-off' : 'i-lucide-pin'" />{{ ingredientsPinned ? 'Lösen' : 'Anheften' }}
-            </button><h2>Das kommt rein.</h2><p>Für {{ recipe.servings }} {{ recipe.servings === 1 ? 'Portion' : 'Portionen' }}</p>
+            </button><h2>Das kommt rein.</h2><p>{{ recipe.yieldLabel ?? `Für ${recipe.servings} ${recipe.servings === 1 ? 'Portion' : 'Portionen'}` }}<span v-if="activeVariant"> · {{ activeVariant.label }}</span></p>
             <ul>
               <li
                 v-for="ingredient in recipe.ingredients"
@@ -270,7 +312,10 @@ useHead(() => ({
           </div>
         </section>
         <section class="recipe-save-bottom">
-          <span aria-hidden="true">{{ recipe.emoji }}</span><h2>Das darf bleiben.</h2><p>Hol dir das Rezept in deine Sammlung. Zum Wiederfinden, Anpassen und gemeinsamen Kochen.</p><RecipeSaveDialog :recipe="recipe" />
+          <span aria-hidden="true">{{ recipe.emoji }}</span><h2>Das darf bleiben.</h2><p>Hol dir das Rezept in deine Sammlung. Zum Wiederfinden, Anpassen und gemeinsamen Kochen.</p><RecipeSaveDialog
+            :key="recipe.catalogId"
+            :recipe="recipe"
+          />
         </section>
       </div>
       <MarketingWaitlistSection />
@@ -332,6 +377,8 @@ useHead(() => ({
 </template>
 
 <style scoped>
+.recipe-page:has(.recipe-variants) .recipe-hero h1{hyphens:none}@media(max-width:680px){.recipe-page:has(.recipe-variants) .recipe-hero h1{font-size:clamp(25px,7.7vw,40px);overflow-wrap:normal}}
+.recipe-variants{margin-block:32px 40px;padding:30px;border:1px solid var(--md-outline-variant);border-radius:28px;background:var(--demo-soft);scroll-margin-top:110px}.recipe-variants h2{font-size:clamp(1.7rem,3vw,2.3rem);font-weight:850;line-height:1.15;margin:10px 0}.recipe-variants p{line-height:1.65}.recipe-variants fieldset{border:0;padding:0;margin:24px 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.recipe-variants label{position:relative;display:flex;align-items:center;gap:12px;min-height:100px;border:2px solid transparent;background:var(--md-surface);border-radius:18px;padding:18px;cursor:pointer}.recipe-variants label.selected{border-color:var(--demo-accent)}.recipe-variants input{position:absolute;opacity:0;width:1px;height:1px;clip-path:inset(50%)}.recipe-variants label:has(input:focus-visible){outline:3px solid var(--demo-accent);outline-offset:4px}.recipe-variants label>.iconify{flex:0 0 24px;color:var(--demo-accent)}.recipe-variants strong,.recipe-variants small{display:block;line-height:1.4}.recipe-variants strong{font-size:1.18rem}.recipe-variants small{font-size:.85rem;margin-top:5px}.variant-status{font-size:.9rem;margin-bottom:12px}.recipe-variants>a{display:inline-flex;min-height:44px;align-items:center;color:var(--demo-accent);font-weight:750}.recipe-variants label>span{min-width:0}@media(max-width:800px){.recipe-variants fieldset{grid-template-columns:1fr}.recipe-variants{padding:22px}.recipe-variants label{min-height:78px}}@media print{.recipe-variants{display:none}}
 .recipe-page{padding-block:32px 80px;color:var(--md-on-surface)}.recipe-back{display:inline-flex;min-height:44px;align-items:center;color:var(--md-primary);font-weight:650}.preview-note{font-size:14px;background:var(--md-secondary-container);border-radius:10px;padding:10px 16px;margin:12px 0 28px}.recipe-hero{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;margin:20px 0 28px}.recipe-eyebrow{font-size:12px;font-weight:750;letter-spacing:.12em;color:var(--md-primary)}h1{font-size:clamp(42px,5vw,68px);line-height:1.03;letter-spacing:-.045em;margin:16px 0 24px;font-weight:760}h2{font-size:clamp(28px,3vw,38px);line-height:1.13;letter-spacing:-.035em;font-weight:720;margin:12px 0 20px}h3{font-size:23px;line-height:1.25;font-weight:700}.recipe-lead{font-size:19px;line-height:1.65;color:var(--md-on-surface-variant)}.recipe-facts{display:flex;gap:24px;list-style:none;padding:0;margin:28px 0}.recipe-facts li{display:grid;gap:4px}.recipe-facts strong{font-size:18px}.recipe-facts span,.recipe-fine{font-size:13px;line-height:1.6;color:var(--md-on-surface-variant)}.recipe-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.recipe-secondary{padding:14px 18px;border:1px solid var(--md-outline-variant);border-radius:99px;font-weight:650}.recipe-hero-photo{box-shadow:0 18px 50px #3e301b15}.recipe-tags{display:flex;flex-wrap:wrap;gap:8px;margin:32px 0}.recipe-tags > span{border-radius:99px;background:var(--md-surface-container);padding:8px 14px;font-size:14px}.recipe-tags button{margin-left:auto;display:inline-flex;align-items:center;min-height:44px;padding-inline:10px;font-size:16px;font-weight:650;color:var(--md-primary)}.cook-test-note{padding:18px 22px;border-left:3px solid #c39743;background:#f7ebd322;border-radius:0 12px 12px 0;font-size:14px;line-height:1.6;margin-bottom:48px}.recipe-body{display:grid;grid-template-columns:320px 1fr;gap:64px;align-items:start}.ingredients-panel{padding-block:12px;padding-inline:0;background:transparent;position:sticky;top:24px}.ingredients-panel>p{color:var(--md-on-surface-variant)}.ingredients-panel ul{list-style:none;padding:0;margin:24px 0}.ingredients-panel li{padding:14px 0;border-bottom:1px solid var(--md-outline-variant);font-size:17px;line-height:1.45}.ingredients-panel small{display:block;font-size:13px;color:var(--md-on-surface-variant);margin-top:6px}.ingredient-note{padding:16px;border-radius:14px;background:var(--md-secondary-container);font-size:15px;line-height:1.5;margin:24px 0}.recipe-method{scroll-margin-top:110px}.method-heading{display:flex;align-items:center;gap:20px;justify-content:space-between}.method-heading{margin-bottom:32px}.recipe-tips{background:var(--md-secondary-container);border-radius:28px;padding:38px;margin:24px 0 64px}.tips-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:28px 40px}.tips-grid p{line-height:1.65;margin-top:10px;font-size:16px}.recipe-save-bottom{text-align:center;max-width:600px;margin:0 auto 56px}.recipe-save-bottom>span{font-size:48px}.recipe-save-bottom p{font-size:18px;line-height:1.6;margin-bottom:24px}.recipe-sources{border-top:1px solid var(--md-outline-variant);padding-top:24px;font-size:14px;line-height:1.7}.recipe-sources summary{cursor:pointer;font-weight:650;min-height:44px}.recipe-sources ul{padding-left:20px}.recipe-sources a{color:var(--md-primary);text-decoration:underline}.recipe-sources li{margin:12px 0}
 @media(max-width:900px){.recipe-hero{gap:28px}.recipe-body{grid-template-columns:270px 1fr;gap:28px}.recipe-facts{gap:16px;flex-wrap:wrap}.recipe-page{padding-block-start:24px}.recipe-hero-photo{transform:none}}
 @media(max-width:680px){.recipe-page{padding-block:20px 56px}.recipe-hero{grid-template-columns:1fr;gap:24px}.recipe-hero-photo{grid-row:1}.recipe-hero h1{font-size:44px}.recipe-body{grid-template-columns:1fr;gap:40px}.ingredients-panel{position:static}.tips-grid{grid-template-columns:1fr}.recipe-tips{padding:24px}.recipe-facts{justify-content:space-between;gap:10px}.recipe-facts strong{font-size:16px}.recipe-facts span{font-size:11px}.recipe-tags button{margin-left:0}.recipe-lead{font-size:18px}.preview-note{margin-bottom:20px}.method-heading .recipe-eyebrow{font-size:10px}}
@@ -370,7 +417,7 @@ useHead(() => ({
 .recipe-body { grid-template-columns: minmax(250px,26%) minmax(0,1fr); gap: clamp(24px,4vw,72px); }
 .ingredients-panel { top: var(--recipe-offset); max-height: calc(100dvh - var(--recipe-offset) - 20px); overflow-y: auto; scrollbar-width: thin; }
 .pin-ingredients{float:right;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:4px 12px;border-radius:999px;background:var(--md-surface-container);color:var(--md-primary);font-weight:650}.ingredients-panel.unpinned{position:static;max-height:none;overflow:visible}@media(max-width:680px),print{.pin-ingredients{display:none}}
-#zutaten, #zubereitung, .method-step { scroll-margin-top: var(--recipe-offset); }
+#zutaten, #zubereitung, #varianten, .method-step { scroll-margin-top: var(--recipe-offset); }
 .recipe-secondary, .recipe-tags > span { display: inline-flex; align-items: center; justify-content: center; line-height: 1; }
 .recipe-secondary { min-height: 54px; font-size:20px; }
 .recipe-back:hover, .recipe-tags button:hover { text-decoration: underline; text-underline-offset:.2em; }

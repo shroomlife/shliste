@@ -25,9 +25,32 @@ afterEach(async () => {
 })
 
 describe('editorial catalog contract', () => {
-  test('20 unique ideas, ten sweet and ten savory; released recipes are public', () => {
-    expect(new Set(recipeIdeas.map(r => r.id)).size).toBe(20)
-    expect(recipeIdeas.filter(r => r.kind === 'suess')).toHaveLength(10)
+  test('Christmas variants resolve publicly and keep separate saved ingredients and steps', async () => {
+    const base = getCatalogRecipe('weihnachtsplaetzchen')!
+    const vanilla = getCatalogRecipe('weihnachtsplaetzchen-vanille')!
+    const cocoa = getCatalogRecipe('weihnachtsplaetzchen-schoko')!
+    const jam = getCatalogRecipe('weihnachtsplaetzchen-marmelade')!
+    expect(base.title).toBe('Weihnachtsplätzchen')
+    expect(base.variants).toHaveLength(3)
+    expect(getCatalogRecipe('weihnachtsplaetzchen-unbekannt')).toBeNull()
+    expect(cocoa.ingredients.find(i => i.id === 'mehl')?.amount).toBe(230)
+    expect(cocoa.ingredients.find(i => i.id === 'kakao')?.amount).toBe(20)
+    expect(vanilla.ingredients.some(i => i.id === 'kakao')).toBe(false)
+    expect(jam.cookMinutes).toBe(15)
+    expect(jam.steps.find(s => s.id === 'formen')?.instruction).toContain('Mulde')
+    const db = await database()
+    const first = await importCatalogRecipe(vanilla, false, db)
+    const second = await importCatalogRecipe(cocoa, false, db)
+    expect(first.recipeId).not.toBe(second.recipeId)
+    expect((await importCatalogRecipe(cocoa, false, db)).recipeId).toBe(second.recipeId)
+    const ingredients = await db.getAllFromIndex('recipe_ingredients', 'by-recipeId', second.recipeId)
+    expect(ingredients.some(i => i.name.includes('20 g Backkakao'))).toBe(true)
+    const steps = await db.getAllFromIndex('recipe_steps', 'by-recipeId', second.recipeId)
+    expect(steps.some(s => s.description.includes('mit einer Gabel'))).toBe(true)
+  })
+  test('21 unique ideas, eleven sweet and ten savory; released recipes are public', () => {
+    expect(new Set(recipeIdeas.map(r => r.id)).size).toBe(21)
+    expect(recipeIdeas.filter(r => r.kind === 'suess')).toHaveLength(11)
     expect(recipeIdeas.filter(r => r.kind === 'herzhaft')).toHaveLength(10)
     expect(pilotRecipe.status).toBe('published')
     expect(getCatalogRecipe(pilotRecipe.catalogId)).toEqual(pilotRecipe)

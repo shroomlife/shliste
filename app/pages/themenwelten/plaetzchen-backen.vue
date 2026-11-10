@@ -4,7 +4,7 @@ import { createImportedList } from '~/db/repositories'
 
 useThemeWorldSchema('baking')
 
-useSeoMeta({ title: 'Plätzchen backen: Rezepte & gemeinsame Einkaufsliste', description: 'Plant eure Weihnachtsbäckerei: drei vegane Plätzchenrezepte, automatisch gebündelte Zutaten, Backtipps und eine gemeinsame Einkaufsliste in shliste.', ogImage: 'https://shliste.app/images/illustrations/plaetzchen-backen.webp', ogImageWidth: 1536, ogImageHeight: 1024, ogImageAlt: 'Eine vielfältige Runde backt gemeinsam Weihnachtsplätzchen.' })
+useSeoMeta({ title: 'Plätzchen backen: Rezepte & gemeinsame Einkaufsliste', description: 'Plant eure Weihnachtsbäckerei: drei Plätzchenvarianten, automatisch gebündelte Zutaten, bebilderte Backtipps und eine gemeinsame Einkaufsliste in shliste.', ogImage: 'https://shliste.app/images/illustrations/plaetzchen-backen.webp', ogImageWidth: 1536, ogImageHeight: 1024, ogImageAlt: 'Eine vielfältige Runde backt gemeinsam Weihnachtsplätzchen.' })
 useHead({ link: [{ rel: 'canonical', href: 'https://shliste.app/themenwelten/plaetzchen-backen' }] })
 const chosen = ref(['vanille', 'schoko', 'marmelade'])
 const batches = ref(1)
@@ -44,7 +44,7 @@ async function copyList() {
 }
 const faq = [
   { q: 'Was brauche ich zum Plätzchenbacken?', a: 'Für diese drei Sorten bilden Mehl, Backmargarine ohne Milchbestandteile, Zucker, Vanillezucker, Haferdrink und Salz die Basis. Kakao und Konfitüre kommen je nach Auswahl dazu. Prüfe außerdem Backbleche, Backpapier, Waage, Nudelholz, Ausstechformen und Dosen. Zubehör lässt sich im Feld für eigene Ergänzungen auf die Liste setzen.' },
-  { q: 'Sind alle drei Plätzchenrezepte vegan?', a: 'Ja. Die Teige kommen ohne Ei und Milchprodukte aus. Verwende Backmargarine ohne Milchbestandteile und Haferdrink. Bei optionaler Schokolade, Zuckerdekor und anderen gekauften Extras ebenfalls die Zutatenliste prüfen.' },
+  { q: 'Welche Margarine eignet sich für den Teig?', a: 'Nimm feste Backmargarine aus Raps- oder Sonnenblumenöl mit etwa 80 Prozent Fett. Halbfettprodukte enthalten mehr Wasser und verändern den Teig. Die genaue Menge findest du in der jeweils ausgewählten Rezeptvariante.' },
   { q: 'Wie viele Plätzchen ergeben die Rezepte?', a: 'Eine Portion pro Sorte ergibt ungefähr 30 kleine Plätzchen. Alle drei Sorten zusammen ergeben etwa 90 Stück. Größe, Dicke und Ausstechform verändern die tatsächliche Menge. Die Auswahl im Planer vervielfacht die Zutaten; die Anleitungen unten beschreiben jeweils eine Portion.' },
   { q: 'Bei welcher Temperatur und wie lange backe ich Plätzchen?', a: 'Diese Rezepte verwenden 175 °C Ober-/Unterhitze im vorgeheizten Ofen. Sterne und Schoko-Taler brauchen ungefähr 10–12 Minuten, Marmeladen-Küsschen 12–15 Minuten. Backe ein Blech nach dem anderen auf mittlerer Schiene. Ofen und Teigdicke beeinflussen die Zeit; das erste Blech früh kontrollieren.' },
   { q: 'Kann ich den Teig vorbereiten?', a: 'Du kannst die Teige am Vortag zubereiten und gut abgedeckt im Kühlschrank aufbewahren. Sehr festen Teig vor dem Formen kurz geschmeidig werden lassen. Rohes Mehl und rohen Teig nicht naschen; genossen wird nach dem Backen und Abkühlen.' },
@@ -92,7 +92,7 @@ const faq = [
           class="section-nav"
           aria-label="Auf dieser Seite"
         >
-          <a href="#backplan"><UIcon name="i-lucide-list-checks" /><span>Einkauf planen</span></a><a href="#rezepte"><UIcon name="i-lucide-cookie" /><span>Drei Sorten backen</span></a><a href="#vorbereitung"><UIcon name="i-lucide-clock" /><span>Entspannt vorbereiten</span></a><a href="#verschenken"><UIcon name="i-lucide-gift" /><span>Freude teilen</span></a>
+          <a href="#backplan"><UIcon name="i-lucide-list-checks" /><span>Einkauf planen</span></a><a href="#rezepte"><UIcon name="i-lucide-cookie" /><span>Drei Sorten backen</span></a><a href="#vorbereitung"><UIcon name="i-lucide-chef-hat" /><span>Backtipps entdecken</span></a><a href="#verschenken"><UIcon name="i-lucide-gift" /><span>Freude teilen</span></a>
         </nav>
       </div>
 
@@ -245,7 +245,7 @@ const faq = [
         <p class="mkt-label">
           03 · Drei Sorten, viele Lieblingsmomente
         </p><h2>Ein Blech voller Vorfreude.</h2><p class="intro">
-          Alle drei Teige kommen ohne Ei und Milchprodukte aus. Die Zutaten unten gelten jeweils für eine Portion mit ungefähr 30 kleinen Plätzchen. Wählt im Planer mehr Portionen, wenn eure Dosen größer sind.
+          Drei Varianten unseres Rezepts Weihnachtsplätzchen. Jede Portion ergibt ungefähr 30 kleine Stücke. Im Rezept wählst du deine Sorte und bekommst die passende bebilderte Anleitung; hier plant ihr den gemeinsamen Einkauf.
         </p><div class="recipe-grid">
           <article
             v-for="recipe in bakingRecipes"
@@ -263,25 +263,10 @@ const faq = [
             </figure><div class="recipe-body">
               <p class="mkt-label">
                 175 °C Ober-/Unterhitze · {{ recipe.time }}
-              </p><h3>{{ recipe.name }}</h3><p>{{ recipe.subtitle }}</p><details>
-                <summary>Zutaten & Backanleitung<UIcon name="i-lucide-chevron-down" /></summary><h4>Für ca. 30 kleine Plätzchen</h4><ul class="recipe-ingredients">
-                  <li
-                    v-for="item in recipe.ingredients"
-                    :key="item.id"
-                  >
-                    {{ bakingAmount(item) }} {{ item.name }}
-                  </li>
-                </ul><ol>
-                  <li
-                    v-for="step in recipe.steps"
-                    :key="step"
-                  >
-                    {{ step }}
-                  </li>
-                </ol><p class="recipe-tip">
-                  {{ recipe.tip }}
-                </p>
-              </details>
+              </p><h3>{{ recipe.name }}</h3><p>{{ recipe.subtitle }}</p><NuxtLink
+                class="text-link"
+                :to="`/rezepte/weihnachtsplaetzchen?variante=${recipe.id}#varianten`"
+              ><UIcon name="i-lucide-book-open" /><span>Diese Variante Schritt für Schritt backen</span></NuxtLink>
             </div>
           </article>
         </div><p class="small">
@@ -289,35 +274,10 @@ const faq = [
         </p>
       </section>
 
-      <section
-        id="vorbereitung"
-        class="preparation-band"
-      >
-        <div class="mkt-content preparation">
-          <div>
-            <p class="mkt-label">
-              04 · Ein bisschen vorher. Viel entspannter später.
-            </p><h2>Der Ofen darf warm laufen.<br>Euer Kopf nicht.</h2><p class="intro">
-              Plant etwas Luft zwischen Kneten, Kühlen und Backen ein. Mehrere Portionen brauchen mehr Bleche und Zeit – nicht mehr Ofentemperatur.
-            </p><div class="equipment">
-              <UIcon name="i-lucide-chef-hat" /><p><strong>Einmal die Küche durchgehen.</strong><br>Waage, Schüsseln, Backbleche, Backpapier, Nudelholz, Ausstecher, Abkühlgitter und Dosen bereitlegen. Fehlendes im Planer ergänzen.</p>
-            </div>
-          </div><ol class="timeline">
-            <li><span>Am Vortag</span><h3>Sorten wählen. Vorräte prüfen.</h3><p>Einkaufsliste übernehmen und teilen. Zutaten und Verträglichkeiten miteinander abstimmen. Auf Wunsch die Teige schon vorbereiten und abgedeckt kühlen.</p></li><li><span>Zum Start</span><h3>Erst kneten, dann Pause.</h3><p>Teige zügig verarbeiten und mindestens 30 Minuten kalt stellen. Währenddessen Platz zum Ausrollen und eine freie Fläche zum Abkühlen schaffen.</p></li><li><span>Am Ofen</span><h3>Ein Blech nach dem anderen.</h3><p>Ähnlich große Stücke zusammen backen. Ein Timer pro Blech hilft. Kinder können ausstechen und erkaltete Plätzchen verzieren; heiße Bleche übernehmen Erwachsene.</p></li><li><span>Zum Schluss</span><h3>Abkühlen. Verzieren. Zusammen genießen.</h3><p>Guss und Schokolade erst auf kaltes Gebäck geben. Vor dem Einpacken vollständig trocknen lassen – und ein paar Plätzchen für eure eigene Pause behalten.</p></li>
-          </ol>
-        </div>
-      </section>
-
-      <section
-        id="verschenken"
-        class="mkt-content gifting"
-      >
-        <p class="mkt-label">
-          05 · Kleine Dinge, die den Nachmittag schöner machen
-        </p><h2>Für eure Dose.<br>Und für jemanden, den ihr mögt.</h2><div class="gift-grid">
-          <article><UIcon name="i-lucide-palette" /><h3>Eine kleine Deko-Station</h3><p>Zitronenguss, dunkle Schokolade und ein paar gehackte Pistazien in Schälchen bereitstellen. Vorher Zutaten und Allergien absprechen. Für kleine Kinder passende Dekoration ohne harte ganze Nüsse wählen.</p><strong>Auf die Liste: nur eure gewählten Extras.</strong></article><article><UIcon name="i-lucide-gift" /><h3>Freude im Schraubglas</h3><p>Saubere, gut getrocknete Gläser oder vorhandene Keksdosen wiederverwenden. Erst vollständig erkaltetes, trockenes Gebäck einfüllen. Ein Zettel mit Sorte, Zutaten und Backdatum macht das Geschenk persönlich.</p><strong>Erst nach vorhandenen Behältern schauen.</strong></article><article><UIcon name="i-lucide-package" /><h3>Jede Sorte hat ihren Platz</h3><p>Plätzchen kühl und trocken in gut schließenden Behältern lagern. Knusprige und weichere Sorten getrennt halten. Feuchte Füllungen und Dekoration beeinflussen die Haltbarkeit – lieber kleine Mengen frisch verschenken.</p><strong>Beschriften, statt später zu rätseln.</strong></article>
-        </div>
-      </section>
+      <ChristmasBakingGuide
+        :extra-items="extraLines"
+        @add-extra="item => { extras = [...extraLines, item].join('\n') }"
+      />
 
       <section class="mkt-content faq">
         <p class="mkt-label">

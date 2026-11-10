@@ -18,10 +18,11 @@ import harissa from './harissa-gurkensalat.v1.json'
 import quinoa from './quinoa-kichererbsen-salat.v1.json'
 import brownies from './pistazien-knusper-brownies.v1.json'
 import crinkle from './zitronen-vanille-crinkle-cake.v1.json'
-import { validateCatalogRecipe, type RecipeIdea, type CatalogRecipe } from '../editorial'
+import { validateCatalogRecipe, selectRecipeVariant, type RecipeIdea, type CatalogRecipe } from '../editorial'
+import { christmasCookies } from './weihnachtsplaetzchen'
 
 export const pilotRecipe = validateCatalogRecipe(pasta)
-export const catalogRecipes: CatalogRecipe[] = [pilotRecipe, validateCatalogRecipe(riceSalad), validateCatalogRecipe(dumplings), validateCatalogRecipe(tiramisu), validateCatalogRecipe(cheesecake), validateCatalogRecipe(pancakes), validateCatalogRecipe(potatoes), validateCatalogRecipe(mousse), validateCatalogRecipe(gnocchi), validateCatalogRecipe(overnightOats), validateCatalogRecipe(greenGoddess), validateCatalogRecipe(mugCake), validateCatalogRecipe(fetaCream), validateCatalogRecipe(bananaBread), validateCatalogRecipe(cabbage), validateCatalogRecipe(lemonBlueberry), validateCatalogRecipe(harissa), validateCatalogRecipe(quinoa), validateCatalogRecipe(brownies), validateCatalogRecipe(crinkle)]
+export const catalogRecipes: CatalogRecipe[] = [validateCatalogRecipe(christmasCookies), pilotRecipe, validateCatalogRecipe(riceSalad), validateCatalogRecipe(dumplings), validateCatalogRecipe(tiramisu), validateCatalogRecipe(cheesecake), validateCatalogRecipe(pancakes), validateCatalogRecipe(potatoes), validateCatalogRecipe(mousse), validateCatalogRecipe(gnocchi), validateCatalogRecipe(overnightOats), validateCatalogRecipe(greenGoddess), validateCatalogRecipe(mugCake), validateCatalogRecipe(fetaCream), validateCatalogRecipe(bananaBread), validateCatalogRecipe(cabbage), validateCatalogRecipe(lemonBlueberry), validateCatalogRecipe(harissa), validateCatalogRecipe(quinoa), validateCatalogRecipe(brownies), validateCatalogRecipe(crinkle)]
 
 const sources = {
   delish: ['Delish · Juni 2026', 'https://www.delish.com/cooking/recipe-ideas/g71664808/viral-recipes/'],
@@ -37,6 +38,7 @@ function idea(id: string, title: string, emoji: string, kind: RecipeIdea['kind']
 
 /** Rechercheideen sind keine veröffentlichten Rezepte; Zeiten werden nicht erfunden. */
 export const recipeIdeas: RecipeIdea[] = [
+  { id: christmasCookies.catalogId, title: christmasCookies.title, emoji: christmasCookies.emoji, kind: christmasCookies.kind, meal: christmasCookies.meal, description: 'Vanille, Kakao oder Marmelade: deine Lieblingssorte mit passender Anleitung.', source: christmasCookies.sources[0]!.url, sourceName: 'Eigene Rezeptidee', tags: christmasCookies.tags },
   idea('french-onion-pasta', pilotRecipe.title, '🧅', 'herzhaft', 'Hauptgericht', 'Goldbraune Zwiebeln, Thymian und eine samtige Sauce. Alles aus einem Topf.', 'delish', ['Zwiebeln', 'Pasta', 'Hafercuisine', 'One Pot']),
   idea('kokos-limetten-dumplings', 'Kokos-Limetten-Dumpling-Auflauf', '🥟', 'herzhaft', 'Hauptgericht', 'Gemüse-Dumplings in Kokossauce mit frischer Limette. Ohne Ei und Fischbestandteile.', 'delish', ['Kokosmilch', 'Ofen']),
   idea('crispy-rice-salad', 'Crispy Rice Salad', '🥒', 'herzhaft', 'Salat', 'Knuspriger Reis, Gurke und Kräuter mit einem Chili-Limetten-Dressing.', 'lecker', ['Reis', 'Gurke']),
@@ -60,5 +62,5 @@ export const recipeIdeas: RecipeIdea[] = [
 ]
 
 export function getCatalogRecipe(id: string, version = 1, includePreview = false): CatalogRecipe | null {
-  return catalogRecipes.find(recipe => (recipe.catalogId === id || recipe.slug === id) && recipe.version === version && (recipe.status === 'published' || includePreview)) ?? null
+  return catalogRecipes.flatMap(recipe => [recipe, ...(recipe.variants?.map(variant => selectRecipeVariant(recipe, variant.id)) ?? [])]).find(recipe => (recipe.catalogId === id || recipe.slug === id) && recipe.version === version && (recipe.status === 'published' || includePreview)) ?? null
 }
