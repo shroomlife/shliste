@@ -135,21 +135,7 @@ function focus(event: FocusEvent) {
       </svg>
     </span>
     <span class="app-cta-label optical-center">Zur App</span>
-    <span
-      class="app-cta-direction"
-      aria-hidden="true"
-    >
-      <svg
-        class="cta-arrow"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.65"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        focusable="false"
-      ><path d="M5 12h14m-5-5 5 5-5 5" /></svg>
-    </span>
+
   </NuxtLink>
 </template>
 

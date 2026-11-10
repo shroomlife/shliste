@@ -13,6 +13,7 @@ const groups = [
   { title: 'Für euren Alltag', icon: 'i-lucide-shopping-basket', links: [
     { to: '/im-alltag/ferienwohnung-einkauf', text: 'Einkauf für die Ferienwohnung' },
     { to: '/themenwelten/raclette', text: 'Einen Racletteabend planen' },
+    { to: '/themenwelten/plaetzchen-backen', text: 'Gemeinsam Plätzchen backen' },
     { to: '/im-alltag/umzug-erster-abend', text: 'Der erste Abend nach dem Umzug' },
     { to: '/im-alltag/gaeste-zum-essen', text: 'Wenn Freunde zum Essen kommen' },
     { to: '/im-alltag/wg-einkauf', text: 'Eine Einkaufsliste für die WG' },
@@ -47,7 +48,7 @@ const { openSettings } = useAnalyticsConsent()
           class="footer-start"
           data-analytics-event="open_app"
           data-analytics-location="footer"
-        ><span class="footer-start-icon"><UIcon name="i-lucide-list-plus" /></span><span><strong>Was fehlt euch noch?</strong><small>Deine erste Liste anlegen</small></span><UIcon name="i-lucide-arrow-up-right" /></NuxtLink>
+        ><span class="footer-start-icon"><UIcon name="i-lucide-list-plus" /></span><span><strong>Was fehlt euch noch?</strong><small>Deine erste Liste anlegen</small></span><UIcon name="i-lucide-check" /></NuxtLink>
       </div>
       <div class="footer-directory">
         <nav

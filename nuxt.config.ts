@@ -121,6 +121,7 @@ export default defineNuxtConfig({
     '/im-alltag': { prerender: true },
     '/themenwelten': { prerender: true },
     '/themenwelten/raclette': { prerender: true },
+    '/themenwelten/plaetzchen-backen': { prerender: true },
     // Die Startseite wird NICHT prerendert, sondern gerendert und per SWR
     // gecacht: Eine prerenderte Seite liefert Nitro aus der statischen
     // Schicht aus, BEVOR Server-Middleware läuft — der Eingeloggt-Redirect
@@ -288,6 +289,8 @@ export default defineNuxtConfig({
 
     workbox: {
       globPatterns: ['**/*.{js,css,html,png,svg,ico,webmanifest,woff2}'],
+      // Marketing-Illustrationen sind kein Bestandteil der Offline-App-Hülle.
+      globIgnores: ['**/images/illustrations/**'],
       // Offline bekommt jede /app-Adresse die vorgerenderte Hülle. Ohne diese
       // Zeile wäre nur die eine besuchte Adresse offline erreichbar.
       navigateFallback: '/app/lists',
@@ -356,7 +359,7 @@ export default defineNuxtConfig({
   // App-Shells gehören nicht in die Sitemap — dünne SPA ohne Marketing-Inhalt.
   sitemap: {
     exclude: ['/app', '/app/**', '/api/**', ...Object.keys(utilityRoutes), '/ki-warteliste', '/impressum', '/datenschutz', '/funktionen/rezepte', ...catalogRecipes.filter(recipe => recipe.status !== 'published').map(recipe => `/rezepte/${recipe.slug}`)],
-    urls: ['/themenwelten', '/themenwelten/raclette', '/im-alltag', ...marketingStories.map(story => story.path), ...catalogRecipes.filter(recipe => recipe.status === 'published').map(recipe => `/rezepte/${recipe.slug}`)],
+    urls: ['/themenwelten', '/themenwelten/raclette', '/themenwelten/plaetzchen-backen', '/im-alltag', ...marketingStories.map(story => story.path), ...catalogRecipes.filter(recipe => recipe.status === 'published').map(recipe => `/rezepte/${recipe.slug}`)],
   },
 
   // Ebenfalls neu mit @nuxtjs/seo 6. Skew Protection überschneidet sich mit

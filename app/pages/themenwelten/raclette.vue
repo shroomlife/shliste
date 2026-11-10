@@ -2,9 +2,16 @@
 import { racletteIngredients, racletteAmount } from '~/data/raclette'
 import { createImportedList } from '~/db/repositories'
 
+useThemeWorldSchema('raclette')
+
 useSeoMeta({ title: 'Raclette Einkaufsliste für 4, 6 oder 8 Personen', description: 'Plane euren Racletteabend: Einkaufsliste mit anpassbaren Mengen, Pfännchenideen und Vorbereitung. Übernimm eure Auswahl direkt in shliste.', ogImage: 'https://shliste.app/images/illustrations/plant-based-raclette.webp', ogImageWidth: 1536, ogImageHeight: 1024, ogImageAlt: 'Raclettepfännchen mit Pilzen, Paprika und Mais neben Kartoffeln in einer blauen Schale.' })
 useHead({ link: [{ rel: 'canonical', href: 'https://shliste.app/themenwelten/raclette' }] })
 const guests = ref(4)
+const guestScene = computed(() => ({
+  src: guests.value === 2 ? '/images/illustrations/raclette-for-two.png' : `/images/illustrations/raclette-for-${guests.value}.webp`,
+  caption: `Euer Abend. ${({ 2: 'Zu zweit.', 4: 'Zu viert.', 6: 'Zu sechst.', 8: 'Zu acht.', 10: 'Zu zehnt.', 12: 'Zu zwölft.' } as Record<number, string>)[guests.value]}`,
+  alt: `${guests.value} Menschen genießen gemeinsam Raclette an einem gedeckten Tisch mit buntem Gemüse und blauen Keramikschalen.`,
+}))
 const selected = ref(racletteIngredients.map(item => item.id))
 const extras = ref('')
 const busy = ref(false)
@@ -62,7 +69,7 @@ async function openList() {
             </p><a
               href="#einkaufsliste"
               class="button"
-            ><span class="button-label">Eure Einkaufsliste zusammenstellen</span><UIcon name="i-lucide-arrow-down" /></a><p class="micro">
+            ><span class="button-label">Eure Einkaufsliste zusammenstellen</span><UIcon name="i-lucide-list-plus" /></a><p class="micro">
               Für Weihnachten, Silvester und lange Winterabende.
             </p>
           </div><figure>
@@ -89,18 +96,42 @@ async function openList() {
           <div class="planner-copy">
             <p class="mkt-label">
               01 · Vom Plan zur Einkaufsliste
-            </p><h2>Wie viele Pfännchen<br>stehen heute am Tisch?</h2><p>Wähle eure Gästezahl. Nimm heraus, was schon da ist, und ergänze eure Wünsche. shliste übernimmt danach genau diese Auswahl.</p><fieldset class="guest-picker">
-              <legend>Für wie viele Personen?</legend><button
-                v-for="count in [2, 4, 6, 8, 10, 12]"
-                :key="count"
-                :aria-pressed="guests === count"
-                @click="guests = count"
+            </p><h2>Wie viele Pfännchen<br>stehen heute am Tisch?</h2><p>Wähle eure Gästezahl. Nimm heraus, was schon da ist, und ergänze eure Wünsche. shliste übernimmt danach genau diese Auswahl.</p><div
+              class="guest-scene has-scene"
+            >
+              <div
+                class="guest-scene-art"
               >
-                <span>{{ count }}</span>
-              </button>
-            </fieldset><p class="note">
+                <img
+                  :src="guestScene.src"
+                  :alt="guestScene.alt"
+                  width="1536"
+                  height="1024"
+                  decoding="async"
+                >
+                <MarketingAiLabel />
+              </div>
+              <div class="guest-scene-controls">
+                <p
+                  class="guest-scene-caption"
+                >
+                  {{ guestScene.caption }}
+                </p>
+                <fieldset class="guest-picker">
+                  <legend>Für wie viele Personen?</legend><button
+                    v-for="count in [2, 4, 6, 8, 10, 12]"
+                    :key="count"
+                    :aria-pressed="guests === count"
+                    @click="guests = count"
+                  >
+                    <span>{{ count }}</span>
+                  </button>
+                </fieldset>
+              </div>
+            </div><p class="note">
               Die Mengen sind ein Startpunkt für Erwachsene mit normalem Appetit, keine feste Portionsregel. Passe sie an eure Runde und weitere Speisen an. Diese Planung rechnet hier auf der Website; die App übernimmt die fertigen Mengen.
-            </p><div class="pantry-tip">
+            </p>
+            <div class="pantry-tip">
               <UIcon name="i-lucide-refrigerator" /><div><strong>Erst in den Kühlschrank schauen.</strong><p>Gewürzgurken schon da? Häkchen raus. So landet nur auf der Liste, was wirklich fehlt.</p></div>
             </div><label
               for="raclette-extras"
@@ -164,7 +195,7 @@ async function openList() {
           </p><h2>„Ich bringe noch<br>Mais mit.“<br><em>Steht schon drauf.</em></h2><p>Teile eure Liste in shliste. Alle ergänzen ihre Wünsche. Beim Einkaufen hakt ihr ab, was im Korb liegt – so sehen die anderen, was noch fehlt.</p><ol><li>Liste übernehmen und in shliste öffnen.</li><li>Anmelden und die anderen zur Liste einladen.</li><li>Gemeinsam ergänzen und beim Einkauf abhaken.</li></ol><NuxtLink
             to="/anleitungen/einkaufsliste-teilen"
             class="text-link"
-          >Das Teilen Schritt für Schritt ansehen →</NuxtLink><p class="note">
+          ><span>Das Teilen Schritt für Schritt ansehen</span><UIcon name="i-lucide-users" /></NuxtLink><p class="note">
             Gemeinsame Änderungen brauchen Anmeldung und Internet. Bereits gespeicherte Listen bleiben offline nutzbar; der Abgleich folgt mit Verbindung.
           </p>
         </div><MarketingEverydayScene
@@ -189,7 +220,7 @@ async function openList() {
         </p><NuxtLink
           to="/rezeptideen"
           class="text-link"
-        >Noch mehr Ideen für eure Küche →</NuxtLink>
+        ><span>Noch mehr Ideen für eure Küche</span><UIcon name="i-lucide-book-open" /></NuxtLink>
       </section>
       <section class="mkt-content preparation">
         <div>
@@ -207,7 +238,13 @@ async function openList() {
         <UIcon name="i-lucide-heart" /><h2>Der schönste Teil steht<br>auf keiner Liste.</h2><p>Aber alles davor könnt ihr gemeinsam abhaken.</p><a
           href="#einkaufsliste"
           class="button"
-        ><span class="button-label">Euren Racletteabend planen</span><UIcon name="i-lucide-arrow-up" /></a>
+        ><span class="button-label">Euren Racletteabend planen</span><UIcon name="i-lucide-cooking-pot" /></a>
+      </div>
+      <div class="mkt-content baking-crosslink">
+        <NuxtLink
+          class="text-link"
+          to="/themenwelten/plaetzchen-backen"
+        ><UIcon name="i-lucide-cookie" /><span>Vor dem Racletteabend: gemeinsam Plätzchen backen</span></NuxtLink>
       </div>
       <MarketingWaitlistSection />
     </main>
@@ -224,4 +261,10 @@ async function openList() {
 @media(max-width:420px){.guest-picker{grid-template-columns:repeat(3,minmax(44px,1fr));max-width:290px}.hero .button,.closing .button{width:100%}.shopping-card{padding:20px}.hero h1{font-size:clamp(2.5rem,10.5vw,2.8rem)}}
 @media(prefers-reduced-motion:reduce){.button,.guest-picker button{transition:none}}
 .together{align-items:start}.together :deep(.mini-scene-narration){min-height:86px;padding-block:18px}
+.guest-scene{margin-block:28px 20px}.guest-scene-art{position:relative;margin-inline:-12px;transform:rotate(-1.5deg);border-radius:42px 42px 24px 24px;overflow:hidden;box-shadow:0 18px 40px -30px var(--demo-accent)}
+.guest-scene-art img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover}.guest-scene-art :deep(.ai-label){position:absolute;right:14px;bottom:48px}
+.guest-scene-controls{position:relative}.guest-scene .guest-picker{margin:0}.has-scene .guest-scene-controls{margin:-36px 18px 0;padding:20px 24px 24px;border:1px solid var(--theme-line);border-radius:24px;background:var(--md-surface);box-shadow:0 12px 32px -24px var(--demo-accent)}
+.guest-scene-caption{font-size:1.45rem;font-weight:800;line-height:1.2;margin-bottom:16px;color:var(--demo-accent)}.has-scene .guest-picker{max-width:none}.has-scene .guest-picker legend{font-size:.9rem;margin-bottom:10px}.has-scene .guest-picker button{border-radius:50%;aspect-ratio:1;height:auto;min-height:44px;max-width:54px}
+@media(max-width:420px){.guest-scene-art{margin-inline:0;border-radius:28px}.has-scene .guest-scene-controls{margin:-22px 8px 0;padding:18px}.has-scene .guest-picker{grid-template-columns:repeat(3,minmax(44px,1fr));max-width:none}.has-scene .guest-picker button{max-width:none;border-radius:14px;aspect-ratio:auto;height:44px}.guest-scene-caption{font-size:1.3rem}}
+.text-link{display:inline-flex;align-items:center;gap:10px}.text-link>.iconify{width:20px;height:20px;flex:0 0 20px}.baking-crosslink{padding-bottom:40px;text-align:center}
 </style>

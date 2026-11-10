@@ -31,7 +31,7 @@ import MarketingMysticAura from './MarketingMysticAura.vue'
         <NuxtLink
           to="/warteliste"
           class="invite-link"
-        ><span>Zum Start Bescheid bekommen</span><UIcon name="i-lucide-arrow-right" /></NuxtLink>
+        ><span>Zum Start Bescheid bekommen</span><UIcon name="i-lucide-bell" /></NuxtLink>
         <span class="invite-note">Mit deiner E-Mail. Ohne Konto. Ganz unverbindlich.</span>
       </div>
     </div>
