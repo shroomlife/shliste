@@ -112,6 +112,22 @@ const { readingRoot, activeSection } = useMarketingReading()
             :list="story.miniList"
           />
           <aside
+            v-if="story.path === '/im-alltag/raclette-einkauf'"
+            class="story-tip"
+          >
+            <div class="story-tip-heading">
+              <span><UIcon name="i-lucide-cooking-pot" /></span><strong>Eure Runde steht. Jetzt den Einkauf planen.</strong>
+            </div>
+            <p>Für euren eigenen Abend findet ihr in der Raclette-Themenwelt einen Mengenplaner für 2 bis 12 Personen, Pfännchenideen und eine Einkaufsliste zum Übernehmen.</p>
+            <UButton
+              to="/themenwelten/raclette"
+              icon="i-lucide-list-plus"
+              class="mt-4 rounded-full"
+            >
+              Raclette-Zutaten und Mengen planen
+            </UButton>
+          </aside>
+          <aside
             id="gut-zu-wissen"
             class="story-tip"
           >
@@ -160,7 +176,6 @@ const { readingRoot, activeSection } = useMarketingReading()
           class="related-card"
         ><MarketingStoryCover :story="item" /><div class="related-copy"><span class="related-kind"><UIcon :name="articleScenes[item.animation].icon" />{{ item.kind }}</span><h3>{{ item.title }}</h3><p>{{ item.intro }}</p><span class="related-open"><UIcon name="i-lucide-book-open" />Geschichte öffnen</span></div></NuxtLink>
       </section>
-      <MarketingThemeTeaser v-if="story.path === '/im-alltag/raclette-einkauf'" />
     </main>
   </MarketingChrome>
 </template>

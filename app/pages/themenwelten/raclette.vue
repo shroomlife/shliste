@@ -198,6 +198,10 @@ async function openList() {
           ><span>Das Teilen Schritt für Schritt ansehen</span><UIcon name="i-lucide-users" /></NuxtLink><p class="note">
             Gemeinsame Änderungen brauchen Anmeldung und Internet. Bereits gespeicherte Listen bleiben offline nutzbar; der Abgleich folgt mit Verbindung.
           </p>
+          <NuxtLink
+            to="/im-alltag/raclette-einkauf"
+            class="text-link"
+          ><span>Wie Mina und ihre Runde den Einkauf abstimmen</span><UIcon name="i-lucide-book-open" /></NuxtLink>
         </div><MarketingEverydayScene
           story-key="raclette-einkauf"
           moment="together"

@@ -62,7 +62,7 @@ export const marketingMoments = {
     note: 'Mengen und besondere Wünsche vorher absprechen.',
     icon: 'i-lucide-cooking-pot',
     to: '/im-alltag/raclette-einkauf',
-    link: 'Euren Racletteabend vorbereiten',
+    link: 'So organisiert sich Minas Runde',
   },
 } as const
 
