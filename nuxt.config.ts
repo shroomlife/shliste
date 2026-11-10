@@ -119,6 +119,8 @@ export default defineNuxtConfig({
     '/funktionen/geheime-listen': { prerender: true },
     ...Object.fromEntries(marketingStories.map(story => [story.path, { prerender: true }])),
     '/im-alltag': { prerender: true },
+    '/themenwelten': { prerender: true },
+    '/themenwelten/raclette': { prerender: true },
     // Die Startseite wird NICHT prerendert, sondern gerendert und per SWR
     // gecacht: Eine prerenderte Seite liefert Nitro aus der statischen
     // Schicht aus, BEVOR Server-Middleware läuft — der Eingeloggt-Redirect
@@ -354,7 +356,7 @@ export default defineNuxtConfig({
   // App-Shells gehören nicht in die Sitemap — dünne SPA ohne Marketing-Inhalt.
   sitemap: {
     exclude: ['/app', '/app/**', '/api/**', ...Object.keys(utilityRoutes), '/ki-warteliste', '/impressum', '/datenschutz', '/funktionen/rezepte', ...catalogRecipes.filter(recipe => recipe.status !== 'published').map(recipe => `/rezepte/${recipe.slug}`)],
-    urls: ['/im-alltag', ...marketingStories.map(story => story.path), ...catalogRecipes.filter(recipe => recipe.status === 'published').map(recipe => `/rezepte/${recipe.slug}`)],
+    urls: ['/themenwelten', '/themenwelten/raclette', '/im-alltag', ...marketingStories.map(story => story.path), ...catalogRecipes.filter(recipe => recipe.status === 'published').map(recipe => `/rezepte/${recipe.slug}`)],
   },
 
   // Ebenfalls neu mit @nuxtjs/seo 6. Skew Protection überschneidet sich mit

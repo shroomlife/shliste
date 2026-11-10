@@ -351,6 +351,7 @@ useSchemaOrg([
           </details>
         </div>
       </section>
+      <MarketingThemeTeaser />
       <MarketingWaitlistSection />
 
       <section class="mkt-content home-closing home-width">

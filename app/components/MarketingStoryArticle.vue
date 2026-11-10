@@ -160,6 +160,7 @@ const { readingRoot, activeSection } = useMarketingReading()
           class="related-card"
         ><MarketingStoryCover :story="item" /><div class="related-copy"><span class="related-kind"><UIcon :name="articleScenes[item.animation].icon" />{{ item.kind }}</span><h3>{{ item.title }}</h3><p>{{ item.intro }}</p><span class="related-open"><UIcon name="i-lucide-book-open" />Geschichte öffnen</span></div></NuxtLink>
       </section>
+      <MarketingThemeTeaser v-if="story.path === '/im-alltag/raclette-einkauf'" />
     </main>
   </MarketingChrome>
 </template>

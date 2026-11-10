@@ -308,6 +308,7 @@ useHead({ link: [{ rel: 'canonical', href: 'https://shliste.app/rezeptideen' }] 
           </button>
         </div>
       </section>
+      <MarketingThemeTeaser />
       <MarketingWaitlistSection />
 
       <RecipeCollectionBridge />

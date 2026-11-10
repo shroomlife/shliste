@@ -26,7 +26,7 @@ export const everydayExpansionStories: MarketingStory[] = [
   },
   {
     path: '/im-alltag/raclette-einkauf', animation: 'raclette-einkauf', animationStep: 1, kind: 'Alltagsbeispiel', scene: 'everyday',
-    seoTitle: 'Raclette-Einkaufsliste: gemeinsam auswählen und einkaufen',
+    seoTitle: 'Raclette gemeinsam organisieren: Minas Abend mit shliste',
     title: 'Alle haben ein Lieblingspfännchen.',
     intro: 'Mina lädt zum Raclette ein. Jo mag Pilze, Kim möchte Mais. Eine gemeinsame Einkaufsliste sammelt die Wünsche, bevor jemand im Supermarkt steht.',
     cover: { src: '/images/illustrations/plant-based-raclette.webp', srcset: '/images/illustrations/plant-based-raclette-small.webp 600w, /images/illustrations/plant-based-raclette-medium.webp 960w, /images/illustrations/plant-based-raclette.webp 1536w', width: 1536, height: 1024 },

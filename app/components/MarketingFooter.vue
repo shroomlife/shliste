@@ -1,16 +1,18 @@
 <script setup lang="ts">
 const groups = [
   { title: 'shliste entdecken', icon: 'i-lucide-compass', links: [
+    { to: '/themenwelten', text: 'Einkaufslisten Themenwelten' },
     { to: '/im-alltag', text: 'Alle Alltagsbeispiele' },
     { to: '/rezeptideen', text: 'Rezeptideen durchsuchen' },
     { to: '/rezepte', text: 'Rezepte sammeln und kochen' },
     { to: '/gemeinsam-einkaufen', text: 'Gemeinsam einkaufen' },
     { to: '/so-funktionierts', text: 'So funktioniert shliste' },
+    { to: '/warteliste', text: 'Zur KI-Warteliste' },
     { to: '/funktionen/rezept-badges', text: 'Deine Rezept-Badges' },
   ] },
   { title: 'Für euren Alltag', icon: 'i-lucide-shopping-basket', links: [
     { to: '/im-alltag/ferienwohnung-einkauf', text: 'Einkauf für die Ferienwohnung' },
-    { to: '/im-alltag/raclette-einkauf', text: 'Einen Racletteabend planen' },
+    { to: '/themenwelten/raclette', text: 'Einen Racletteabend planen' },
     { to: '/im-alltag/umzug-erster-abend', text: 'Der erste Abend nach dem Umzug' },
     { to: '/im-alltag/gaeste-zum-essen', text: 'Wenn Freunde zum Essen kommen' },
     { to: '/im-alltag/wg-einkauf', text: 'Eine Einkaufsliste für die WG' },
