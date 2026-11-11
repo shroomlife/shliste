@@ -26,7 +26,7 @@ defineProps<{ compact?: boolean }>()
 </template>
 
 <style scoped>
-.ai-label{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font:inherit;line-height:1.25;padding:5px 8px;border:1px solid #ffffffb3;border-radius:999px;background:#fffaf2f2;color:#493c43;box-shadow:0 1px 6px #30232914}
+.ai-label{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font:inherit;font-size:max(1em,.625rem);line-height:1.25;padding:5px 8px;border:1px solid #ffffffb3;border-radius:999px;background:#fffaf2f2;color:#493c43;box-shadow:0 1px 6px #30232914}
 .ai-label--compact{gap:3px;padding:3px 6px}
 .ai-label>.iconify{width:1.1em;height:1.1em;flex:0 0 1.1em}
 .ai-label-short{display:none}

@@ -164,7 +164,7 @@ async function save() {
 </template>
 
 <style scoped>
-.recipe-save-button{display:inline-flex;gap:10px;align-items:center;justify-content:center;min-height:54px;padding:14px 22px;border-radius:999px;background:var(--md-primary);color:var(--md-on-primary);font-size:20px;font-weight:700;line-height:1.2;text-align:center;box-shadow:0 5px 18px #50345918}.recipe-save-button:hover{filter:brightness(1.08)}.recipe-save-button:focus-visible{outline:3px solid var(--md-primary);outline-offset:4px}.recipe-save-button>.iconify{flex-shrink:0;width:22px;height:22px}
+.recipe-save-button{display:inline-flex;gap:10px;align-items:center;justify-content:center;min-height:54px;padding:14px 22px;border-radius:999px;background:var(--md-primary);color:var(--md-on-primary);font-size:clamp(1rem,4.1vw,1.25rem);font-weight:700;line-height:1.2;text-align:center;box-shadow:0 5px 18px #50345918}.recipe-save-button:hover{filter:brightness(1.08)}.recipe-save-button:focus-visible{outline:3px solid var(--md-primary);outline-offset:4px}.recipe-save-button>.iconify{flex-shrink:0;width:22px;height:22px}
 .recipe-save-dialog {
   width: min(31rem, calc(100% - 1.5rem));
   max-height: calc(100dvh - 2rem);

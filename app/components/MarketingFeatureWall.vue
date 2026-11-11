@@ -24,7 +24,7 @@ const features = [
       <h2 id="feature-wall-title">
         Vieles ist schon da.<br>Und es wächst mit deinen Ideen.
       </h2>
-      <p>Das macht shliste heute schon für dich — und darauf kannst du dich mit Premium freuen.</p>
+      <p>Das macht shliste heute schon für dich. Und darauf kannst du dich mit Premium freuen.</p>
     </header>
     <div class="wall-grid">
       <article

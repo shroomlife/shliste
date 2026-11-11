@@ -242,7 +242,7 @@ async function handleSignOut(): Promise<void> {
       <!-- Konto -->
       <section class="px-5 pb-2">
         <div
-          class="flex items-center gap-4 rounded-xl p-4 shadow-sm"
+          class="flex flex-wrap items-center gap-4 rounded-xl p-4 shadow-sm"
           style="background-color: var(--md-surface); border: 1px solid var(--md-outline-variant)"
         >
           <img
@@ -259,26 +259,28 @@ async function handleSignOut(): Promise<void> {
           >
             {{ profile ? initialOf(profile.displayName ?? profile.email) : '?' }}
           </div>
-          <div class="min-w-0 grow">
-            <p class="truncate text-[1.25rem] font-bold">
+          <div class="min-w-0 flex-1 basis-44">
+            <p class="text-[1.25rem] leading-snug font-bold [overflow-wrap:anywhere]">
               {{ profile?.displayName ?? (isSignedIn ? profile?.email : 'Nicht angemeldet') }}
             </p>
             <p
-              class="truncate text-[1rem]"
+              class="text-[1rem] [overflow-wrap:anywhere]"
               style="color: var(--md-on-surface-variant)"
             >
               {{ isSignedIn ? profile?.email : 'Du nutzt shliste auf diesem Gerät' }}
             </p>
           </div>
-          <UButton
-            v-if="isSignedIn"
-            variant="outline"
-            color="neutral"
-            @click="handleSignOut"
-          >
-            Abmelden
-          </UButton>
-          <AuthButton v-else />
+          <div class="ms-auto shrink-0">
+            <UButton
+              v-if="isSignedIn"
+              variant="outline"
+              color="neutral"
+              @click="handleSignOut"
+            >
+              Abmelden
+            </UButton>
+            <AuthButton v-else />
+          </div>
         </div>
 
         <!-- Eigener Name -->

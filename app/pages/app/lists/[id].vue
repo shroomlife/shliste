@@ -940,7 +940,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
         class="flex items-center gap-3.5"
       >
         <span
-          class="text-[1rem]"
+          class="shrink-0 text-[1rem] whitespace-nowrap"
           style="color: var(--md-on-primary-container)"
         >{{ openItems.length }} offen · {{ doneItems.length }} erledigt</span>
         <UProgress

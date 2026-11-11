@@ -194,7 +194,7 @@ const explore = [
 .mkt-chapter-link {
   text-decoration: none;
   color: var(--md-on-surface-variant);
-  padding: 0.2rem 0.15rem;
+  padding: 0.4rem 0.15rem;
 }
 .mkt-chapter-link--active {
   color: var(--demo-accent);
@@ -206,4 +206,6 @@ const explore = [
 .marketing-hero-image{position:relative;max-width:100%;container:ai-image / inline-size}
 .marketing-hero-image>.ai-label{position:absolute;right:12px;bottom:12px;font-size:11px}
 .mkt-explore { color: inherit; }
+/* Zwischen getönten Bändern würde der Außenabstand als weißer Streifen stehen. */
+:deep(.waitlist-invite) { margin-block: 0; }
 </style>
