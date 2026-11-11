@@ -60,7 +60,7 @@ const ingredientsPinned = ref(true)
 function printRecipe() {
   window.print()
 }
-useSeoMeta({ title: () => `${baseRecipe.value.title} – Schritt für Schritt · Shliste`, description: () => recipe.value.intro, robots: () => recipe.value.status === 'preview' ? 'noindex, nofollow' : 'index, follow', ogImage: () => `https://shliste.app${recipe.value.hero.src}` })
+useSeoMeta({ title: () => `${baseRecipe.value.title} – Schritt für Schritt`, description: () => recipe.value.intro, robots: () => recipe.value.status === 'preview' ? 'noindex, nofollow' : 'index, follow', ogImage: () => `https://shliste.app${recipe.value.hero.src}` })
 useHead(() => ({
   link: [{ rel: 'canonical', href: recipeUrl.value }],
   script: [{ key: 'editorial-recipe', type: 'application/ld+json', innerHTML: JSON.stringify({

@@ -17,7 +17,9 @@ defineProps<{ recipe: CatalogRecipe }>()
     </header>
     <div class="print-intro">
       <div>
-        <h1>{{ recipe.title }}</h1>
+        <p class="print-title">
+          {{ recipe.title }}
+        </p>
         <p class="facts">
           {{ recipe.servings }} {{ recipe.servings === 1 ? 'Portion' : 'Portionen' }} · ca. {{ durationLabel(recipe) }}{{ recipe.restMinutes ? ' inkl. Ruhezeit' : '' }} · {{ recipe.difficulty }} · pflanzlich
         </p>
@@ -107,8 +109,8 @@ defineProps<{ recipe: CatalogRecipe }>()
   figure { flex: 0 0 43mm; margin: 0; }
   figure img { width: 100%; height: auto; border-radius: 2mm; }
   figcaption { text-align: right; font-size: 7.5pt; margin-top: 1mm; }
-  h1, h2, h3 { font-family: "Zain", Arial, sans-serif; line-height: 1.12; font-weight: 700; break-after: avoid; }
-  h1 { font-size: 30pt; }
+  .print-title, h2, h3 { font-family: "Zain", Arial, sans-serif; line-height: 1.12; font-weight: 700; break-after: avoid; }
+  .print-title { font-size: 30pt; margin: .67em 0; }
   h2 { font-size: 21pt; margin: 4mm 0 2mm; color: #67364f; }
   h3 { font-size: 14pt; }
   .facts { font-weight: bold; margin: 1mm 0 3mm; }

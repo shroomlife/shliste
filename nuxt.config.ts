@@ -85,8 +85,6 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    // Nur explizit gestartete lokale Vorschauen dürfen Rechercheentwürfe ausliefern.
-    recipeCatalogPreview: process.env.NUXT_RECIPE_CATALOG_PREVIEW === 'true',
     // NUR serverseitig. Landet niemals im Client-Bundle — alles unterhalb von
     // `public` würde beim Build ins Browser-Bundle inlined und wäre damit
     // für jeden Besucher lesbar, unabhängig davon ob das Repo public ist.
@@ -134,7 +132,10 @@ export default defineNuxtConfig({
     '/': { swr: process.env.NODE_ENV === 'development' ? false : 3600 },
     '/rezepte': { prerender: true },
     '/rezeptideen': { prerender: false },
-    '/rezepte/**': { prerender: false },
+    // Veröffentlichte Rezepte stehen beim Build fest und werden vorgerendert.
+    // Rezepte mit Varianten bleiben auf dem Server: `?variante=` bestimmt dort
+    // Inhalt, Canonical und Rezept-Schema, eine statische Datei kennt die Adresse nicht.
+    ...Object.fromEntries(catalogRecipes.filter(recipe => recipe.status === 'published' && !recipe.variants?.length).map(recipe => [`/rezepte/${recipe.slug}`, { prerender: true }])),
     '/funktionen/rezepte': { prerender: true },
     '/gemeinsam-einkaufen': { prerender: true },
     '/so-funktionierts': { prerender: true },
@@ -166,6 +167,9 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: 'bun',
+    // nuxt-ai-ready schreibt /llms-full.txt nur, wenn es das Vorrendern an
+    // dieser Liste erkennt; Route Rules allein sieht das Modul nicht.
+    prerender: { routes: ['/llms.txt'] },
   },
 
   vite: {

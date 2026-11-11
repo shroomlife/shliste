@@ -8,7 +8,8 @@ export default defineEventHandler((event) => {
   const query = getQuery(event)
   const version = query.version === undefined ? 1 : Number(query.version)
   if (!Number.isSafeInteger(version) || version < 1) throw createError({ statusCode: 400, statusMessage: 'Ungültige Rezeptversion' })
-  const preview = import.meta.dev || Boolean(useRuntimeConfig(event).recipeCatalogPreview)
+  // Entwürfe sind nur im lokalen Dev-Server sichtbar.
+  const preview = import.meta.dev
   const recipe = getCatalogRecipe(getRouterParam(event, 'id') ?? '', version, preview)
   if (!recipe) throw createError({ statusCode: 404, statusMessage: 'Rezept nicht verfügbar' })
   setResponseHeader(event, 'Cache-Control', preview ? 'no-store' : 'public, max-age=300')
