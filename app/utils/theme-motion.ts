@@ -5,14 +5,19 @@ export interface ThemeImageVisibility {
   centerDistance: number
 }
 
-/** Only image rectangles count, never the surrounding card or its text. */
-export function chooseThemeMotion(images: ThemeImageVisibility[], current: symbol | null): symbol | null {
+/**
+ * Es bewegt sich das Bild, das der sichtbaren Mitte am nächsten ist. Ein
+ * Bild unter dem Zeiger oder mit Tastaturfokus hat Vorrang vor der Mitte.
+ * Nur Bildflächen zählen, nie die umgebende Karte oder ihr Text.
+ */
+export function chooseThemeMotion(images: ThemeImageVisibility[], current: symbol | null, hovered: symbol | null = null, tolerance = 0): symbol | null {
   const candidates = images.filter(image => image.imageArea > 0 && image.visibleArea / image.imageArea >= 0.12)
-  candidates.sort((a, b) => b.visibleArea - a.visibleArea || a.centerDistance - b.centerDistance)
+  if (candidates.some(image => image.id === hovered)) return hovered
+  candidates.sort((a, b) => a.centerDistance - b.centerDistance || b.visibleArea - a.visibleArea)
   const best = candidates[0]
   if (!best) return null
   const previous = candidates.find(image => image.id === current)
-  // A small dead band avoids flickering at the boundary between two pictures.
-  if (previous && previous.visibleArea >= best.visibleArea * 0.95) return previous.id
+  // Die Toleranz verhindert Flackern, wenn zwei Bilder fast gleich weit von der Mitte liegen.
+  if (previous && previous.centerDistance <= best.centerDistance + tolerance) return previous.id
   return best.id
 }

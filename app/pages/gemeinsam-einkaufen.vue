@@ -32,13 +32,21 @@ const jumps = [
       label="Ein gemeinsamer Ausgangspunkt"
       title="Besorgungen gehören dorthin, wo ihr sie braucht."
     >
-      <div class="mt-6 grid gap-6 lg:grid-cols-2">
-        <p class="!mt-0">
-          Richte eine Liste für euren Einkauf ein und lade die Menschen ein, mit denen du sie nutzen möchtest. Gemeinsame Nutzung benötigt eine Anmeldung; Änderungen werden mit Verbindung abgeglichen. Danach muss die Frage „Was brauchen wir noch?“ nicht jedes Mal mit einer neuen Nachricht anfangen. Wer etwas bemerkt, ergänzt es auf der Liste.
-        </p>
-        <p class="!mt-0">
-          Der Listenname darf so konkret sein wie euer Alltag: der normale Wocheneinkauf, die Besorgungen für einen gemeinsamen Abend oder eine einzelne größere Kochaktion. Verschiedene Listen helfen, diese Anlässe auseinanderzuhalten. Ihr entscheidet, welche davon ihr gemeinsam verwendet.
-        </p>
+      <div class="mt-6 grid items-center gap-8 lg:grid-cols-[1fr_0.85fr] lg:gap-12">
+        <div>
+          <p class="!mt-0">
+            Richte eine Liste für euren Einkauf ein und lade die Menschen ein, mit denen du sie nutzen möchtest. Gemeinsame Nutzung benötigt eine Anmeldung; Änderungen werden mit Verbindung abgeglichen. Danach muss die Frage „Was brauchen wir noch?“ nicht jedes Mal mit einer neuen Nachricht anfangen. Wer etwas bemerkt, ergänzt es auf der Liste.
+          </p>
+          <p>
+            Der Listenname darf so konkret sein wie euer Alltag: der normale Wocheneinkauf, die Besorgungen für einen gemeinsamen Abend oder eine einzelne größere Kochaktion. Verschiedene Listen helfen, diese Anlässe auseinanderzuhalten. Ihr entscheidet, welche davon ihr gemeinsam verwendet.
+          </p>
+        </div>
+        <MarketingMoodImage
+          name="fridge-check"
+          alt="Eine Person mit roten Locken steht nachdenklich vor dem offenen Kühlschrank und hält ihr Handy in der Hand. Das Gemüsefach ist fast leer."
+          caption="Gesehen, was fehlt. Schon steht es auf der Liste."
+          icon="i-lucide-refrigerator"
+        />
       </div>
     </MarketingSection>
 

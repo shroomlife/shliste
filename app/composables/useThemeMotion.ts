@@ -4,6 +4,8 @@ type Entry = { element: HTMLElement, update: (active: boolean, reduced: boolean)
 // Populated exclusively onMounted; no server-side or cross-request state.
 const entries = new Map<symbol, Entry>()
 let current: symbol | null = null
+// Karte unter dem Zeiger oder mit Tastaturfokus: Ihr Bild hat Vorrang vor der Mitte.
+let hovered: symbol | null = null
 let frame = 0
 let stop: (() => void) | undefined
 let schedule: (() => void) | undefined
@@ -23,8 +25,26 @@ export function useThemeMotion(root: Ref<HTMLElement | null>) {
 
   watch(paused, () => schedule?.())
 
+  let scope: HTMLElement | null = null
+  const claim = (event: Event) => {
+    // Auf Touch-Geräten gibt es kein Hover; dort entscheidet allein die Mitte.
+    if (event instanceof PointerEvent && event.pointerType !== 'mouse') return
+    hovered = id
+    schedule?.()
+  }
+  const release = () => {
+    if (hovered !== id) return
+    hovered = null
+    schedule?.()
+  }
+
   onMounted(() => {
     if (!root.value) return
+    scope = root.value.closest<HTMLElement>('[data-theme-motion-scope]') ?? root.value
+    scope.addEventListener('pointerenter', claim)
+    scope.addEventListener('pointerleave', release)
+    scope.addEventListener('focusin', claim)
+    scope.addEventListener('focusout', release)
     entries.set(id, { element: root.value, update: (playing, reduce) => {
       active.value = playing
       reduced.value = reduce
@@ -43,7 +63,7 @@ export function useThemeMotion(root: Ref<HTMLElement | null>) {
           const visibleHeight = Math.max(0, Math.min(height, rect.bottom) - Math.max(top, rect.top))
           return { id: key, visibleArea: visibleWidth * visibleHeight, imageArea: rect.width * rect.height, centerDistance: Math.abs((rect.top + rect.bottom) / 2 - (height + top) / 2) }
         })
-        current = paused.value || media.matches || document.hidden ? null : chooseThemeMotion(images, current)
+        current = paused.value || media.matches || document.hidden ? null : chooseThemeMotion(images, current, hovered, (height - top) * 0.05)
         for (const [key, entry] of entries) entry.update(key === current, media.matches)
       }
       schedule = () => {
@@ -75,6 +95,7 @@ export function useThemeMotion(root: Ref<HTMLElement | null>) {
         cancelAnimationFrame(frame)
         frame = 0
         current = null
+        hovered = null
         schedule = undefined
         stop = undefined
       }
@@ -83,6 +104,11 @@ export function useThemeMotion(root: Ref<HTMLElement | null>) {
     schedule?.()
   })
   onBeforeUnmount(() => {
+    scope?.removeEventListener('pointerenter', claim)
+    scope?.removeEventListener('pointerleave', release)
+    scope?.removeEventListener('focusin', claim)
+    scope?.removeEventListener('focusout', release)
+    release()
     entries.delete(id)
     active.value = false
     if (!entries.size) stop?.()

@@ -77,20 +77,29 @@ const jumps = [
       title="Rezepte haben ihren eigenen Platz."
       tone="accent"
     >
-      <p>
-        Unter Rezepte sammelst du Gerichte mit Zutaten und Zubereitungsschritten. So bleibt die Anleitung beim Gericht, während die Besorgungen auf der Einkaufsliste stehen. Zutaten kannst du von dort zum Einkauf hinzufügen, statt alles erneut einzutippen.
-      </p>
-      <p>
-        Du kannst Rezepte auch mit KI aus einem Foto oder Link übernehmen. Dafür brauchst du aktuell ein freigeschaltetes Testkonto und Internet. Zum späteren Start gibt es eine Warteliste. Vergleiche die erkannten Zutaten, Mengen und Schritte anschließend mit dem Original. Mit KI kannst du ein passendes Rezeptbild ergänzen, damit du das Gericht in der Übersicht leichter wiedererkennst.
-      </p>
-      <UButton
-        to="/rezepte"
-        size="lg"
-        color="neutral"
-        class="mt-6 rounded-full font-bold"
-      >
-        Mehr über Rezepte
-      </UButton>
+      <div class="mt-6 grid items-center gap-8 lg:grid-cols-[1fr_0.85fr] lg:gap-12">
+        <div>
+          <p class="!mt-0">
+            Unter Rezepte sammelst du Gerichte mit Zutaten und Zubereitungsschritten. So bleibt die Anleitung beim Gericht, während die Besorgungen auf der Einkaufsliste stehen. Zutaten kannst du von dort zum Einkauf hinzufügen, statt alles erneut einzutippen.
+          </p>
+          <p>
+            Du kannst Rezepte auch mit KI aus einem Foto oder Link übernehmen. Dafür brauchst du aktuell ein freigeschaltetes Testkonto und Internet. Zum späteren Start gibt es eine Warteliste. Vergleiche die erkannten Zutaten, Mengen und Schritte anschließend mit dem Original. Mit KI kannst du ein passendes Rezeptbild ergänzen, damit du das Gericht in der Übersicht leichter wiedererkennst.
+          </p>
+          <UButton
+            to="/rezepte"
+            size="lg"
+            class="mt-6 rounded-full font-bold"
+          >
+            Mehr über Rezepte
+          </UButton>
+        </div>
+        <MarketingMoodImage
+          name="cooking-from-recipe"
+          alt="Eine Frau mit langem Zopf rührt lächelnd in einem Topf. Auf der Arbeitsfläche liegen Gnocchi, Tomaten und Basilikum, daneben lehnt ihr Handy mit dem Rezept."
+          caption="Das Rezept bleibt neben dem Topf."
+          icon="i-lucide-chef-hat"
+        />
+      </div>
     </MarketingSection>
 
     <MarketingSection
@@ -146,12 +155,22 @@ const jumps = [
       title="Was passiert bei einer neuen Web-Version?"
       tone="soft"
     >
-      <p>
-        Die Web-App prüft im Hintergrund auf eine neue Version und lädt sie automatisch. Dafür wird die App neu geladen. Speichere offene Eingaben deshalb regelmäßig, auch wenn du mehrere Tabs nutzt.
-      </p>
-      <p>
-        Für den Anfang reicht eine Liste mit den nächsten Besorgungen. Wenn du danach Rezeptideen sammeln oder jemanden einladen möchtest, findest du die passenden Möglichkeiten direkt in der App. Du musst nicht alles auf einmal einrichten.
-      </p>
+      <div class="mt-6 grid items-center gap-8 lg:grid-cols-[1fr_0.85fr] lg:gap-12">
+        <div>
+          <p class="!mt-0">
+            Die Web-App prüft im Hintergrund auf eine neue Version und lädt sie automatisch. Dafür wird die App neu geladen. Speichere offene Eingaben deshalb regelmäßig, auch wenn du mehrere Tabs nutzt.
+          </p>
+          <p>
+            Für den Anfang reicht eine Liste mit den nächsten Besorgungen. Wenn du danach Rezeptideen sammeln oder jemanden einladen möchtest, findest du die passenden Möglichkeiten direkt in der App. Du musst nicht alles auf einmal einrichten.
+          </p>
+        </div>
+        <MarketingMoodImage
+          name="first-list-kitchen-table"
+          alt="Ein älterer Mann mit Brille sitzt entspannt am Küchentisch und tippt auf seinem Handy. Vor ihm stehen eine Tasse Tee, ein Laptop, Äpfel und ein Einkaufsnetz."
+          caption="Eine Liste reicht für den Anfang."
+          icon="i-lucide-list-checks"
+        />
+      </div>
     </MarketingSection>
   </MarketingPage>
 </template>

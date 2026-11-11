@@ -180,7 +180,7 @@ async function startAgain() {
             </div>
           </div>
           <p class="waitlist-note">
-            Wir geben den letzten Details noch etwas Zeit. Du bekommst zum Start eine Nachricht — und kannst dann in Ruhe entscheiden.
+            Wir geben den letzten Details noch etwas Zeit. Du bekommst zum Start eine Nachricht und kannst dann in Ruhe entscheiden.
           </p>
         </div>
         <p
@@ -304,7 +304,7 @@ async function startAgain() {
                   </template>. Öffne die shliste-Mail und bestätige deine E-Mail-Adresse.
                 </p>
                 <ol class="waitlist-steps">
-                  <li>Mail von shliste öffnen</li><li>„Ja, zum Start Bescheid bekommen“ anklicken</li><li>Auf der Seite bestätigen — fertig!</li>
+                  <li>Mail von shliste öffnen</li><li>„Ja, zum Start Bescheid bekommen“ anklicken</li><li>Auf der Seite bestätigen, fertig!</li>
                 </ol>
                 <p class="waitlist-small">
                   Nichts angekommen? Schau auch im Spamordner nach. Nach 15 Minuten kannst du einen neuen Link anfordern.
@@ -410,6 +410,14 @@ async function startAgain() {
             Kein Newsletter. Wir speichern deine Einwilligung und melden Anmeldung und Bestätigung intern an unser Team. <NuxtLink to="/privacy#ki-warteliste">Datenschutz</NuxtLink>
           </p>
         </section>
+        <MarketingMoodImage
+          class="waitlist-mood"
+          name="waitlist-anticipation"
+          alt="Zwei Menschen sitzen auf einer Fensterbank in der Küche und schauen lächelnd auf ein Handy. Vor ihnen stehen zwei Tassen, Marmeladenplätzchen und ein Brief mit Herzsiegel."
+          caption="Etwas Gutes ist unterwegs."
+          icon="i-lucide-mail-open"
+          wide
+        />
         <MarketingFeatureWall />
       </main>
     </div>
@@ -473,7 +481,7 @@ async function startAgain() {
 /* The same editorial scale, palette and page boundaries as the marketing chapters. */
 .waitlist-page{--waitlist-accent:var(--demo-accent,#a63780);column-gap:clamp(2rem,6vw,5.5rem);grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:center;padding-block:3rem 4.5rem}
 .waitlist-story{padding:0;min-width:0}
-.waitlist-back{display:inline-flex;align-items:center;gap:.5rem;color:var(--md-on-surface-variant);font-size:.8125rem;text-decoration:none;margin-bottom:2rem}
+.waitlist-mood{position:relative;z-index:1;grid-column:1/-1;margin-top:clamp(2rem,4vw,3.5rem)}.waitlist-back{display:inline-flex;align-items:center;min-height:1.75rem;gap:.5rem;color:var(--md-on-surface-variant);font-size:.8125rem;text-decoration:none;margin-bottom:2rem}
 .waitlist-back .iconify{width:1rem;height:1rem}
 .waitlist-back:hover{color:var(--waitlist-accent)}
 .waitlist-eyebrow{margin:0 0 .75rem}
