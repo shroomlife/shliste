@@ -17,6 +17,21 @@ definePageMeta({ layout: 'app' })
 const { profile, isSignedIn, signOut, updateDisplayName } = useAuth()
 const { snapshot, display, dataVersion, realtime, requestSync } = useSync()
 const { badges, reload: reloadBadges } = useBadges()
+const route = useRoute()
+const badgeSection = ref<HTMLElement | null>(null)
+
+async function revealBadgeSection(): Promise<void> {
+  if (route.hash !== '#badges') return
+  await nextTick()
+  badgeSection.value?.scrollIntoView({ block: 'start', behavior: 'instant' })
+}
+
+onMounted(() => {
+  void revealBadgeSection()
+})
+watch(() => route.hash, () => {
+  void revealBadgeSection()
+}, { flush: 'post' })
 
 /* ------------------------------------------------------------------ *
  * Lokale und serverseitige Zählstände
@@ -335,7 +350,11 @@ async function handleSignOut(): Promise<void> {
       </section>
 
       <!-- Badges -->
-      <section class="px-5 pt-6">
+      <section
+        id="badges"
+        ref="badgeSection"
+        class="px-5 pt-6"
+      >
         <h2 class="flex items-center gap-2 text-[1.375rem] font-bold">
           <UIcon
             name="i-lucide-award"
@@ -596,6 +615,19 @@ async function handleSignOut(): Promise<void> {
           </div>
         </div>
       </section>
+      <div class="px-5 pt-8">
+        <NuxtLink
+          to="/?view=website"
+          class="inline-flex min-h-10 items-center gap-2 text-sm underline-offset-4 hover:underline"
+          style="color: var(--md-on-surface-variant)"
+        >
+          <UIcon
+            name="i-lucide-external-link"
+            class="size-4"
+          />
+          Zur shliste-Website
+        </NuxtLink>
+      </div>
     </div>
   </div>
 </template>

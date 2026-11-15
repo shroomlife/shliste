@@ -126,6 +126,7 @@ async function submitDialog(): Promise<void> {
   >
     <!-- Index -->
     <section
+      data-overview-scroll
       class="w-full shrink-0 flex-col overflow-y-auto lg:flex lg:w-86"
       :class="isDetailOpen ? 'hidden' : 'flex'"
       style="background: var(--md-surface-low)"

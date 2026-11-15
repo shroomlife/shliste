@@ -13,13 +13,43 @@
  * Stelle öffnete eine zweite Echtzeit-Verbindung.
  */
 const route = useRoute()
+const mainContent = ref<HTMLElement | null>(null)
+const logoTarget = computed(() => route.path.startsWith('/app/recipes/') ? '/app/recipes' : '/app/lists')
+
+function onLogoClick(event: MouseEvent): void {
+  if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
+  event.preventDefault()
+  const viewport = mainContent.value?.querySelector<HTMLElement>('[data-overview-scroll]')
+  const inOverview = route.path === '/app/lists' || route.path === '/app/recipes'
+  if (inOverview && viewport && viewport.scrollTop > 1) {
+    viewport.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
+  }
+  else {
+    void navigateTo(logoTarget.value)
+  }
+}
+
+function onBadgesClick(event: MouseEvent): void {
+  if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
+  if (route.path !== '/app/profile' || route.hash !== '#badges') return
+  event.preventDefault()
+  mainContent.value?.querySelector('#badges')?.scrollIntoView({ block: 'start', behavior: 'instant' })
+}
 
 const { profile, isSignedIn } = useAuth()
 const { refresh: refreshAiAccess } = await useFetch<{ enabled: boolean, state: string }>('/api/waitlist/status', { server: false, key: 'ai-access' })
 watch(isSignedIn, () => {
   void refreshAiAccess()
 })
-const { display, snapshot, resolveConflict } = useSync()
+const { display, snapshot, resolveConflict, dataVersion } = useSync()
+const { badges, reload: reloadBadges } = useBadges()
+const showBadgeShortcut = computed(() => isSignedIn.value || badges.value.length > 0)
+onMounted(() => {
+  void reloadBadges()
+})
+watch(dataVersion, () => {
+  void reloadBadges()
+})
 
 useSyncRunner()
 
@@ -82,10 +112,11 @@ function navAriaLabel(destination: Destination): string | undefined {
       <!-- Die Bildmarke der Android-App (drawable ci_logo), nicht nachgebaut.
            Vorher stand hier ein Menü-Symbol, das kein Menü öffnete — genau die
            Art Versprechen, das eine Oberfläche nicht halten kann. -->
-      <NuxtLink
-        to="/app/lists"
+      <a
+        :href="logoTarget"
         class="mb-4 flex size-10 items-center justify-center"
-        aria-label="shliste, zu deinen Listen"
+        aria-label="shliste, nach oben oder zur Übersicht"
+        @click="onLogoClick"
       >
         <img
           src="/images/brand/mark.svg"
@@ -94,7 +125,7 @@ function navAriaLabel(destination: Destination): string | undefined {
           height="22"
           class="w-7"
         >
-      </NuxtLink>
+      </a>
 
       <NuxtLink
         v-for="destination in destinations"
@@ -126,7 +157,6 @@ function navAriaLabel(destination: Destination): string | undefined {
       <!-- Konto und Abgleich stehen zusammen am unteren Ende der Rail: beides
            betrifft nicht den Inhalt, sondern den Zustand der App. -->
       <div class="flex flex-col items-center gap-2">
-        <AppWebsiteLink placement="rail" />
         <ThemeToggle />
         <!-- Ohne Konto gibt es nichts abzugleichen. Eine Anzeige wäre dann
              kein Hinweis, sondern eine Frage ohne Anlass. -->
@@ -169,9 +199,11 @@ function navAriaLabel(destination: Destination): string | undefined {
       class="flex h-16 shrink-0 items-center gap-2 border-b px-3 lg:hidden"
       style="background: var(--md-surface-container); border-color: var(--md-primary)"
     >
-      <NuxtLink
-        to="/app/lists"
-        aria-label="shliste, zu deinen Listen"
+      <a
+        :href="logoTarget"
+        class="flex h-10 items-center"
+        aria-label="shliste, nach oben oder zur Übersicht"
+        @click="onLogoClick"
       >
         <img
           src="/images/brand/wordmark.svg"
@@ -180,7 +212,7 @@ function navAriaLabel(destination: Destination): string | undefined {
           height="24"
           class="h-7 w-auto"
         >
-      </NuxtLink>
+      </a>
       <div class="grow" />
       <ThemeToggle />
       <SyncStatus
@@ -191,8 +223,22 @@ function navAriaLabel(destination: Destination): string | undefined {
       />
       <!-- Wie in der Rail: der Profil-Zugang ist immer sichtbar. -->
       <NuxtLink
+        v-if="showBadgeShortcut"
+        to="/app/profile#badges"
+        class="state-layer flex size-10 shrink-0 items-center justify-center rounded-full"
+        aria-label="Meine Badges"
+        title="Meine Badges"
+        @click="onBadgesClick"
+      >
+        <UIcon
+          name="i-lucide-award"
+          class="size-6"
+          style="color: var(--md-primary)"
+        />
+      </NuxtLink>
+      <NuxtLink
         to="/app/profile"
-        class="state-layer flex size-10 items-center justify-center rounded-full"
+        class="state-layer flex size-10 shrink-0 items-center justify-center rounded-full"
         :aria-label="isSignedIn ? 'Mein Profil' : 'Profil und Anmeldung'"
         :title="isSignedIn ? 'Mein Profil' : 'Profil und Anmeldung'"
       >
@@ -217,7 +263,10 @@ function navAriaLabel(destination: Destination): string | undefined {
          Kopfzeile, auf dem Desktop am Kopf der Inhaltsspalte neben der Rail. -->
     <div class="flex min-h-0 min-w-0 grow flex-col">
       <OfflineBanner />
-      <main class="flex min-h-0 min-w-0 grow flex-col overflow-y-auto">
+      <main
+        ref="mainContent"
+        class="flex min-h-0 min-w-0 grow flex-col overflow-y-auto"
+      >
         <slot />
       </main>
     </div>
@@ -275,7 +324,6 @@ function navAriaLabel(destination: Destination): string | undefined {
             : 'color: var(--md-on-surface-variant)'"
         >{{ destination.label }}</span>
       </NuxtLink>
-      <AppWebsiteLink placement="bottom" />
     </nav>
   </div>
 </template>
