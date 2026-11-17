@@ -263,6 +263,8 @@ export function planLegacyImport(input: {
         linkImagePath: null,
         linkImageKind: null,
         linkPending: false,
+        itemImagePath: null,
+        itemImagePending: false,
         createdBy: null,
         modifiedBy: null,
       })

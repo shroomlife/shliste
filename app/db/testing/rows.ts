@@ -51,6 +51,8 @@ export function itemRow(id: string, listId: string, overrides: Partial<ListItemR
     linkImagePath: null,
     linkImageKind: null,
     linkPending: false,
+    itemImagePath: null,
+    itemImagePending: false,
     createdBy: null,
     modifiedBy: null,
     createdAt: OLD,

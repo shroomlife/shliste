@@ -18,7 +18,7 @@ watch(() => props.storyKey, () => {
   paused.value = false
 })
 function item(name: string, checked = false, quantity = 1): ListItem {
-  return { id: name, listId: 'article-preview', name, quantity, checked, removed: false, orderIndex: 0, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, createdBy: null, modifiedBy: null, createdAt: '2026-11-03T12:00:00.000Z', updatedAt: '2026-11-03T12:00:00.000Z', deletedAt: null, fieldTimestamps: null }
+  return { id: name, listId: 'article-preview', name, quantity, checked, removed: false, orderIndex: 0, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, itemImagePath: null, itemImagePending: false, createdBy: null, modifiedBy: null, createdAt: '2026-11-03T12:00:00.000Z', updatedAt: '2026-11-03T12:00:00.000Z', deletedAt: null, fieldTimestamps: null }
 }
 const isOffline = computed(() => phase.value === 1 || phase.value === 2)
 </script>

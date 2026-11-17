@@ -31,6 +31,7 @@ import { CLEAN, type ListItemRow } from '../../db/schema'
 import { keepListLocalFields } from '../../db/seen'
 import { isAtOrBefore, nowIso } from '../../db/timestamps'
 import { linkMirrorsFor, type LinkMirrors } from '../merge/link-mirrors'
+import { itemImageMirrorsFor, normalizeItemName, type ItemImageMirrors } from '../merge/item-image-mirrors'
 import { capText, sanitize, SYNC_FIELD_LIMITS } from '../merge/limits'
 import {
   parseBadge,
@@ -729,6 +730,8 @@ export interface PushResponse {
    * (`linkPending`). Fehlt das Feld (älterer Server), ist es leer.
    */
   pendingLinkItemIds: string[]
+  /** Dasselbe für die KI-Bilder (`itemImagePending`). Fehlt das Feld, ist es leer. */
+  pendingItemImageIds: string[]
 }
 
 export function parsePushResponse(value: unknown): PushResponse {
@@ -748,6 +751,7 @@ export function parsePushResponse(value: unknown): PushResponse {
     skippedIds: parseSkippedIds(record['skippedIds']),
     serverTime: readIso(record, 'serverTime'),
     pendingLinkItemIds: readArray(record, 'pendingLinkItemIds').filter((entry): entry is string => typeof entry === 'string'),
+    pendingItemImageIds: readArray(record, 'pendingItemImageIds').filter((entry): entry is string => typeof entry === 'string'),
   }
 }
 
@@ -855,12 +859,14 @@ export async function runPush(store: PushStore, send: PushSender, onNotice?: Not
   const skippedIds = emptySkipped()
   const conflicts: PushConflicts[] = []
   const pendingLinkItemIds: string[] = []
+  const pendingItemImageIds: string[] = []
 
   for (const block of blocks) {
     const response = parsePushResponse(await send(block))
     addSkipped(skippedIds, response.skippedIds)
     conflicts.push(response.conflicts)
     pendingLinkItemIds.push(...response.pendingLinkItemIds)
+    pendingItemImageIds.push(...response.pendingItemImageIds)
   }
 
   /*
@@ -881,6 +887,7 @@ export async function runPush(store: PushStore, send: PushSender, onNotice?: Not
   }
 
   await applyPendingLinks(store.rows, pendingLinkItemIds, dirty.items)
+  await applyPendingItemImages(store.rows, pendingItemImageIds, dirty.items)
 
   return {
     pushSnapshot,
@@ -1035,6 +1042,30 @@ async function applyPendingLinks(
 }
 
 /**
+ * Setzt "in Arbeit" an den Einträgen, für die der Server laut Antwort ein
+ * KI-Bild sucht oder malt. Begründung wie bei `applyPendingLinks`; die
+ * Bedingung ist hier der NAME, den dieser Push gesendet hat
+ * (`itemImageMirrorsFor`).
+ */
+async function applyPendingItemImages(
+  rows: RowStores,
+  pendingIds: readonly string[],
+  pushedItems: readonly ListItemRow[],
+): Promise<void> {
+  if (pendingIds.length === 0) return
+  const sentName = new Map(pushedItems.map(item => [item.id, normalizeItemName(item.name)]))
+
+  for (const id of new Set(pendingIds)) {
+    const name = sentName.get(id)
+    if (name === undefined) continue
+    await rows.items.mutate(id, (local) => {
+      if (local === undefined || normalizeItemName(local.name) !== name || local.itemImagePending) return null
+      return { ...local, itemImagePending: true }
+    })
+  }
+}
+
+/**
  * Übernimmt den Serverstand der Zeilen, bei denen der Server gewonnen hat.
  *
  * Eine Zeile, die seit `pushSnapshot` lokal bearbeitet wurde, bleibt
@@ -1094,8 +1125,10 @@ async function applyConflicts(rows: RowStores, conflicts: PushConflicts, pushSna
          * Zeile bleibt schmutzig und geht beim nächsten Push wieder mit.
          */
         const mirrors = linkMirrorsFor(item, local.url)
-        if (!linkMirrorsDiffer(local, mirrors)) return null
-        return { ...local, ...mirrors }
+        // Das KI-Bild gehört zum Namen; dieselbe Überlegung, andere Bindung.
+        const bild = itemImageMirrorsFor(item, local.name)
+        if (!linkMirrorsDiffer(local, mirrors) && !itemImageMirrorsDiffer(local, bild)) return null
+        return { ...local, ...mirrors, ...bild }
       }
       applied += 1
       return { ...item, dirty: CLEAN }
@@ -1147,6 +1180,10 @@ function isLocallyNewer(local: { updatedAt: IsoUtc } | undefined, pushSnapshot: 
  * Nur dann lohnt der Schreibvorgang im Konfliktpfad. Sonst schriebe jeder
  * Konflikt dieselbe Zeile grundlos neu.
  */
+function itemImageMirrorsDiffer(local: ListItemRow, next: ItemImageMirrors): boolean {
+  return local.itemImagePath !== next.itemImagePath || local.itemImagePending !== next.itemImagePending
+}
+
 function linkMirrorsDiffer(local: ListItemRow, next: LinkMirrors): boolean {
   return local.linkTitle !== next.linkTitle
     || local.linkImagePath !== next.linkImagePath

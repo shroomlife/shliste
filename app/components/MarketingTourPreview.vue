@@ -11,7 +11,7 @@ const lists = computed<List[]>(() => [
   { ...base, id: 'tour-week', name: 'Für die Woche', color: '#94A97F', secret: false, lastSuggestedItems: '', sourceUrl: null, ownerUserId: null },
   { ...base, id: 'tour-secret', name: 'Sams Überraschung', color: '#B796D5', secret: true, lastSuggestedItems: '', sourceUrl: null, ownerUserId: null },
 ])
-const items: ListItem[] = ['Tomaten', 'Rucola', 'Lasagneblätter'].map((name, index) => ({ ...base, id: `tour-${index}`, listId: 'tour-friday', name, quantity: 1, checked: false, removed: false, orderIndex: index, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, createdBy: null, modifiedBy: null }))
+const items: ListItem[] = ['Tomaten', 'Rucola', 'Lasagneblätter'].map((name, index) => ({ ...base, id: `tour-${index}`, listId: 'tour-friday', name, quantity: 1, checked: false, removed: false, orderIndex: index, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, itemImagePath: null, itemImagePending: false, createdBy: null, modifiedBy: null }))
 </script>
 
 <template>

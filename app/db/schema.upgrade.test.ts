@@ -81,3 +81,34 @@ test('Version 4 mit Bestand: linkPending wird nachgetragen, ohne die Zeile schmu
   expect(row?.fieldTimestamps).toEqual(altzeile.fieldTimestamps)
   v5.close()
 })
+
+test('Version 5 mit Bestand: die Bild-Spiegel werden nachgetragen, ohne die Zeile schmutzig zu machen', async () => {
+  const name = 'shliste-upgrade-v5'
+
+  // Eine Zeile aus Version 5: alle Link-Felder, aber noch keine Bild-Spiegel.
+  const { itemImagePath: _ohnePfad, itemImagePending: _ohneZustand, ...altzeile }
+    = itemRow('i1', 'l1', { name: 'Gurke', dirty: 1 })
+  const v5 = await openDB<ShlisteDb>(name, 5, {
+    upgrade(db) {
+      createSchema(db)
+    },
+  })
+  v5.close()
+  const roh = await openDB(name, 5)
+  await roh.put('list_items', altzeile)
+  roh.close()
+
+  const v6 = await openDB<ShlisteDb>(name, DB_VERSION, {
+    upgrade(db, oldVersion, _newVersion, transaction) {
+      createSchema(db)
+      void backfillLinkFields(oldVersion, transaction)
+    },
+  })
+
+  const row = await v6.get('list_items', 'i1')
+  expect(row?.itemImagePath).toBeNull()
+  expect(row?.itemImagePending).toBe(false)
+  expect(row?.dirty).toBe(altzeile.dirty)
+  expect(row?.updatedAt).toBe(altzeile.updatedAt)
+  v6.close()
+})

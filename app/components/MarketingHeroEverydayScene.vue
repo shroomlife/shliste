@@ -9,7 +9,7 @@ const rows = computed(() => props.index === 1 ? ['Kaffee', 'Haferdrink', 'Spülm
 const title = computed(() => props.index === 3 ? 'Erster Abend' : props.world.lists[0])
 const checked = (i: number) => props.index === 1 ? i < props.moment - 1 : props.index === 2 ? i === 10 && props.moment >= 4 : props.index === 4 ? i === 0 && props.moment >= 4 : false
 function item(name: string, i: number): ListItem {
-  return { id: name, listId: 'hero-everyday', name, checked: checked(i), quantity: 1, removed: false, orderIndex: i, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, createdBy: null, modifiedBy: null, createdAt: '', updatedAt: '', deletedAt: null, fieldTimestamps: null }
+  return { id: name, listId: 'hero-everyday', name, checked: checked(i), quantity: 1, removed: false, orderIndex: i, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, itemImagePath: null, itemImagePending: false, createdBy: null, modifiedBy: null, createdAt: '', updatedAt: '', deletedAt: null, fieldTimestamps: null }
 }
 const holidayMotion = computed(() => holidayListScroll(props.time))
 const naming = computed(() => props.index === 3 && props.moment <= 2)

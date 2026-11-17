@@ -75,6 +75,14 @@ export type LinkImageKind = 'preview' | 'icon'
  */
 export type LinkMirrorField = 'linkTitle' | 'linkImagePath' | 'linkImageKind' | 'linkPending'
 
+/**
+ * Die zwei Server-Spiegel des KI-Bilds hinter einem Eintrag (SHL-1). Dieselben
+ * Regeln wie bei den Link-Spiegeln: nie gesendet, nie gemergt, keine
+ * `fieldTimestamps`, nicht im Content-Hash. Sie gehören zum NAMEN, wie die
+ * Link-Spiegel zur Adresse (`app/sync/merge/item-image-mirrors.ts`).
+ */
+export type ItemImageMirrorField = 'itemImagePath' | 'itemImagePending'
+
 export interface ListItem extends SyncedEntity {
   listId: string
   /**
@@ -117,6 +125,14 @@ export interface ListItem extends SyncedEntity {
    * Regel steht nur auf dem Server (`lib/link-preview/pending.ts` der API).
    */
   linkPending: boolean
+  /** Server-Spiegel: KI-Bild hinter der Zeile, `item:{32 hex}.webp`. */
+  itemImagePath: string | null
+  /**
+   * Server-Spiegel: Der Server sucht oder malt gerade ein Bild für diesen
+   * Eintrag. Solange zeigt die Zeile den Pollenflug. Die Regel steht nur auf
+   * dem Server (`lib/item-images/pending.ts` der API).
+   */
+  itemImagePending: boolean
   createdBy: string | null
   modifiedBy: string | null
 }

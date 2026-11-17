@@ -344,6 +344,21 @@ export default defineNuxtConfig({
             cacheableResponse: { statuses: [200] },
           },
         },
+        // Dieselbe Begründung für die KI-Bilder hinter Listeneinträgen: Name
+        // ist die Prüfsumme, ein Eintrag veraltet nie. Ein Bild je Begriff,
+        // 768x512 WebP, und viele Einträge teilen sich eines.
+        {
+          urlPattern: /\/api\/item-images\//,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'item-images',
+            expiration: {
+              maxEntries: 300,
+              maxAgeSeconds: 60 * 60 * 24 * 30,
+            },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
       ],
     },
 

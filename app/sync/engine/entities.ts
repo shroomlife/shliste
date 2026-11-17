@@ -128,6 +128,8 @@ export function parseListItem(value: unknown): ListItem | null {
     linkImagePath: readNullableString(value, 'linkImagePath'),
     linkImageKind: readLinkImageKind(value),
     linkPending: readBooleanOr(value, 'linkPending', false),
+    itemImagePath: readNullableString(value, 'itemImagePath'),
+    itemImagePending: readBooleanOr(value, 'itemImagePending', false),
     createdBy: readNullableString(value, 'createdBy'),
     modifiedBy: readNullableString(value, 'modifiedBy'),
     deletedAt: readNullableIso(value, 'deletedAt'),

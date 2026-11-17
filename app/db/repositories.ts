@@ -26,6 +26,7 @@ import type {
   FieldTimestamps,
   HistoryEntry,
   IsoUtc,
+  ItemImageMirrorField,
   LinkMirrorField,
   List,
   ListItem,
@@ -37,6 +38,7 @@ import type {
   SyncedEntity,
 } from '../../shared/types/domain'
 import { linkMirrorsFor, type LinkMirrors } from '../sync/merge/link-mirrors'
+import { emptyItemImageMirrors, itemImageMirrorsFor } from '../sync/merge/item-image-mirrors'
 import { sanitize } from '../sync/merge/limits'
 import { nextSortKey } from '../sync/merge/reorder'
 import { randomListColor } from '../utils/color'
@@ -79,7 +81,7 @@ export type Draft<T extends SyncedEntity> = Omit<T, 'createdAt' | 'updatedAt' | 
  * überschreibt. Was lokal mit ihnen passiert, entscheidet allein
  * `linkFieldsAfterWrite`.
  */
-export type ListItemDraft = Omit<Draft<ListItem>, LinkMirrorField>
+export type ListItemDraft = Omit<Draft<ListItem>, LinkMirrorField | ItemImageMirrorField>
 
 /** Alle Stores, deren Zeilen gepusht werden. */
 export type DirtyStoreName
@@ -429,6 +431,9 @@ export async function upsertItem(
   const row: ListItemRow = {
     ...input,
     ...linkFieldsAfterWrite(previous, input.url),
+    // Das KI-Bild bleibt, solange der Name (normalisiert) derselbe ist; eine
+    // echte Umbenennung räumt es sofort weg, wie der Server im Push.
+    ...itemImageMirrorsFor(previous, input.name),
     ...titleHintAfterWrite(previous, input.url, options.linkTitleHint),
     ...buildRowMeta(previous, changed, nowIso()),
   }
@@ -491,7 +496,7 @@ async function writeImportedList(
         url: null, createdBy: null, modifiedBy: null, deletedAt: null,
       }
       const row: ListItemRow = {
-        ...draft, ...linkFieldsAfterWrite(undefined, null),
+        ...draft, ...linkFieldsAfterWrite(undefined, null), ...emptyItemImageMirrors(),
         ...buildRowMeta(undefined, changedFields(undefined, draft), nowIso()),
       }
       await store.add(row)

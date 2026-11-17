@@ -11,7 +11,7 @@ const accepted = computed(() => props.moment >= 2)
 const names = computed(() => props.moment >= 3 ? ['Kaffee', 'Haferdrink', 'Spülmittel'] : ['Kaffee', 'Spülmittel'])
 const checked = (index: number) => props.moment >= 5 || (props.moment >= 4 && index < 2)
 function item(name: string, index: number): ListItem {
-  return { id: `wg-${name}`, listId: 'hero-wg', name, checked: checked(index), quantity: 1, removed: false, orderIndex: index, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, createdBy: name === 'Haferdrink' ? 'demo-noor' : 'demo-jules', modifiedBy: name === 'Haferdrink' ? 'demo-noor' : 'demo-jules', createdAt: '', updatedAt: '', deletedAt: null, fieldTimestamps: null }
+  return { id: `wg-${name}`, listId: 'hero-wg', name, checked: checked(index), quantity: 1, removed: false, orderIndex: index, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, itemImagePath: null, itemImagePending: false, createdBy: name === 'Haferdrink' ? 'demo-noor' : 'demo-jules', modifiedBy: name === 'Haferdrink' ? 'demo-noor' : 'demo-jules', createdAt: '', updatedAt: '', deletedAt: null, fieldTimestamps: null }
 }
 </script>
 

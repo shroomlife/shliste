@@ -47,8 +47,13 @@ import type { ListItem } from '#shared/types/domain'
  * Barrierefreiheit: Alle Knöpfe halten mindestens 44 Pixel Zeilenhöhe, damit
  * sie auch am Handy sicher zu treffen sind (WCAG 2.2 SC 2.5.8).
  */
-const { item, justChanged = false, changedBy = null, sortable = false } = defineProps<{
+const { item, justChanged = false, changedBy = null, sortable = false, showItemImage = true } = defineProps<{
   item: ListItem
+  /**
+   * Darf das KI-Bild hinter der Zeile stehen? Nein in geheimen Listen: Dort
+   * wird es nur ausgeblendet, nicht gelöscht (Entscheidung an SHL-1).
+   */
+  showItemImage?: boolean
   /** Wurde die Zeile gerade von einem anderen Gerät geändert? */
   justChanged?: boolean
   /** Anzeigename der Person, die geändert hat */
@@ -101,6 +106,21 @@ const showBusy = useMinimumVisible(busy, 1000)
 /** Die Statuszeile beschreibt den gesperrten Entfernen-Knopf. */
 const statusId = useId()
 
+/**
+ * KI-Bild hinter der Zeile (SHL-1). Reine Dekoration: kein Alternativtext,
+ * keine Sperre, nichts für den Screenreader. Eingeblendet wird erst, wenn das
+ * Bild geladen ist, sonst blitzte ein leerer Rahmen auf.
+ */
+const itemImageUrl = computed(() => (showItemImage ? resolveItemImageUrl(item.itemImagePath) : null))
+const itemImageLoaded = ref(false)
+watch(itemImageUrl, () => {
+  itemImageLoaded.value = false
+})
+
+/** Pollenflug, solange der Server malt; mindestens eine Sekunde, wie der Lichtlauf. */
+const painting = computed(() => showItemImage && item.itemImagePending)
+const showPollen = useMinimumVisible(painting, 1000)
+
 function onRemove(): void {
   // Der Knopf bleibt fokussierbar (`aria-disabled`), also kommt der Klick
   // hier an. Gesperrt ist er trotzdem — und `removeItem` prüft noch einmal.
@@ -145,11 +165,31 @@ function onRemove(): void {
        in voller Zeilenhöhe (items-stretch), wie in ListItemContent.kt. -->
   <div
     v-else
-    class="list-item-row group relative flex min-h-15 w-full items-stretch rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-colors"
+    class="list-item-row group relative isolate flex min-h-15 w-full items-stretch rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-colors"
     :class="[justChanged && 'delta-flash']"
     :aria-busy="busy || undefined"
     style="background: var(--md-surface)"
   >
+    <!-- KI-Bild und Pollenflug liegen HINTER dem Text (z-index -1 im eigenen
+         Stapel, siehe `item-image` in main.css). Sie füllen jede Zeilenhöhe,
+         auch zweizeilig, ohne sie zu ändern. Abgehakt halb so kräftig. -->
+    <img
+      v-if="itemImageUrl !== null"
+      :key="itemImageUrl"
+      :src="itemImageUrl"
+      alt=""
+      aria-hidden="true"
+      decoding="async"
+      class="item-image"
+      :style="itemImageLoaded
+        ? (item.checked ? 'opacity: calc(var(--md-item-image-opacity) * 0.5)' : 'opacity: var(--md-item-image-opacity)')
+        : undefined"
+      @load="itemImageLoaded = true"
+    >
+    <Transition name="pollen-fade">
+      <ItemImagePollen v-if="showPollen" />
+    </Transition>
+
     <Transition name="busy-fade">
       <span
         v-if="showBusy"

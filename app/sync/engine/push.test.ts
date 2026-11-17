@@ -486,6 +486,8 @@ function dirtyItem(id: string, listId: string, updatedAt: IsoUtc = TS): ListItem
     linkImagePath: null,
     linkImageKind: null,
     linkPending: false,
+    itemImagePath: null,
+    itemImagePending: false,
     updatedAt,
     dirty: DIRTY,
   }
@@ -674,6 +676,27 @@ describe('runPush', () => {
     expect(store.items.get('i1')?.linkPending).toBe(false)
   })
 
+  test('ein laut Antwort gemalter Eintrag zeigt sofort den Pollenflug', async () => {
+    const zeile: ListItemRow = { ...dirtyItem('i1', 'l1'), name: 'Gurke' }
+    const store = fakePushStore({ items: [zeile] }, { items: [zeile] })
+
+    await runPush(store, () => Promise.resolve({ ...OK_RESPONSE, pendingItemImageIds: ['i1'] }))
+
+    expect(store.items.get('i1')?.itemImagePending).toBe(true)
+    expect(store.items.get('i1')?.dirty).toBe(zeile.dirty)
+  })
+
+  test('ein seitdem umbenannter Eintrag bekommt den Pollenflug nicht, Groß- und Kleinschreibung zählt nicht', async () => {
+    const gesendet: ListItemRow = { ...dirtyItem('i1', 'l1'), name: 'Gurke' }
+    const umbenannt = fakePushStore({ items: [gesendet] }, { items: [{ ...gesendet, name: 'Tomate', updatedAt: FUTURE }] })
+    await runPush(umbenannt, () => Promise.resolve({ ...OK_RESPONSE, pendingItemImageIds: ['i1'] }))
+    expect(umbenannt.items.get('i1')?.itemImagePending).toBe(false)
+
+    const kleiner = fakePushStore({ items: [gesendet] }, { items: [{ ...gesendet, name: ' gurke', updatedAt: FUTURE }] })
+    await runPush(kleiner, () => Promise.resolve({ ...OK_RESPONSE, pendingItemImageIds: ['i1'] }))
+    expect(kleiner.items.get('i1')?.itemImagePending).toBe(true)
+  })
+
   /* ---------------------------------------------------------------- *
    * Die Link-Felder im Konfliktpfad
    * ---------------------------------------------------------------- */
@@ -694,6 +717,8 @@ describe('runPush', () => {
       linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
       linkImageKind: 'preview',
       linkPending: false,
+      itemImagePath: null,
+      itemImagePending: false,
       createdAt: TS,
       updatedAt: TS,
       deletedAt: null,
@@ -776,6 +801,8 @@ describe('runPush', () => {
       linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
       linkImageKind: 'preview',
       linkPending: false,
+      itemImagePath: null,
+      itemImagePending: false,
     })
     const store = fakePushStore({ items: [dirtyItem('i1', 'l1')] }, { items: [lokal] })
 
@@ -830,6 +857,15 @@ describe('buildPushPayload — Link-Felder', () => {
     expect(sent).not.toHaveProperty('linkImagePath')
     expect(sent).not.toHaveProperty('linkImageKind')
     expect(sent).not.toHaveProperty('linkPending')
+  })
+
+  test('die Bild-Spiegel gehen nie mit', () => {
+    const row: ListItemRow = {
+      ...dirtyItem('i1', 'l1'), itemImagePath: 'item:0123456789abcdef0123456789abcdef.webp', itemImagePending: true,
+    }
+    const sent = buildPushPayload({ ...emptyDirty(), items: [row] }).listItems[0]
+    expect(sent).not.toHaveProperty('itemImagePath')
+    expect(sent).not.toHaveProperty('itemImagePending')
   })
 
   test('ein Titelvorschlag aus dem Teilen-Text geht mit, wenn die Zeile einen trägt', () => {
