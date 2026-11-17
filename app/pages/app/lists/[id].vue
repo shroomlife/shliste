@@ -106,6 +106,15 @@ const isRenameOpen = ref(false)
 const isDeleteOpen = ref(false)
 const renameValue = ref('')
 const sourceUrlValue = ref('')
+/** Schalter "KI-Bilder" im Bearbeiten-Blatt, gespeichert erst mit "Speichern". */
+const itemImagesValue = ref(false)
+/**
+ * Der Stand beim Öffnen. Geschrieben wird nur, wenn der Nutzer den Schalter
+ * WIRKLICH umgelegt hat: Schaltet ein anderes Gerät ihn um, während das Blatt
+ * offen ist, drehte ein bloßes Umbenennen das sonst mit frischem Zeitstempel
+ * zurück.
+ */
+const itemImagesOpened = ref(false)
 
 /**
  * Geheime Listen: Android = Biometrie, Browser = Platform-WebAuthn.
@@ -174,6 +183,8 @@ const menuItems = computed(() => [[
     onSelect: () => {
       renameValue.value = list.value?.name ?? ''
       sourceUrlValue.value = list.value?.sourceUrl ?? ''
+      itemImagesValue.value = list.value?.itemImages === true
+      itemImagesOpened.value = itemImagesValue.value
       isRenameOpen.value = true
     },
   },
@@ -207,11 +218,12 @@ const sourceUrlError = computed(() =>
 
 const canSubmitRename = computed(() => renameValue.value.trim().length > 0 && !sourceUrlError.value)
 
-async function submitEditListWork(name: string, sourceUrl: string | null): Promise<void> {
-  // Zwei getrennte Schreibzüge und keiner zu viel: Jeder stempelt nur sein
+async function submitEditListWork(name: string, sourceUrl: string | null, itemImages: boolean | null): Promise<void> {
+  // Getrennte Schreibzüge und keiner zu viel: Jeder stempelt nur sein
   // eigenes Feld neu, damit der Push nicht das jeweils andere überschreibt.
   await renameList(name)
   await setListSourceUrl(sourceUrl)
+  if (itemImages !== null) await setListItemImages(itemImages)
 }
 
 function submitRename(): void {
@@ -219,7 +231,8 @@ function submitRename(): void {
   if (!canSubmitRename.value) return
 
   isRenameOpen.value = false
-  mutate(submitEditListWork(name, sourceUrlParsed.value))
+  const itemImages = itemImagesValue.value === itemImagesOpened.value ? null : itemImagesValue.value
+  mutate(submitEditListWork(name, sourceUrlParsed.value, itemImages))
 }
 
 async function confirmDelete(): Promise<void> {
@@ -256,6 +269,7 @@ const {
   moveItemTo,
   renameList,
   setListSourceUrl,
+  setListItemImages,
   deleteList,
 } = useListDetail()
 
@@ -830,6 +844,7 @@ async function writeSuggestionCacheWork(remaining: readonly string[]): Promise<v
     name: target.name,
     color: target.color,
     secret: target.secret,
+    itemImages: target.itemImages,
     lastSuggestedItems: joinSuggestionCache(remaining),
     sourceUrl: target.sourceUrl,
     ownerUserId: target.ownerUserId,
@@ -1209,7 +1224,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
     <AppSheet
       v-model:open="isRenameOpen"
       title="Liste bearbeiten"
-      description="Name und Quelle anpassen"
+      description="Name, Quelle und KI-Bilder anpassen"
     >
       <div class="flex flex-col gap-5">
         <UInput
@@ -1247,6 +1262,20 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
             style="color: var(--md-delete-content)"
           >Das sieht nicht nach einer gültigen Adresse aus.</span>
         </div>
+
+        <!-- KI-Bilder (SHL-11): Beim Einschalten malt der Server auch die
+             vorhandenen Einträge nach. Geheime Listen bekommen nie Bilder. -->
+        <USwitch
+          v-model="itemImagesValue"
+          size="lg"
+          label="KI-Bilder"
+          :description="list?.secret === true
+            ? 'Geheime Listen bekommen keine Bilder.'
+            : !isOwner
+              ? 'Nur die Person, der die Liste gehört, kann das ändern.'
+              : 'Malt zu den Einträgen ein Bild im Hintergrund, auch zu den vorhandenen.'"
+          :disabled="list?.secret === true || !isOwner"
+        />
       </div>
 
       <template #footer>

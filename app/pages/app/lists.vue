@@ -30,6 +30,8 @@ const isDetailOpen = computed(() => typeof route.params.id === 'string')
 
 const isDialogOpen = ref(false)
 const newListName = ref('')
+/** Schalter "KI-Bilder" beim Anlegen, Vorgabe aus (SHL-11). */
+const newListItemImages = ref(false)
 const isSaving = ref(false)
 
 /* ------------------------------------------------------------------ *
@@ -99,6 +101,7 @@ watch(dataVersion, () => {
 
 function openDialog(): void {
   newListName.value = ''
+  newListItemImages.value = false
   isDialogOpen.value = true
 }
 
@@ -108,7 +111,7 @@ async function submitDialog(): Promise<void> {
 
   isSaving.value = true
   try {
-    const created = await createList(name)
+    const created = await createList(name, { itemImages: newListItemImages.value })
     scheduleSync()
     isDialogOpen.value = false
     await navigateTo(`/app/lists/${created.id}`)
@@ -240,14 +243,23 @@ async function submitDialog(): Promise<void> {
       title="Neue Liste"
       description="Wie soll die Liste heißen?"
     >
-      <UInput
-        v-model="newListName"
-        placeholder="z.B. Wocheneinkauf"
-        size="xl"
-        autofocus
-        :ui="{ root: 'w-full' }"
-        @keyup.enter="submitDialog"
-      />
+      <div class="flex flex-col gap-5">
+        <UInput
+          v-model="newListName"
+          placeholder="z.B. Wocheneinkauf"
+          size="xl"
+          autofocus
+          :ui="{ root: 'w-full' }"
+          @keyup.enter="submitDialog"
+        />
+        <!-- KI-Bilder (SHL-11), Vorgabe aus. -->
+        <USwitch
+          v-model="newListItemImages"
+          size="lg"
+          label="KI-Bilder"
+          description="Malt zu den Einträgen ein Bild im Hintergrund."
+        />
+      </div>
 
       <template #footer>
         <div class="flex justify-end gap-2">

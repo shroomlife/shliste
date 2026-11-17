@@ -167,7 +167,7 @@ function onRemove(): void {
     v-else
     class="list-item-row group relative isolate flex min-h-15 w-full items-stretch rounded-sm shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition-colors"
     :class="[justChanged && 'delta-flash']"
-    :aria-busy="busy || undefined"
+    :aria-busy="busy || painting || undefined"
     style="background: var(--md-surface)"
   >
     <!-- KI-Bild und Pollenflug liegen HINTER dem Text (z-index -1 im eigenen

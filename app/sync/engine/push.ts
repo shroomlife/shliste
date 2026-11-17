@@ -59,6 +59,7 @@ export interface PushList {
   name: string
   color: string
   secret: boolean
+  itemImages: boolean
   lastSuggestedItems: string
   sourceUrl: string | null
   createdAt: IsoUtc
@@ -316,6 +317,7 @@ function toPushList(row: List): PushList {
     name: row.name,
     color: row.color,
     secret: row.secret,
+    itemImages: row.itemImages,
     lastSuggestedItems: row.lastSuggestedItems,
     sourceUrl: row.sourceUrl,
     createdAt: row.createdAt,

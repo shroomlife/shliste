@@ -44,6 +44,7 @@ function list(id: string, overrides: Partial<ListRow> = {}): ListRow {
     name: id,
     color: '#123456',
     secret: false,
+    itemImages: false,
     lastSuggestedItems: '',
     sourceUrl: null,
     ownerUserId: null,

@@ -31,6 +31,7 @@ function makeList(overrides: Partial<List> = {}): List {
     name: 'Wocheneinkauf',
     color: '#ABCDEF',
     secret: false,
+    itemImages: false,
     lastSuggestedItems: '',
     sourceUrl: null,
     ownerUserId: null,

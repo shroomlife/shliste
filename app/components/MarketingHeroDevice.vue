@@ -52,7 +52,7 @@ let media: MediaQueryList | undefined
 
 let sizeMedia: MediaQueryList | undefined
 
-const base = { createdAt: '2026-11-02T12:00:00.000Z', updatedAt: '2026-11-02T12:00:00.000Z', deletedAt: null, fieldTimestamps: null, secret: false, lastSuggestedItems: '', sourceUrl: null, ownerUserId: null }
+const base = { createdAt: '2026-11-02T12:00:00.000Z', updatedAt: '2026-11-02T12:00:00.000Z', deletedAt: null, fieldTimestamps: null, secret: false, itemImages: false, lastSuggestedItems: '', sourceUrl: null, ownerUserId: null }
 
 const lists = computed<List[]>(() => world.value.lists.map((name, i) => ({ ...base, id: `example-list-${i}`, name, color: current.value.primary, secret: world.value.secret && i === 0 })))
 

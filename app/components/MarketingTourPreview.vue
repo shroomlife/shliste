@@ -7,9 +7,9 @@ const { style, palette } = useMarketingPalette()
 const stamp = '2026-11-03T12:00:00.000Z'
 const base = { createdAt: stamp, updatedAt: stamp, deletedAt: null, fieldTimestamps: null }
 const lists = computed<List[]>(() => [
-  { ...base, id: 'tour-friday', name: 'Freitag mit Freunden', color: marketingPalettes[palette.value]!.primary, secret: false, lastSuggestedItems: '', sourceUrl: null, ownerUserId: null },
-  { ...base, id: 'tour-week', name: 'Für die Woche', color: '#94A97F', secret: false, lastSuggestedItems: '', sourceUrl: null, ownerUserId: null },
-  { ...base, id: 'tour-secret', name: 'Sams Überraschung', color: '#B796D5', secret: true, lastSuggestedItems: '', sourceUrl: null, ownerUserId: null },
+  { ...base, id: 'tour-friday', name: 'Freitag mit Freunden', color: marketingPalettes[palette.value]!.primary, secret: false, itemImages: false, lastSuggestedItems: '', sourceUrl: null, ownerUserId: null },
+  { ...base, id: 'tour-week', name: 'Für die Woche', color: '#94A97F', secret: false, itemImages: false, lastSuggestedItems: '', sourceUrl: null, ownerUserId: null },
+  { ...base, id: 'tour-secret', name: 'Sams Überraschung', color: '#B796D5', secret: true, itemImages: false, lastSuggestedItems: '', sourceUrl: null, ownerUserId: null },
 ])
 const items: ListItem[] = ['Tomaten', 'Rucola', 'Lasagneblätter'].map((name, index) => ({ ...base, id: `tour-${index}`, listId: 'tour-friday', name, quantity: 1, checked: false, removed: false, orderIndex: index, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, itemImagePath: null, itemImagePending: false, createdBy: null, modifiedBy: null }))
 </script>

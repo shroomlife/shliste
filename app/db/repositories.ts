@@ -461,7 +461,7 @@ export async function createImportedList(generated: {
   const name = generated.name.trim()
   if (name.length === 0) throw new Error('Die neue Liste braucht einen Namen.')
   const draft: Draft<List> = {
-    id: crypto.randomUUID(), name, color: randomListColor(), secret: false,
+    id: crypto.randomUUID(), name, color: randomListColor(), secret: false, itemImages: false,
     lastSuggestedItems: '', sourceUrl: validHttpUrlOrNull(generated.sourceUrl),
     ownerUserId: null, deletedAt: null,
   }

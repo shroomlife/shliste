@@ -86,7 +86,7 @@ test('Version 5 mit Bestand: die Bild-Spiegel werden nachgetragen, ohne die Zeil
   const name = 'shliste-upgrade-v5'
 
   // Eine Zeile aus Version 5: alle Link-Felder, aber noch keine Bild-Spiegel.
-  const { itemImagePath: _ohnePfad, itemImagePending: _ohneZustand, ...altzeile }
+  const { itemImagePath: _withoutPath, itemImagePending: _withoutState, ...oldRow }
     = itemRow('i1', 'l1', { name: 'Gurke', dirty: 1 })
   const v5 = await openDB<ShlisteDb>(name, 5, {
     upgrade(db) {
@@ -94,9 +94,9 @@ test('Version 5 mit Bestand: die Bild-Spiegel werden nachgetragen, ohne die Zeil
     },
   })
   v5.close()
-  const roh = await openDB(name, 5)
-  await roh.put('list_items', altzeile)
-  roh.close()
+  const raw = await openDB(name, 5)
+  await raw.put('list_items', oldRow)
+  raw.close()
 
   const v6 = await openDB<ShlisteDb>(name, DB_VERSION, {
     upgrade(db, oldVersion, _newVersion, transaction) {
@@ -108,7 +108,35 @@ test('Version 5 mit Bestand: die Bild-Spiegel werden nachgetragen, ohne die Zeil
   const row = await v6.get('list_items', 'i1')
   expect(row?.itemImagePath).toBeNull()
   expect(row?.itemImagePending).toBe(false)
-  expect(row?.dirty).toBe(altzeile.dirty)
-  expect(row?.updatedAt).toBe(altzeile.updatedAt)
+  expect(row?.dirty).toBe(oldRow.dirty)
+  expect(row?.updatedAt).toBe(oldRow.updatedAt)
   v6.close()
+})
+
+test('Version 6 mit Bestand: der Schalter KI-Bilder wird als aus nachgetragen, ohne Zeitstempel und ohne dirty', async () => {
+  const name = 'shliste-upgrade-v6'
+
+  const { itemImages: _without, ...oldList } = listRow('l1', { name: 'Wocheneinkauf', dirty: 1 })
+  const v6 = await openDB<ShlisteDb>(name, 6, {
+    upgrade(db) {
+      createSchema(db)
+    },
+  })
+  v6.close()
+  const raw = await openDB(name, 6)
+  await raw.put('lists', oldList)
+  raw.close()
+
+  const v7 = await openDB<ShlisteDb>(name, DB_VERSION, {
+    upgrade(db, oldVersion, _newVersion, transaction) {
+      createSchema(db)
+      void backfillLinkFields(oldVersion, transaction)
+    },
+  })
+
+  const row = await v7.get('lists', 'l1')
+  expect(row?.itemImages).toBe(false)
+  expect(row?.dirty).toBe(oldList.dirty)
+  expect(row?.fieldTimestamps).toEqual(oldList.fieldTimestamps)
+  v7.close()
 })

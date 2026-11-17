@@ -38,6 +38,12 @@ export interface List extends SyncedEntity {
   color: string
   /** Geheime Listen sind nicht teilbar und werden im Web gesperrt dargestellt */
   secret: boolean
+  /**
+   * KI-Bilder hinter den Einträgen malen (SHL-11). Nutzerfeld mit eigenem
+   * Zeitstempel wie `secret`, Vorgabe aus. Vorhandene Katalogbilder erscheinen
+   * auch ohne; der Schalter erlaubt nur das Malen neuer.
+   */
+  itemImages: boolean
   lastSuggestedItems: string
   sourceUrl: string | null
   /** UUID des Eigentümers. Aus dem Pull als `ownerUserId ?? userId` lesen. */
