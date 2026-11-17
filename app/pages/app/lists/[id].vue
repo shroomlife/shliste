@@ -1224,7 +1224,7 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
     <AppSheet
       v-model:open="isRenameOpen"
       title="Liste bearbeiten"
-      description="Name, Quelle und KI-Bilder anpassen"
+      :description="isSignedIn ? 'Name, Quelle und KI-Bilder anpassen' : 'Name und Quelle anpassen'"
     >
       <div class="flex flex-col gap-5">
         <UInput
@@ -1264,8 +1264,11 @@ function onSuggestionsAdd(names: string[], remaining: string[]): void {
         </div>
 
         <!-- KI-Bilder (SHL-11): Beim Einschalten malt der Server auch die
-             vorhandenen Einträge nach. Geheime Listen bekommen nie Bilder. -->
+             vorhandenen Einträge nach. Geheime Listen bekommen nie Bilder.
+             Nur angemeldet: Gemalt wird auf dem Server, ohne Konto gibt es
+             keinen Eigentümer und keinen Abgleich. -->
         <USwitch
+          v-if="isSignedIn"
           v-model="itemImagesValue"
           size="lg"
           label="KI-Bilder"

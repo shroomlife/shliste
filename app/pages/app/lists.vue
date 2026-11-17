@@ -23,6 +23,7 @@ const { entries, reload, createList } = useLists()
 // Teilen-Empfang braucht denselben Ablauf (siehe dort).
 const { createListFromAi } = useAiCreate()
 const { dataVersion, scheduleSync, snapshot, requestSync } = useSync()
+const { isSignedIn } = useAuth()
 const toast = useToast()
 
 /** Auf Mobil zeigt der Bereich entweder den Index oder das Detail, nie beides. */
@@ -111,7 +112,7 @@ async function submitDialog(): Promise<void> {
 
   isSaving.value = true
   try {
-    const created = await createList(name, { itemImages: newListItemImages.value })
+    const created = await createList(name, { itemImages: isSignedIn.value && newListItemImages.value })
     scheduleSync()
     isDialogOpen.value = false
     await navigateTo(`/app/lists/${created.id}`)
@@ -252,8 +253,10 @@ async function submitDialog(): Promise<void> {
           :ui="{ root: 'w-full' }"
           @keyup.enter="submitDialog"
         />
-        <!-- KI-Bilder (SHL-11), Vorgabe aus. -->
+        <!-- KI-Bilder (SHL-11), Vorgabe aus. Nur angemeldet: Gemalt wird
+             auf dem Server, ohne Konto gibt es keinen Abgleich. -->
         <USwitch
+          v-if="isSignedIn"
           v-model="newListItemImages"
           size="lg"
           label="KI-Bilder"
