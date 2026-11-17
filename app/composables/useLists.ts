@@ -185,12 +185,15 @@ export function useLists() {
    * die Voraussetzung dafür, offline arbeiten zu können: ohne serverseitig
    * vergebene Schlüssel gäbe es offline keine stabile Identität.
    */
-  async function createList(name: string, options?: { secret?: boolean }): Promise<ListRow> {
+  async function createList(name: string, options?: { secret?: boolean, itemImages?: boolean }): Promise<ListRow> {
+    const secret = options?.secret === true
     const row = await upsertList({
       id: crypto.randomUUID(),
       name: name.trim(),
       color: randomListColor(),
-      secret: options?.secret === true,
+      secret,
+      // Geheime Listen bekommen nie Bilder, der Schalter wäre dort eine Lüge.
+      itemImages: options?.itemImages === true && !secret,
       lastSuggestedItems: '',
       sourceUrl: null,
       ownerUserId: null,

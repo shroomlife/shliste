@@ -75,6 +75,8 @@ export function parseList(value: unknown): List | null {
     name: readStringOr(value, 'name', ''),
     color: readStringOr(value, 'color', ''),
     secret: readBooleanOr(value, 'secret', false),
+    // Ein älterer Server kennt das Feld nicht: dann aus, wie die Vorgabe.
+    itemImages: readBooleanOr(value, 'itemImages', false),
     lastSuggestedItems: readStringOr(value, 'lastSuggestedItems', ''),
     sourceUrl: readNullableString(value, 'sourceUrl'),
     ownerUserId: readOwnerUserId(value),

@@ -39,8 +39,8 @@ const altzeile: StoredListItemRow = {
 }
 
 describe('DB_VERSION', () => {
-  test('steht auf 6 — die Bild-Spiegel sind der Grund, linkPending kam mit 5, die Waisenrettung mit 4, die Link-Felder mit 3', () => {
-    expect(DB_VERSION).toBe(6)
+  test('steht auf 7 — der Schalter KI-Bilder ist der Grund, die Bild-Spiegel kamen mit 6, linkPending mit 5, die Waisenrettung mit 4, die Link-Felder mit 3', () => {
+    expect(DB_VERSION).toBe(7)
   })
 })
 

@@ -22,6 +22,7 @@ function list(overrides: Partial<ListRow> = {}): ListRow {
     name: 'Wohnung',
     color: '#123456',
     secret: false,
+    itemImages: false,
     lastSuggestedItems: '',
     sourceUrl: null,
     ownerUserId: null,

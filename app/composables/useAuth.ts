@@ -176,13 +176,14 @@ export function useAuth() {
 
       // Die Service-Worker-Caches der Bilder überleben das Cookie — auf einem
       // geteilten Gerät sollen sie mit der Sitzung gehen. Das gilt für
-      // Rezeptbilder wie für die Vorschaubilder der Link-Einträge: Beide
-      // liegen hinter der Anmeldung und verraten sonst, was auf den Listen
-      // stand. Best effort: Ein Fehler hier darf das Abmelden nicht aufhalten.
+      // Rezeptbilder, die Vorschaubilder der Link-Einträge und die KI-Bilder
+      // hinter den Einträgen: Alle liegen hinter der Anmeldung und verraten
+      // sonst, was auf den Listen stand. Best effort: Ein Fehler hier darf das Abmelden nicht aufhalten.
       if (typeof caches !== 'undefined') {
         await Promise.all([
           caches.delete('recipe-images').catch(() => false),
           caches.delete('link-previews').catch(() => false),
+          caches.delete('item-images').catch(() => false),
         ])
       }
     }

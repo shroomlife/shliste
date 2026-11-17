@@ -52,6 +52,7 @@ function dirtyList(id: string): ListRow {
     name: id,
     color: '#abcdef',
     secret: false,
+    itemImages: false,
     lastSuggestedItems: '',
     sourceUrl: null,
     ownerUserId: null,

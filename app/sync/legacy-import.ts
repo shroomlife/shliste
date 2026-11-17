@@ -235,6 +235,7 @@ export function planLegacyImport(input: {
       color: toHexColor(source.color, input.fallbackColor()),
       // Die alte Fassung kannte keine geheimen Listen und kein Teilen.
       secret: false,
+      itemImages: false,
       lastSuggestedItems: '',
       sourceUrl: readText(source.url) === '' ? null : readText(source.url),
       ownerUserId: null,

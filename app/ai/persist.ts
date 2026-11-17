@@ -138,6 +138,7 @@ async function setListSourceUrlById(listId: string, sourceUrl: string): Promise<
     name: row.name,
     color: row.color,
     secret: row.secret,
+    itemImages: row.itemImages,
     sourceUrl,
     lastSuggestedItems: row.lastSuggestedItems,
     ownerUserId: row.ownerUserId,

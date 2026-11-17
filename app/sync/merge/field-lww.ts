@@ -45,7 +45,7 @@ export type EntityType = typeof ENTITY_TYPES[number]
  * Begründung wie bei `applyAddWins`). Die Vollständigkeit sichert ein Test.
  */
 export const MUTABLE_FIELDS: Record<string, readonly string[]> = {
-  list: ['name', 'color', 'secret', 'lastSuggestedItems', 'sourceUrl', 'deletedAt'],
+  list: ['name', 'color', 'secret', 'itemImages', 'lastSuggestedItems', 'sourceUrl', 'deletedAt'],
   listItem: ['name', 'quantity', 'checked', 'removed', 'orderIndex', 'sortKey', 'url', 'deletedAt'],
   recipe: ['name', 'color', 'sourceUrl', 'imagePath', 'editorialMetadata', 'deletedAt'],
   recipeIngredient: ['name', 'quantity', 'orderIndex', 'sortKey', 'deletedAt'],
@@ -79,7 +79,7 @@ export const MUTABLE_FIELDS: Record<string, readonly string[]> = {
  * Server, tragen keine Zeitstempel und dürfen eine Löschung nicht aufheben.
  */
 export const ADD_WINS_CONTENT_FIELDS: Record<string, readonly string[]> = {
-  list: ['name', 'color', 'secret', 'lastSuggestedItems', 'sourceUrl'],
+  list: ['name', 'color', 'secret', 'itemImages', 'lastSuggestedItems', 'sourceUrl'],
   listItem: ['name', 'quantity', 'checked', 'url'],
   recipe: ['name', 'color', 'sourceUrl', 'imagePath'],
   recipeIngredient: ['name', 'quantity'],

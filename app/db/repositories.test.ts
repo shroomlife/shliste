@@ -32,6 +32,7 @@ const draft: Draft<List> = {
   name: 'Wocheneinkauf',
   color: '#AABBCC',
   secret: false,
+  itemImages: false,
   lastSuggestedItems: '',
   sourceUrl: null,
   ownerUserId: null,
@@ -55,6 +56,7 @@ describe('changedFields', () => {
     expect(changedFields(undefined, draft).sort()).toEqual([
       'color',
       'deletedAt',
+      'itemImages',
       'lastSuggestedItems',
       'name',
       'ownerUserId',

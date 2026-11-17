@@ -407,6 +407,7 @@ export function useListDetail() {
       name: trimmed,
       color: target.color,
       secret: target.secret,
+      itemImages: target.itemImages,
       lastSuggestedItems: target.lastSuggestedItems,
       sourceUrl: target.sourceUrl,
       ownerUserId: target.ownerUserId,
@@ -434,8 +435,38 @@ export function useListDetail() {
       name: target.name,
       color: target.color,
       secret: target.secret,
+      itemImages: target.itemImages,
       lastSuggestedItems: target.lastSuggestedItems,
       sourceUrl: next,
+      ownerUserId: target.ownerUserId,
+      deletedAt: target.deletedAt,
+    })
+    await reload()
+  }
+
+  /**
+   * Schaltet die KI-Bilder der Liste (SHL-11).
+   *
+   * Wie `setListSourceUrl` ein eigener Schreibzug, damit nur `itemImages`
+   * einen frischen Zeitstempel bekommt. Geheime Listen bleiben aus. Das
+   * Nachmalen der vorhandenen Einträge startet der Server, sobald der Push
+   * den Wechsel auf an sieht.
+   */
+  async function setListItemImages(itemImages: boolean): Promise<void> {
+    const target = list.value
+    if (target === null) return
+
+    const next = itemImages && !target.secret
+    if (next === target.itemImages) return
+
+    await upsertList({
+      id: target.id,
+      name: target.name,
+      color: target.color,
+      secret: target.secret,
+      itemImages: next,
+      lastSuggestedItems: target.lastSuggestedItems,
+      sourceUrl: target.sourceUrl,
       ownerUserId: target.ownerUserId,
       deletedAt: target.deletedAt,
     })
@@ -463,6 +494,7 @@ export function useListDetail() {
       name: target.name,
       color: target.color,
       secret: target.secret,
+      itemImages: target.itemImages,
       lastSuggestedItems: target.lastSuggestedItems,
       sourceUrl: target.sourceUrl,
       ownerUserId: target.ownerUserId,
@@ -486,6 +518,7 @@ export function useListDetail() {
     moveItemTo,
     renameList,
     setListSourceUrl,
+    setListItemImages,
     deleteList,
   }
 }

@@ -30,6 +30,12 @@ import type { SyncTable } from '../sync/recovery/orphan-policy'
 export const DB_NAME = 'shliste'
 
 /**
+ * Version 7: das Nutzerfeld `itemImages` an `lists` (Schalter "KI-Bilder",
+ * SHL-11). Reiner DATENnachtrag (`backfillListFields`): Ohne ihn sähe
+ * `changedFields` bei jeder Änderung einer Altzeile `undefined` gegen `false`
+ * als Änderung und stempelte das Feld, und dieser Phantom-Stempel gewönne
+ * beim nächsten Merge gegen den Server.
+ *
  * Version 6: die Bild-Spiegel `itemImagePath` und `itemImagePending` an
  * `list_items` (KI-Bild hinter dem Eintrag). Derselbe reine DATENnachtrag wie
  * Version 3 und 5, über `backfillLinkFields`.
@@ -51,7 +57,7 @@ export const DB_NAME = 'shliste'
  * Gegenstück zu Androids `history_entries`-Tabelle). Version 1 war der
  * Erststand mit den acht Stores plus `sync_meta`.
  */
-export const DB_VERSION = 6
+export const DB_VERSION = 7
 
 /**
  * 1 = diese Zeile wurde lokal geändert und muss gepusht werden.
@@ -472,6 +478,22 @@ export function fillLinkFields(row: StoredListItemRow): ListItemRow {
   }
 }
 
+/**
+ * Eine Listenzeile, wie IndexedDB sie WIRKLICH liefert: vor Version 7 ohne
+ * `itemImages`.
+ */
+export type StoredListRow = Omit<ListRow, 'itemImages'> & Partial<Pick<ListRow, 'itemImages'>>
+
+/** Fehlt der Listenzeile der Schalter "KI-Bilder"? */
+export function needsListBackfill(row: object): boolean {
+  return !Object.hasOwn(row, 'itemImages')
+}
+
+/** Ergänzt den Schalter mit der Vorgabe aus, ohne `dirty` oder Zeitstempel anzufassen. */
+export function fillListFields(row: StoredListRow): ListRow {
+  return { ...row, itemImages: row.itemImages ?? false }
+}
+
 /** Die Transaktion, in der ein Versionswechsel läuft. */
 type UpgradeTransaction = IDBPTransaction<ShlisteDb, StoreNames<ShlisteDb>[], 'versionchange'>
 
@@ -488,13 +510,24 @@ type UpgradeTransaction = IDBPTransaction<ShlisteDb, StoreNames<ShlisteDb>[], 'v
  * Datenbank hat keine Zeilen, über die sich laufen ließe.
  */
 export async function backfillLinkFields(oldVersion: number, transaction: UpgradeTransaction): Promise<void> {
-  if (oldVersion === 0 || oldVersion >= 6) return
+  if (oldVersion === 0 || oldVersion >= 7) return
 
-  let cursor = await transaction.objectStore('list_items').openCursor()
-  while (cursor !== null) {
-    if (needsLinkBackfill(cursor.value)) {
-      await cursor.update(fillLinkFields(cursor.value))
+  if (oldVersion < 6) {
+    let cursor = await transaction.objectStore('list_items').openCursor()
+    while (cursor !== null) {
+      if (needsLinkBackfill(cursor.value)) {
+        await cursor.update(fillLinkFields(cursor.value))
+      }
+      cursor = await cursor.continue()
     }
-    cursor = await cursor.continue()
+  }
+
+  // Version 7: der Schalter "KI-Bilder" an den Listen.
+  let listCursor = await transaction.objectStore('lists').openCursor()
+  while (listCursor !== null) {
+    if (needsListBackfill(listCursor.value)) {
+      await listCursor.update(fillListFields(listCursor.value))
+    }
+    listCursor = await listCursor.continue()
   }
 }

@@ -24,6 +24,7 @@ export function listRow(id: string, overrides: Partial<ListRow> = {}): ListRow {
     name: id,
     color: '#AABBCC',
     secret: false,
+    itemImages: false,
     lastSuggestedItems: '',
     sourceUrl: null,
     ownerUserId: null,

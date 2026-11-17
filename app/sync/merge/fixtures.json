@@ -23,7 +23,7 @@
       },
       "expected": {
         "values": { "name": "lokal", "color": "#222222", "secret": true, "lastSuggestedItems": "server-vorschlag", "sourceUrl": "https://example.test/rezept", "deletedAt": null },
-        "fieldTimestamps": { "name": "2026-07-16T12:00:00.000Z", "color": "2026-07-16T10:00:00.000Z", "secret": "2026-07-16T10:00:00.000Z", "lastSuggestedItems": "2026-07-16T10:00:00.000Z", "sourceUrl": "2026-07-16T10:00:00.000Z", "deletedAt": "" },
+        "fieldTimestamps": { "name": "2026-07-16T12:00:00.000Z", "color": "2026-07-16T10:00:00.000Z", "secret": "2026-07-16T10:00:00.000Z", "lastSuggestedItems": "2026-07-16T10:00:00.000Z", "sourceUrl": "2026-07-16T10:00:00.000Z", "deletedAt": "", "itemImages": "" },
         "dirty": true,
         "restored": false
       }
@@ -43,7 +43,7 @@
       },
       "expected": {
         "values": { "name": "server", "color": "#222222", "secret": false, "lastSuggestedItems": "", "sourceUrl": null, "deletedAt": null },
-        "fieldTimestamps": { "name": "2026-07-16T12:00:00.000Z", "color": "2026-07-16T12:00:00.000Z", "secret": "2026-07-16T12:00:00.000Z", "lastSuggestedItems": "2026-07-16T12:00:00.000Z", "sourceUrl": "2026-07-16T12:00:00.000Z", "deletedAt": "2026-07-16T12:00:00.000Z" },
+        "fieldTimestamps": { "name": "2026-07-16T12:00:00.000Z", "color": "2026-07-16T12:00:00.000Z", "secret": "2026-07-16T12:00:00.000Z", "lastSuggestedItems": "2026-07-16T12:00:00.000Z", "sourceUrl": "2026-07-16T12:00:00.000Z", "deletedAt": "2026-07-16T12:00:00.000Z", "itemImages": "" },
         "dirty": false,
         "restored": false
       }
@@ -63,7 +63,7 @@
       },
       "expected": {
         "values": { "name": "server", "color": "#222222", "secret": false, "lastSuggestedItems": "", "sourceUrl": null, "deletedAt": null },
-        "fieldTimestamps": { "name": "2026-07-16T12:00:00.000Z", "color": "2026-07-16T12:00:00.000Z", "secret": "2026-07-16T12:00:00.000Z", "lastSuggestedItems": "2026-07-16T12:00:00.000Z", "sourceUrl": "2026-07-16T12:00:00.000Z", "deletedAt": "2026-07-16T12:00:00.000Z" },
+        "fieldTimestamps": { "name": "2026-07-16T12:00:00.000Z", "color": "2026-07-16T12:00:00.000Z", "secret": "2026-07-16T12:00:00.000Z", "lastSuggestedItems": "2026-07-16T12:00:00.000Z", "sourceUrl": "2026-07-16T12:00:00.000Z", "deletedAt": "2026-07-16T12:00:00.000Z", "itemImages": "" },
         "dirty": false,
         "restored": false
       }
@@ -83,7 +83,7 @@
       },
       "expected": {
         "values": { "name": "server", "color": "#222222", "secret": false, "lastSuggestedItems": "", "sourceUrl": null, "deletedAt": null },
-        "fieldTimestamps": { "name": "2026-07-16T10:15:00.000Z", "color": "2026-07-16T10:00:00.000Z", "secret": "2026-07-16T10:00:00.000Z", "lastSuggestedItems": "2026-07-16T10:00:00.000Z", "sourceUrl": "2026-07-16T10:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "name": "2026-07-16T10:15:00.000Z", "color": "2026-07-16T10:00:00.000Z", "secret": "2026-07-16T10:00:00.000Z", "lastSuggestedItems": "2026-07-16T10:00:00.000Z", "sourceUrl": "2026-07-16T10:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z", "itemImages": "" },
         "dirty": false,
         "restored": false
       }
@@ -479,7 +479,7 @@
       },
       "expected": {
         "values": { "name": "server", "color": "#222222", "secret": true, "lastSuggestedItems": "s", "sourceUrl": null, "deletedAt": null },
-        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z", "color": "2026-07-16T10:00:00.000Z", "secret": "2026-07-16T10:00:00.000Z", "lastSuggestedItems": "2026-07-16T10:00:00.000Z", "sourceUrl": "2026-07-16T10:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z" },
+        "fieldTimestamps": { "name": "2026-07-16T10:00:00.000Z", "color": "2026-07-16T10:00:00.000Z", "secret": "2026-07-16T10:00:00.000Z", "lastSuggestedItems": "2026-07-16T10:00:00.000Z", "sourceUrl": "2026-07-16T10:00:00.000Z", "deletedAt": "2026-07-16T10:00:00.000Z", "itemImages": "" },
         "dirty": false,
         "restored": false
       }

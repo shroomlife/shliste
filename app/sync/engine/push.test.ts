@@ -58,6 +58,7 @@ function list(id: string): PushList {
     name: id,
     color: '#abcdef',
     secret: false,
+    itemImages: false,
     lastSuggestedItems: '',
     sourceUrl: null,
     createdAt: TS,
@@ -677,24 +678,24 @@ describe('runPush', () => {
   })
 
   test('ein laut Antwort gemalter Eintrag zeigt sofort den Pollenflug', async () => {
-    const zeile: ListItemRow = { ...dirtyItem('i1', 'l1'), name: 'Gurke' }
-    const store = fakePushStore({ items: [zeile] }, { items: [zeile] })
+    const row: ListItemRow = { ...dirtyItem('i1', 'l1'), name: 'Gurke' }
+    const store = fakePushStore({ items: [row] }, { items: [row] })
 
     await runPush(store, () => Promise.resolve({ ...OK_RESPONSE, pendingItemImageIds: ['i1'] }))
 
     expect(store.items.get('i1')?.itemImagePending).toBe(true)
-    expect(store.items.get('i1')?.dirty).toBe(zeile.dirty)
+    expect(store.items.get('i1')?.dirty).toBe(row.dirty)
   })
 
   test('ein seitdem umbenannter Eintrag bekommt den Pollenflug nicht, Groß- und Kleinschreibung zählt nicht', async () => {
-    const gesendet: ListItemRow = { ...dirtyItem('i1', 'l1'), name: 'Gurke' }
-    const umbenannt = fakePushStore({ items: [gesendet] }, { items: [{ ...gesendet, name: 'Tomate', updatedAt: FUTURE }] })
-    await runPush(umbenannt, () => Promise.resolve({ ...OK_RESPONSE, pendingItemImageIds: ['i1'] }))
-    expect(umbenannt.items.get('i1')?.itemImagePending).toBe(false)
+    const sent: ListItemRow = { ...dirtyItem('i1', 'l1'), name: 'Gurke' }
+    const renamed = fakePushStore({ items: [sent] }, { items: [{ ...sent, name: 'Tomate', updatedAt: FUTURE }] })
+    await runPush(renamed, () => Promise.resolve({ ...OK_RESPONSE, pendingItemImageIds: ['i1'] }))
+    expect(renamed.items.get('i1')?.itemImagePending).toBe(false)
 
-    const kleiner = fakePushStore({ items: [gesendet] }, { items: [{ ...gesendet, name: ' gurke', updatedAt: FUTURE }] })
-    await runPush(kleiner, () => Promise.resolve({ ...OK_RESPONSE, pendingItemImageIds: ['i1'] }))
-    expect(kleiner.items.get('i1')?.itemImagePending).toBe(true)
+    const lowercased = fakePushStore({ items: [sent] }, { items: [{ ...sent, name: ' gurke', updatedAt: FUTURE }] })
+    await runPush(lowercased, () => Promise.resolve({ ...OK_RESPONSE, pendingItemImageIds: ['i1'] }))
+    expect(lowercased.items.get('i1')?.itemImagePending).toBe(true)
   })
 
   /* ---------------------------------------------------------------- *
@@ -986,5 +987,17 @@ describe('buildPushPayload', () => {
     const built = buildPushPayload({ ...emptyDirty(), lists: [dirtyList('l1')] })
 
     expect(built.lists[0]?.fieldTimestamps).toBeNull()
+  })
+})
+
+describe('buildPushPayload — Schalter KI-Bilder (SHL-11)', () => {
+  test('itemImages geht mit seinem Zeitstempel mit, auch wenn er aus ist', () => {
+    const switchedOn: ListRow = { ...dirtyList('l1'), itemImages: true, fieldTimestamps: { itemImages: TS } }
+    const switchedOff: ListRow = { ...dirtyList('l2'), itemImages: false }
+    const built = buildPushPayload({ ...emptyDirty(), lists: [switchedOn, switchedOff] })
+
+    expect(built.lists[0]?.itemImages).toBe(true)
+    expect(built.lists[0]?.fieldTimestamps).toEqual({ itemImages: TS })
+    expect(built.lists[1]).toHaveProperty('itemImages', false)
   })
 })
