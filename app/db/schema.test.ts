@@ -39,8 +39,8 @@ const altzeile: StoredListItemRow = {
 }
 
 describe('DB_VERSION', () => {
-  test('steht auf 5 — linkPending ist der Grund, die Waisenrettung kam mit 4, die Link-Felder mit 3', () => {
-    expect(DB_VERSION).toBe(5)
+  test('steht auf 6 — die Bild-Spiegel sind der Grund, linkPending kam mit 5, die Waisenrettung mit 4, die Link-Felder mit 3', () => {
+    expect(DB_VERSION).toBe(6)
   })
 })
 
@@ -57,6 +57,8 @@ describe('needsLinkBackfill', () => {
       linkImagePath: null,
       linkImageKind: null,
       linkPending: false,
+      itemImagePath: null,
+      itemImagePending: false,
     })).toBe(false)
   })
 
@@ -68,6 +70,8 @@ describe('needsLinkBackfill', () => {
       linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
       linkImageKind: 'preview',
       linkPending: false,
+      itemImagePath: 'item:0123456789abcdef0123456789abcdef.webp',
+      itemImagePending: false,
     })).toBe(false)
   })
 
@@ -75,10 +79,13 @@ describe('needsLinkBackfill', () => {
     // Sonst bliebe eine halb migrierte Zeile für immer halb migriert. Der
     // Test geht alle vier durch, damit kein Schlüssel aus der Prüfliste
     // fallen kann, ohne dass es auffällt.
-    const vollstaendig = { ...altzeile, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false }
+    const vollstaendig = {
+      ...altzeile, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false,
+      itemImagePath: null, itemImagePending: false,
+    }
     expect(needsLinkBackfill(vollstaendig)).toBe(false)
 
-    for (const key of ['url', 'linkTitle', 'linkImagePath', 'linkImageKind']) {
+    for (const key of ['url', 'linkTitle', 'linkImagePath', 'linkImageKind', 'linkPending', 'itemImagePath', 'itemImagePending']) {
       // Ohne `delete` zusammengesetzt: Ein dynamisches `delete` ist in diesem
       // Repo untersagt, und ein Filter über die Einträge sagt ohnehin klarer,
       // was gemeint ist — „alle ausser diesem einen".
@@ -97,6 +104,8 @@ describe('fillLinkFields', () => {
     expect(gefuellt.linkTitle).toBeNull()
     expect(gefuellt.linkImagePath).toBeNull()
     expect(gefuellt.linkImageKind).toBeNull()
+    expect(gefuellt.itemImagePath).toBeNull()
+    expect(gefuellt.itemImagePending).toBe(false)
     expect(needsLinkBackfill(gefuellt)).toBe(false)
   })
 

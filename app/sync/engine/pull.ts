@@ -41,6 +41,7 @@ import { keepListLocalFields, type SeenMark } from '../../db/seen'
 import type { LocalRow, PullMergeResult } from '../merge/field-lww'
 import { mergePulledEntity } from '../merge/field-lww'
 import { linkMirrorsFor } from '../merge/link-mirrors'
+import { itemImageMirrorsFor } from '../merge/item-image-mirrors'
 import {
   parseBadge,
   parseChatMessage,
@@ -437,11 +438,12 @@ async function applyItem(rows: RowStores, server: ListItem): Promise<void> {
     })
     const values = merged.values
     const mergedUrl = pickNullableString(values, 'url', server.url)
+    const mergedName = pickString(values, 'name', server.name)
 
     return {
       id: server.id,
       listId: server.listId,
-      name: pickString(values, 'name', server.name),
+      name: mergedName,
       quantity: pickNumber(values, 'quantity', server.quantity),
       checked: pickBoolean(values, 'checked', server.checked),
       removed: pickBoolean(values, 'removed', server.removed),
@@ -465,6 +467,9 @@ async function applyItem(rows: RowStores, server: ListItem): Promise<void> {
        * Pushs und beim lokalen Schreiben.
        */
       ...linkMirrorsFor(server, mergedUrl),
+      // Dasselbe für das KI-Bild, gebunden an den Namen statt an die Adresse
+      // (`app/sync/merge/item-image-mirrors.ts`).
+      ...itemImageMirrorsFor(server, mergedName),
       createdBy: server.createdBy,
       modifiedBy: server.modifiedBy,
       createdAt: server.createdAt,

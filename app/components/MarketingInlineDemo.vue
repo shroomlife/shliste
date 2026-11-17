@@ -26,7 +26,7 @@ const ingredients = ['Lasagneblätter', 'Tomaten', 'Olivenöl']
 const stamp = '2026-11-02T12:00:00.000Z'
 // Real ListItemRow, with isolated example objects. No database, login or sync writes.
 function item(name: string, checked = false, quantity = 1): ListItem {
-  return { id: name, listId: 'marketing-example', name, quantity, checked, removed: false, orderIndex: 0, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, createdBy: null, modifiedBy: null, createdAt: stamp, updatedAt: stamp, deletedAt: null, fieldTimestamps: null }
+  return { id: name, listId: 'marketing-example', name, quantity, checked, removed: false, orderIndex: 0, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, itemImagePath: null, itemImagePending: false, createdBy: null, modifiedBy: null, createdAt: stamp, updatedAt: stamp, deletedAt: null, fieldTimestamps: null }
 }
 const rows = computed(() => mode.value === 'voice' ? (phase.value >= 2 ? [item('Haferdrink', false, 2), item('Bananen'), item('Kaffee')] : []) : mode.value === 'shared' ? [item('Tomaten'), ...(phase.value >= 2 ? [item('Rucola', phase.value === 3)] : [])] : phase.value >= 2 ? [item('Lasagneblätter'), item('Tomaten')] : [])
 function updateMotion() {

@@ -5,7 +5,7 @@ import type { ListItem } from '#shared/types/domain'
 
 const props = defineProps<{ frame: ReturnType<typeof marketingHeroFrame>, world: typeof marketingHeroWorlds[number] }>()
 function row(name: string): ListItem {
-  return { id: name, listId: 'hero-shared', name, quantity: 1, checked: false, removed: false, orderIndex: 0, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, createdBy: null, modifiedBy: null, createdAt: '', updatedAt: '', deletedAt: null, fieldTimestamps: null }
+  return { id: name, listId: 'hero-shared', name, quantity: 1, checked: false, removed: false, orderIndex: 0, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, itemImagePath: null, itemImagePending: false, createdBy: null, modifiedBy: null, createdAt: '', updatedAt: '', deletedAt: null, fieldTimestamps: null }
 }
 const rows = computed(() => ['Lasagneplatten', 'Passierte Tomaten', ...(props.frame.applied ? props.world.items : [])])
 // Android scrolls after local additions, while contributions from another person stay put.

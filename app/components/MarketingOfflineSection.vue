@@ -3,7 +3,7 @@ import type { ListItem } from '#shared/types/domain'
 
 const groceries = ['Tomaten', 'Lasagneplatten', 'Haferdrink']
 function item(name: string, checked: boolean): ListItem {
-  return { id: name, listId: 'offline-preview', name, checked, quantity: 1, removed: false, orderIndex: 0, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, createdBy: null, modifiedBy: null, createdAt: '2026-11-03T12:00:00.000Z', updatedAt: '2026-11-03T12:00:00.000Z', deletedAt: null, fieldTimestamps: null }
+  return { id: name, listId: 'offline-preview', name, checked, quantity: 1, removed: false, orderIndex: 0, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, itemImagePath: null, itemImagePending: false, createdBy: null, modifiedBy: null, createdAt: '2026-11-03T12:00:00.000Z', updatedAt: '2026-11-03T12:00:00.000Z', deletedAt: null, fieldTimestamps: null }
 }
 </script>
 

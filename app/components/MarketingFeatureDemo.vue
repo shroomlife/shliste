@@ -18,7 +18,7 @@ function list(id: string, name: string, secret = false): List {
   return { id, name, secret, color: id === 'week' ? '#94A97F' : id === 'surprise' ? '#B796D5' : String(style.value['--md-primary']), createdAt: stamp, updatedAt: stamp, deletedAt: null, fieldTimestamps: null, lastSuggestedItems: '', sourceUrl: null, ownerUserId: null }
 }
 function item(name: string): ListItem {
-  return { id: name, listId: 'preview', name, checked: false, quantity: 1, removed: false, orderIndex: 0, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, createdBy: null, modifiedBy: null, createdAt: stamp, updatedAt: stamp, deletedAt: null, fieldTimestamps: null }
+  return { id: name, listId: 'preview', name, checked: false, quantity: 1, removed: false, orderIndex: 0, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, itemImagePath: null, itemImagePending: false, createdBy: null, modifiedBy: null, createdAt: stamp, updatedAt: stamp, deletedAt: null, fieldTimestamps: null }
 }
 </script>
 

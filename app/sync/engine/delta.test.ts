@@ -115,6 +115,8 @@ function serverItem(overrides: Record<string, unknown> = {}): Record<string, unk
     linkImagePath: null,
     linkImageKind: null,
     linkPending: false,
+    itemImagePath: null,
+    itemImagePending: false,
     createdAt: OLD,
     updatedAt: NEW,
     deletedAt: null,
@@ -160,6 +162,8 @@ function localItem(overrides: Partial<ListItemRow> = {}): ListItemRow {
     linkImagePath: null,
     linkImageKind: null,
     linkPending: false,
+    itemImagePath: null,
+    itemImagePending: false,
     createdBy: null,
     modifiedBy: null,
     createdAt: OLD,
@@ -393,6 +397,8 @@ describe('runDelta — Link-Felder', () => {
     linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
     linkImageKind: 'preview',
     linkPending: false,
+    itemImagePath: null,
+    itemImagePending: false,
   }
 
   test('Titel und Vorschaubild kommen über das Delta an', async () => {

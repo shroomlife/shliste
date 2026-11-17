@@ -27,6 +27,8 @@ const item: ListItem = {
   linkImagePath: null,
   linkImageKind: null,
   linkPending: false,
+  itemImagePath: null,
+  itemImagePending: false,
   createdBy: 'robin-uuid',
   modifiedBy: null,
   createdAt: '2026-08-22T10:00:00.000Z',
@@ -134,6 +136,8 @@ describe('parseHistorySnapshot: Link-Einträge', () => {
       linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
       linkImageKind: 'preview',
       linkPending: false,
+      itemImagePath: null,
+      itemImagePending: false,
     })) as Record<string, unknown>
     expect(raw['url']).toBe('https://kochwelt.de/rezept')
     expect(raw).not.toHaveProperty('linkTitle')

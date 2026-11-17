@@ -189,6 +189,15 @@
   --md-busy-content: var(--md-tertiary);
   --md-busy-accent: var(--md-primary);
   --md-busy-sweep: 16%;
+
+  /*
+   * KI-Bild hinter dem Eintrag (SHL-1): Deckkraft des Bildes und der
+   * Pollenflug, solange es gemalt wird. Gold ist das Ocker der botanischen
+   * Zeichnung, dazu primary. Hell trägt das Bild 45 %.
+   */
+  --md-item-image-opacity: 0.45;
+  --md-pollen-gold: #D6A860;
+  --md-pollen-sheen: 16%;
 }
 
 .dark {
@@ -247,6 +256,14 @@
   --md-delta-peak: 20%;
   --md-delta-sheen: 30%;
   --md-busy-sweep: 24%;
+
+  /*
+   * Das Bild ist auf hellem Baumwollpapier gemalt. Auf #1E1E1E hellte es mit
+   * 45 % die Fläche unter dem hellen Namen zu stark auf, deshalb weniger.
+   */
+  --md-item-image-opacity: 0.24;
+  --md-pollen-gold: #E2BC7A;
+  --md-pollen-sheen: 22%;
 }
 
 body {
@@ -578,6 +595,87 @@ body {
   }
 }
 
+/*
+ * KI-Bild hinter dem Eintrag und der Pollenflug, solange es gemalt wird
+ * (Idee 2 aus dem Entwurf, siehe ListItemRow.vue und ItemImagePollen.vue).
+ *
+ * BEIDE LIEGEN HINTER DEM TEXT: `z-index: -1` in der Zeile, die dafür mit
+ * `isolate` einen eigenen Stapel bildet. Ohne den Stapel rutschte -1 unter
+ * den Hintergrund der Zeile und wäre unsichtbar; ohne -1 läge ein absolut
+ * positioniertes Bild über dem nicht positionierten Namen.
+ *
+ * Bewegt wird nur `transform` und `opacity`, kein Layout. Ohne Bewegung
+ * steht ein ruhiger Schimmer rechts, die Pollen bleiben weg.
+ */
+@utility item-image {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 45%;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  mask-image: linear-gradient(90deg, rgb(0 0 0 / 0.3) 0%, #000 55%);
+  transition: opacity 0.6s ease-out;
+}
+
+@keyframes pollen-sheen {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(180%); }
+}
+
+@keyframes pollen-rise {
+  0%   { transform: translate(0, 0) scale(0.6); opacity: 0; }
+  20%  { opacity: 0.7; }
+  70%  { opacity: 0.45; }
+  100% { transform: translate(-14px, -68px) scale(1); opacity: 0; }
+}
+
+@utility pollen-flight {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: 60%;
+    background-image: linear-gradient(
+      100deg,
+      transparent 0%,
+      color-mix(in srgb, var(--md-pollen-gold) var(--md-pollen-sheen), transparent) 45%,
+      color-mix(in srgb, var(--md-primary) var(--md-pollen-sheen), transparent) 55%,
+      transparent 100%
+    );
+    transform: translateX(-100%);
+    animation: pollen-sheen 3.6s ease-in-out infinite;
+  }
+}
+
+@utility pollen-mote {
+  position: absolute;
+  bottom: -6px;
+  border-radius: 9999px;
+  opacity: 0;
+  animation: pollen-rise 4.2s ease-out infinite;
+}
+
+/* Ende des Malens: Pollen gehen, während das Bild kommt (<Transition name="pollen-fade">). */
+.pollen-fade-leave-active {
+  transition: opacity 0.6s ease-out;
+}
+
+.pollen-fade-leave-to {
+  opacity: 0;
+}
+
 /* Das Ausblenden, wenn der Server fertig ist (<Transition name="busy-fade">). */
 .busy-fade-leave-active {
   transition: opacity 0.3s ease-out;
@@ -608,6 +706,20 @@ body {
   }
 
   .busy-fade-leave-active {
+    transition: none;
+  }
+
+  .pollen-flight::before {
+    animation: none;
+    transform: translateX(70%);
+  }
+
+  .pollen-mote {
+    display: none;
+  }
+
+  .item-image,
+  .pollen-fade-leave-active {
     transition: none;
   }
 }

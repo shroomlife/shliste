@@ -180,6 +180,8 @@ function serverItem(overrides: Record<string, unknown> = {}): Record<string, unk
     linkImagePath: null,
     linkImageKind: null,
     linkPending: false,
+    itemImagePath: null,
+    itemImagePending: false,
     createdAt: OLD,
     updatedAt: OLD,
     deletedAt: null,
@@ -236,6 +238,8 @@ function localItem(overrides: Partial<ListItemRow> = {}): ListItemRow {
     linkImagePath: null,
     linkImageKind: null,
     linkPending: false,
+    itemImagePath: null,
+    itemImagePending: false,
     createdBy: null,
     modifiedBy: null,
     createdAt: OLD,
@@ -551,6 +555,8 @@ describe('runPull — Link-Felder', () => {
     linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
     linkImageKind: 'preview',
     linkPending: false,
+    itemImagePath: null,
+    itemImagePending: false,
   }
 
   test('alle vier Felder kommen an', async () => {
@@ -613,6 +619,22 @@ describe('runPull — Link-Felder', () => {
       lists: [serverList({ items: [serverItem(ohneFeld)] })],
     })))
     expect(alt.items.get('i1')?.linkPending).toBe(false)
+  })
+
+  test('das KI-Bild und sein Zustand kommen als Spiegel an, ein älterer Server liefert keines', async () => {
+    const store = fakePullStore()
+    await runPull(store, () => Promise.resolve(pullBody({
+      lists: [serverList({ items: [serverItem({
+        itemImagePath: 'item:0123456789abcdef0123456789abcdef.webp', itemImagePending: true,
+      })] })],
+    })))
+    expect(store.items.get('i1')?.itemImagePath).toBe('item:0123456789abcdef0123456789abcdef.webp')
+    expect(store.items.get('i1')?.itemImagePending).toBe(true)
+
+    const alt = fakePullStore()
+    await runPull(alt, () => Promise.resolve(pullBody({ lists: [serverList({ items: [serverItem()] })] })))
+    expect(alt.items.get('i1')?.itemImagePath).toBeNull()
+    expect(alt.items.get('i1')?.itemImagePending).toBe(false)
   })
 
   test('eine unbekannte Bildart wird zu null statt geraten', async () => {

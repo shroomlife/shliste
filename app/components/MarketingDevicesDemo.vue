@@ -26,7 +26,7 @@ function changed(id: string) {
   return (id === 'android' && phase.value === 2) || (id === 'browser' && phase.value === 4)
 }
 function row(name: string, checked = false): ListItem {
-  return { id: name, listId: 'device-demo', name, checked, quantity: 1, removed: false, orderIndex: 0, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, createdBy: null, modifiedBy: null, createdAt: '2026-11-02T12:00:00.000Z', updatedAt: '2026-11-02T12:00:00.000Z', deletedAt: null, fieldTimestamps: null }
+  return { id: name, listId: 'device-demo', name, checked, quantity: 1, removed: false, orderIndex: 0, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, itemImagePath: null, itemImagePending: false, createdBy: null, modifiedBy: null, createdAt: '2026-11-02T12:00:00.000Z', updatedAt: '2026-11-02T12:00:00.000Z', deletedAt: null, fieldTimestamps: null }
 }
 function select(index: number) {
   phase.value = index

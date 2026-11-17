@@ -15,6 +15,7 @@ import type {
   Badge,
   HistoryEntry,
   IsoUtc,
+  ItemImageMirrorField,
   LinkMirrorField,
   List,
   ListItem,
@@ -29,6 +30,10 @@ import type { SyncTable } from '../sync/recovery/orphan-policy'
 export const DB_NAME = 'shliste'
 
 /**
+ * Version 6: die Bild-Spiegel `itemImagePath` und `itemImagePending` an
+ * `list_items` (KI-Bild hinter dem Eintrag). Derselbe reine DATENnachtrag wie
+ * Version 3 und 5, über `backfillLinkFields`.
+ *
  * Version 5: der Server-Spiegel `linkPending` an `list_items`. Wie Version 3
  * ein reiner DATENnachtrag (`backfillLinkFields`): Danach trägt wieder jede
  * Zeile alle Link-Schlüssel, und kein Leser muss `undefined` von `false`
@@ -46,7 +51,7 @@ export const DB_NAME = 'shliste'
  * Gegenstück zu Androids `history_entries`-Tabelle). Version 1 war der
  * Erststand mit den acht Stores plus `sync_meta`.
  */
-export const DB_VERSION = 5
+export const DB_VERSION = 6
 
 /**
  * 1 = diese Zeile wurde lokal geändert und muss gepusht werden.
@@ -120,8 +125,8 @@ export type ListItemRow = Dirty<ListItem> & ListItemLocalFields
  * Zeile vollständig, überall sonst genügt deshalb `ListItemRow`.
  */
 export type StoredListItemRow
-  = Omit<ListItemRow, 'url' | LinkMirrorField>
-    & Partial<Pick<ListItemRow, 'url' | LinkMirrorField>>
+  = Omit<ListItemRow, 'url' | LinkMirrorField | ItemImageMirrorField>
+    & Partial<Pick<ListItemRow, 'url' | LinkMirrorField | ItemImageMirrorField>>
 export type RecipeRow = Dirty<Recipe>
 export type RecipeIngredientRow = Dirty<RecipeIngredient>
 export type RecipeStepRow = Dirty<RecipeStep>
@@ -428,8 +433,8 @@ export function createSchema(db: IDBPDatabase<ShlisteDb>): void {
  * `fillLinkFields` — dessen Rückgabetyp verlangt alle Felder, ein
  * vergessenes fällt dort auf — und der Test, der alle durchgeht.
  */
-const LINK_ROW_KEYS: readonly ('url' | LinkMirrorField)[]
-  = ['url', 'linkTitle', 'linkImagePath', 'linkImageKind', 'linkPending']
+const LINK_ROW_KEYS: readonly ('url' | LinkMirrorField | ItemImageMirrorField)[]
+  = ['url', 'linkTitle', 'linkImagePath', 'linkImageKind', 'linkPending', 'itemImagePath', 'itemImagePending']
 
 /**
  * Fehlt dieser Zeile mindestens einer der Link-Schlüssel?
@@ -462,6 +467,8 @@ export function fillLinkFields(row: StoredListItemRow): ListItemRow {
     linkImagePath: row.linkImagePath ?? null,
     linkImageKind: row.linkImageKind ?? null,
     linkPending: row.linkPending ?? false,
+    itemImagePath: row.itemImagePath ?? null,
+    itemImagePending: row.itemImagePending ?? false,
   }
 }
 
@@ -481,7 +488,7 @@ type UpgradeTransaction = IDBPTransaction<ShlisteDb, StoreNames<ShlisteDb>[], 'v
  * Datenbank hat keine Zeilen, über die sich laufen ließe.
  */
 export async function backfillLinkFields(oldVersion: number, transaction: UpgradeTransaction): Promise<void> {
-  if (oldVersion === 0 || oldVersion >= 5) return
+  if (oldVersion === 0 || oldVersion >= 6) return
 
   let cursor = await transaction.objectStore('list_items').openCursor()
   while (cursor !== null) {

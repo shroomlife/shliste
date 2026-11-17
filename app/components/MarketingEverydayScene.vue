@@ -16,7 +16,7 @@ watch(phase, (current, previous) => {
 })
 const narration = computed(() => scene.value[props.moment][phase.value])
 function item(name: string, checked = false): ListItem {
-  return { id: name, listId: 'marketing-example', name, quantity: 1, checked, removed: false, orderIndex: 0, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, createdBy: null, modifiedBy: null, createdAt: '2026-11-03T12:00:00.000Z', updatedAt: '2026-11-03T12:00:00.000Z', deletedAt: null, fieldTimestamps: null }
+  return { id: name, listId: 'marketing-example', name, quantity: 1, checked, removed: false, orderIndex: 0, sortKey: null, url: null, linkTitle: null, linkImagePath: null, linkImageKind: null, linkPending: false, itemImagePath: null, itemImagePending: false, createdBy: null, modifiedBy: null, createdAt: '2026-11-03T12:00:00.000Z', updatedAt: '2026-11-03T12:00:00.000Z', deletedAt: null, fieldTimestamps: null }
 }
 </script>
 

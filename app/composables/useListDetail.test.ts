@@ -35,6 +35,8 @@ function makeItem(overrides: Partial<ListItem> = {}): ListItem {
     linkImagePath: null,
     linkImageKind: null,
     linkPending: false,
+    itemImagePath: null,
+    itemImagePending: false,
     createdBy: null,
     modifiedBy: null,
     ...overrides,
@@ -155,6 +157,8 @@ describe('toItemDraft', () => {
       linkImagePath: 'link:0123456789abcdef0123456789abcdef.webp',
       linkImageKind: 'preview',
       linkPending: false,
+      itemImagePath: null,
+      itemImagePending: false,
     })))
 
     expect(keys).toContain('url')
